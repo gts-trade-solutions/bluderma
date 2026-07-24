@@ -1,0 +1,93 @@
+[
+  {
+    "slug": "liztox",
+    "brand": "Huons Biopharma",
+    "description": "Liztox is a botulinum toxin type A injectable developed by Huons Biopharma, a subsidiary of the South Korean pharmaceutical group Huons Global, and approved by Korea's Ministry of Food and Drug Safety (MFDS). It is a lyophilised, high-purity type A toxin supplied in 100 and 200 unit vials for aesthetic and therapeutic use. The same product is distributed in export markets under the Hutox brand name.",
+    "howItWorks": "Botulinum toxin type A binds to presynaptic cholinergic nerve terminals and cleaves the SNAP-25 protein, blocking acetylcholine release at the neuromuscular junction. This produces temporary, localised chemodenervation that relaxes the injected muscle, softening dynamic wrinkles. The effect is reversible as nerve terminals recover, typically over about 3-4 months.",
+    "composition": "Botulinum toxin type A (Clostridium botulinum toxin type A complex), available in 100 unit and 200 unit vials, formulated with human serum albumin and sodium chloride as excipients. Sources cite a high purity level (reported around 99.8%).",
+    "usageNotes": "Supplied as a lyophilised white powder for reconstitution with preservative-free 0.9% sterile saline immediately before use. Store refrigerated at 2-8C and use the reconstituted solution promptly per label. For administration by trained practitioners only.",
+    "features": ["Korean type A toxin from Huons Biopharma", "MFDS (Korea) approved", "High reported purity, low protein load", "Available in 100U and 200U vials", "Exported internationally as Hutox"],
+    "benefits": ["Consistent unit potency for predictable dosing", "High purity aimed at reducing immunogenic burden", "Backed by a large established Korean manufacturer", "Two vial sizes support flexible clinic inventory"],
+    "indications": ["Glabellar (frown) lines", "Forehead lines", "Crow's feet (lateral canthal lines)", "Masseter/jawline slimming", "Hyperhidrosis (off-label/therapeutic use per region)"],
+    "images": ["https://i0.wp.com/www.pharmacoline.com/wp-content/uploads/2023/02/image-60.png?fit=800%2C800&ssl=1"],
+    "sourceUrl": "https://www.pharmacoline.com/product/liztox-100-units/"
+  },
+  {
+    "slug": "kaimax",
+    "brand": "JETEMA",
+    "description": "Kaimax is a Korean botulinum toxin type A injectable listed by distributors as a product of JETEMA Co., Ltd., a South Korean aesthetics manufacturer. It is a high-purity type A toxin supplied primarily in 100 unit vials (a 200 unit presentation is also referenced) and is marketed as KFDA-approved for professional aesthetic use.",
+    "howItWorks": "Botulinum toxin type A binds to presynaptic cholinergic nerve terminals and cleaves the SNAP-25 protein, blocking acetylcholine release at the neuromuscular junction. This temporarily relaxes the target muscle, reducing dynamic wrinkling. The effect is reversible, generally lasting around 3-4 months before muscle activity returns.",
+    "composition": "Botulinum toxin type A complex, supplied in 100 unit vials (200 unit also referenced), with human serum albumin and sodium chloride as standard excipients for the class. Described by distributors as a highly purified, vacuum-dried preparation.",
+    "usageNotes": "Reconstitute the dried powder with preservative-free 0.9% sterile saline before injection. Because it is vacuum-dried, the vial may appear nearly empty or show only a thin film, which is expected. Store refrigerated at 2-8C; for use by trained injectors.",
+    "features": ["Type A toxin attributed to JETEMA Co., Ltd.", "Vacuum-dried preparation", "High purity, low immunogenicity positioning", "100U (and 200U) vial formats", "KFDA-approved per distributor listings"],
+    "benefits": ["Reliable, standardised unit potency", "Cost-efficient option among Korean toxins", "Purity profile intended to limit antibody formation", "Suitable across common aesthetic indications"],
+    "indications": ["Glabellar (frown) lines", "Forehead lines", "Crow's feet", "Masseter reduction / facial contouring"],
+    "images": ["https://fillersfairy.com/wp-content/uploads/2024/11/Kaimax-100-300x300.png", "https://fillersfairy.com/wp-content/uploads/2024/11/Kaimax-200u-300x300.png"],
+    "sourceUrl": "https://fillersfairy.com/product-category/botulinum-toxin/kaimax/"
+  },
+  {
+    "slug": "metox",
+    "brand": "Maypharm",
+    "description": "Metox is a Korean botulinum toxin type A injectable manufactured by Maypharm Co., Ltd., which markets it as a second-generation, vacuum-dried toxin. It is supplied in 100 unit and 200 unit vials and is intended for professional aesthetic use. It is not FDA-approved and is not marketed for sale in the United States.",
+    "howItWorks": "Botulinum toxin type A binds to presynaptic cholinergic nerve terminals and cleaves the SNAP-25 protein, blocking acetylcholine release at the neuromuscular junction. This temporarily relaxes the injected muscle and softens dynamic lines. The effect is reversible over roughly 3-4 months as neuromuscular transmission recovers.",
+    "composition": "Botulinum toxin type A, supplied in 100 unit and 200 unit vials as a vacuum-dried powder, with human serum albumin and sodium chloride as standard excipients. Distributors describe a low-protein, high-purity (reported around 99.8%) formulation.",
+    "usageNotes": "Reconstitute with preservative-free 0.9% sterile saline before injection. As Metox is vacuum-dried rather than freeze-dried, the vial may appear nearly empty or show only a faint dried film; the full dose dissolves on reconstitution. Store unopened refrigerated at 2-8C; for trained practitioners.",
+    "features": ["Manufactured by Maypharm Co., Ltd.", "Vacuum-drying manufacturing process", "Low-protein, high-purity formulation", "100U and 200U vial options", "Marketed as a second-generation toxin"],
+    "benefits": ["Standardised potency for predictable outcomes", "Vacuum-dried process positioned for stability", "Low protein load to help limit immunogenicity", "Flexible vial sizing for clinic workflows"],
+    "indications": ["Glabellar (frown) lines", "Forehead lines", "Crow's feet", "Masseter slimming", "Other dynamic facial wrinkles"],
+    "images": ["https://fillersfairy.com/wp-content/uploads/2025/02/1554fa4f-b2f3-4dc5-81fa-504d6e938306-600x600.png"],
+    "sourceUrl": "https://www.prnewswire.com/news-releases/maypharm-launches-metoo-fill-ha-filler-metox-botulinum-toxin-with-a-2nd-generation-technological-advantage-301900737.html"
+  },
+  {
+    "slug": "newlux",
+    "brand": "Medytox",
+    "description": "Newlux is a botulinum toxin type A injectable from South Korea's Medytox, launched in 2023 through a subsidiary and approved by Korea's MFDS. It is positioned as a premium, high-purity neurotoxin and is notable for being produced without animal-derived components, which is intended to reduce the risk of animal-antigen-related reactions. It is supplied as a lyophilised 100 unit vial.",
+    "howItWorks": "Botulinum toxin type A binds to presynaptic cholinergic nerve terminals and cleaves the SNAP-25 protein, blocking acetylcholine release at the neuromuscular junction. This temporarily relaxes the target muscle and reduces dynamic wrinkling. The effect is reversible as nerve function recovers.",
+    "composition": "Botulinum toxin type A supplied as a lyophilised 100 unit vial, formulated with human serum albumin and sodium chloride as excipients and produced without animal-derived components. Distributors cite high purity (reported above 99%).",
+    "usageNotes": "Reconstitute the lyophilised powder with preservative-free 0.9% sterile saline to yield a clear solution before injection. Store refrigerated at 2-8C and use promptly after reconstitution per label. For administration by trained practitioners only.",
+    "features": ["Medytox portfolio toxin (2023 launch)", "MFDS (Korea) approved", "Manufactured without animal-derived components", "High-purity type A complex", "Lyophilised 100U vial"],
+    "benefits": ["Animal-component-free process to help limit allergenicity", "Backing of an established toxin manufacturer", "High purity for a controlled immunogenic profile", "Consistent unit dosing"],
+    "indications": ["Glabellar (frown) lines", "Forehead lines", "Crow's feet", "Masseter slimming", "Other dynamic facial wrinkles"],
+    "images": ["https://premiumdermalmart.com/cdn/shop/files/Newlux-100-Units.jpg?v=1781229080"],
+    "sourceUrl": "https://premiumdermalmart.com/products/newlux-100-units"
+  },
+  {
+    "slug": "zerotox",
+    "brand": "Double J Holdings",
+    "description": "Zerotox is a Korean botulinum toxin type A injectable listed by distributors under Double J Holdings Co., Ltd., with some sources indicating it is OEM-manufactured in South Korea. It is a high-purity type A toxin supplied as a 100 unit vial, purified using size-exclusion HPLC, and is described as KFDA-approved for professional aesthetic and therapeutic use.",
+    "howItWorks": "Botulinum toxin type A binds to presynaptic cholinergic nerve terminals and cleaves the SNAP-25 protein, blocking acetylcholine release at the neuromuscular junction. This temporarily relaxes the injected muscle and softens dynamic wrinkles. The effect is reversible, typically over about 3-4 months.",
+    "composition": "Clostridium botulinum toxin type A, 100 units per vial, with human serum albumin and sodium chloride as standard excipients. Distributors cite over 99% purity, characterised by size-exclusion HPLC (SEC-HPLC).",
+    "usageNotes": "Supplied as a dried powder for reconstitution with preservative-free 0.9% sterile saline before injection. Store refrigerated at 2-8C and use the reconstituted solution promptly. For use by trained injectors only.",
+    "features": ["Brand held by Double J Holdings (Korea)", "Over 99% purity (SEC-HPLC characterised)", "100 unit vial", "KFDA-approved per distributor listings", "Korean-manufactured type A toxin"],
+    "benefits": ["High purity for a controlled immunogenic profile", "Standardised 100U potency for predictable dosing", "Competitive option within the Korean toxin segment", "Suitable for common aesthetic indications"],
+    "indications": ["Glabellar (frown) lines", "Forehead lines", "Crow's feet", "Other moderate-to-severe dynamic wrinkles"],
+    "images": ["https://derma-solution.com/wp-content/uploads/2024/02/zerotox-100units-fiz.jpg", "https://derma-solution.com/wp-content/uploads/2024/02/zerotox-2.jpg"],
+    "sourceUrl": "https://derma-solution.com/shop/toxins/zerotox/"
+  },
+  {
+    "slug": "bijutox",
+    "brand": "Maypharm",
+    "description": "Bijutox is a Korean botulinum toxin type A injectable for aesthetic use; distributor listings attribute it to Maypharm Co., Ltd. and describe a vacuum-dehydration (rather than lyophilisation) manufacturing process. Public information on this export brand is limited, but the product is supplied as a 100 unit vial of Clostridium botulinum toxin type A intended for professional wrinkle treatment.",
+    "howItWorks": "Botulinum toxin type A binds to presynaptic cholinergic nerve terminals and cleaves the SNAP-25 protein, blocking acetylcholine release at the neuromuscular junction. This temporarily relaxes the injected muscle and reduces dynamic wrinkling. The effect is reversible as neuromuscular transmission recovers.",
+    "composition": "Clostridium botulinum toxin type A, 100 units per vial, with human serum albumin (approx. 0.5 mg) and sodium chloride (approx. 0.9 mg) as excipients per distributor specifications; stated potency range approximately 87-125%. Presented as a white to pale-yellow dried substance in a clear vial.",
+    "usageNotes": "Reconstitute the dried powder with preservative-free 0.9% sterile saline before injection. As it is vacuum-dehydrated, the vial contents may appear as only a thin film; the full dose dissolves on reconstitution. Store refrigerated at 2-8C; for trained practitioners only.",
+    "features": ["Korean type A toxin (attributed to Maypharm)", "Vacuum-dehydration process", "100 unit vial", "Human serum albumin / sodium chloride excipients", "Stated potency range ~87-125%"],
+    "benefits": ["Standardised 100U dosing", "Vacuum-drying positioned for product stability", "Cost-competitive Korean toxin option", "Applicable to standard aesthetic indications"],
+    "indications": ["Glabellar (frown) lines", "Forehead lines", "Crow's feet", "Other moderate-to-severe dynamic facial wrinkles"],
+    "images": ["https://premiumdermalmart.com/cdn/shop/files/Bijutox-100U.webp?v=1781228495", "https://i0.wp.com/www.pharmacoline.com/wp-content/uploads/2023/10/bijutox-1.png?fit=800%2C800&ssl=1"],
+    "sourceUrl": "https://www.pharmacoline.com/product/bijutox-100-units/"
+  },
+  {
+    "slug": "hutox",
+    "brand": "Huons Biopharma",
+    "description": "Hutox is the export brand name for Huons' botulinum toxin type A, corresponding to the domestically named Liztox produced by Huons Biopharma (part of Huons Global). It is a lyophilised, high-purity type A toxin supplied in 100 unit vials (200 unit also available) for aesthetic and therapeutic use. Sources confirm it is KFDA-approved and characterised by high reported purity (exceeding 99%).",
+    "howItWorks": "Botulinum toxin type A binds to presynaptic cholinergic nerve terminals and cleaves the SNAP-25 protein, blocking acetylcholine release at the neuromuscular junction. This produces temporary chemodenervation that relaxes the target muscle and softens dynamic wrinkles. The effect is reversible, typically over about 3-4 months.",
+    "composition": "Clostridium botulinum toxin type A complex, supplied as a lyophilised white powder in 100 unit vials (200 unit also available), with human serum albumin and sodium chloride as excipients. Reconstitutes to a colourless, transparent solution; reported purity exceeds 99%.",
+    "usageNotes": "Supplied as a lyophilised powder for reconstitution with preservative-free 0.9% sterile saline immediately before use, yielding a clear solution. Store refrigerated at 2-8C and use the reconstituted product promptly per label. For administration by trained practitioners only.",
+    "features": ["Export brand of Huons' Liztox", "Manufactured by Huons Biopharma (Huons Global)", "KFDA-approved; purity reported above 99%", "Lyophilised 100U vial (200U also available)", "Established Korean pharmaceutical origin"],
+    "benefits": ["High purity for a controlled immunogenic profile", "Consistent unit potency for predictable dosing", "Backed by a large established manufacturer", "Widely distributed in export markets"],
+    "indications": ["Glabellar (frown) lines", "Forehead lines", "Crow's feet", "Masseter slimming", "Hyperhidrosis / blepharospasm (therapeutic use per region)"],
+    "images": ["https://dotradeex.com/cdn/shop/products/Hutoxbotulinumtoxin.png?v=1649143157&width=600"],
+    "sourceUrl": "https://dotradeex.com/products/hutox-botulinum-toxin"
+  }
+]

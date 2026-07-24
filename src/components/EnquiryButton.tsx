@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import EnquiryModal from "./EnquiryModal";
-import { ROLE_STORAGE_KEY, Role } from "@/lib/roles";
+import { useExperience } from "@/hooks/useExperience";
 
 interface EnquiryButtonProps {
   treatmentName: string;
   productName: string;
+  treatmentSlug?: string;
   className?: string;
   label?: string;
   full?: boolean;
@@ -15,21 +16,13 @@ interface EnquiryButtonProps {
 export default function EnquiryButton({
   treatmentName,
   productName,
+  treatmentSlug,
   className,
   label = "Enquiry to order",
   full = false,
 }: EnquiryButtonProps) {
   const [open, setOpen] = useState(false);
-  const [role, setRole] = useState<Role>("doctor");
-
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(ROLE_STORAGE_KEY);
-      if (stored === "doctor" || stored === "patient") setRole(stored);
-    } catch {
-      /* ignore */
-    }
-  }, []);
+  const { experience } = useExperience("doctor");
 
   return (
     <>
@@ -52,7 +45,8 @@ export default function EnquiryButton({
         onClose={() => setOpen(false)}
         treatmentName={treatmentName}
         productName={productName}
-        audience={role}
+        treatmentSlug={treatmentSlug}
+        audience={experience}
       />
     </>
   );

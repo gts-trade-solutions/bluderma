@@ -1,14 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  Treatment,
-  TreatmentCategory,
-  categoryOrder,
-} from "@/data/treatments";
+import type { TreatmentDTO } from "@/lib/queries/types";
 import TreatmentCard from "./TreatmentCard";
 
-function slugify(cat: TreatmentCategory): string {
+function slugify(cat: string): string {
   return cat
     .toLowerCase()
     .replace(/[^a-z]+/g, "-")
@@ -16,7 +12,9 @@ function slugify(cat: TreatmentCategory): string {
 }
 
 interface TreatmentBrowserProps {
-  treatments: Treatment[];
+  treatments: TreatmentDTO[];
+  /** Category display order, from the database. */
+  categoryOrder: string[];
   audience?: "doctor" | "patient";
 }
 
@@ -27,13 +25,14 @@ interface TreatmentBrowserProps {
  */
 export default function TreatmentBrowser({
   treatments,
+  categoryOrder,
   audience = "doctor",
 }: TreatmentBrowserProps) {
-  const [active, setActive] = useState<TreatmentCategory | "all">("all");
+  const [active, setActive] = useState<string>("all");
 
   const present = useMemo(
     () => categoryOrder.filter((c) => treatments.some((t) => t.category === c)),
-    [treatments]
+    [treatments, categoryOrder]
   );
 
   // Pre-select from the URL hash (e.g. #cat-injectables) and react to changes.

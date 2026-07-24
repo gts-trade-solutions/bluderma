@@ -1,0 +1,93 @@
+[
+  {
+    "slug": "greentox",
+    "brand": null,
+    "description": "Greentox is a Korean botulinum toxin type A injectable supplied in a 100-unit lyophilised vial for aesthetic use. The specific manufacturer is not clearly identified in available distributor sources, which describe it as a high-purity type A neurotoxin produced in Korean biopharmaceutical facilities. It is positioned for facial wrinkle treatment and muscle-slimming procedures.",
+    "howItWorks": "Botulinum toxin type A blocks acetylcholine release at the neuromuscular junction by cleaving the SNAP-25 protein required for synaptic vesicle fusion. This produces temporary, dose-dependent chemodenervation that relaxes the targeted muscle, softening dynamic wrinkles until nerve terminals regenerate over several months.",
+    "composition": "Botulinum toxin type A; 100-unit lyophilised vial reconstituted before injection. Distributor listings describe a high-purity type A neurotoxin (some cite an X58540 production strain); a verified full excipient breakdown was not located.",
+    "usageNotes": "Supplied as a lyophilised powder; reconstitute with preservative-free 0.9% sterile saline before use. Store refrigerated at 2-8C and, once reconstituted, use promptly per the product insert. For administration by trained medical professionals only; dose and injection points are physician-determined.",
+    "features": ["Botulinum toxin type A in a 100-unit lyophilised vial", "Marketed as high-purity, low-diffusion toxin", "Korean-manufactured export brand", "Reconstituted with sterile saline before use", "For professional aesthetic use only"],
+    "benefits": ["Predictable, dose-dependent muscle relaxation", "Cost-competitive Korean toxin option for clinic stocking", "Suitable for facial wrinkle and slimming protocols", "Standard reconstitution workflow familiar to injectors"],
+    "indications": ["Glabellar (frown) lines", "Forehead lines", "Lateral canthal lines (crow's feet)", "Masseter / muscle slimming", "Other dynamic facial wrinkles"],
+    "images": ["https://opalnirvana.com/wp-content/uploads/2025/08/greentox-100u-opalnirvana.com_-1.webp"],
+    "sourceUrl": "https://opalnirvana.com/product/greentox-100u/"
+  },
+  {
+    "slug": "wondertox",
+    "brand": "Chong Kun Dang (CKD)",
+    "description": "Wondertox is a botulinum toxin type A injectable marketed by Chong Kun Dang (CKD) of South Korea; Korean industry reporting indicates the toxin is produced in partnership with Huons. It is supplied in 100- and 200-unit lyophilised vials with a human serum albumin and sodium chloride excipient profile. It is used for aesthetic reduction of dynamic facial wrinkles.",
+    "howItWorks": "Botulinum toxin type A blocks acetylcholine release at the neuromuscular junction by cleaving the SNAP-25 protein required for synaptic vesicle fusion. This produces temporary, dose-dependent chemodenervation that relaxes the targeted muscle, softening dynamic wrinkles until nerve terminals regenerate over several months.",
+    "composition": "Botulinum toxin type A, 100 or 200 units per vial, stabilised with human serum albumin (approx. 0.5 mg) and sodium chloride (approx. 0.9 mg); lyophilised powder reconstituted with sterile saline before use.",
+    "usageNotes": "Supplied as a lyophilised powder; reconstitute with preservative-free 0.9% sterile saline. Store refrigerated at 2-8C and use reconstituted solution promptly per the product insert. For administration by trained medical professionals only; dosing is physician-determined.",
+    "features": ["100- and 200-unit vial strengths", "Human serum albumin plus sodium chloride excipient profile", "Marketed by Chong Kun Dang (Huons-linked toxin supply)", "Lyophilised, reconstituted with saline", "Excipient profile comparable to conventional type A toxins"],
+    "benefits": ["Excipient profile supports familiar Botox-style dose conversion", "Backed by an established Korean pharmaceutical marketer", "Two vial sizes for varied treatment volumes", "Standard clinic reconstitution and cold-chain handling"],
+    "indications": ["Glabellar frown lines", "Forehead lines", "Crow's feet", "Masseter slimming", "Dynamic facial wrinkles"],
+    "images": ["https://fillersfairy.com/wp-content/uploads/2024/11/wondertox-100u.png"],
+    "sourceUrl": "https://fillersfairy.com/product/wondertox-100-unit/"
+  },
+  {
+    "slug": "toxta",
+    "brand": "Jetema",
+    "description": "Toxta is a botulinum toxin type A injectable manufactured by Jetema Co., Ltd. in South Korea and is KFDA-approved for aesthetic use. It is supplied in 100- and 200-unit lyophilised vials and is marketed on a high-purity, low-protein-load positioning intended to reduce immunogenicity risk. It is used for facial wrinkle treatment and muscle-slimming procedures.",
+    "howItWorks": "Botulinum toxin type A blocks acetylcholine release at the neuromuscular junction by cleaving the SNAP-25 protein required for synaptic vesicle fusion. This produces temporary, dose-dependent chemodenervation that relaxes the targeted muscle, softening dynamic wrinkles until nerve terminals regenerate over several months.",
+    "composition": "Botulinum toxin type A, 100 or 200 units per lyophilised vial; distributor listings report human serum albumin and sodium chloride excipients. Reconstituted with sterile 0.9% saline before injection.",
+    "usageNotes": "Supplied as a lyophilised powder; reconstitute with preservative-free 0.9% sterile saline. Store sealed and refrigerated at 2-8C, with a reported shelf life of up to 36 months from manufacture; use reconstituted solution promptly. For administration by trained medical professionals only.",
+    "features": ["Manufactured by Jetema (Korea), KFDA-approved", "100- and 200-unit vial options", "Positioned as high-purity, low protein load", "Lyophilised powder, saline reconstitution", "Refrigerated storage, ~36-month shelf life"],
+    "benefits": ["Established Korean manufacturer with regulatory approval", "Low protein load positioned to limit resistance risk", "Suited to higher-dose use on larger muscles (e.g., masseter)", "Familiar reconstitution and cold-chain handling"],
+    "indications": ["Glabellar frown lines", "Forehead lines", "Crow's feet", "Masseter / jaw slimming", "Dynamic facial wrinkles"],
+    "images": ["https://fillerskorea.wpenginepowered.com/wp-content/uploads/2024/06/Toxta-100-Botulinum-Toxin.jpg"],
+    "sourceUrl": "https://fillerskorea.com/toxta/"
+  },
+  {
+    "slug": "bienox",
+    "brand": "Korea BNC",
+    "description": "Bienox is a botulinum toxin type A injectable developed by Korea BNC (BNC Korea), supplied in a 100-unit lyophilised vial. Korean industry reporting indicates it received MFDS manufacturing and marketing approval in 2024 and is distributed domestically via Dongkook Pharmaceutical. It is marketed on a high-purity, vacuum-drying production positioning for aesthetic wrinkle treatment.",
+    "howItWorks": "Botulinum toxin type A blocks acetylcholine release at the neuromuscular junction by cleaving the SNAP-25 protein required for synaptic vesicle fusion. This produces temporary, dose-dependent chemodenervation that relaxes the targeted muscle, softening dynamic wrinkles until nerve terminals regenerate over several months.",
+    "composition": "Botulinum toxin type A, 100 units per vial, stabilised with human serum albumin and sodium chloride; supplied as lyophilised powder for reconstitution with sterile saline.",
+    "usageNotes": "Supplied as a lyophilised powder; reconstitute with preservative-free 0.9% sterile saline. Store refrigerated at 2-8C and use reconstituted solution promptly per the product insert. For administration by trained medical professionals only; dosing is physician-determined.",
+    "features": ["Developed by Korea BNC", "100-unit lyophilised vial", "Marketed with a vacuum-drying production process", "Reported Korean MFDS approval (2024)", "Reconstituted with saline before use"],
+    "benefits": ["From an established Korean toxin developer", "Positioned for stability and reduced resistance risk", "Cost-competitive clinic stocking option", "Standard reconstitution and cold-chain workflow"],
+    "indications": ["Glabellar frown lines", "Forehead lines", "Crow's feet", "Masseter slimming", "Dynamic facial wrinkles"],
+    "images": ["https://derma-solution.com/wp-content/uploads/2024/01/bienox-1.jpg"],
+    "sourceUrl": "https://derma-solution.com/shop/toxins/bienox/"
+  },
+  {
+    "slug": "linetox",
+    "brand": "Korea BNC",
+    "description": "Linetox is a botulinum toxin type A injectable marketed as manufactured by Korea BNC (BNC Korea) and supplied in a 100-unit lyophilised vial. Despite the superficially similar name, verification did not link it to Hugel or Huons; it is a lesser-known Korean export brand attributed to Korea BNC in distributor listings. It is used for aesthetic reduction of facial wrinkles and for facial contouring.",
+    "howItWorks": "Botulinum toxin type A blocks acetylcholine release at the neuromuscular junction by cleaving the SNAP-25 protein required for synaptic vesicle fusion. This produces temporary, dose-dependent chemodenervation that relaxes the targeted muscle, softening dynamic wrinkles until nerve terminals regenerate over several months.",
+    "composition": "Botulinum toxin type A, 100 units per vial, with human serum albumin (approx. 0.5 mg) and sodium chloride (approx. 0.9 mg) excipients; lyophilised powder reconstituted with sterile saline before use.",
+    "usageNotes": "Supplied as a lyophilised powder; reconstitute with preservative-free 0.9% sterile saline. Store refrigerated at 2-8C, with a reported shelf life of about 36 months; use reconstituted solution promptly. For administration by trained medical professionals only.",
+    "features": ["100-unit lyophilised vial", "Attributed to Korea BNC per distributor listings", "High reported purity (~99%)", "Reconstituted with saline before use", "Refrigerated storage, ~36-month shelf life"],
+    "benefits": ["Cost-competitive Korean toxin option", "Standard HSA / sodium chloride excipient profile", "Familiar reconstitution and handling", "Suitable for wrinkle-softening and contouring protocols"],
+    "indications": ["Glabellar frown lines", "Forehead lines", "Crow's feet", "Masseter / facial slimming", "Hyperhidrosis (class-level use)"],
+    "images": ["https://fillerskorea.wpenginepowered.com/wp-content/uploads/2024/05/lineto3x.jpg"],
+    "sourceUrl": "https://fillerskorea.com/linetox/"
+  },
+  {
+    "slug": "onetox",
+    "brand": "JDBIO",
+    "description": "One Tox (Onetox) is a Korean botulinum toxin type A injectable marketed and exported by JDBIO Co., Ltd. of Seongnam, South Korea, supplied in 100- and 200-unit lyophilised vials. JDBIO is the associated Korean company/exporter; the underlying manufacturing plant is not independently detailed in available sources. It is used for temporary reduction of dynamic facial wrinkles such as glabellar lines.",
+    "howItWorks": "Botulinum toxin type A blocks acetylcholine release at the neuromuscular junction by cleaving the SNAP-25 protein required for synaptic vesicle fusion. This produces temporary, dose-dependent chemodenervation that relaxes the targeted muscle, softening dynamic wrinkles until nerve terminals regenerate over several months.",
+    "composition": "Botulinum toxin type A, 100 or 200 units per vial, with human serum albumin (approx. 0.5 mg) and sodium chloride (approx. 0.9 mg); white to light-yellow lyophilisate reconstituted with sterile saline before use.",
+    "usageNotes": "Supplied as a lyophilised powder in a colourless vial; reconstitute with preservative-free 0.9% sterile saline. Store refrigerated at 2-8C and use reconstituted solution promptly per the product insert. For administration by trained medical professionals only.",
+    "features": ["100- and 200-unit vial strengths", "Human serum albumin plus sodium chloride excipient profile", "Marketed / exported by JDBIO (Korea)", "Lyophilised, saline reconstitution", "Positioned as a quick-onset toxin"],
+    "benefits": ["Standard excipient profile for familiar dosing", "Two vial sizes for treatment flexibility", "Cost-competitive export option", "Conventional reconstitution and storage"],
+    "indications": ["Glabellar frown lines", "Forehead lines", "Crow's feet", "Masseter slimming", "Dynamic facial wrinkles"],
+    "images": ["https://jdbioshop.com/cdn/shop/files/One-Tox-1_07f87a67-cff5-4bc7-84d9-f7a9155f74eb.webp"],
+    "sourceUrl": "https://jdbioshop.com/products/one-tox"
+  },
+  {
+    "slug": "re-n-tox",
+    "brand": "PharmaResearch Bio",
+    "description": "Re N Tox is a botulinum toxin type A injectable manufactured by PharmaResearch Bio (Pharma Research Bio Co., Ltd.) of South Korea, supplied in 100- and 200-unit lyophilised vials. It is marketed on a low-diffusion profile intended for localised treatment and is used in aesthetic clinics in Korea and other markets. It is indicated for temporary reduction of moderate-to-severe facial wrinkles.",
+    "howItWorks": "Botulinum toxin type A blocks acetylcholine release at the neuromuscular junction by cleaving the SNAP-25 protein required for synaptic vesicle fusion. This produces temporary, dose-dependent chemodenervation that relaxes the targeted muscle, softening dynamic wrinkles until nerve terminals regenerate over several months.",
+    "composition": "Botulinum toxin type A, 100 or 200 units per vial, stabilised with human serum albumin (approx. 0.5 mg) and sodium chloride (approx. 0.9 mg); lyophilised powder reconstituted with sterile saline before use.",
+    "usageNotes": "Supplied as a lyophilised powder; reconstitute with preservative-free 0.9% sterile saline. Store refrigerated at 2-8C and use reconstituted solution promptly per the product insert. For administration by trained medical professionals only; dosing and injection points are physician-determined.",
+    "features": ["100- and 200-unit vial strengths", "Manufactured by PharmaResearch Bio (Korea)", "Marketed on low-diffusion, localised action", "Human serum albumin plus sodium chloride excipients", "Lyophilised, saline reconstitution"],
+    "benefits": ["Low-diffusion positioning for precise placement", "From an established Korean biopharma group", "Two vial sizes for varied dosing", "Standard reconstitution and cold-chain handling"],
+    "indications": ["Glabellar frown lines", "Forehead lines", "Crow's feet", "Masseter slimming", "Dynamic facial wrinkles"],
+    "images": ["https://ikrorwxhijpllq5p.ldycdn.com/cloud/mjBprKjkRlkSkjjijojoi/Re-N-Tox-200U-800-800.jpg"],
+    "sourceUrl": "https://www.cosmo-korea.com/brand/re-n-tox-46"
+  }
+]

@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import BrandLogo from "./BrandLogo";
+
 const socials = [
   {
     label: "Instagram",
@@ -57,21 +59,8 @@ export default function Footer() {
     <footer id="contact" className="bg-brand-950 text-brand-100">
       <div className="container-page grid gap-10 py-14 md:grid-cols-4">
         <div className="md:col-span-2">
-          <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white">
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none">
-                <path
-                  d="M12 3s6 5.5 6 10a6 6 0 1 1-12 0c0-4.5 6-10 6-10Z"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-            <span className="text-lg font-extrabold text-white">
-              Blu<span className="text-teal-400">Derma</span>
-            </span>
-          </div>
+          <BrandLogo tone="light" />
+
           <p className="mt-4 max-w-md text-sm leading-relaxed text-brand-200/80">
             A dermatology and aesthetic treatment reference connecting
             evidence-based skin solutions with the professionals and patients who

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { submitEnquiry } from "@/lib/actions/enquiry";
 
 interface EnquiryModalProps {
   open: boolean;
@@ -8,6 +9,8 @@ interface EnquiryModalProps {
   /** Pre-fills the enquiry with the treatment / product context. */
   treatmentName: string;
   productName: string;
+  /** Links the resulting lead to the treatment row. */
+  treatmentSlug?: string;
   audience?: "doctor" | "patient";
 }
 
@@ -34,14 +37,21 @@ export default function EnquiryModal({
   onClose,
   treatmentName,
   productName,
+  treatmentSlug,
   audience = "doctor",
 }: EnquiryModalProps) {
   const [form, setForm] = useState<FormState>(empty);
   const [submitted, setSubmitted] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fields, setFields] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (open) {
       setSubmitted(false);
+      setBusy(false);
+      setError(null);
+      setFields({});
       setForm(empty);
       document.body.style.overflow = "hidden";
     } else {
@@ -65,16 +75,33 @@ export default function EnquiryModal({
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Frontend-only MVP: no backend. We simply confirm the enquiry locally.
-    // eslint-disable-next-line no-console
-    console.log("[BluDerma] Enquiry captured (demo only):", {
-      treatmentName,
+    setBusy(true);
+    setError(null);
+    setFields({});
+
+    const res = await submitEnquiry({
+      audience,
+      name: form.name,
+      email: form.email,
+      phone: form.phone,
+      organisation: form.organisation,
+      quantity: audience === "doctor" ? form.quantity : undefined,
+      message: form.message,
+      treatmentSlug,
       productName,
-      ...form,
     });
+
+    if (!res.ok) {
+      setError(res.error ?? "Could not send your enquiry.");
+      setFields(res.fields ?? {});
+      setBusy(false);
+      return;
+    }
+
     setSubmitted(true);
+    setBusy(false);
   };
 
   return (
@@ -125,10 +152,9 @@ export default function EnquiryModal({
             </div>
             <h4 className="text-lg font-bold text-ink">Enquiry received</h4>
             <p className="mx-auto mt-2 max-w-sm text-sm text-ink-muted">
-              Thanks, {form.name || "there"}. This is a frontend demo, so nothing
-              was actually sent — but in the live product your enquiry for{" "}
-              <span className="font-medium text-ink">{productName}</span> would
-              reach our team and we&apos;d get back to you shortly.
+              Thanks, {form.name || "there"}. Your enquiry for{" "}
+              <span className="font-medium text-ink">{productName}</span> has
+              reached our team — we&apos;ll get back to you shortly.
             </p>
             <button onClick={onClose} className="btn-primary mt-6">
               Done
@@ -136,8 +162,16 @@ export default function EnquiryModal({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 p-6">
+            {error && (
+              <div
+                role="alert"
+                className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700 ring-1 ring-inset ring-rose-100"
+              >
+                {error}
+              </div>
+            )}
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Full name" required>
+              <Field label="Full name" required error={fields.name}>
                 <input
                   required
                   value={form.name}
@@ -146,7 +180,7 @@ export default function EnquiryModal({
                   placeholder="Dr. A. Sharma"
                 />
               </Field>
-              <Field label="Email" required>
+              <Field label="Email" required error={fields.email}>
                 <input
                   required
                   type="email"
@@ -201,15 +235,24 @@ export default function EnquiryModal({
             </Field>
 
             <div className="flex items-center justify-end gap-3 pt-1">
-              <button type="button" onClick={onClose} className="btn-ghost">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={busy}
+                className="btn-ghost"
+              >
                 Cancel
               </button>
-              <button type="submit" className="btn-primary">
-                Send enquiry
+              <button
+                type="submit"
+                disabled={busy}
+                className="btn-primary disabled:opacity-60"
+              >
+                {busy ? "Sending…" : "Send enquiry"}
               </button>
             </div>
             <p className="pt-1 text-center text-xs text-ink-muted">
-              Demo form — submissions are logged to the browser console only.
+              We&apos;ll only use these details to respond to your enquiry.
             </p>
           </form>
         )}
@@ -239,10 +282,12 @@ export default function EnquiryModal({
 function Field({
   label,
   required,
+  error,
   children,
 }: {
   label: string;
   required?: boolean;
+  error?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -252,6 +297,11 @@ function Field({
         {required && <span className="text-brand-500"> *</span>}
       </span>
       {children}
+      {error && (
+        <span className="mt-1 block text-xs font-medium text-rose-600">
+          {error}
+        </span>
+      )}
     </label>
   );
 }

@@ -2,26 +2,40 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+
 import RoleModal from "@/components/RoleModal";
-import { ROLE_STORAGE_KEY, roleMeta } from "@/lib/roles";
+import BrandLogo from "@/components/BrandLogo";
+import { ROLE_STORAGE_KEY, isExperience, landingPathForRole, roleMeta } from "@/lib/roles";
 
 export default function Home() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
+    if (status === "loading") return;
+
+    // A signed-in account goes straight to the area its role belongs to; the
+    // stored preference is only a fallback for anonymous visitors.
+    if (status === "authenticated" && session?.user?.role) {
+      router.replace(landingPathForRole(session.user.role));
+      return;
+    }
+
     let stored: string | null = null;
     try {
       stored = window.localStorage.getItem(ROLE_STORAGE_KEY);
     } catch {
       stored = null;
     }
-    if (stored === "doctor" || stored === "patient") {
+
+    if (isExperience(stored)) {
       router.replace(roleMeta[stored].path);
     } else {
       setShowModal(true);
     }
-  }, [router]);
+  }, [router, session, status]);
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-brand-950">
@@ -36,20 +50,8 @@ export default function Home() {
       <div className="absolute inset-0 bg-gradient-to-br from-brand-950/90 via-brand-900/80 to-teal-900/70" />
 
       <div className="relative z-10 px-6 text-center text-white">
-        <div className="mb-6 inline-flex items-center gap-2">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur">
-            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none">
-              <path
-                d="M12 3s6 5.5 6 10a6 6 0 1 1-12 0c0-4.5 6-10 6-10Z"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
-          <span className="text-2xl font-extrabold tracking-tight">
-            Blu<span className="text-teal-300">Derma</span>
-          </span>
+        <div className="mb-6 flex justify-center">
+          <BrandLogo href={null} tone="light" size={48} />
         </div>
         <h1 className="mx-auto max-w-2xl text-balance text-3xl font-bold sm:text-5xl">
           Dermatology &amp; aesthetic care, made clear

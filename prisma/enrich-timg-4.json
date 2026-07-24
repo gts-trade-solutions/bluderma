@@ -1,0 +1,42 @@
+[
+  {
+    "slug": "exosome-therapy",
+    "images": [
+      "https://images.pexels.com/photos/33794143/pexels-photo-33794143.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/29745247/pexels-photo-29745247.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/29648626/pexels-photo-29648626.jpeg?auto=compress&cs=tinysrgb&w=1400"
+    ]
+  },
+  {
+    "slug": "iv-wellness-drips",
+    "images": [
+      "https://images.pexels.com/photos/6753457/pexels-photo-6753457.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/6191543/pexels-photo-6191543.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/6191530/pexels-photo-6191530.jpeg?auto=compress&cs=tinysrgb&w=1400"
+    ]
+  },
+  {
+    "slug": "numbing-adjuncts",
+    "images": [
+      "https://images.pexels.com/photos/7321545/pexels-photo-7321545.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/7801866/pexels-photo-7801866.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/7281625/pexels-photo-7281625.jpeg?auto=compress&cs=tinysrgb&w=1400"
+    ]
+  },
+  {
+    "slug": "cosmeceuticals",
+    "images": [
+      "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=1400&q=80",
+      "https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=1400&q=80",
+      "https://images.unsplash.com/photo-1598662957563-ee4965d4d72c?auto=format&fit=crop&w=1400&q=80"
+    ]
+  },
+  {
+    "slug": "clinic-supplies-devices",
+    "images": [
+      "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=1400&q=80",
+      "https://images.unsplash.com/photo-1666214280557-f1b5022eb634?auto=format&fit=crop&w=1400&q=80",
+      "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1400&q=80"
+    ]
+  }
+]

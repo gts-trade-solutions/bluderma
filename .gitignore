@@ -26,3 +26,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Internal-only seed data — contains wholesale priceInr values, kept out of the public repo
+prisma/catalog.ts
+prisma/seed-catalog.ts

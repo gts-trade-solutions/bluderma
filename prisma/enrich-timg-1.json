@@ -1,0 +1,50 @@
+[
+  {
+    "slug": "skin-boosters",
+    "images": [
+      "https://images.pexels.com/photos/6476077/pexels-photo-6476077.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/3762756/pexels-photo-3762756.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/34220536/pexels-photo-34220536.jpeg?auto=compress&cs=tinysrgb&w=1400"
+    ]
+  },
+  {
+    "slug": "botox",
+    "images": [
+      "https://images.pexels.com/photos/7581577/pexels-photo-7581577.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/7581590/pexels-photo-7581590.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/7581583/pexels-photo-7581583.jpeg?auto=compress&cs=tinysrgb&w=1400"
+    ]
+  },
+  {
+    "slug": "dermal-fillers",
+    "images": [
+      "https://images.pexels.com/photos/34220525/pexels-photo-34220525.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/7446679/pexels-photo-7446679.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/34220532/pexels-photo-34220532.jpeg?auto=compress&cs=tinysrgb&w=1400"
+    ]
+  },
+  {
+    "slug": "laser-toning",
+    "images": [
+      "https://images.pexels.com/photos/3865548/pexels-photo-3865548.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/12556700/pexels-photo-12556700.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/5069499/pexels-photo-5069499.jpeg?auto=compress&cs=tinysrgb&w=1400"
+    ]
+  },
+  {
+    "slug": "thread-lift",
+    "images": [
+      "https://images.pexels.com/photos/8485344/pexels-photo-8485344.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/31403887/pexels-photo-31403887.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/31064384/pexels-photo-31064384.jpeg?auto=compress&cs=tinysrgb&w=1400"
+    ]
+  },
+  {
+    "slug": "chemical-peels",
+    "images": [
+      "https://images.pexels.com/photos/10192208/pexels-photo-10192208.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/22589363/pexels-photo-22589363.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/6543489/pexels-photo-6543489.jpeg?auto=compress&cs=tinysrgb&w=1400"
+    ]
+  }
+]

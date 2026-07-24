@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Star,
   MapPin,
@@ -12,16 +15,12 @@ import {
   CalendarDays,
 } from "@/components/icons";
 import SmartImage from "@/components/SmartImage";
-import {
-  ConsultMode,
-  Doctor,
-  buildDayOptions,
-  slotsForDoctor,
-} from "@/data/doctors";
-import { addAppointment, newId } from "@/lib/patientStore";
+import { bookAppointment } from "@/lib/actions/booking";
+import type { DayOption, Slot } from "@/lib/queries/availability";
+import type { ConsultModeDTO, DoctorDTO } from "@/lib/queries/types";
 
 interface BookingModalProps {
-  doctor: Doctor | null;
+  doctor: DoctorDTO | null;
   open: boolean;
   onClose: () => void;
 }
@@ -37,30 +36,56 @@ export default function BookingModal({
   open,
   onClose,
 }: BookingModalProps) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [dayIndex, setDayIndex] = useState(0);
-  const [mode, setMode] = useState<ConsultMode>("clinic");
+  const [mode, setMode] = useState<ConsultModeDTO>("clinic");
   const [slot, setSlot] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Day options are computed on the client (Date is unavailable server-side).
-  const days = useMemo(() => buildDayOptions(new Date(), 5), []);
+  // Availability comes from the server — it depends on other people's bookings,
+  // so it can't be derived on the client.
+  const [days, setDays] = useState<DayOption[]>([]);
+  const [slotsByDay, setSlotsByDay] = useState<Record<string, Slot[]>>({});
+  const [loadingSlots, setLoadingSlots] = useState(false);
+
   const activeDay = days[dayIndex] ?? days[0];
+  const slots = activeDay ? slotsByDay[activeDay.daySeed] ?? [] : [];
 
-  const slots = useMemo(
-    () => (doctor ? slotsForDoctor(doctor.id, activeDay.daySeed) : []),
-    [doctor, activeDay]
-  );
+  const loadSlots = useCallback(async (slug: string) => {
+    setLoadingSlots(true);
+    try {
+      const res = await fetch(`/api/doctors/${slug}/slots?days=5`, {
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error("failed");
+      const data = await res.json();
+      setDays(data.days ?? []);
+      setSlotsByDay(data.slots ?? {});
+    } catch {
+      setError("Could not load available times. Please try again.");
+    } finally {
+      setLoadingSlots(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (open && doctor) {
       setDayIndex(0);
       setMode(doctor.modes[0] ?? "clinic");
       setSlot(null);
-      setName("");
       setPhone("");
       setConfirmed(false);
+      setError(null);
+      // Pre-fill from the account so the patient doesn't retype it.
+      setName(session?.user?.name ?? "");
+      loadSlots(doctor.id);
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -68,7 +93,7 @@ export default function BookingModal({
     return () => {
       document.body.style.overflow = "";
     };
-  }, [open, doctor]);
+  }, [open, doctor, session?.user?.name, loadSlots]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -81,30 +106,37 @@ export default function BookingModal({
 
   if (!open || !doctor) return null;
 
-  const canConfirm = slot && name.trim().length > 1;
+  const signedIn = status === "authenticated";
+  const canConfirm = !!slot && name.trim().length > 1 && signedIn && !busy;
   const freeCount = slots.filter((s) => s.available).length;
 
-  const handleConfirm = () => {
-    if (!doctor || !slot) return;
-    addAppointment({
-      id: newId(),
-      doctorId: doctor.id,
-      doctorName: doctor.name,
-      specialty: doctor.specialty,
-      image: doctor.image,
-      clinic: doctor.clinic,
-      location: doctor.location,
-      dateLabel: activeDay.label,
-      dateSub: activeDay.sub,
+  const handleConfirm = async () => {
+    if (!doctor || !slot || !activeDay) return;
+    setBusy(true);
+    setError(null);
+
+    const res = await bookAppointment({
+      doctorSlug: doctor.id,
       daySeed: activeDay.daySeed,
       time: slot,
       mode,
-      fee: doctor.fee,
       patientName: name.trim(),
       patientPhone: phone.trim(),
-      createdAt: Date.now(),
     });
+
+    if (!res.ok) {
+      setError(res.error ?? "Could not complete your booking.");
+      // The slot list is the likely culprit — refresh it so the taken slot
+      // shows as unavailable rather than letting them retry the same one.
+      await loadSlots(doctor.id);
+      setSlot(null);
+      setBusy(false);
+      return;
+    }
+
     setConfirmed(true);
+    setBusy(false);
+    router.refresh();
   };
 
   return (
@@ -179,7 +211,8 @@ export default function BookingModal({
               <Row k="Consultation" v={`₹${doctor.fee}`} />
             </div>
             <p className="mt-4 text-xs text-ink-muted">
-              Demo booking — no confirmation is actually sent.
+              A confirmation email is on its way. You can cancel any time from
+              My Appointments.
             </p>
             <button onClick={onClose} className="btn-primary mt-6">
               Done
@@ -187,6 +220,28 @@ export default function BookingModal({
           </div>
         ) : (
           <div className="space-y-6 p-6">
+            {error && (
+              <div
+                role="alert"
+                className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700 ring-1 ring-inset ring-rose-100"
+              >
+                {error}
+              </div>
+            )}
+
+            {/* Booking needs an account — say so up front rather than at submit. */}
+            {status !== "loading" && !signedIn && (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800 ring-1 ring-inset ring-brand-100">
+                <span>Sign in to confirm a booking.</span>
+                <Link
+                  href={`/login?callbackUrl=${encodeURIComponent(pathname ?? "/")}`}
+                  className="btn-primary !px-4 !py-1.5 text-xs"
+                >
+                  Sign in
+                </Link>
+              </div>
+            )}
+
             {/* Consultation mode */}
             {doctor.modes.length > 1 && (
               <div>
@@ -194,7 +249,7 @@ export default function BookingModal({
                   Consultation type
                 </p>
                 <div className="grid grid-cols-2 gap-2.5">
-                  {(["clinic", "video"] as ConsultMode[])
+                  {(["clinic", "video"] as ConsultModeDTO[])
                     .filter((m) => doctor.modes.includes(m))
                     .map((m) => {
                       const selected = mode === m;
@@ -227,6 +282,13 @@ export default function BookingModal({
                 <span className="text-xs text-ink-muted">{freeCount} slots free</span>
               </div>
               <div className="flex gap-2 overflow-x-auto pb-1">
+                {loadingSlots && days.length === 0 &&
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-[52px] min-w-[74px] animate-pulse rounded-xl bg-slate-100"
+                    />
+                  ))}
                 {days.map((d, i) => {
                   const selected = i === dayIndex;
                   return (
@@ -255,8 +317,15 @@ export default function BookingModal({
 
             {/* Slots grouped by period */}
             <div className="space-y-4">
+              {!loadingSlots && slots.length === 0 && (
+                <p className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-ink-muted">
+                  {doctor.name} isn&apos;t taking appointments on this day. Try
+                  another date.
+                </p>
+              )}
               {PERIODS.map((period) => {
                 const periodSlots = slots.filter((s) => s.period === period);
+                if (periodSlots.length === 0) return null;
                 return (
                   <div key={period}>
                     <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
@@ -287,7 +356,7 @@ export default function BookingModal({
                 );
               })}
               <p className="text-xs text-ink-muted">
-                Struck-through times are already booked.
+                Struck-through times are already booked or have passed.
               </p>
             </div>
 
@@ -335,7 +404,7 @@ export default function BookingModal({
                   !canConfirm ? "cursor-not-allowed opacity-40" : ""
                 }`}
               >
-                Confirm booking
+                {busy ? "Booking…" : "Confirm booking"}
               </button>
             </div>
           </div>

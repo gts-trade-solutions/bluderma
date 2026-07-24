@@ -3,16 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Role, roleMeta } from "@/lib/roles";
-import { buildMenu, buildPatientMenu, NavNode } from "@/data/nav";
-import RoleModal from "./RoleModal";
+import { Experience, roleMeta } from "@/lib/roles";
+import type { NavNode } from "@/lib/queries/nav";
+import AccountMenu from "./AccountMenu";
+import BrandLogo from "./BrandLogo";
 
 interface NavbarProps {
-  role: Role;
+  role: Experience;
+  /** Built on the server — this component can't query the database. */
+  menu: NavNode[];
 }
 
-export default function Navbar({ role }: NavbarProps) {
-  const [switchOpen, setSwitchOpen] = useState(false);
+export default function Navbar({ role, menu }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openMobileGroup, setOpenMobileGroup] = useState<string | null>(null);
 
@@ -25,8 +27,6 @@ export default function Navbar({ role }: NavbarProps) {
 
   const pathname = usePathname();
   const meta = roleMeta[role];
-  const menu =
-    role === "patient" ? buildPatientMenu() : buildMenu(meta.hubPath);
   // Reference-style: nav always sits on a solid white bar above the content.
   const solid = true;
 
@@ -36,29 +36,11 @@ export default function Navbar({ role }: NavbarProps) {
 
         <div className="container-page flex h-16 items-center justify-between gap-4">
           {/* Brand */}
-          <Link
+          <BrandLogo
             href={meta.path}
-            className="flex shrink-0 items-center gap-2"
+            tone={solid ? "dark" : "light"}
             onClick={() => setMobileOpen(false)}
-          >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white shadow-soft">
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none">
-                <path
-                  d="M12 3s6 5.5 6 10a6 6 0 1 1-12 0c0-4.5 6-10 6-10Z"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-            <span
-              className={`text-lg font-extrabold tracking-tight ${
-                solid ? "text-brand-800" : "text-white drop-shadow"
-              }`}
-            >
-              Blu<span className="text-teal-400">Derma</span>
-            </span>
-          </Link>
+          />
 
           {/* Desktop mega-menu */}
           <nav className="hidden items-center gap-1 lg:flex">
@@ -83,14 +65,7 @@ export default function Navbar({ role }: NavbarProps) {
             >
               {meta.badge}
             </span>
-            <button
-              onClick={() => setSwitchOpen(true)}
-              className={
-                solid ? "btn-ghost !px-4 !py-2" : "btn-outline-white !px-4 !py-2"
-              }
-            >
-              Switch
-            </button>
+            <AccountMenu />
             <button
               className={`lg:hidden ${solid ? "text-ink" : "text-white"}`}
               aria-label="Toggle menu"
@@ -170,13 +145,6 @@ export default function Navbar({ role }: NavbarProps) {
           </div>
         )}
       </header>
-
-      {/* Spacer so fixed header doesn't overlap non-hero pages */}
-      <RoleModal
-        open={switchOpen}
-        dismissible
-        onClose={() => setSwitchOpen(false)}
-      />
     </>
   );
 }

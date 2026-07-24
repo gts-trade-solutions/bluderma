@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { Treatment } from "@/data/treatments";
+import type { TreatmentDTO } from "@/lib/queries/types";
 import SmartImage from "./SmartImage";
 
 interface TreatmentCardProps {
-  treatment: Treatment;
+  treatment: TreatmentDTO;
   /** Patient view uses friendlier framing. */
   audience?: "doctor" | "patient";
 }

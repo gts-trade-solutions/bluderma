@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { ROLE_STORAGE_KEY, Role, roleMeta } from "@/lib/roles";
+import { ROLE_STORAGE_KEY, Experience, roleMeta } from "@/lib/roles";
+import BrandLogo from "./BrandLogo";
 
 interface RoleModalProps {
   open: boolean;
@@ -12,7 +13,7 @@ interface RoleModalProps {
 }
 
 const options: {
-  role: Role;
+  role: Experience;
   title: string;
   subtitle: string;
   points: string[];
@@ -87,7 +88,7 @@ export default function RoleModal({
 
   if (!open) return null;
 
-  const choose = (role: Role) => {
+  const choose = (role: Experience) => {
     try {
       window.localStorage.setItem(ROLE_STORAGE_KEY, role);
     } catch {
@@ -127,17 +128,15 @@ export default function RoleModal({
         )}
 
         <div className="mb-7 text-center">
-          <div className="mx-auto mb-3 flex items-center justify-center gap-2">
-            <span className="text-lg font-extrabold tracking-tight text-brand-700">
-              Blu<span className="text-teal-500">Derma</span>
-            </span>
+          <div className="mx-auto mb-3 flex items-center justify-center">
+            <BrandLogo href={null} size={40} />
           </div>
           <h2 className="text-2xl font-bold text-ink sm:text-3xl">
             Welcome — how would you like to continue?
           </h2>
           <p className="mx-auto mt-2 max-w-xl text-sm text-ink-muted">
-            Choose the experience made for you. You can switch anytime from the
-            menu.
+            Choose the experience made for you — we&apos;ll tailor BluDerma to
+            match.
           </p>
         </div>
 

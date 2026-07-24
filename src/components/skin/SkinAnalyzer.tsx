@@ -23,7 +23,9 @@ import {
   CalendarClock,
 } from "@/components/icons";
 import SmartImage from "@/components/SmartImage";
-import { CONCERN_INFO } from "@/lib/skinConcerns";
+import { rankDoctors, matchStrength } from "@/lib/queries/doctors";
+import type { ConcernDTO, ConsultModeDTO, DoctorDTO } from "@/lib/queries/types";
+import { saveAnalysis } from "@/lib/actions/analysis";
 import {
   metrics,
   metricLabel,
@@ -33,16 +35,7 @@ import {
   AnalysisResult,
   MetricKey,
 } from "@/data/skin";
-import {
-  Doctor,
-  ConsultMode,
-  doctors as allDoctors,
-  suggestDoctors,
-  matchStrength,
-  nextAvailable,
-} from "@/data/doctors";
 import BookingModal from "./BookingModal";
-import { saveAnalysis } from "@/lib/patientStore";
 
 type Step = "intro" | "capture" | "analyzing" | "results";
 
@@ -85,17 +78,24 @@ const TESTIMONIALS = [
   { name: "Sana K.", loc: "Delhi", avatar: "https://randomuser.me/api/portraits/women/12.jpg", quote: "Love that I can re-scan and compare — my pores score actually went up in a month!" },
 ];
 
-const FEATURED = [
-  "acne", "wrinkles", "pores", "moisture", "dark_circle", "redness",
-  "oiliness", "radiance", "firmness", "texture", "eye_bag", "age_spot",
-];
 
-export default function SkinAnalyzer() {
+export interface SkinAnalyzerProps {
+  doctors: DoctorDTO[];
+  concerns: ConcernDTO[];
+  /** Next free slot today per doctor slug — a hint, refreshed with the page. */
+  nextSlotBySlug: Record<string, string | null>;
+}
+
+export default function SkinAnalyzer({
+  doctors,
+  concerns,
+  nextSlotBySlug,
+}: SkinAnalyzerProps) {
   const [step, setStep] = useState<Step>("intro");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [seedSource, setSeedSource] = useState("");
   const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [bookingDoctor, setBookingDoctor] = useState<Doctor | null>(null);
+  const [bookingDoctor, setBookingDoctor] = useState<DoctorDTO | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,13 +112,21 @@ export default function SkinAnalyzer() {
     window.setTimeout(() => {
       const r = simulateAnalysis(seed);
       setResult(r);
-      saveAnalysis({
+
+      // Persist every metric, not just the summary — that's what makes
+      // "re-scan and compare" possible. Fire-and-forget: a failed save must
+      // not stop the patient seeing their results.
+      void saveAnalysis({
         overall: r.overall,
         skinType: r.skinType,
         estimatedAge: r.estimatedAge,
+        seed: source,
+        scores: (Object.entries(r.scores) as [MetricKey, number][]).map(
+          ([key, score]) => ({ key, score })
+        ),
         topConcerns: r.topConcerns,
-        at: Date.now(),
-      });
+      }).catch(() => undefined);
+
       setStep("results");
     }, 2600);
   };
@@ -133,7 +141,9 @@ export default function SkinAnalyzer() {
 
   return (
     <>
-      {step === "intro" && <Intro onStart={() => setStep("capture")} />}
+      {step === "intro" && (
+        <Intro concerns={concerns} onStart={() => setStep("capture")} />
+      )}
       {step === "capture" && (
         <Capture
           imageUrl={imageUrl}
@@ -148,6 +158,8 @@ export default function SkinAnalyzer() {
         <Results
           result={result}
           imageUrl={imageUrl}
+          doctors={doctors}
+          nextSlotBySlug={nextSlotBySlug}
           onBook={setBookingDoctor}
           onReset={reset}
         />
@@ -172,7 +184,13 @@ export default function SkinAnalyzer() {
 
 /* ============================ INTRO (your UI) ========================== */
 
-function Intro({ onStart }: { onStart: () => void }) {
+function Intro({
+  concerns,
+  onStart,
+}: {
+  concerns: ConcernDTO[];
+  onStart: () => void;
+}) {
   const Cta = ({ small }: { small?: boolean }) => (
     <button
       onClick={onStart}
@@ -269,13 +287,15 @@ function Intro({ onStart }: { onStart: () => void }) {
             sub="Every concern gets its own score and severity — so you know exactly where to focus."
           />
           <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {FEATURED.filter((k) => CONCERN_INFO[k]).map((k) => (
-              <div key={k} className="rounded-xl border bg-white p-4 transition-shadow hover:shadow-sm">
+            {concerns.map((c) => (
+              <div key={c.key} className="rounded-xl border bg-white p-4 transition-shadow hover:shadow-sm">
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-gradient-to-r from-rose-400 to-violet-400" />
-                  <span className="text-sm font-medium text-ink">{CONCERN_INFO[k]?.name}</span>
+                  <span className="text-sm font-medium text-ink">{c.label}</span>
                 </div>
-                <p className="mt-1 text-xs text-ink-muted">{CONCERN_INFO[k]?.description}</p>
+                <p className="mt-1 text-xs text-ink-muted">
+                  {c.description ?? c.hint}
+                </p>
               </div>
             ))}
           </div>
@@ -562,28 +582,27 @@ type SortKey = "match" | "rating" | "experience" | "price";
 function Results({
   result,
   imageUrl,
+  doctors,
+  nextSlotBySlug,
   onBook,
   onReset,
 }: {
   result: AnalysisResult;
   imageUrl: string | null;
-  onBook: (d: Doctor) => void;
+  doctors: DoctorDTO[];
+  nextSlotBySlug: Record<string, string | null>;
+  onBook: (d: DoctorDTO) => void;
   onReset: () => void;
 }) {
   const rating = ratingForScore(result.overall);
   const [viewAll, setViewAll] = useState(false);
   const [sort, setSort] = useState<SortKey>("match");
-  const [modeFilter, setModeFilter] = useState<"all" | ConsultMode>("all");
-
-  const todaySeed = useMemo(() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-      d.getDate()
-    ).padStart(2, "0")}`;
-  }, []);
+  const [modeFilter, setModeFilter] = useState<"all" | ConsultModeDTO>("all");
 
   const list = useMemo(() => {
-    let base = viewAll ? [...allDoctors] : suggestDoctors(result.topConcerns, 4);
+    let base = viewAll
+      ? [...doctors]
+      : rankDoctors(doctors, result.topConcerns, 4);
     if (modeFilter !== "all") base = base.filter((d) => d.modes.includes(modeFilter));
     const sorted = [...base].sort((a, b) => {
       if (sort === "rating") return b.rating - a.rating;
@@ -596,7 +615,7 @@ function Results({
       );
     });
     return sorted;
-  }, [viewAll, sort, modeFilter, result.topConcerns]);
+  }, [viewAll, sort, modeFilter, result.topConcerns, doctors]);
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-14">
@@ -715,7 +734,7 @@ function Results({
               doctor={d}
               best={!viewAll && sort === "match" && i === 0}
               concerns={result.topConcerns}
-              nextSlot={nextAvailable(d.id, todaySeed)}
+              nextSlot={nextSlotBySlug[d.id] ?? null}
               onBook={() => onBook(d)}
             />
           ))}
@@ -812,13 +831,15 @@ function DoctorCard({
   nextSlot,
   onBook,
 }: {
-  doctor: Doctor;
+  doctor: DoctorDTO;
   best: boolean;
   concerns: MetricKey[];
   nextSlot: string | null;
   onBook: () => void;
 }) {
-  const matched = concerns.filter((c) => doctor.focus.includes(c)).map((c) => metricLabel[c]);
+  const matched = concerns
+    .filter((c) => doctor.focus.includes(c))
+    .map((c) => metricLabel[c]);
   return (
     <div
       className={`relative flex flex-col rounded-2xl border bg-white p-5 shadow-sm transition ${

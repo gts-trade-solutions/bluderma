@@ -1,0 +1,18 @@
+[
+  {
+    "slug": "body-contouring",
+    "images": [
+      "https://images.pexels.com/photos/15319043/pexels-photo-15319043.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/8454941/pexels-photo-8454941.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/4266939/pexels-photo-4266939.jpeg?auto=compress&cs=tinysrgb&w=1400"
+    ]
+  },
+  {
+    "slug": "fat-dissolving",
+    "images": [
+      "https://images.pexels.com/photos/9892782/pexels-photo-9892782.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/2761798/pexels-photo-2761798.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/5951337/pexels-photo-5951337.jpeg?auto=compress&cs=tinysrgb&w=1400"
+    ]
+  }
+]

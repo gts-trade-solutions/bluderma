@@ -64,12 +64,26 @@ const config: Config = {
           "0%": { opacity: "0", transform: "scale(0.96)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
+        // Dot travelling down inside the mouse outline.
+        "scroll-dot": {
+          "0%": { transform: "translateY(0)", opacity: "0" },
+          "30%": { opacity: "1" },
+          "60%": { transform: "translateY(10px)", opacity: "1" },
+          "100%": { transform: "translateY(13px)", opacity: "0" },
+        },
+        // Gentle vertical nudge for the whole cue.
+        "scroll-nudge": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(5px)" },
+        },
       },
       animation: {
         "fade-in": "fade-in 0.6s ease-out both",
         "fade-in-fast": "fade-in-fast 0.3s ease-out both",
         "ken-burns": "ken-burns 18s ease-out alternate infinite",
         "scale-in": "scale-in 0.25s ease-out both",
+        "scroll-dot": "scroll-dot 1.8s ease-in-out infinite",
+        "scroll-nudge": "scroll-nudge 2s ease-in-out infinite",
       },
     },
   },

@@ -4,7 +4,13 @@ import Footer from "@/components/Footer";
 import HeroVideo from "@/components/HeroVideo";
 import TreatmentBrowser from "@/components/TreatmentBrowser";
 import SolutionTiles from "@/components/SolutionTiles";
-import { treatments, categoryOrder } from "@/data/treatments";
+import {
+  getTreatments,
+  getCategories,
+  getCategoryOrder,
+} from "@/lib/queries/treatments";
+import { getContentBlocks } from "@/lib/queries/content";
+import { buildMenu } from "@/lib/queries/nav";
 
 export const metadata: Metadata = {
   title: "Clinical Reference for Practitioners",
@@ -12,36 +18,25 @@ export const metadata: Metadata = {
     "BluDerma clinical hub — an evidence-informed reference to dermatology and aesthetic treatments, indications, protocols and orderable solutions for practitioners.",
 };
 
+/** Content is admin-editable, so re-render every 5 minutes. */
+export const revalidate = 300;
+
 const heroPoster =
   "https://images.unsplash.com/photo-1728727267814-792db55ce678?auto=format&fit=crop&w=1600&q=80";
 
-const whyPoints = [
-  {
-    t: "Genuine, traceable products",
-    d: "Every solution maps to authentic, quality-assured products you can order with confidence.",
-    icon: "shield",
-  },
-  {
-    t: "Clinical expertise",
-    d: "Indication-led content built around how clinicians actually assess and plan treatment.",
-    icon: "clip",
-  },
-  {
-    t: "Personalised protocols",
-    d: "Sessions, downtime and timelines for every treatment, so plans fit the patient in front of you.",
-    icon: "user",
-  },
-  {
-    t: "Unique BluDerma solutions",
-    d: "A one-to-one link from each treatment to a concrete, orderable BluDerma solution.",
-    icon: "spark",
-  },
-];
+export default async function DoctorHome() {
+  const [treatments, categories, categoryOrder, whyPoints, menu] =
+    await Promise.all([
+      getTreatments(),
+      getCategories(),
+      getCategoryOrder(),
+      getContentBlocks("doctor", "why"),
+      buildMenu("/doctor"),
+    ]);
 
-export default function DoctorHome() {
   return (
     <>
-      <Navbar role="doctor" />
+      <Navbar role="doctor" menu={menu} />
 
       {/* 1 — Clean beauty-model video hero (no overlay) */}
       <HeroVideo poster={heroPoster} />
@@ -124,7 +119,7 @@ export default function DoctorHome() {
                 select one to jump to its treatments.
               </p>
             </div>
-            <SolutionTiles hubPath="/doctor" />
+            <SolutionTiles hubPath="/doctor" tiles={categories} />
           </div>
         </section>
 
@@ -142,7 +137,11 @@ export default function DoctorHome() {
                 BluDerma solution you can enquire to order.
               </p>
             </div>
-            <TreatmentBrowser treatments={treatments} audience="doctor" />
+            <TreatmentBrowser
+              treatments={treatments}
+              categoryOrder={categoryOrder}
+              audience="doctor"
+            />
           </div>
         </section>
 
@@ -157,12 +156,12 @@ export default function DoctorHome() {
             </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {whyPoints.map((f) => (
-                <div key={f.t} className="card p-7">
+                <div key={f.key} className="card p-7">
                   <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
-                    <WhyIcon name={f.icon} />
+                    <WhyIcon name={f.icon ?? "spark"} />
                   </span>
-                  <h3 className="mt-5 text-base font-bold text-ink">{f.t}</h3>
-                  <p className="mt-2 text-sm text-ink-muted">{f.d}</p>
+                  <h3 className="mt-5 text-base font-bold text-ink">{f.title}</h3>
+                  <p className="mt-2 text-sm text-ink-muted">{f.body}</p>
                 </div>
               ))}
             </div>

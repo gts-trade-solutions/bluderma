@@ -1,0 +1,865 @@
+// BluDerma — data model
+// Day 1 of the sprint: full schema for content, identity, and transactions.
+//
+// Design notes worth knowing before you edit:
+//  - Content tables (Category/Treatment/Banner/Faq/...) are admin-editable CMS rows.
+//    Everything the site renders comes from here, not from src/data/*.ts.
+//  - Doctor is a *directory record* (admin-managed). It optionally links 1:1 to a
+//    User so a practitioner can log in and see their own appointments.
+//  - Appointment.slotLock is a real column, not a generated one: the app writes
+//    "<doctorId>@<ISO datetime>" on booking and NULLs it on cancel. MySQL allows
+//    many NULLs in a unique index, so this prevents double-booking while letting a
+//    cancelled slot be rebooked. Keep that invariant in the booking action.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// 1. Identity & auth  (NextAuth-compatible)
+// ─────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  DOCTOR
+  PATIENT
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?   @db.Text
+  /// Null for OAuth-only accounts. Argon2/bcrypt hash — never a raw password.
+  passwordHash  String?
+  phone         String?
+  role          Role      @default(PATIENT)
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts       Account[]
+  sessions       Session[]
+  resetTokens    PasswordResetToken[]
+  doctor         Doctor?
+  patientProfile PatientProfile?
+  analyses       SkinAnalysis[]
+  appointments   Appointment[]        @relation("PatientAppointments")
+  assignedLeads  Enquiry[]            @relation("LeadOwner")
+  enquiryNotes   EnquiryNote[]
+  uploads        MediaAsset[]
+  auditLogs      AuditLog[]
+
+  @@index([role])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+// ─────────────────────────────────────────────────────────────
+// 2. Treatment catalog
+// ─────────────────────────────────────────────────────────────
+
+model Category {
+  id        String  @id @default(cuid())
+  slug      String  @unique
+  /// Display name, e.g. "Laser & Energy". Matches the old TreatmentCategory union.
+  name      String  @unique
+  blurb     String? @db.Text
+  image     String? @db.Text
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  treatments Treatment[]
+
+  @@index([sortOrder])
+  @@map("categories")
+}
+
+model Treatment {
+  id           String @id @default(cuid())
+  slug         String @unique
+  name         String
+  categoryId   String
+  tagline      String @db.Text
+  image        String @db.Text
+  summary      String @db.Text
+  /// The patient concern / indication this treatment addresses.
+  concern      String @db.Text
+  /// How the treatment works — the clinical solution.
+  howItWorks   String @db.Text
+  /// Shown only to signed-in clinicians (replaces the old <DoctorOnly> gate).
+  clinicalNote String @db.Text
+
+  // Quick-facts spec strip
+  factSessions String
+  factDowntime String
+  factResults  String
+  factDuration String
+
+  // The orderable product/solution (was Treatment.product, 1:1 embedded)
+  productName       String
+  productDescriptor String @db.Text
+
+  seoTitle       String?
+  seoDescription String? @db.Text
+  sortOrder      Int     @default(0)
+  isPublished    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  category     Category           @relation(fields: [categoryId], references: [id])
+  bullets      TreatmentBullet[]
+  testimonials Testimonial[]
+  enquiries    Enquiry[]
+  images       TreatmentImage[]
+  products     TreatmentProduct[]
+
+  @@index([categoryId])
+  @@index([isPublished, sortOrder])
+  @@map("treatments")
+}
+
+enum TreatmentImageKind {
+  HERO
+  BEFORE_AFTER
+  RESULT
+  HOW_IT_WORKS
+  GALLERY
+}
+
+/// Typed image slots for a treatment page (before/after, result, how-it-works,
+/// gallery). Separate from Treatment.image, which stays the single hero.
+model TreatmentImage {
+  id          String             @id @default(cuid())
+  treatmentId String
+  kind        TreatmentImageKind @default(GALLERY)
+  url         String             @db.Text
+  caption     String?
+  sortOrder   Int                @default(0)
+
+  createdAt DateTime @default(now())
+
+  treatment Treatment @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
+
+  @@index([treatmentId, kind, sortOrder])
+  @@map("treatment_images")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Product catalog (orderable solutions, enquiry-to-order)
+// ─────────────────────────────────────────────────────────────
+
+/// A distributable product a clinic can enquire to order. Details are
+/// web-researched. `priceInr` is stored for internal admin reference and is
+/// NEVER rendered on any public page — the site is enquiry-only.
+model Product {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  /// Manufacturer / house brand, e.g. "Hugel", "Medytox".
+  brand       String?
+  /// Catalog section, e.g. "Botulinum Toxin", "HA Filler", "Biostimulator".
+  category    String
+  origin      String? @default("Korea")
+  tagline     String? @db.Text
+  description String? @db.Text
+  howItWorks  String? @db.Text
+  /// Active ingredient / composition.
+  composition String? @db.Text
+  /// Storage, reconstitution, handling notes.
+  usageNotes  String? @db.Text
+
+  /// Internal only. Never shown publicly.
+  priceInr  Int?
+  priceNote String?
+
+  isPublished Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  /// Enrichment bookkeeping so a staged web-research pass is resumable.
+  enrichedAt DateTime?
+  sourceUrl  String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  variants   ProductVariant[]
+  bullets    ProductBullet[]
+  images     ProductImage[]
+  treatments TreatmentProduct[]
+
+  @@index([category, sortOrder])
+  @@index([isPublished, sortOrder])
+  @@map("products")
+}
+
+enum ProductBulletKind {
+  FEATURE
+  BENEFIT
+  INDICATION
+}
+
+model ProductBullet {
+  id        String            @id @default(cuid())
+  productId String
+  kind      ProductBulletKind
+  text      String            @db.Text
+  sortOrder Int               @default(0)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, kind, sortOrder])
+  @@map("product_bullets")
+}
+
+/// Unit sizes / grades, e.g. "100 unit" / "200 unit", or "Sub-Q / Deep / Fine".
+/// priceInr per variant is internal-only, like Product.priceInr.
+model ProductVariant {
+  id        String @id @default(cuid())
+  productId String
+  label     String
+  priceInr  Int?
+  sortOrder Int    @default(0)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, label])
+  @@map("product_variants")
+}
+
+/// Up to 5 per product (enforced in the admin, not the DB).
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  url       String  @db.Text
+  alt       String?
+  sortOrder Int     @default(0)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder])
+  @@map("product_images")
+}
+
+/// Many-to-many: a product can suit several treatments; a treatment lists many
+/// products. `isPrimary` marks the headline solution for a treatment.
+model TreatmentProduct {
+  treatmentId String
+  productId   String
+  sortOrder   Int     @default(0)
+  isPrimary   Boolean @default(false)
+
+  treatment Treatment @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([treatmentId, productId])
+  @@index([productId])
+  @@map("treatment_products")
+}
+
+enum BulletKind {
+  CONCERN_POINT
+  PROCEDURE_STEP
+  BENEFIT
+  IDEAL_FOR
+}
+
+/// The four ordered bullet lists on a treatment page, in one table so the
+/// admin can add/remove/reorder items without a schema change.
+model TreatmentBullet {
+  id          String     @id @default(cuid())
+  treatmentId String
+  kind        BulletKind
+  text        String     @db.Text
+  sortOrder   Int        @default(0)
+
+  treatment Treatment @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
+
+  @@index([treatmentId, kind, sortOrder])
+  @@map("treatment_bullets")
+}
+
+// ─────────────────────────────────────────────────────────────
+// 3. Skin concerns  (unifies the two vocabularies that existed)
+// ─────────────────────────────────────────────────────────────
+
+/// Canonical concern list. `key` is the camelCase MetricKey used by the analyzer
+/// (acne, darkCircles, ...); `legacyKey` is the snake_case name the marketing
+/// grid used (dark_circle, ...) so old links/copy still resolve.
+model SkinConcern {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  legacyKey   String? @unique
+  label       String
+  hint        String
+  description String? @db.Text
+  sortOrder   Int     @default(0)
+  isFeatured  Boolean @default(false)
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  doctorFocus    DoctorConcern[]
+  analysisScores SkinAnalysisScore[]
+
+  @@index([sortOrder])
+  @@map("skin_concerns")
+}
+
+// ─────────────────────────────────────────────────────────────
+// 4. Practitioners, availability
+// ─────────────────────────────────────────────────────────────
+
+enum ConsultMode {
+  CLINIC
+  VIDEO
+}
+
+model Doctor {
+  id              String  @id @default(cuid())
+  /// Stable public handle, e.g. "aarti-menon". Was Doctor.id in the seed data.
+  slug            String  @unique
+  /// Set once the practitioner has a login. Null = directory record only.
+  userId          String? @unique
+  name            String
+  title           String
+  specialty       String
+  rating          Decimal @default(0) @db.Decimal(2, 1)
+  reviews         Int     @default(0)
+  experienceYears Int     @default(0)
+  clinic          String
+  location        String
+  image           String  @db.Text
+  /// Consultation fee in whole INR.
+  fee             Int     @default(0)
+  about           String  @db.Text
+  verified        Boolean @default(false)
+  /// Fallback practitioner shown when no concern-based match applies.
+  isGeneral       Boolean @default(false)
+  isActive        Boolean @default(true)
+  sortOrder       Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  focus        DoctorConcern[]
+  languages    DoctorLanguage[]
+  services     DoctorService[]
+  modes        DoctorMode[]
+  availability DoctorAvailability[]
+  timeOff      DoctorTimeOff[]
+  appointments Appointment[]
+
+  @@index([isActive, sortOrder])
+  @@index([location])
+  @@map("doctors")
+}
+
+/// Concerns this doctor focuses on — drives analyzer → doctor matching.
+model DoctorConcern {
+  doctorId  String
+  concernId String
+  weight    Int    @default(1)
+
+  doctor  Doctor      @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  concern SkinConcern @relation(fields: [concernId], references: [id], onDelete: Cascade)
+
+  @@id([doctorId, concernId])
+  @@index([concernId])
+  @@map("doctor_concerns")
+}
+
+model DoctorLanguage {
+  id        String @id @default(cuid())
+  doctorId  String
+  name      String
+  sortOrder Int    @default(0)
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@unique([doctorId, name])
+  @@map("doctor_languages")
+}
+
+model DoctorService {
+  id        String @id @default(cuid())
+  doctorId  String
+  name      String
+  sortOrder Int    @default(0)
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@unique([doctorId, name])
+  @@map("doctor_services")
+}
+
+model DoctorMode {
+  doctorId String
+  mode     ConsultMode
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@id([doctorId, mode])
+  @@map("doctor_modes")
+}
+
+/// Weekly recurring working hours. Slots are generated from these at read time
+/// (replaces the hashed PRNG in slotsForDoctor()).
+model DoctorAvailability {
+  id          String  @id @default(cuid())
+  doctorId    String
+  /// 0 = Sunday … 6 = Saturday, matching JS getDay().
+  dayOfWeek   Int
+  /// "09:00" — local clinic time, 24h.
+  startTime   String
+  endTime     String
+  slotMinutes Int     @default(30)
+  isActive    Boolean @default(true)
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@unique([doctorId, dayOfWeek, startTime])
+  @@index([doctorId, isActive])
+  @@map("doctor_availability")
+}
+
+/// Holidays / blackouts that punch holes in the recurring availability.
+model DoctorTimeOff {
+  id       String   @id @default(cuid())
+  doctorId String
+  startsAt DateTime
+  endsAt   DateTime
+  reason   String?
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId, startsAt])
+  @@map("doctor_time_off")
+}
+
+// ─────────────────────────────────────────────────────────────
+// 5. Patients, skin analysis
+// ─────────────────────────────────────────────────────────────
+
+enum Gender {
+  FEMALE
+  MALE
+  OTHER
+  UNDISCLOSED
+}
+
+model PatientProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  fullName  String?
+  phone     String?
+  age       Int?
+  gender    Gender?
+  city      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("patient_profiles")
+}
+
+model SkinAnalysis {
+  id           String   @id @default(cuid())
+  /// Null for anonymous runs before sign-in; claimed on login.
+  userId       String?
+  overall      Int
+  skinType     String
+  estimatedAge Int
+  /// S3/CloudFront URL. Null while analysis stays client-side (current default).
+  imageUrl     String?  @db.Text
+  /// Deterministic seed used by the simulator; keeps results reproducible.
+  seed         String?
+  createdAt    DateTime @default(now())
+
+  user   User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scores SkinAnalysisScore[]
+
+  @@index([userId, createdAt])
+  @@map("skin_analyses")
+}
+
+/// One row per metric per analysis — all 12 are stored, not just the top 3,
+/// so the "re-analyse and compare" progress view is possible.
+model SkinAnalysisScore {
+  id         String @id @default(cuid())
+  analysisId String
+  concernId  String
+  score      Int
+  /// 1..3 for the worst concerns surfaced in the UI, else null.
+  topRank    Int?
+
+  analysis SkinAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  concern  SkinConcern  @relation(fields: [concernId], references: [id], onDelete: Cascade)
+
+  @@unique([analysisId, concernId])
+  @@index([concernId])
+  @@map("skin_analysis_scores")
+}
+
+// ─────────────────────────────────────────────────────────────
+// 6. Transactions: appointments & leads
+// ─────────────────────────────────────────────────────────────
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model Appointment {
+  id            String            @id @default(cuid())
+  /// Null for guest bookings taken over the phone by an admin.
+  patientUserId String?
+  doctorId      String
+  scheduledAt   DateTime
+  durationMin   Int               @default(30)
+  mode          ConsultMode
+  status        AppointmentStatus @default(CONFIRMED)
+  /// Fee snapshot — Doctor.fee changes over time, this must not.
+  feeAtBooking  Int
+
+  // Contact details as given at booking time (may differ from the profile).
+  patientName  String
+  patientPhone String?
+  patientEmail String?
+  notes        String? @db.Text
+
+  cancelReason       String?   @db.Text
+  cancelledAt        DateTime?
+  confirmationSentAt DateTime?
+
+  /// "<doctorId>@<ISO datetime>" while the slot is held; NULL once cancelled.
+  /// The unique index on this is what actually prevents double-booking.
+  slotLock String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  patient User?  @relation("PatientAppointments", fields: [patientUserId], references: [id], onDelete: SetNull)
+  doctor  Doctor @relation(fields: [doctorId], references: [id])
+
+  @@index([doctorId, scheduledAt])
+  @@index([patientUserId, scheduledAt])
+  @@index([status, scheduledAt])
+  @@map("appointments")
+}
+
+enum EnquiryAudience {
+  DOCTOR
+  PATIENT
+}
+
+enum EnquiryStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  CLOSED
+}
+
+model Enquiry {
+  id           String          @id @default(cuid())
+  audience     EnquiryAudience
+  name         String
+  email        String
+  phone        String?
+  /// "Organisation" for clinicians, "City" for patients — same input, two labels.
+  organisation String?
+  /// Units requested. Clinician enquiries only.
+  quantity     Int?
+  message      String?         @db.Text
+
+  treatmentId String?
+  /// Product name snapshot, in case the treatment is later renamed or removed.
+  productName String?
+
+  status       EnquiryStatus @default(NEW)
+  assignedToId String?
+  source       String?       @default("web")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  treatment  Treatment?    @relation(fields: [treatmentId], references: [id], onDelete: SetNull)
+  assignedTo User?         @relation("LeadOwner", fields: [assignedToId], references: [id], onDelete: SetNull)
+  notes      EnquiryNote[]
+
+  @@index([status, createdAt])
+  @@index([audience])
+  @@index([treatmentId])
+  @@map("enquiries")
+}
+
+model EnquiryNote {
+  id        String   @id @default(cuid())
+  enquiryId String
+  authorId  String?
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+
+  enquiry Enquiry @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+  author  User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([enquiryId, createdAt])
+  @@map("enquiry_notes")
+}
+
+// ─────────────────────────────────────────────────────────────
+// 7. Editable site content
+// ─────────────────────────────────────────────────────────────
+
+enum BannerPlacement {
+  HOME_HERO
+  DOCTOR_HERO
+  PATIENT_HERO
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+model Banner {
+  id        String          @id @default(cuid())
+  placement BannerPlacement
+  title     String?
+  subtitle  String?         @db.Text
+  ctaLabel  String?
+  ctaHref   String?
+  mediaType MediaType       @default(IMAGE)
+  mediaUrl  String          @db.Text
+  posterUrl String?         @db.Text
+  sortOrder Int             @default(0)
+  isActive  Boolean         @default(true)
+  startsAt  DateTime?
+  endsAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([placement, isActive, sortOrder])
+  @@map("banners")
+}
+
+/// Generic keyed content for the hand-written page sections (why-points,
+/// about stats, headline bands). `data` holds shape-specific extras.
+model ContentBlock {
+  id        String  @id @default(cuid())
+  key       String  @unique
+  page      String
+  section   String
+  title     String?
+  subtitle  String? @db.Text
+  body      String? @db.Text
+  image     String? @db.Text
+  icon      String?
+  data      Json?
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([page, section, sortOrder])
+  @@map("content_blocks")
+}
+
+model Testimonial {
+  id          String  @id @default(cuid())
+  authorName  String
+  authorRole  String?
+  avatarUrl   String? @db.Text
+  quote       String  @db.Text
+  rating      Int?
+  treatmentId String?
+  isPublished Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  treatment Treatment? @relation(fields: [treatmentId], references: [id], onDelete: SetNull)
+
+  @@index([isPublished, sortOrder])
+  @@index([treatmentId])
+  @@map("testimonials")
+}
+
+model Faq {
+  id          String  @id @default(cuid())
+  question    String  @db.Text
+  answer      String  @db.Text
+  category    String?
+  sortOrder   Int     @default(0)
+  isPublished Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isPublished, sortOrder])
+  @@map("faqs")
+}
+
+enum SettingType {
+  STRING
+  TEXT
+  NUMBER
+  BOOLEAN
+  JSON
+}
+
+model SiteSetting {
+  id        String      @id @default(cuid())
+  key       String      @unique
+  value     String?     @db.Text
+  type      SettingType @default(STRING)
+  group     String      @default("general")
+  label     String?
+  updatedAt DateTime    @updatedAt
+
+  @@index([group])
+  @@map("site_settings")
+}
+
+// ─────────────────────────────────────────────────────────────
+// 8. Operations: media, audit, email
+// ─────────────────────────────────────────────────────────────
+
+/// Registry of S3 objects uploaded through presigned URLs.
+model MediaAsset {
+  id           String    @id @default(cuid())
+  /// S3 object key, e.g. "treatments/2026/botox-hero.jpg".
+  storageKey   String    @unique
+  /// Public CloudFront URL.
+  url          String    @db.Text
+  mimeType     String
+  sizeBytes    Int?
+  width        Int?
+  height       Int?
+  alt          String?
+  mediaType    MediaType @default(IMAGE)
+  uploadedById String?
+  createdAt    DateTime  @default(now())
+
+  uploadedBy User? @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([mediaType, createdAt])
+  @@map("media_assets")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  before    Json?
+  after     Json?
+  ip        String?
+  userAgent String?  @db.Text
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([userId, createdAt])
+  @@map("audit_logs")
+}
+
+enum EmailStatus {
+  QUEUED
+  SENT
+  FAILED
+}
+
+model EmailLog {
+  id         String      @id @default(cuid())
+  to         String
+  subject    String
+  template   String
+  status     EmailStatus @default(QUEUED)
+  providerId String?
+  error      String?     @db.Text
+  relatedId  String?
+  createdAt  DateTime    @default(now())
+  sentAt     DateTime?
+
+  @@index([status, createdAt])
+  @@index([relatedId])
+  @@map("email_logs")
+}

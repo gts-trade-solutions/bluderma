@@ -1,29 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Navbar from "./Navbar";
-import { ROLE_STORAGE_KEY, Role } from "@/lib/roles";
+import { Experience } from "@/lib/roles";
+import type { NavNode } from "@/lib/queries/nav";
+import { useExperience } from "@/hooks/useExperience";
 
 /**
- * Renders the Navbar using the visitor's stored role (defaults to doctor).
- * Used on shared pages such as treatment detail, where the server cannot
- * know which experience the visitor came from.
+ * Renders the Navbar using the visitor's experience. A signed-in account's
+ * role decides it; anonymous visitors fall back to their stored preference.
+ *
+ * Both menus are built on the server and passed in, because which one applies
+ * is only known once the session and localStorage have been read on the client.
  */
 export default function RoleAwareNavbar({
+  doctorMenu,
+  patientMenu,
   fallback = "doctor",
 }: {
-  fallback?: Role;
+  doctorMenu: NavNode[];
+  patientMenu: NavNode[];
+  fallback?: Experience;
 }) {
-  const [role, setRole] = useState<Role>(fallback);
-
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(ROLE_STORAGE_KEY);
-      if (stored === "doctor" || stored === "patient") setRole(stored);
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  return <Navbar role={role} />;
+  const { experience } = useExperience(fallback);
+  return (
+    <Navbar
+      role={experience}
+      menu={experience === "patient" ? patientMenu : doctorMenu}
+    />
+  );
 }

@@ -1,0 +1,50 @@
+[
+  {
+    "slug": "prp-hair",
+    "images": [
+      "https://images.pexels.com/photos/4076442/pexels-photo-4076442.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/28994388/pexels-photo-28994388.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/29648642/pexels-photo-29648642.jpeg?auto=compress&cs=tinysrgb&w=1400"
+    ]
+  },
+  {
+    "slug": "pigmentation",
+    "images": [
+      "https://images.pexels.com/photos/2709386/pexels-photo-2709386.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/31403887/pexels-photo-31403887.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/3763155/pexels-photo-3763155.jpeg?auto=compress&cs=tinysrgb&w=1400"
+    ]
+  },
+  {
+    "slug": "acne-treatment",
+    "images": [
+      "https://images.pexels.com/photos/9038626/pexels-photo-9038626.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/6476083/pexels-photo-6476083.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/6475987/pexels-photo-6475987.jpeg?auto=compress&cs=tinysrgb&w=1400"
+    ]
+  },
+  {
+    "slug": "rosacea-treatment",
+    "images": [
+      "https://images.pexels.com/photos/1138531/pexels-photo-1138531.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/14862020/pexels-photo-14862020.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/7290084/pexels-photo-7290084.jpeg?auto=compress&cs=tinysrgb&w=1400"
+    ]
+  },
+  {
+    "slug": "microneedling",
+    "images": [
+      "https://images.pexels.com/photos/34220312/pexels-photo-34220312.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/33794144/pexels-photo-33794144.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/29648626/pexels-photo-29648626.jpeg?auto=compress&cs=tinysrgb&w=1400"
+    ]
+  },
+  {
+    "slug": "hifu-ultherapy",
+    "images": [
+      "https://images.pexels.com/photos/5069425/pexels-photo-5069425.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/36338411/pexels-photo-36338411.jpeg?auto=compress&cs=tinysrgb&w=1400",
+      "https://images.pexels.com/photos/4586721/pexels-photo-4586721.jpeg?auto=compress&cs=tinysrgb&w=1400"
+    ]
+  }
+]

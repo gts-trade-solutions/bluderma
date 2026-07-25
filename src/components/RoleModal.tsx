@@ -44,7 +44,7 @@ const options: {
   },
   {
     role: "patient",
-    title: "I'm a Patient",
+    title: "I'm a Client",
     subtitle: "Exploring treatments for myself",
     points: [
       "Friendly, easy-to-understand guides",
@@ -129,7 +129,7 @@ export default function RoleModal({
 
         <div className="mb-7 text-center">
           <div className="mx-auto mb-3 flex items-center justify-center">
-            <BrandLogo href={null} size={40} />
+            <BrandLogo href={null} size={52} />
           </div>
           <h2 className="text-2xl font-bold text-ink sm:text-3xl">
             Welcome — how would you like to continue?

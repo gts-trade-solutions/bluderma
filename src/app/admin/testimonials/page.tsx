@@ -18,7 +18,7 @@ export default async function TestimonialsPage() {
     <>
       <PageHeader
         title="Testimonials"
-        description="Patient quotes shown across the site."
+        description="Client quotes shown across the site."
         action={
           <Link href="/admin/testimonials/new" className="btn-primary">
             New testimonial
@@ -29,7 +29,7 @@ export default async function TestimonialsPage() {
       {testimonials.length === 0 ? (
         <EmptyState
           title="No testimonials yet"
-          description="Add a patient quote to build trust on the public pages."
+          description="Add a client quote to build trust on the public pages."
           action={
             <Link href="/admin/testimonials/new" className="btn-primary">
               New testimonial

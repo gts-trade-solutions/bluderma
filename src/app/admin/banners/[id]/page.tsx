@@ -59,7 +59,7 @@ export default async function BannerEditPage({
               options={[
                 { value: "HOME_HERO", label: "Home hero" },
                 { value: "DOCTOR_HERO", label: "Clinical hub hero" },
-                { value: "PATIENT_HERO", label: "Patient hub hero" },
+                { value: "PATIENT_HERO", label: "Client hub hero" },
               ]}
             />
             <TextField

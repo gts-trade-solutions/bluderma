@@ -220,7 +220,7 @@ export default async function TreatmentPage({
               reverse
             >
               <p className="leading-relaxed text-ink-soft">
-                A good fit for patients looking to address{" "}
+                A good fit for clients looking to address{" "}
                 {treatment.concern.charAt(0).toLowerCase() +
                   treatment.concern.slice(1).replace(/\.$/, "")}
                 .
@@ -348,7 +348,7 @@ export default async function TreatmentPage({
                 <p className="mt-2">
                   Information here is for reference and does not replace an
                   individual medical consultation. Suitability, risks and
-                  outcomes vary per patient.
+                  outcomes vary per client.
                 </p>
               </div>
             </div>

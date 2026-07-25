@@ -16,7 +16,7 @@ export default function NotFound() {
           Doctor hub
         </Link>
         <Link href="/patient" className="btn-outline-white">
-          Patient hub
+          Client hub
         </Link>
       </div>
     </main>

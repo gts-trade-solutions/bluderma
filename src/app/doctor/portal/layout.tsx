@@ -24,7 +24,7 @@ export default async function DoctorPortalLayout({
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
           <div className="flex items-center gap-3">
-            <BrandLogo href="/doctor" size={36} />
+            <BrandLogo href="/doctor" size={44} />
             <span className="rounded-full bg-teal-600 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white">
               Doctor
             </span>

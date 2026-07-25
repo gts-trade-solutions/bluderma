@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 
 import Field from "./Field";
 import FormAlert from "./FormAlert";
-import GoogleButton from "./GoogleButton";
 import { ROLE_STORAGE_KEY, isExperience, type Experience } from "@/lib/roles";
 
 /** NextAuth surfaces failures as opaque codes; translate the ones users hit. */
@@ -21,7 +20,7 @@ const ERROR_COPY: Record<string, string> = {
   SessionRequired: "Please sign in to continue.",
 };
 
-export default function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
+export default function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const callbackUrl = params.get("callbackUrl") || "/";
@@ -81,7 +80,7 @@ export default function LoginForm({ googleEnabled }: { googleEnabled: boolean })
       {experience && (
         <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-brand-50 px-3.5 py-1.5 text-sm font-medium text-brand-700 ring-1 ring-inset ring-brand-100">
           <span className="h-2 w-2 rounded-full bg-brand-500" />
-          Continuing as {experience === "doctor" ? "a Doctor" : "a Patient"}
+          Continuing as {experience === "doctor" ? "a Doctor" : "a Client"}
         </div>
       )}
 
@@ -136,19 +135,6 @@ export default function LoginForm({ googleEnabled }: { googleEnabled: boolean })
           {busy ? "Signing in…" : "Sign in"}
         </button>
       </form>
-
-      {googleEnabled && (
-        <>
-          <div className="my-6 flex items-center gap-3">
-            <span className="h-px flex-1 bg-slate-200" />
-            <span className="text-xs font-medium uppercase tracking-wider text-ink-muted">
-              or
-            </span>
-            <span className="h-px flex-1 bg-slate-200" />
-          </div>
-          <GoogleButton callbackUrl={callbackUrl} />
-        </>
-      )}
 
       <p className="mt-8 text-center text-sm text-ink-muted">
         New to BluDerma?{" "}

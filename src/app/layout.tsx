@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     template: "%s | BluDerma",
   },
   description:
-    "BluDerma is a dermatology and aesthetic treatment reference platform for medical professionals and patients — explore treatments, indications, solutions and product enquiries.",
+    "BluDerma is a dermatology and aesthetic treatment reference platform for medical professionals and clients — explore treatments, indications, solutions and product enquiries.",
   keywords: [
     "dermatology",
     "aesthetics",

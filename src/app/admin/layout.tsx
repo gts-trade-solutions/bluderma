@@ -25,7 +25,7 @@ export default async function AdminLayout({
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white">
         <div className="flex h-16 items-center justify-between gap-4 px-5 sm:px-8">
           <div className="flex items-center gap-3">
-            <BrandLogo href="/admin" size={36} />
+            <BrandLogo href="/admin" size={44} />
             <span className="rounded-full bg-ink px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white">
               Admin
             </span>

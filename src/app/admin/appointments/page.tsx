@@ -76,7 +76,7 @@ export default async function AdminAppointmentsPage({
           <thead>
             <tr>
               <Th className="w-44">When</Th>
-              <Th>Patient</Th>
+              <Th>Client</Th>
               <Th>Doctor</Th>
               <Th className="w-24">Mode</Th>
               <Th className="w-20">Fee</Th>

@@ -142,6 +142,76 @@ export async function sendEmail(input: SendEmailInput): Promise<void> {
   }
 }
 
+/** Where new-enquiry notifications are sent. Overridable via env. */
+export function enquiryNotifyAddress(): string {
+  return process.env.ENQUIRY_NOTIFY_EMAIL || "info@bluderma.kr";
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Internal notification sent to the business when an enquiry comes in. */
+export function enquiryNotificationEmail(e: {
+  audience: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  organisation?: string | null;
+  quantity?: number | null;
+  productName?: string | null;
+  treatmentName?: string | null;
+  message?: string | null;
+  source: string;
+}) {
+  const isDoctor = e.audience === "DOCTOR";
+  const rows: [string, string | null | undefined][] = [
+    ["Audience", isDoctor ? "Doctor / Clinician" : "Client"],
+    ["Name", e.name],
+    ["Email", e.email],
+    ["Phone", e.phone],
+    ["Organisation", e.organisation],
+    ["Product", e.productName],
+    ["Treatment", e.treatmentName],
+    ["Quantity", e.quantity != null ? String(e.quantity) : null],
+    ["Message", e.message],
+    ["Source", e.source],
+  ];
+  const shown = rows.filter(([, v]) => v != null && v !== "");
+
+  const text =
+    `New enquiry received via BluDerma.\n\n` +
+    shown.map(([k, v]) => `${k}: ${v}`).join("\n") +
+    `\n`;
+
+  const htmlRows = shown
+    .map(
+      ([k, v]) =>
+        `<tr><td style="padding:5px 14px 5px 0;color:#64748b;font-size:13px;vertical-align:top;white-space:nowrap">${escapeHtml(
+          k
+        )}</td><td style="padding:5px 0;font-size:14px;color:#0f172a">${escapeHtml(
+          String(v)
+        )}</td></tr>`
+    )
+    .join("");
+
+  return {
+    subject: `New ${isDoctor ? "clinician" : "client"} enquiry — ${e.name}`,
+    text,
+    html: `
+      <p style="font-size:15px;color:#0f172a">New enquiry received via BluDerma.</p>
+      <table style="border-collapse:collapse;margin-top:8px">${htmlRows}</table>
+      <p style="color:#64748b;font-size:13px;margin-top:16px">Reply directly to ${escapeHtml(
+        e.email
+      )} to follow up.</p>
+    `,
+  };
+}
+
 export function passwordResetEmail(name: string | null, url: string) {
   const greeting = name ? `Hi ${name},` : "Hi,";
   return {

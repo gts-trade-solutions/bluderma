@@ -7,6 +7,11 @@ import { prisma } from "@/lib/prisma";
 import { enquirySchema, fieldErrors } from "@/lib/validation";
 import { rateLimit } from "@/lib/rateLimit";
 import { getCurrentUser } from "@/lib/session";
+import {
+  enquiryNotificationEmail,
+  enquiryNotifyAddress,
+  sendEmail,
+} from "@/lib/email";
 
 export interface ActionResult {
   ok: boolean;
@@ -41,19 +46,18 @@ export async function submitEnquiry(input: unknown): Promise<ActionResult> {
   const treatment = d.treatmentSlug
     ? await prisma.treatment.findUnique({
         where: { slug: d.treatmentSlug },
-        select: { id: true },
+        select: { id: true, name: true },
       })
     : null;
 
   const user = await getCurrentUser();
+  const audience =
+    d.audience === "doctor" ? EnquiryAudience.DOCTOR : EnquiryAudience.PATIENT;
 
   try {
-    await prisma.enquiry.create({
+    const enquiry = await prisma.enquiry.create({
       data: {
-        audience:
-          d.audience === "doctor"
-            ? EnquiryAudience.DOCTOR
-            : EnquiryAudience.PATIENT,
+        audience,
         name: d.name,
         email: d.email,
         phone: d.phone || null,
@@ -66,6 +70,33 @@ export async function submitEnquiry(input: unknown): Promise<ActionResult> {
         source: user ? "web:authenticated" : "web",
       },
     });
+
+    // Notify the business by email. Best-effort: a mail failure must never lose
+    // the lead, which is already safely stored above.
+    try {
+      const mail = enquiryNotificationEmail({
+        audience,
+        name: d.name,
+        email: d.email,
+        phone: d.phone,
+        organisation: d.organisation,
+        quantity: d.audience === "doctor" ? d.quantity ?? null : null,
+        productName: d.productName,
+        treatmentName: treatment?.name ?? null,
+        message: d.message,
+        source: user ? "web:authenticated" : "web",
+      });
+      await sendEmail({
+        to: enquiryNotifyAddress(),
+        subject: mail.subject,
+        template: "enquiry-notification",
+        html: mail.html,
+        text: mail.text,
+        relatedId: enquiry.id,
+      });
+    } catch (mailErr) {
+      console.error("enquiry notification email failed", mailErr);
+    }
 
     return { ok: true };
   } catch (err) {

@@ -26,7 +26,7 @@ export default async function FaqsPage() {
       {faqs.length === 0 ? (
         <EmptyState
           title="No FAQs yet"
-          description="Nothing was carried over from the frontend MVP — it had no FAQ content. Add the first one here."
+          description="No FAQs yet. Add the first one here to show it across the site."
           action={
             <Link href="/admin/faqs/new" className="btn-primary">
               New FAQ

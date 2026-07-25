@@ -15,12 +15,9 @@ export default async function RegisterPage() {
   const user = await getCurrentUser();
   if (user) redirect(landingPathForRole(user.role));
 
-  const googleEnabled =
-    !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET;
-
   return (
     <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-slate-50" />}>
-      <RegisterForm googleEnabled={googleEnabled} />
+      <RegisterForm />
     </Suspense>
   );
 }

@@ -167,7 +167,7 @@ export default async function TreatmentEditPage({
 
         <Card
           title="The concern"
-          description="What the patient comes in with."
+          description="What the client comes in with."
         >
           <div className="space-y-5">
             <TextArea

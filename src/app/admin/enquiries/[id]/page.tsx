@@ -56,7 +56,7 @@ export default async function EnquiryDetailPage({
         description={`Received ${DATE.format(enquiry.createdAt)}`}
         action={
           <Pill tone={enquiry.audience === "DOCTOR" ? "success" : "neutral"}>
-            {enquiry.audience === "DOCTOR" ? "Clinician" : "Patient"}
+            {enquiry.audience === "DOCTOR" ? "Clinician" : "Client"}
           </Pill>
         }
       />

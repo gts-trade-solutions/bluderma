@@ -215,7 +215,7 @@ export default async function DoctorEditPage({
 
         <Card
           title="Focus areas"
-          description="Drives which doctors are suggested for a patient's top concerns."
+          description="Drives which doctors are suggested for a client's top concerns."
         >
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
             {concerns.map((c) => (

@@ -12,7 +12,7 @@ import { requireUser } from "@/lib/session";
 
 export const metadata: Metadata = {
   title: "My Profile",
-  description: "Manage your BluDerma patient profile and skin snapshot.",
+  description: "Manage your BluDerma profile and skin snapshot.",
   robots: { index: false, follow: false },
 };
 

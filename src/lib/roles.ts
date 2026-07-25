@@ -31,10 +31,10 @@ export const roleMeta: Record<Experience, ExperienceMeta> = {
     badge: "Clinical view",
   },
   patient: {
-    label: "Patient",
+    label: "Client",
     path: "/patient/skin-analyzer",
     hubPath: "/patient",
-    badge: "Patient view",
+    badge: "Client view",
   },
 };
 

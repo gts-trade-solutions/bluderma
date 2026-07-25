@@ -23,7 +23,7 @@ export default function AuthLayout({
         <div className="absolute inset-0 bg-gradient-to-br from-brand-950/90 via-brand-900/80 to-teal-900/70" />
 
         <div className="relative z-10 flex h-full flex-col justify-between p-12 text-white">
-          <BrandLogo href="/" tone="light" size={44} />
+          <BrandLogo href="/" tone="light" size={60} />
 
           <div>
             <h2 className="max-w-sm text-balance text-3xl font-bold leading-tight">
@@ -31,7 +31,7 @@ export default function AuthLayout({
             </h2>
             <p className="mt-4 max-w-sm text-sm text-white/75">
               A trusted reference for skin treatments — built for both the
-              clinicians who deliver them and the patients who receive them.
+              clinicians who deliver them and the clients who receive them.
             </p>
           </div>
 
@@ -44,7 +44,7 @@ export default function AuthLayout({
       {/* Form column */}
       <div className="flex min-h-screen flex-1 flex-col items-center justify-center bg-white px-5 py-12 sm:px-10">
         <div className="w-full max-w-md animate-fade-in">
-          <BrandLogo href="/" size={36} className="mb-8 lg:hidden" />
+          <BrandLogo href="/" size={48} className="mb-8 lg:hidden" />
 
           {children}
         </div>

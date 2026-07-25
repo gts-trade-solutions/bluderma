@@ -86,7 +86,7 @@ export default async function AdminDashboard() {
     {
       label: "Testimonials",
       value: testimonials,
-      sub: "patient quotes",
+      sub: "client quotes",
       href: "/admin/testimonials",
     },
     { label: "FAQs", value: faqs, sub: "questions", href: "/admin/faqs" },

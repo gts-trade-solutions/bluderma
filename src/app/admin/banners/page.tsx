@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 const PLACEMENT_LABEL: Record<string, string> = {
   HOME_HERO: "Home hero",
   DOCTOR_HERO: "Clinical hub hero",
-  PATIENT_HERO: "Patient hub hero",
+  PATIENT_HERO: "Client hub hero",
 };
 
 export default async function BannersPage() {

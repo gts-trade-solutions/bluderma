@@ -34,11 +34,12 @@ export default function Navbar({ role, menu }: NavbarProps) {
     <>
       <header className="sticky top-0 z-40 bg-white/95 shadow-soft backdrop-blur">
 
-        <div className="container-page flex h-16 items-center justify-between gap-4">
+        <div className="container-page flex h-20 items-center justify-between gap-4">
           {/* Brand */}
           <BrandLogo
             href={meta.path}
             tone={solid ? "dark" : "light"}
+            size={64}
             onClick={() => setMobileOpen(false)}
           />
 
@@ -56,15 +57,6 @@ export default function Navbar({ role, menu }: NavbarProps) {
 
           {/* Right actions */}
           <div className="flex shrink-0 items-center gap-2">
-            <span
-              className={`hidden rounded-full px-3 py-1 text-xs font-semibold xl:inline-flex ${
-                solid
-                  ? "bg-brand-50 text-brand-700 ring-1 ring-brand-100"
-                  : "bg-white/15 text-white ring-1 ring-white/25"
-              }`}
-            >
-              {meta.badge}
-            </span>
             <AccountMenu />
             <button
               className={`lg:hidden ${solid ? "text-ink" : "text-white"}`}

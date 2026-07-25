@@ -167,8 +167,103 @@ export async function updateOwnAvailability(
       }
     });
 
+    await audit({
+      userId: owner.userId,
+      action: "update",
+      entity: "DoctorAvailability",
+      entityId: owner.doctorId,
+      after: { self_edit: true, days: d.workDays },
+    });
+
     revalidatePath("/doctor/portal");
     revalidatePath("/patient/skin-analyzer");
+    return { ok: true };
+  });
+}
+
+const timeOffSchema = z.object({
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a start date."),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick an end date."),
+  reason: z.string().trim().max(160).optional().or(z.literal("")),
+});
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * A doctor blocks out a holiday / leave range on their OWN calendar. Stored as
+ * a UTC datetime range (consistent with the UTC slot anchor); the end date is
+ * inclusive, so it is stored as the start of the following day.
+ */
+export async function addOwnTimeOff(formData: FormData): Promise<AdminResult> {
+  return runAction("addOwnTimeOff", async () => {
+    const owner = await requireOwnDoctor();
+    if (!owner) return { ok: false, error: "You don't have a doctor profile." };
+
+    const parsed = timeOffSchema.safeParse({
+      startDate: formData.get("startDate"),
+      endDate: formData.get("endDate"),
+      reason: formData.get("reason") ?? "",
+    });
+    if (!parsed.success) {
+      return {
+        ok: false,
+        error: "Please pick valid dates.",
+        fields: fieldErrors(parsed.error),
+      };
+    }
+    const d = parsed.data;
+
+    const startsAt = new Date(`${d.startDate}T00:00:00.000Z`);
+    const endsAt = new Date(
+      new Date(`${d.endDate}T00:00:00.000Z`).getTime() + DAY_MS
+    );
+    if (endsAt <= startsAt) {
+      return { ok: false, error: "The end date must be on or after the start date." };
+    }
+
+    const created = await prisma.doctorTimeOff.create({
+      data: {
+        doctorId: owner.doctorId,
+        startsAt,
+        endsAt,
+        reason: d.reason || null,
+      },
+    });
+
+    await audit({
+      userId: owner.userId,
+      action: "create",
+      entity: "DoctorTimeOff",
+      entityId: created.id,
+      after: { startsAt, endsAt, reason: d.reason || null },
+    });
+
+    revalidatePath("/doctor/portal/profile");
+    revalidatePath("/doctor/portal");
+    return { ok: true };
+  });
+}
+
+/** Remove one of the doctor's own time-off entries. */
+export async function removeOwnTimeOff(id: string): Promise<AdminResult> {
+  return runAction("removeOwnTimeOff", async () => {
+    const owner = await requireOwnDoctor();
+    if (!owner) return { ok: false, error: "Not permitted." };
+
+    const result = await prisma.doctorTimeOff.deleteMany({
+      where: { id, doctorId: owner.doctorId },
+    });
+    if (result.count === 0) return { ok: false, error: "Entry not found." };
+
+    await audit({
+      userId: owner.userId,
+      action: "delete",
+      entity: "DoctorTimeOff",
+      entityId: id,
+    });
+
+    revalidatePath("/doctor/portal/profile");
+    revalidatePath("/doctor/portal");
     return { ok: true };
   });
 }

@@ -11,8 +11,8 @@ import { useState } from "react";
  * Drop the supplied logo at `public/brand/logo.png` to activate it everywhere.
  */
 export default function BrandLogo({
-  size = 36,
-  showWordmark = true,
+  size = 48,
+  showWordmark = false,
   tone = "dark",
   href = "/",
   className = "",
@@ -20,7 +20,7 @@ export default function BrandLogo({
 }: {
   /** Icon edge length in pixels. */
   size?: number;
-  /** Show the "BluDerma" wordmark beside the mark. */
+  /** Show the "BluDerma" wordmark beside the mark. Off by default — the logo speaks for itself. */
   showWordmark?: boolean;
   /** Wordmark colour: "dark" on light backgrounds, "light" on dark ones. */
   tone?: "dark" | "light";

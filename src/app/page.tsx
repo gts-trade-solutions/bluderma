@@ -51,14 +51,14 @@ export default function Home() {
 
       <div className="relative z-10 px-6 text-center text-white">
         <div className="mb-6 flex justify-center">
-          <BrandLogo href={null} tone="light" size={48} />
+          <BrandLogo href={null} tone="light" size={72} />
         </div>
         <h1 className="mx-auto max-w-2xl text-balance text-3xl font-bold sm:text-5xl">
           Dermatology &amp; aesthetic care, made clear
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-white/80">
           A trusted reference for skin treatments — built for both the clinicians
-          who deliver them and the patients who receive them.
+          who deliver them and the clients who receive them.
         </p>
         {!showModal && (
           <p className="mt-8 animate-fade-in-fast text-sm text-white/70">

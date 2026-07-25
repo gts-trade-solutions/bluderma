@@ -77,7 +77,7 @@ export default async function DoctorHome() {
               <p className="mt-5 text-lg leading-relaxed text-ink-soft">
                 BluDerma organises dermatology and aesthetic treatments the way
                 clinicians think — by concern and by modality. Each entry starts
-                from the patient&apos;s indication, explains the mechanism and
+                from the client&apos;s indication, explains the mechanism and
                 protocol, and pairs the treatment with a concrete solution you can
                 order for your clinic.
               </p>
@@ -177,7 +177,7 @@ export default async function DoctorHome() {
                   Order a treatment solution
                 </h2>
                 <p className="mt-4 text-lg text-white/85">
-                  Found the right treatment for your patient? Open its page and use
+                  Found the right treatment for your client? Open its page and use
                   the <span className="font-semibold">Enquiry to order</span>{" "}
                   button to request the matched BluDerma product for your clinic —
                   pricing and availability follow by return.
@@ -194,8 +194,8 @@ export default async function DoctorHome() {
                   </a>
                 </div>
                 <p className="mt-6 text-xs text-white/70">
-                  This is a frontend MVP — enquiries are captured in-browser for
-                  demonstration only.
+                  Enquiries reach our team directly — we&apos;ll reply with
+                  pricing and availability by email or WhatsApp.
                 </p>
               </div>
             </div>

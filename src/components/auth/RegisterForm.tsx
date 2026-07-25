@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 
 import Field from "./Field";
 import FormAlert from "./FormAlert";
-import GoogleButton from "./GoogleButton";
 import { ROLE_STORAGE_KEY, isExperience, type Experience } from "@/lib/roles";
 
 interface FormState {
@@ -26,11 +25,7 @@ const EMPTY: FormState = {
   confirmPassword: "",
 };
 
-export default function RegisterForm({
-  googleEnabled,
-}: {
-  googleEnabled: boolean;
-}) {
+export default function RegisterForm() {
   const router = useRouter();
   const params = useSearchParams();
   const callbackUrl = params.get("callbackUrl") || "/patient/skin-analyzer";
@@ -138,7 +133,7 @@ export default function RegisterForm({
                       <span className="h-1.5 w-1.5 rounded-full bg-white" />
                     )}
                   </span>
-                  {t === "doctor" ? "A Doctor" : "A Patient"}
+                  {t === "doctor" ? "A Doctor" : "A Client"}
                 </button>
               );
             })}
@@ -215,19 +210,6 @@ export default function RegisterForm({
           {busy ? "Creating account…" : "Create account"}
         </button>
       </form>
-
-      {googleEnabled && (
-        <>
-          <div className="my-6 flex items-center gap-3">
-            <span className="h-px flex-1 bg-slate-200" />
-            <span className="text-xs font-medium uppercase tracking-wider text-ink-muted">
-              or
-            </span>
-            <span className="h-px flex-1 bg-slate-200" />
-          </div>
-          <GoogleButton callbackUrl={callbackUrl} label="Sign up with Google" />
-        </>
-      )}
 
       <p className="mt-8 text-center text-sm text-ink-muted">
         Already have an account?{" "}

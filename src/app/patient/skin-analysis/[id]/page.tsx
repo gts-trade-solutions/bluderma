@@ -110,13 +110,6 @@ export default async function SkinAnalysisDetailPage({
           web chart, per-concern breakdown and a downloadable PDF.
         </div>
 
-        {/* Doctor recommendations — highlighted at the top. */}
-        {doctors.length > 0 && (
-          <div className="mb-6 rounded-2xl bg-gradient-to-br from-brand-50 to-teal-50 p-4 ring-1 ring-brand-100 sm:p-5">
-            <DoctorRecommendations doctors={doctors} />
-          </div>
-        )}
-
         <SkinResultView
           baseImage={summary.base_image ?? null}
           overall={summary.overall ?? null}
@@ -125,6 +118,13 @@ export default async function SkinAnalysisDetailPage({
           concerns={concerns}
           aiSummary={aiSummary}
         />
+
+        {/* Clinics — below the analysis. */}
+        {doctors.length > 0 && (
+          <div className="mt-10">
+            <DoctorRecommendations doctors={doctors} />
+          </div>
+        )}
       </main>
     </>
   );

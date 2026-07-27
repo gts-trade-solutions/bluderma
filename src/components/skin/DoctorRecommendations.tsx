@@ -43,11 +43,12 @@ export default function DoctorRecommendations({
       <p className="mb-4 text-sm text-ink-muted">
         Share these results with a clinic to discuss tailored treatment options.
       </p>
-      <ul className="grid gap-3 sm:grid-cols-2">
+      {/* Mobile: horizontal slider (less scroll). Desktop: 2-col grid. */}
+      <ul className="flex snap-x gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0">
         {doctors.map((d) => (
           <li
             key={d.slug}
-            className="flex items-center gap-3 rounded-2xl border border-slate-200 p-4"
+            className="flex w-[82%] shrink-0 snap-start items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:w-auto"
           >
             {hasPhoto(d.image) ? (
               // eslint-disable-next-line @next/next/no-img-element

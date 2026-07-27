@@ -15,6 +15,20 @@ import { prisma } from "@/lib/prisma";
  * oversight.
  */
 
+/**
+ * BluDerma runs on a single clinic timezone: India (UTC+5:30, no DST). Slot
+ * instants are wall-clock labelled as UTC (see the contract above), so "now"
+ * has to be shifted into that same frame before any past-slot comparison —
+ * otherwise a 13:00 slot (stored 13:00Z) still looks 5½ hours in the future at
+ * 15:00 IST, and already-passed times keep showing as bookable.
+ */
+export const CLINIC_UTC_OFFSET_MINUTES = 330;
+
+/** The current instant expressed in the clinic's wall clock (labelled as UTC). */
+export function clinicNow(): number {
+  return Date.now() + CLINIC_UTC_OFFSET_MINUTES * 60_000;
+}
+
 export type SlotPeriod = "Morning" | "Afternoon" | "Evening";
 
 export interface Slot {
@@ -113,7 +127,8 @@ export async function getSlotsForDoctor(
   const takenLabels = new Set(
     booked.map((b) => b.scheduledAt.toISOString().slice(11, 16))
   );
-  const now = Date.now();
+  // Compare against the clinic wall clock, not raw UTC (see clinicNow).
+  const now = clinicNow();
 
   const slots: Slot[] = [];
   for (const w of windows) {

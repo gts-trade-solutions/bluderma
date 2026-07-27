@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 
-import { buildDayOptions, getSlotsForDays } from "@/lib/queries/availability";
+import {
+  buildDayOptions,
+  clinicNow,
+  getSlotsForDays,
+} from "@/lib/queries/availability";
 
 /**
  * Live slot availability for the booking modal.
@@ -24,7 +28,8 @@ export async function GET(
     MAX_DAYS
   );
 
-  const dayOptions = buildDayOptions(new Date(), days);
+  // Anchor the day list to the clinic's local date, not the server's UTC date.
+  const dayOptions = buildDayOptions(new Date(clinicNow()), days);
   const slotsByDay = await getSlotsForDays(
     params.slug,
     dayOptions.map((d) => d.daySeed)

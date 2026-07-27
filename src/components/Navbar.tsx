@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { Experience, roleMeta } from "@/lib/roles";
 import type { NavNode } from "@/lib/queries/nav";
-import AccountMenu from "./AccountMenu";
+import AccountMenu, { linksFor } from "./AccountMenu";
 import BrandLogo from "./BrandLogo";
 
 interface NavbarProps {
@@ -26,6 +27,7 @@ export default function Navbar({ role, menu }: NavbarProps) {
   }, [mobileOpen]);
 
   const pathname = usePathname();
+  const { data: session, status } = useSession();
   const meta = roleMeta[role];
   // Reference-style: nav always sits on a solid white bar above the content.
   const solid = true;
@@ -134,6 +136,50 @@ export default function Navbar({ role, menu }: NavbarProps) {
                 )}
               </div>
             ))}
+
+            {/* Account actions — the avatar dropdown is easy to miss on mobile,
+                so sign in / sign out lives here in the drawer too. */}
+            <div className="mt-4 pt-2">
+              {status === "authenticated" && session?.user ? (
+                <>
+                  <div className="px-1 pb-1">
+                    <p className="truncate text-sm font-semibold text-ink">
+                      {session.user.name ?? "Your account"}
+                    </p>
+                    <p className="truncate text-xs text-ink-muted">
+                      {session.user.email}
+                    </p>
+                  </div>
+                  {linksFor(session.user.role).map((l) => (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      onClick={() => setMobileOpen(false)}
+                      className="block rounded-lg px-1 py-2.5 text-sm font-medium text-ink-soft hover:text-brand-700"
+                    >
+                      {l.label}
+                    </Link>
+                  ))}
+                  <button
+                    onClick={() => {
+                      setMobileOpen(false);
+                      signOut({ callbackUrl: "/" });
+                    }}
+                    className="mt-1 block w-full rounded-lg px-1 py-2.5 text-left text-sm font-semibold text-rose-600"
+                  >
+                    Sign out
+                  </button>
+                </>
+              ) : status === "unauthenticated" ? (
+                <Link
+                  href={`/login?callbackUrl=${encodeURIComponent(pathname ?? "/")}`}
+                  onClick={() => setMobileOpen(false)}
+                  className="btn-primary w-full"
+                >
+                  Sign in
+                </Link>
+              ) : null}
+            </div>
           </div>
         )}
       </header>

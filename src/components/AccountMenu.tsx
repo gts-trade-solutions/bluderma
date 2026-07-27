@@ -12,7 +12,7 @@ const ROLE_LABEL: Record<string, string> = {
 };
 
 /** Links offered per role, beyond the shared ones. */
-function linksFor(role: string): { label: string; href: string }[] {
+export function linksFor(role: string): { label: string; href: string }[] {
   if (role === "ADMIN") {
     return [
       { label: "Admin dashboard", href: "/admin" },

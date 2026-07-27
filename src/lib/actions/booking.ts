@@ -6,7 +6,11 @@ import { AppointmentStatus, ConsultMode, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { bookingSchema, fieldErrors } from "@/lib/validation";
 import { getCurrentUser } from "@/lib/session";
-import { getSlotsForDoctor, slotInstant } from "@/lib/queries/availability";
+import {
+  clinicNow,
+  getSlotsForDoctor,
+  slotInstant,
+} from "@/lib/queries/availability";
 import { sendEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rateLimit";
 import type { ActionResult } from "./enquiry";
@@ -73,7 +77,7 @@ export async function bookAppointment(input: unknown): Promise<BookingResult> {
   if (Number.isNaN(scheduledAt.getTime())) {
     return { ok: false, error: "Pick a valid date and time." };
   }
-  if (scheduledAt.getTime() <= Date.now()) {
+  if (scheduledAt.getTime() <= clinicNow()) {
     return { ok: false, error: "That time has already passed." };
   }
 

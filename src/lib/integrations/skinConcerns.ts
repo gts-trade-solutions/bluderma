@@ -31,6 +31,14 @@ export const CONCERN_INFO: Record<
 
 export const CONCERN_KEYS = Object.keys(CONCERN_INFO);
 
+// Canonical display order index — keeps the report's radar-chart axes in a
+// FIXED position across every report (rather than sorting by score, which would
+// rotate the shape). Unknown keys sort to the end.
+const CONCERN_ORDER = new Map(CONCERN_KEYS.map((k, i) => [k, i]));
+export function concernOrder(key: string): number {
+  return CONCERN_ORDER.get(key) ?? CONCERN_KEYS.length;
+}
+
 /** Human label for a concern key (falls back to Title Case). */
 export function concernLabel(key: string): string {
   if (CONCERN_INFO[key]) return CONCERN_INFO[key].name;

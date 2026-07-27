@@ -5,13 +5,19 @@ import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { buildPatientMenu } from "@/lib/queries/nav";
 import Navbar from "@/components/Navbar";
-import SkinScanResult, { toConcerns } from "@/components/skin/SkinScanResult";
+import { SkinResultView } from "@/components/skin/SkinResultView";
+import { ViewReportButton } from "@/components/skin/ViewReportButton";
 import DoctorRecommendations from "@/components/skin/DoctorRecommendations";
 import { generateSkinSummary } from "@/lib/integrations/skinSummary";
-import type { SkinSummary } from "@/lib/integrations/skinConcerns";
+import {
+  type SkinSummary,
+  type SkinIssueDetails,
+} from "@/lib/integrations/skinConcerns";
 
 export const metadata = { title: "Skin analysis" };
 export const dynamic = "force-dynamic";
+
+const META = new Set(["overall", "skin_type", "skin_age", "resize_image"]);
 
 export default async function SkinAnalysisDetailPage({
   params,
@@ -27,7 +33,14 @@ export default async function SkinAnalysisDetailPage({
   if (!scan) notFound();
 
   const summary = (scan.summary as SkinSummary | null) ?? {};
-  const concerns = toConcerns(scan.issues);
+  const concerns = scan.issues
+    .filter((i) => !META.has(i.issueType) && i.score != null)
+    .sort((a, b) => (a.score ?? 1) - (b.score ?? 1))
+    .map((i) => ({
+      key: i.issueType,
+      score: i.score ?? 0,
+      imageUrl: (i.details as SkinIssueDetails | null)?.imageUrl ?? null,
+    }));
 
   // AI summary — generated once, then cached on the scan's summary JSON.
   let aiSummary = summary.ai_summary ?? null;
@@ -46,7 +59,6 @@ export default async function SkinAnalysisDetailPage({
       .catch(() => {});
   }
 
-  // Recommended clinics — all active doctors (not concern-matched, by design).
   const doctors = await prisma.doctor.findMany({
     where: { isActive: true },
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
@@ -64,33 +76,43 @@ export default async function SkinAnalysisDetailPage({
     },
   });
 
+  const dateLabel = new Date(scan.createdAt).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
   return (
     <>
       <Navbar role="patient" menu={buildPatientMenu()} />
-      <main className="container-page max-w-4xl py-10 sm:py-14">
-        <div className="mb-6 flex items-center justify-between gap-3">
+      <main className="container-page max-w-5xl py-8 sm:py-10">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-ink">Your skin analysis</h1>
-            <p className="mt-1 text-sm text-ink-muted">
-              {new Date(scan.createdAt).toLocaleDateString(undefined, {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </p>
+            <h1 className="text-2xl font-bold text-ink sm:text-3xl">
+              Your skin analysis
+            </h1>
+            <p className="mt-1 text-sm text-ink-muted">{dateLabel}</p>
           </div>
-          <div className="flex shrink-0 gap-2">
+          <div className="flex items-center gap-2">
+            <ViewReportButton
+              href={`/patient/skin-analysis/${scan.id}/report`}
+            />
             <Link href="/patient/skin-analysis" className="btn-ghost text-sm">
-              All results
-            </Link>
-            <Link href="/patient/skin-analyzer" className="btn-primary text-sm">
-              New scan
+              All
             </Link>
           </div>
         </div>
 
-        <SkinScanResult
-          summary={summary}
+        <div className="mb-5 rounded-xl bg-slate-50 px-4 py-3 text-sm text-ink-soft ring-1 ring-slate-100">
+          Tap <span className="font-semibold">View full report</span> for your
+          web chart, per-concern breakdown and a downloadable PDF.
+        </div>
+
+        <SkinResultView
+          baseImage={summary.base_image ?? null}
+          overall={summary.overall ?? null}
+          skinType={summary.skin_type ?? null}
+          skinAge={summary.skin_age ?? null}
           concerns={concerns}
           aiSummary={aiSummary}
         />

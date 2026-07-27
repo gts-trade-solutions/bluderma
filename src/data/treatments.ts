@@ -199,7 +199,7 @@ export const treatments: Treatment[] = [
     name: "Laser Toning",
     category: "Laser & Energy",
     tagline: "Even tone, refined pores and controlled pigment clearance",
-    image: U("photo-1746806942799-b4db209e9a6b"),
+    image: "https://images.pexels.com/photos/3985356/pexels-photo-3985356.jpeg?auto=compress&cs=tinysrgb&w=1400",
     summary:
       "Low-fluence Q-switched laser sessions gently break down excess melanin and stimulate remodelling for brighter, more even-toned skin with minimal downtime.",
     concern:
@@ -247,7 +247,7 @@ export const treatments: Treatment[] = [
     name: "Thread Lift",
     category: "Lifting & Contouring",
     tagline: "Non-surgical lift with absorbable suspension threads",
-    image: U("photo-1761819922656-d1b77eef49c0"),
+    image: "https://images.pexels.com/photos/3762410/pexels-photo-3762410.jpeg?auto=compress&cs=tinysrgb&w=1400",
     summary:
       "Absorbable PDO/PLLA threads are placed under the skin to reposition mild sagging and stimulate fresh collagen along their path for a subtle, natural lift.",
     concern:
@@ -343,7 +343,7 @@ export const treatments: Treatment[] = [
     name: "PRP Hair Restoration",
     category: "Hair Restoration",
     tagline: "Regenerative platelet therapy for thinning hair",
-    image: U("photo-1674867373999-6ba05e654684"),
+    image: "https://images.pexels.com/photos/28994388/pexels-photo-28994388.jpeg?auto=compress&cs=tinysrgb&w=1400",
     summary:
       "Platelet-rich plasma from the patient's own blood is injected into the scalp to strengthen weakening follicles, reduce shedding and improve density.",
     concern:
@@ -535,7 +535,7 @@ export const treatments: Treatment[] = [
     name: "Microneedling",
     category: "Peels & Resurfacing",
     tagline: "Collagen induction for texture, scars and pores",
-    image: U("photo-1598300188904-6287d52746ad"),
+    image: "https://images.pexels.com/photos/5042629/pexels-photo-5042629.jpeg?auto=compress&cs=tinysrgb&w=1400",
     summary:
       "Fine needles create controlled micro-channels that trigger natural collagen production, improving acne scars, texture, pores and fine lines.",
     concern:

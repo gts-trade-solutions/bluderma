@@ -61,16 +61,6 @@ export default function Footer() {
                 info@bluderma.kr
               </a>
             </li>
-            <li>
-              <a
-                href="https://wa.me/919384857587"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-white"
-              >
-                WhatsApp: +91 93848 57587
-              </a>
-            </li>
             <li>Mon–Fri, 9:00–18:00 KST</li>
           </ul>
           <h4 className="mt-6 text-sm font-semibold text-white">Legal</h4>

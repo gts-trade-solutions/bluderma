@@ -49,15 +49,6 @@ export default function LegalDoc({
           className="font-medium text-brand-600 hover:text-brand-700"
         >
           info@bluderma.kr
-        </a>{" "}
-        or message us on{" "}
-        <a
-          href="https://wa.me/919384857587"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium text-brand-600 hover:text-brand-700"
-        >
-          WhatsApp
         </a>
         .
       </p>

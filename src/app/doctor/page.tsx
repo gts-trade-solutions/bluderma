@@ -195,7 +195,7 @@ export default async function DoctorHome() {
                 </div>
                 <p className="mt-6 text-xs text-white/70">
                   Enquiries reach our team directly — we&apos;ll reply with
-                  pricing and availability by email or WhatsApp.
+                  pricing and availability by email.
                 </p>
               </div>
             </div>

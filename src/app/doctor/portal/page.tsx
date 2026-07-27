@@ -89,7 +89,7 @@ export default async function DoctorPortalPage({
           title={`No ${when} appointments`}
           description={
             when === "upcoming"
-              ? "When clients book with you, they'll appear here."
+              ? "When someone books a consultation with you, they'll appear here."
               : "Past appointments will be listed here once they've happened."
           }
         />
@@ -98,7 +98,7 @@ export default async function DoctorPortalPage({
           <thead>
             <tr>
               <Th className="w-44">When</Th>
-              <Th>Client</Th>
+              <Th>Consultation</Th>
               <Th className="w-24">Mode</Th>
               <Th className="w-28">Status</Th>
               <Th className="w-44 text-right">Actions</Th>

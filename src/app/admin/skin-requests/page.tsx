@@ -28,19 +28,19 @@ export default async function SkinRequestsPage() {
     <>
       <PageHeader
         title="Skin analysis requests"
-        description="Clients who have used their free scan and asked for another. Approving grants one more scan."
+        description="People who have used their free scan and asked for another. Approving grants one more scan."
       />
 
       {requests.length === 0 ? (
         <EmptyState
           title="No requests"
-          description="Scan requests from clients will appear here."
+          description="Scan requests from consultations will appear here."
         />
       ) : (
         <Table>
           <thead>
             <tr>
-              <Th>Client</Th>
+              <Th>Consultation</Th>
               <Th className="w-40">Requested</Th>
               <Th className="w-28">Status</Th>
               <Th className="w-56 text-right">Action</Th>

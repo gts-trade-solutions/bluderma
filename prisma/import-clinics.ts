@@ -8,7 +8,7 @@
  *   npx tsx prisma/import-clinics.ts          # dry run
  *   npx tsx prisma/import-clinics.ts --write  # apply
  */
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, ConsultMode } from "@prisma/client";
 import fs from "fs";
 
 const prisma = new PrismaClient({ log: ["warn", "error"] });
@@ -97,10 +97,31 @@ async function main() {
       console.log(`${slug}\t${data.name}\t${data.location}\t${data.phone ?? "-"}`);
       continue;
     }
-    await prisma.doctor.upsert({
+    const doctor = await prisma.doctor.upsert({
       where: { slug },
       update: data,
       create: { slug, ...data },
+      select: { id: true },
+    });
+
+    // Make the clinic bookable through the slot picker: an in-clinic mode row
+    // (the booking action rejects modes the doctor doesn't offer) + Mon–Sat
+    // 09:00–17:30 in 30-min slots, mirroring the seeded doctors. Idempotent —
+    // skipDuplicates guards the unique keys on re-runs.
+    await prisma.doctorMode.createMany({
+      data: [{ doctorId: doctor.id, mode: ConsultMode.CLINIC }],
+      skipDuplicates: true,
+    });
+    await prisma.doctorAvailability.createMany({
+      data: [1, 2, 3, 4, 5, 6].map((dayOfWeek) => ({
+        doctorId: doctor.id,
+        dayOfWeek,
+        startTime: "09:00",
+        endTime: "17:30",
+        slotMinutes: 30,
+        isActive: true,
+      })),
+      skipDuplicates: true,
     });
   }
   console.log(`\n${WRITE ? "Imported/updated" : "Would import"} ${i} clinics.`);

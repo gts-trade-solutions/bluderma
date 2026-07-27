@@ -170,7 +170,7 @@ export function enquiryNotificationEmail(e: {
 }) {
   const isDoctor = e.audience === "DOCTOR";
   const rows: [string, string | null | undefined][] = [
-    ["Audience", isDoctor ? "Doctor / Clinician" : "Client"],
+    ["Audience", isDoctor ? "Doctor / Clinician" : "Consultation"],
     ["Name", e.name],
     ["Email", e.email],
     ["Phone", e.phone],
@@ -200,7 +200,7 @@ export function enquiryNotificationEmail(e: {
     .join("");
 
   return {
-    subject: `New ${isDoctor ? "clinician" : "client"} enquiry — ${e.name}`,
+    subject: `New ${isDoctor ? "clinician" : "consultation"} enquiry — ${e.name}`,
     text,
     html: `
       <p style="font-size:15px;color:#0f172a">New enquiry received via BluDerma.</p>

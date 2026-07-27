@@ -174,13 +174,11 @@ export function SkinResultView({
         </div>
       </div>
 
-      {/* Rail — desktop concern list */}
-      <div className="mt-6 lg:mt-0 lg:flex-1">
+      {/* Rail — desktop-only concern list (mobile uses the photo's swipe strip) */}
+      <div className="hidden lg:block lg:flex-1">
         <div className="mb-3 flex items-center justify-between gap-3">
           <h2 className="text-sm font-medium text-ink-muted">Concerns</h2>
-          <div className="hidden lg:block">
-            <ScoreLegend />
-          </div>
+          <ScoreLegend />
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {concerns.map((c) => {

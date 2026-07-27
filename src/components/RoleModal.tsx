@@ -44,7 +44,7 @@ const options: {
   },
   {
     role: "patient",
-    title: "I'm a Client",
+    title: "I'm here for consultation",
     subtitle: "Exploring treatments for myself",
     points: [
       "Friendly, easy-to-understand guides",

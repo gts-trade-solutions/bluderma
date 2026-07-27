@@ -197,7 +197,7 @@ export function SkinReport({
         {/* Clinics — below the report */}
         {doctors.length ? (
           <section className="mt-8 break-inside-avoid border-t border-slate-200 pt-6">
-            <DoctorRecommendations doctors={doctors} />
+            <DoctorRecommendations doctors={doctors} mode="list" />
           </section>
         ) : null}
 

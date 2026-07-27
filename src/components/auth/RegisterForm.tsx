@@ -133,7 +133,7 @@ export default function RegisterForm() {
                       <span className="h-1.5 w-1.5 rounded-full bg-white" />
                     )}
                   </span>
-                  {t === "doctor" ? "A Doctor" : "A Client"}
+                  {t === "doctor" ? "A Doctor" : "Consultation"}
                 </button>
               );
             })}

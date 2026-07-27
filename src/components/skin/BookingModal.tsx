@@ -162,18 +162,22 @@ export default function BookingModal({
             </div>
             <p className="text-sm text-brand-600">{doctor.specialty}</p>
             <p className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-ink-muted">
-              <span className="inline-flex items-center gap-1">
-                <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                {doctor.rating} ({doctor.reviews})
-              </span>
+              {doctor.reviews > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                  {doctor.rating} ({doctor.reviews})
+                </span>
+              )}
               <span className="inline-flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
-                {doctor.clinic}, {doctor.location}
+                {[doctor.clinic, doctor.location].filter(Boolean).join(", ")}
               </span>
-              <span className="inline-flex items-center gap-1">
-                <Globe className="h-3 w-3" />
-                {doctor.languages.join(", ")}
-              </span>
+              {doctor.languages.length > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <Globe className="h-3 w-3" />
+                  {doctor.languages.join(", ")}
+                </span>
+              )}
             </p>
           </div>
           <button
@@ -208,7 +212,7 @@ export default function BookingModal({
                     : `${doctor.clinic}, ${doctor.location}`
                 }
               />
-              <Row k="Consultation" v={`₹${doctor.fee}`} />
+              {doctor.fee > 0 && <Row k="Consultation" v={`₹${doctor.fee}`} />}
             </div>
             <p className="mt-4 text-xs text-ink-muted">
               A confirmation email is on its way. You can cancel any time from
@@ -388,8 +392,14 @@ export default function BookingModal({
 
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
               <div className="text-sm">
-                <span className="text-ink-muted">Consultation </span>
-                <span className="font-bold text-ink">₹{doctor.fee}</span>
+                {doctor.fee > 0 ? (
+                  <>
+                    <span className="text-ink-muted">Consultation </span>
+                    <span className="font-bold text-ink">₹{doctor.fee}</span>
+                  </>
+                ) : (
+                  <span className="font-medium text-ink">Book a consultation</span>
+                )}
                 {slot && (
                   <span className="text-ink-muted">
                     {" "}

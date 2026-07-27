@@ -8,7 +8,7 @@ export const metadata = { title: "Users" };
 export const dynamic = "force-dynamic";
 
 const ROLE_OPTIONS = [
-  { value: "PATIENT", label: "Client" },
+  { value: "PATIENT", label: "Consultation" },
   { value: "DOCTOR", label: "Doctor" },
   { value: "ADMIN", label: "Admin" },
 ];

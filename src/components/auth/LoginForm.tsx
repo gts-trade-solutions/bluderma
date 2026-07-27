@@ -80,7 +80,7 @@ export default function LoginForm() {
       {experience && (
         <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-brand-50 px-3.5 py-1.5 text-sm font-medium text-brand-700 ring-1 ring-inset ring-brand-100">
           <span className="h-2 w-2 rounded-full bg-brand-500" />
-          Continuing as {experience === "doctor" ? "a Doctor" : "a Client"}
+          Continuing {experience === "doctor" ? "as a Doctor" : "for a consultation"}
         </div>
       )}
 

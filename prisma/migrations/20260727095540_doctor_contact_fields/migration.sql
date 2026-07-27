@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE `doctors` ADD COLUMN `email` VARCHAR(191) NULL,
+    ADD COLUMN `phone` VARCHAR(191) NULL,
+    ADD COLUMN `website` VARCHAR(191) NULL;

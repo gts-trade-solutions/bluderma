@@ -19,6 +19,7 @@ export const ADMIN_NAV: { section: string; items: NavItem[] }[] = [
     items: [
       { label: "Enquiries", href: "/admin/enquiries", icon: "inbox" },
       { label: "Appointments", href: "/admin/appointments", icon: "calendar" },
+      { label: "Skin requests", href: "/admin/skin-requests", icon: "sparkle" },
     ],
   },
   {
@@ -55,6 +56,7 @@ const PATHS: Record<string, string> = {
   calendar: "M8 3v3m8-3v3M4 8h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z",
   box: "M12 3 4 7v10l8 4 8-4V7l-8-4Zm0 0v18M4 7l8 4 8-4",
   users: "M9 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 0c-3.3 0-6 2.2-6 5m13-5a3 3 0 1 0 0-6m2 11c0-2.5-2-4.5-5-5",
+  sparkle: "M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3Z",
 };
 
 function Icon({ name }: { name: string }) {

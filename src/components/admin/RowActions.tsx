@@ -116,6 +116,90 @@ export function ToggleButton({
   );
 }
 
+/**
+ * Generic two-step confirm button for an arbitrary server action (approve,
+ * reject, …). Same confirm-then-run pattern as DeleteButton, with a tone.
+ */
+export function ConfirmButton({
+  action,
+  label,
+  confirmText,
+  tone = "primary",
+}: {
+  action: () => Promise<AdminResult>;
+  label: string;
+  confirmText: string;
+  tone?: "primary" | "danger";
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [confirming, setConfirming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const solid =
+    tone === "danger"
+      ? "bg-rose-600 hover:bg-rose-700"
+      : "bg-brand-600 hover:bg-brand-700";
+  const text = tone === "danger" ? "text-rose-600 hover:text-rose-700" : "text-brand-600 hover:text-brand-700";
+
+  function run() {
+    setError(null);
+    startTransition(async () => {
+      const res = await action();
+      if (!res.ok) {
+        setError(res.error ?? "Could not complete.");
+        setConfirming(false);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
+  if (error) {
+    return (
+      <span className="inline-flex items-center gap-2">
+        <span className="text-xs font-medium text-rose-600">{error}</span>
+        <button
+          onClick={() => setError(null)}
+          className="text-xs font-semibold text-ink-muted hover:text-ink"
+        >
+          Dismiss
+        </button>
+      </span>
+    );
+  }
+
+  if (confirming) {
+    return (
+      <span className="inline-flex items-center gap-2">
+        <span className="text-xs text-ink-muted">{confirmText}?</span>
+        <button
+          onClick={run}
+          disabled={pending}
+          className={`rounded-full px-3 py-1 text-xs font-semibold text-white disabled:opacity-60 ${solid}`}
+        >
+          {pending ? "…" : "Confirm"}
+        </button>
+        <button
+          onClick={() => setConfirming(false)}
+          className="text-xs font-semibold text-ink-muted hover:text-ink"
+        >
+          Cancel
+        </button>
+      </span>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setConfirming(true)}
+      className={`text-xs font-semibold ${text}`}
+    >
+      {label}
+    </button>
+  );
+}
+
 export function EditLink({ href }: { href: string }) {
   return (
     <Link

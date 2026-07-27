@@ -52,6 +52,9 @@ model User {
   doctor         Doctor?
   patientProfile PatientProfile?
   analyses       SkinAnalysis[]
+  skinScans          SkinScan[]
+  skinEntitlements   SkinEntitlement[]
+  skinAccessRequests SkinAccessRequest[]
   appointments   Appointment[]        @relation("PatientAppointments")
   assignedLeads  Enquiry[]            @relation("LeadOwner")
   enquiryNotes   EnquiryNote[]
@@ -397,6 +400,10 @@ model Doctor {
   clinic          String
   location        String
   image           String  @db.Text
+  /// Public contact details (used for directory/clinic contacts).
+  phone           String?
+  email           String?
+  website         String?
   /// Consultation fee in whole INR.
   fee             Int     @default(0)
   about           String  @db.Text
@@ -568,6 +575,91 @@ model SkinAnalysisScore {
   @@unique([analysisId, concernId])
   @@index([concernId])
   @@map("skin_analysis_scores")
+}
+
+// ─────────────────────────────────────────────────────────────
+// 5b. Camera skin analyzer (Face++) — standalone-analyzer integration.
+// BluDerma is the authority for identity + entitlement; the external analyzer
+// (skinanalyzer.madenkorea.com/bd) does the capture + Face++ and posts back a
+// signed result. See lib/integrations/skinAnalyzer.ts.
+// ─────────────────────────────────────────────────────────────
+
+/// Canonical stored scan; `analyzerAnalysisId` unique = callback idempotency.
+model SkinScan {
+  id                 String    @id @default(cuid())
+  userId             String
+  /// The analyzer's own analysis id — unique so a retried callback is idempotent.
+  analyzerAnalysisId String    @unique
+  /// The entitlement row that authorised this scan.
+  grantId            String
+  status             String    @default("done")
+  kind               String    @default("face")
+  /// Derived summary (overall, skin_type, skin_age, top_concerns, base_image).
+  summary            Json?
+  completedAt        DateTime?
+  createdAt          DateTime  @default(now())
+
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issues SkinScanIssue[]
+
+  @@index([userId, createdAt])
+  @@map("skin_scans")
+}
+
+/// Per-concern rows for a scan (type, score, confidence, severity band).
+model SkinScanIssue {
+  id           String  @id @default(cuid())
+  scanId       String
+  issueType    String
+  score        Float?
+  confidence   Float?
+  severityBand String?
+  details      Json?
+
+  scan SkinScan @relation(fields: [scanId], references: [id], onDelete: Cascade)
+
+  @@index([scanId])
+  @@map("skin_scan_issues")
+}
+
+/// Quota lifecycle. The row id IS the token `grant_id`.
+/// state: available → reserved → consumed | released.
+model SkinEntitlement {
+  id         String    @id @default(cuid())
+  userId     String
+  state      String    @default("available")
+  /// "free" (the seeded first scan) or "granted" (admin-approved extra).
+  source     String    @default("free")
+  /// Reservation TTL; a reserved grant past this is lazily released on read.
+  expiresAt  DateTime?
+  reservedAt DateTime?
+  consumedAt DateTime?
+  releasedAt DateTime?
+  /// The SkinScan produced when this grant was consumed.
+  analysisId String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, state])
+  @@map("skin_entitlements")
+}
+
+/// "Request more scans" queue, approved by an admin.
+model SkinAccessRequest {
+  id           String    @id @default(cuid())
+  userId       String
+  status       String    @default("pending")
+  note         String?   @db.Text
+  reviewedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@map("skin_access_requests")
 }
 
 // ─────────────────────────────────────────────────────────────

@@ -134,6 +134,25 @@ export default async function DoctorEditPage({
               defaultValue={doctor?.location}
               placeholder="Bengaluru"
             />
+            <TextField
+              label="Phone"
+              name="phone"
+              defaultValue={doctor?.phone ?? ""}
+              placeholder="+91 98765 43210"
+            />
+            <TextField
+              label="Email"
+              name="email"
+              type="email"
+              defaultValue={doctor?.email ?? ""}
+              placeholder="clinic@example.com"
+            />
+            <TextField
+              label="Website"
+              name="website"
+              defaultValue={doctor?.website ?? ""}
+              placeholder="https://example.com"
+            />
           </div>
 
           <div className="mt-5 space-y-5">

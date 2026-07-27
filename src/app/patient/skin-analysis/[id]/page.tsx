@@ -59,8 +59,10 @@ export default async function SkinAnalysisDetailPage({
       .catch(() => {});
   }
 
+  // Only the real imported clinic contacts (they carry the neutral clinic
+  // avatar) — never the demo/seed doctors.
   const doctors = await prisma.doctor.findMany({
-    where: { isActive: true },
+    where: { isActive: true, image: "/brand/clinic-avatar.svg" },
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     select: {
       slug: true,
@@ -108,6 +110,13 @@ export default async function SkinAnalysisDetailPage({
           web chart, per-concern breakdown and a downloadable PDF.
         </div>
 
+        {/* Doctor recommendations — highlighted at the top. */}
+        {doctors.length > 0 && (
+          <div className="mb-6 rounded-2xl bg-gradient-to-br from-brand-50 to-teal-50 p-4 ring-1 ring-brand-100 sm:p-5">
+            <DoctorRecommendations doctors={doctors} />
+          </div>
+        )}
+
         <SkinResultView
           baseImage={summary.base_image ?? null}
           overall={summary.overall ?? null}
@@ -116,10 +125,6 @@ export default async function SkinAnalysisDetailPage({
           concerns={concerns}
           aiSummary={aiSummary}
         />
-
-        <div className="mt-10">
-          <DoctorRecommendations doctors={doctors} />
-        </div>
       </main>
     </>
   );

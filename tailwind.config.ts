@@ -76,6 +76,11 @@ const config: Config = {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(5px)" },
         },
+        // Scanning line sweeping down the skin-analyzer hero card.
+        scanline: {
+          "0%, 100%": { top: "8%" },
+          "50%": { top: "92%" },
+        },
       },
       animation: {
         "fade-in": "fade-in 0.6s ease-out both",
@@ -84,6 +89,7 @@ const config: Config = {
         "scale-in": "scale-in 0.25s ease-out both",
         "scroll-dot": "scroll-dot 1.8s ease-in-out infinite",
         "scroll-nudge": "scroll-nudge 2s ease-in-out infinite",
+        scanline: "scanline 3.2s ease-in-out infinite",
       },
     },
   },

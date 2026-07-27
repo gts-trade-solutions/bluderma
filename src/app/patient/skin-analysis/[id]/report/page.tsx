@@ -53,8 +53,9 @@ export default async function SkinReportPage({
       .catch(() => {});
   }
 
+  // Only the real imported clinic contacts — never demo/seed doctors.
   const doctors = await prisma.doctor.findMany({
-    where: { isActive: true },
+    where: { isActive: true, image: "/brand/clinic-avatar.svg" },
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     select: {
       slug: true,

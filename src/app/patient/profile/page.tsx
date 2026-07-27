@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProfileView from "@/components/patient/ProfileView";
+import ProfileSkinSection from "@/components/skin/ProfileSkinSection";
 import { buildPatientMenu } from "@/lib/queries/nav";
+import { prisma } from "@/lib/prisma";
 import {
   getMyAnalyses,
   getMyAppointments,
@@ -18,10 +20,16 @@ export const metadata: Metadata = {
 
 export default async function ProfilePage() {
   const user = await requireUser("/patient/profile");
-  const [profile, analyses, appointments] = await Promise.all([
+  const [profile, analyses, appointments, skinScans] = await Promise.all([
     getMyProfile(user.id),
     getMyAnalyses(user.id, 5),
     getMyAppointments(user.id),
+    prisma.skinScan.findMany({
+      where: { userId: user.id, status: "done" },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: { id: true, createdAt: true, summary: true },
+    }),
   ]);
 
   const upcoming = appointments.filter(
@@ -37,6 +45,9 @@ export default async function ProfilePage() {
           analyses={analyses}
           appointmentCount={upcoming.length}
         />
+        <div className="mx-auto max-w-5xl px-4 pb-12">
+          <ProfileSkinSection scans={skinScans} />
+        </div>
       </main>
       <Footer />
     </>

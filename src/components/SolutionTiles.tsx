@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { type MouseEvent } from "react";
 import type { CategoryDTO } from "@/lib/queries/types";
 import SmartImage from "./SmartImage";
 
@@ -10,15 +13,37 @@ interface SolutionTilesProps {
 
 /**
  * Reference-style "exclusive solutions" grid — one tile per treatment
- * category, linking to that category section within the hub.
+ * category, deep-linking (via a `#cat-<slug>` hash) into the treatment browser,
+ * which reads the hash to pre-select that category's filter.
  */
 export default function SolutionTiles({ hubPath, tiles }: SolutionTilesProps) {
+  // The `#cat-<slug>` hash matches no element on the page, so Next's <Link>
+  // would scroll to the top ("hero"). For a same-page click we instead set the
+  // hash ourselves — that fires a real `hashchange` (which the router's
+  // pushState wouldn't), so TreatmentBrowser applies the filter and scrolls to
+  // the grid. The href is kept for SSR/new-tab/right-click, where the target
+  // page's mount effect handles the same thing.
+  const openCategory = (e: MouseEvent<HTMLAnchorElement>, slug: string) => {
+    // Let modified clicks (new tab/window) use the real href.
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    const target = `cat-${slug}`;
+    if (window.location.hash.replace(/^#/, "") === target) {
+      document
+        .getElementById("treatments")
+        ?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      window.location.hash = target;
+    }
+  };
+
   return (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {tiles.map((tile) => (
         <Link
           key={tile.slug}
           href={`${hubPath}#cat-${tile.slug}`}
+          onClick={(e) => openCategory(e, tile.slug)}
           className="group relative flex h-56 items-end overflow-hidden rounded-2xl shadow-card"
         >
           <SmartImage

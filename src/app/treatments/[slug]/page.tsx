@@ -241,6 +241,13 @@ export default async function TreatmentPage({
         </section>
       </div>
 
+      {/* Matched product solutions — surfaced mid-page so it's easy to reach
+          and interact with, rather than buried at the very bottom. */}
+      <RelatedProducts
+        products={products}
+        subheading={`Korean solutions our team can source for ${treatment.name.toLowerCase()}. Prices on enquiry.`}
+      />
+
       {/* Benefits — table band */}
       <section className="border-y border-slate-100 bg-gradient-to-br from-brand-50/60 to-teal-50/50 py-16 sm:py-20">
         <div className="container-page">
@@ -355,12 +362,6 @@ export default async function TreatmentPage({
           </div>
         </div>
       </section>
-
-      {/* Products that suit this treatment */}
-      <RelatedProducts
-        products={products}
-        subheading={`Korean solutions our team can source for ${treatment.name.toLowerCase()}. Prices on enquiry.`}
-      />
 
       {/* Related treatments */}
       <section className="border-t border-slate-100 bg-white py-16">

@@ -16,7 +16,9 @@ export const dynamic = "force-dynamic";
 export default function SkinAnalyzerPage() {
   return (
     <>
-      <Navbar role="patient" menu={buildPatientMenu()} />
+      {/* This is the client home page, so it carries the headline analyzer
+          call-to-action in the navbar. */}
+      <Navbar role="patient" menu={buildPatientMenu()} overlay />
       <main>
         <SkinAnalyzerLanding />
       </main>

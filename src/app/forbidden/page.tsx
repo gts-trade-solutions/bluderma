@@ -14,9 +14,9 @@ export default async function ForbiddenPage() {
   const home = user ? landingPathForRole(user.role) : "/";
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-white px-5 py-16">
+    <main className="flex min-h-screen items-center justify-center bg-white/[0.04] px-5 py-16">
       <div className="w-full max-w-md text-center">
-        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-500/[12%] text-rose-600">
           <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none">
             <path
               d="M12 9v4m0 3h.01M10.3 3.9 2.5 17.4A2 2 0 0 0 4.2 20.4h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"

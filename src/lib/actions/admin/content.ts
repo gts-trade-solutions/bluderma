@@ -156,12 +156,16 @@ export async function saveBanner(
     const d = parsed.data;
     const data = {
       placement: d.placement,
+      eyebrow: d.eyebrow || null,
       title: d.title || null,
+      titleAccent: d.titleAccent || null,
       subtitle: d.subtitle || null,
       ctaLabel: d.ctaLabel || null,
       ctaHref: d.ctaHref || null,
       mediaType: d.mediaType,
       mediaUrl: d.mediaUrl,
+      mediaUrlTablet: d.mediaUrlTablet,
+      mediaUrlMobile: d.mediaUrlMobile,
       posterUrl: d.posterUrl,
       sortOrder: d.sortOrder,
       isActive: d.isActive,

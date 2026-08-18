@@ -57,14 +57,14 @@ export function ratingForScore(score: number): Rating {
   if (score >= 85)
     return {
       label: "Excellent",
-      color: "text-teal-600",
+      color: "text-teal-300",
       bar: "bg-teal-500",
       ring: "text-teal-500",
     };
   if (score >= 70)
     return {
       label: "Good",
-      color: "text-brand-600",
+      color: "text-brand-300",
       bar: "bg-brand-500",
       ring: "text-brand-500",
     };

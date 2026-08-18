@@ -1,9 +1,17 @@
+/*
+ * NOT dead code, despite having no importer under src/.
+ *
+ * prisma/seed.ts reads `treatments` and `categoryOrder` from here to populate
+ * the Treatment table. The app itself reads the database, never this file —
+ * so an orphan sweep will flag it. Leave it.
+ */
 // -----------------------------------------------------------------------------
 // BluDerma treatment catalogue
 // Original reference content written for the BluDerma MVP.
-// Images are free-license Unsplash CDN URLs, each matched to the treatment.
-// Swap any `image` value for your own asset URL or a /public path at any time.
+// Images come from the reviewed local Korean client-image set.
 // -----------------------------------------------------------------------------
+
+import { IMG } from "./hubImages";
 
 export type TreatmentCategory =
   | "Injectables"
@@ -46,16 +54,13 @@ export interface Treatment {
   product: ProductSolution;
 }
 
-const U = (id: string) =>
-  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1400&q=80`;
-
 export const treatments: Treatment[] = [
   {
     slug: "skin-boosters",
     name: "Skin Boosters",
     category: "Injectables",
     tagline: "Micro-injected hydration for luminous, resilient skin",
-    image: U("photo-1552256031-811fa8f0a7b1"),
+    image: IMG.procInject,
     summary:
       "Injectable hyaluronic-acid micro-boosters that rehydrate the dermis from within, improving elasticity, fine lines and overall glow without adding volume.",
     concern:
@@ -103,7 +108,7 @@ export const treatments: Treatment[] = [
     name: "Anti-Wrinkle (Botulinum Toxin)",
     category: "Injectables",
     tagline: "Relax dynamic lines for a smoother, rested expression",
-    image: U("photo-1746708810803-722593e53772"),
+    image: IMG.procInject2,
     summary:
       "Precisely dosed botulinum toxin softens the muscle activity that drives expression lines on the forehead, between the brows and around the eyes.",
     concern:
@@ -151,7 +156,7 @@ export const treatments: Treatment[] = [
     name: "Dermal Fillers",
     category: "Injectables",
     tagline: "Restore volume, contour and structural support",
-    image: U("photo-1746017062285-13c77e29fc25"),
+    image: IMG.procFiller,
     summary:
       "Hyaluronic-acid fillers replace lost volume and redefine facial contours — cheeks, lips, chin, jawline and tear troughs — with immediate, reversible results.",
     concern:
@@ -199,7 +204,7 @@ export const treatments: Treatment[] = [
     name: "Laser Toning",
     category: "Laser & Energy",
     tagline: "Even tone, refined pores and controlled pigment clearance",
-    image: "https://images.pexels.com/photos/3985356/pexels-photo-3985356.jpeg?auto=compress&cs=tinysrgb&w=1400",
+    image: IMG.procLaserFace,
     summary:
       "Low-fluence Q-switched laser sessions gently break down excess melanin and stimulate remodelling for brighter, more even-toned skin with minimal downtime.",
     concern:
@@ -247,7 +252,7 @@ export const treatments: Treatment[] = [
     name: "Thread Lift",
     category: "Lifting & Contouring",
     tagline: "Non-surgical lift with absorbable suspension threads",
-    image: "https://images.pexels.com/photos/3762410/pexels-photo-3762410.jpeg?auto=compress&cs=tinysrgb&w=1400",
+    image: IMG.procInject3,
     summary:
       "Absorbable PDO/PLLA threads are placed under the skin to reposition mild sagging and stimulate fresh collagen along their path for a subtle, natural lift.",
     concern:
@@ -295,7 +300,7 @@ export const treatments: Treatment[] = [
     name: "Chemical Peels",
     category: "Peels & Resurfacing",
     tagline: "Controlled exfoliation for clarity, tone and texture",
-    image: U("photo-1713085085470-fba013d67e65"),
+    image: IMG.procPeel,
     summary:
       "Medical-grade acid formulations remove damaged surface layers to reveal smoother, brighter skin and treat acne, pigmentation and early ageing.",
     concern:
@@ -343,7 +348,7 @@ export const treatments: Treatment[] = [
     name: "PRP Hair Restoration",
     category: "Hair Restoration",
     tagline: "Regenerative platelet therapy for thinning hair",
-    image: "https://images.pexels.com/photos/28994388/pexels-photo-28994388.jpeg?auto=compress&cs=tinysrgb&w=1400",
+    image: IMG.hair1,
     summary:
       "Platelet-rich plasma from the patient's own blood is injected into the scalp to strengthen weakening follicles, reduce shedding and improve density.",
     concern:
@@ -391,7 +396,7 @@ export const treatments: Treatment[] = [
     name: "Pigmentation Treatment",
     category: "Skin Health",
     tagline: "Targeted clearance of spots, patches and dark marks",
-    image: U("photo-1616394584738-fc6e612e71b9"),
+    image: IMG.pairPigmentA,
     summary:
       "A combination approach — topicals, peels and laser — that lightens sunspots, freckles and post-inflammatory marks while protecting against recurrence.",
     concern:
@@ -439,7 +444,7 @@ export const treatments: Treatment[] = [
     name: "Acne Treatment",
     category: "Skin Health",
     tagline: "Clear active breakouts and prevent scarring",
-    image: U("photo-1728727267814-792db55ce678"),
+    image: IMG.acne1,
     summary:
       "A staged medical programme combining topicals, in-clinic procedures and lifestyle guidance to control active acne and limit long-term scarring.",
     concern:
@@ -487,7 +492,7 @@ export const treatments: Treatment[] = [
     name: "Rosacea Management",
     category: "Skin Health",
     tagline: "Calm redness, flushing and reactive skin",
-    image: U("photo-1648203276014-20f97ba1f817"),
+    image: IMG.portraitCalm,
     summary:
       "A gentle, evidence-based plan to reduce facial redness, visible vessels and flushing while rebuilding a resilient, comfortable skin barrier.",
     concern:
@@ -535,7 +540,7 @@ export const treatments: Treatment[] = [
     name: "Microneedling",
     category: "Peels & Resurfacing",
     tagline: "Collagen induction for texture, scars and pores",
-    image: "https://images.pexels.com/photos/5042629/pexels-photo-5042629.jpeg?auto=compress&cs=tinysrgb&w=1400",
+    image: IMG.procMicro,
     summary:
       "Fine needles create controlled micro-channels that trigger natural collagen production, improving acne scars, texture, pores and fine lines.",
     concern:
@@ -583,7 +588,7 @@ export const treatments: Treatment[] = [
     name: "HIFU Skin Tightening",
     category: "Lifting & Contouring",
     tagline: "Focused ultrasound lifting from the inside out",
-    image: U("photo-1598300195863-ac4191dd32a2"),
+    image: IMG.procDevice,
     summary:
       "High-intensity focused ultrasound delivers energy to deep support layers, tightening and subtly lifting skin on the face and neck with no surgery.",
     concern:
@@ -631,7 +636,7 @@ export const treatments: Treatment[] = [
     name: "Scar Revision",
     category: "Peels & Resurfacing",
     tagline: "Soften, flatten and blend scars of all kinds",
-    image: U("photo-1552693673-1bf958298935"),
+    image: IMG.pairScarA,
     summary:
       "A tailored combination of laser, microneedling, injectables and topicals to improve the colour, texture and contour of acne, surgical and injury scars.",
     concern:
@@ -679,7 +684,7 @@ export const treatments: Treatment[] = [
     name: "Melasma Treatment",
     category: "Skin Health",
     tagline: "Gentle, sustained control of stubborn facial pigment",
-    image: U("photo-1693004927824-f2623bbedc8b"),
+    image: IMG.pairPigmentA,
     summary:
       "A conservative, maintenance-focused programme to lighten melasma patches while avoiding the aggressive treatment that can make this condition worse.",
     concern:
@@ -727,7 +732,7 @@ export const treatments: Treatment[] = [
     name: "Anti-Ageing Program",
     category: "Skin Health",
     tagline: "A structured, whole-face rejuvenation roadmap",
-    image: U("photo-1570172619644-dfd03ed5d881"),
+    image: IMG.portraitSmile,
     summary:
       "A physician-designed programme that sequences prevention, correction and maintenance — combining skincare, injectables and energy devices into one plan.",
     concern:

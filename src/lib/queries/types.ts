@@ -47,6 +47,23 @@ export interface CategoryDTO {
 
 export type ConsultModeDTO = "clinic" | "video";
 
+/**
+ * One location a doctor practises at, as the booking UI needs it.
+ *
+ * The fee lives here rather than on the doctor because branches of the same
+ * practice charge differently — and until the booking form sent a clinicId,
+ * every booking silently landed at the primary clinic and was charged the
+ * primary clinic's fee whatever the client thought they had picked.
+ */
+export interface DoctorClinicDTO {
+  id: string;
+  name: string;
+  area: string;
+  city: string;
+  feeInr: number;
+  isPrimary: boolean;
+}
+
 export interface DoctorDTO {
   /** The public handle — what used to be Doctor.id in the seed data. */
   id: string;
@@ -67,6 +84,9 @@ export interface DoctorDTO {
   about: string;
   verified: boolean;
   general?: boolean;
+  /** Every location this doctor consults at. Empty for a directory-only
+   *  record that has not been migrated onto clinics yet. */
+  clinics: DoctorClinicDTO[];
 }
 
 export interface ConcernDTO {
@@ -104,11 +124,17 @@ export interface FaqDTO {
 
 export interface BannerDTO {
   id: string;
+  eyebrow: string | null;
   title: string | null;
+  /** Second title line, rendered with the brand gradient accent. */
+  titleAccent: string | null;
   subtitle: string | null;
   ctaLabel: string | null;
   ctaHref: string | null;
   mediaType: "IMAGE" | "VIDEO";
+  /** Desktop artwork; tablet/mobile fall back to it when unset. */
   mediaUrl: string;
+  mediaUrlTablet: string | null;
+  mediaUrlMobile: string | null;
   posterUrl: string | null;
 }

@@ -12,12 +12,15 @@ export default function EntityForm({
   action,
   submitLabel = "Save changes",
   cancelHref,
+  cancelLabel = "Cancel",
   redirectTo,
   children,
 }: {
   action: (formData: FormData) => Promise<AdminResult>;
   submitLabel?: string;
   cancelHref: string;
+  /** "Cancel" is wrong in a wizard, where the secondary link goes back a step. */
+  cancelLabel?: string;
   /** Where to go after a successful save. Stays put when omitted. */
   redirectTo?: string;
   children: React.ReactNode;
@@ -67,7 +70,7 @@ export default function EntityForm({
             {pending ? "Saving…" : submitLabel}
           </button>
           <Link href={cancelHref} className="btn-ghost">
-            Cancel
+            {cancelLabel}
           </Link>
         </div>
       </form>

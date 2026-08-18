@@ -139,12 +139,16 @@ export const faqSchema = z.object({
 
 export const bannerSchema = z.object({
   placement: z.enum(["HOME_HERO", "DOCTOR_HERO", "PATIENT_HERO"]),
+  eyebrow: z.string().trim().max(120).optional().or(z.literal("")),
   title: z.string().trim().max(200).optional().or(z.literal("")),
+  titleAccent: z.string().trim().max(200).optional().or(z.literal("")),
   subtitle: z.string().trim().max(500).optional().or(z.literal("")),
   ctaLabel: z.string().trim().max(80).optional().or(z.literal("")),
   ctaHref: z.string().trim().max(500).optional().or(z.literal("")),
   mediaType: z.enum(["IMAGE", "VIDEO"]),
   mediaUrl: z.string().trim().min(1, "A media URL is required.").max(2000),
+  mediaUrlTablet: optionalUrl,
+  mediaUrlMobile: optionalUrl,
   posterUrl: optionalUrl,
   sortOrder: z.coerce.number().int().min(0).max(9999).default(0),
   isActive: checkbox,
@@ -198,3 +202,107 @@ export type DoctorInput = z.infer<typeof doctorSchema>;
 export type TestimonialInput = z.infer<typeof testimonialSchema>;
 export type FaqInput = z.infer<typeof faqSchema>;
 export type BannerInput = z.infer<typeof bannerSchema>;
+
+/* --------------------- Patient records (admin-entered) -------------------- */
+
+const userId = z.string().trim().min(1, "Pick a client.");
+
+export const prescriptionSchema = z.object({
+  userId,
+  doctorId: z.string().trim().optional().or(z.literal("")),
+  title: z.string().trim().min(1, "A title is required.").max(200),
+  notes: z.string().trim().max(4000).optional().or(z.literal("")),
+  fileUrl: optionalUrl,
+  /// YYYY-MM-DD from a date input; blank means today.
+  issuedAt: z.string().trim().optional().or(z.literal("")),
+});
+
+export const purchaseSchema = z.object({
+  userId,
+  itemName: z.string().trim().min(1, "An item name is required.").max(200),
+  quantity: z.coerce.number().int().min(1).max(999).default(1),
+  status: z.enum(["PLACED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"]),
+  amountInr: z.coerce.number().int().min(0).max(10_000_000).optional(),
+  orderedAt: z.string().trim().optional().or(z.literal("")),
+});
+
+export const discountGrantSchema = z
+  .object({
+    userId,
+    code: z.string().trim().min(1, "A code is required.").max(60),
+    description: z.string().trim().min(1, "Say what the discount is for.").max(300),
+    percentOff: z.coerce.number().int().min(0).max(100).optional(),
+    amountOffInr: z.coerce.number().int().min(0).max(10_000_000).optional(),
+    expiresAt: z.string().trim().optional().or(z.literal("")),
+    /// Ticking this stamps the redemption; the profile only lists used grants.
+    markUsed: checkbox,
+  })
+  .refine((d) => (d.percentOff ?? 0) > 0 || (d.amountOffInr ?? 0) > 0, {
+    message: "Set either a percentage or an amount.",
+    path: ["percentOff"],
+  });
+
+export type PrescriptionInput = z.infer<typeof prescriptionSchema>;
+export type PurchaseInput = z.infer<typeof purchaseSchema>;
+export type DiscountGrantInput = z.infer<typeof discountGrantSchema>;
+
+/* ------------------- Client-facing catalogue (explore hub) ---------------- */
+
+export const hubCategorySchema = z.object({
+  slug,
+  name: z.string().trim().min(1, "A name is required.").max(120),
+  icon: z.string().trim().min(1, "Pick an icon.").max(60),
+  blurb: z.string().trim().min(1, "A short line is required.").max(300),
+  intro: z.string().trim().min(1, "An intro is required.").max(2000),
+  image: z.string().trim().min(1, "An image is required.").max(2000),
+  tint: z.string().trim().min(1, "A tint is required.").max(200),
+  sortOrder: z.coerce.number().int().min(0).max(9999).default(0),
+  isActive: checkbox,
+});
+
+export const hubTreatmentSchema = z.object({
+  categoryId: z.string().trim().min(1, "Pick a category."),
+  slug,
+  name: z.string().trim().min(1, "A name is required.").max(160),
+  blurb: z.string().trim().min(1, "A blurb is required.").max(500),
+  image: z.string().trim().min(1, "An image is required.").max(2000),
+  beforeImage: z.string().trim().max(2000).optional().or(z.literal("")),
+  afterImage: z.string().trim().max(2000).optional().or(z.literal("")),
+  /// Session/downtime micro-fact. Never a price — the catalogue is price-free.
+  meta: z.string().trim().max(120).optional().or(z.literal("")),
+  sortOrder: z.coerce.number().int().min(0).max(9999).default(0),
+  isActive: checkbox,
+});
+
+/**
+ * The clinical protocol. Repeating groups are entered one per line with `|`
+ * between the parts — far kinder to an editor than a JSON textarea, and it
+ * round-trips cleanly because neither options nor questions contain pipes.
+ *
+ *   options: Name | what differs | popular
+ *   faqs:    Question | Answer
+ */
+export const protocolSchema = z.object({
+  categoryId: z.string().trim().min(1),
+  recommendedFor: lines,
+  summary: z.string().trim().min(1, "A summary is required.").max(4000),
+  howItWorks: z.string().trim().min(1, "Describe how it works.").max(4000),
+  options: lines,
+  areas: lines,
+  duration: z.string().trim().min(1).max(160),
+  anaesthesia: z.string().trim().min(1).max(160),
+  sessions: z.string().trim().min(1).max(160),
+  downtime: z.string().trim().min(1).max(160),
+  results: z.string().trim().min(1).max(1000),
+  includes: lines,
+  excludes: lines,
+  precautions: lines,
+  sideEffects: lines,
+  notSuitable: lines,
+  aftercare: lines,
+  faqs: lines,
+});
+
+export type HubCategoryInput = z.infer<typeof hubCategorySchema>;
+export type HubTreatmentInput = z.infer<typeof hubTreatmentSchema>;
+export type ProtocolInput = z.infer<typeof protocolSchema>;

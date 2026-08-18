@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 
 import LegalDoc from "@/components/LegalDoc";
@@ -35,7 +36,7 @@ export default function TermsPage() {
         doctor&ndash;patient relationship. Decisions about any treatment must be
         made in person with a qualified, licensed practitioner who has assessed
         the individual. See our{" "}
-        <a href="/precautions">Precautions</a> page before considering any
+        <Link href="/precautions">Precautions</Link> page before considering any
         procedure.
       </p>
 

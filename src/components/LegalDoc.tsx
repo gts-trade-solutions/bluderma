@@ -17,7 +17,7 @@ export default function LegalDoc({
 }) {
   return (
     <article className="container-page max-w-3xl py-14 sm:py-20">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-600">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-300">
         BluDerma
       </p>
       <h1 className="mt-2 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
@@ -37,16 +37,16 @@ export default function LegalDoc({
           [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5
           [&_ol]:mt-3 [&_ol]:list-decimal [&_ol]:space-y-1.5 [&_ol]:pl-5
           [&_strong]:font-semibold [&_strong]:text-ink
-          [&_a]:font-medium [&_a]:text-brand-600 [&_a:hover]:text-brand-700"
+          [&_a]:font-medium [&_a]:text-brand-300 [&_a:hover]:text-brand-200"
       >
         {children}
       </div>
 
-      <p className="mt-12 border-t border-slate-200 pt-6 text-sm text-ink-muted">
+      <p className="mt-12 border-t border-white/10 pt-6 text-sm text-ink-muted">
         Questions about this page? Email{" "}
         <a
           href="mailto:info@bluderma.kr"
-          className="font-medium text-brand-600 hover:text-brand-700"
+          className="font-medium text-brand-300 hover:text-brand-200"
         >
           info@bluderma.kr
         </a>

@@ -10,7 +10,15 @@ import { prisma } from "@/lib/prisma";
  */
 export async function audit(input: {
   userId: string;
-  action: "create" | "update" | "delete" | "publish" | "unpublish" | "reorder";
+  action:
+    | "create"
+    | "update"
+    | "delete"
+    | "publish"
+    | "unpublish"
+    | "reorder"
+    /** Money returned to a client — its own verb, not an update. */
+    | "refund";
   entity: string;
   entityId?: string | null;
   before?: unknown;

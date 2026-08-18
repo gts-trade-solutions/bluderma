@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
-import { requireAdminUser, ForbiddenError } from "@/lib/admin/guard";
+import { getCurrentUser } from "@/lib/session";
 import {
   ALLOWED_IMAGE_TYPES,
   ALLOWED_VIDEO_TYPES,
@@ -20,15 +20,39 @@ const schema = z.object({
   folder: z.string().trim().max(60).default("uploads"),
 });
 
-export async function POST(req: Request) {
-  try {
-    // Presigned URLs grant write access to the bucket — admin only.
-    await requireAdminUser();
-  } catch (err) {
-    const status = err instanceof ForbiddenError ? 403 : 500;
-    return NextResponse.json({ error: "Not permitted." }, { status });
-  }
+/**
+ * The only folders a doctor may write to.
+ *
+ * Presigned URLs grant real write access to the bucket, and this endpoint used
+ * to be admin-only for that reason. Doctors now upload their own portrait,
+ * registration document and clinic photographs during onboarding, so they need
+ * it — but scoped. Without this allow-list a practitioner could overwrite
+ * `treatments/` and change the catalogue imagery for the whole site.
+ *
+ * The key is built from the folder plus random bytes (see buildKey), so within
+ * an allowed folder they can only ever create, never clobber.
+ */
+const DOCTOR_FOLDERS = new Set(["doctors", "clinics", "cases", "credentials"]);
 
+/**
+ * Admins upload anywhere. Doctors upload to their own folders.
+ *
+ * Deliberately keyed on the ROLE rather than on having an approved Doctor row:
+ * the uploads happen during onboarding, before there is anything to approve.
+ */
+async function authorizeUpload(
+  folder: string
+): Promise<{ ok: true; userId: string } | { ok: false; status: number; error: string }> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, status: 403, error: "Not permitted." };
+  if (user.role === "ADMIN") return { ok: true, userId: user.id };
+  if (user.role === "DOCTOR" && DOCTOR_FOLDERS.has(folder)) {
+    return { ok: true, userId: user.id };
+  }
+  return { ok: false, status: 403, error: "Not permitted." };
+}
+
+export async function POST(req: Request) {
   if (!isConfigured()) {
     return NextResponse.json(
       {
@@ -52,6 +76,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
   const { filename, contentType, size, folder } = parsed.data;
+
+  // Authorised against the folder, so it has to happen after the body parses.
+  const auth = await authorizeUpload(folder);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
 
   const isImage = ALLOWED_IMAGE_TYPES.includes(contentType);
   const isVideo = ALLOWED_VIDEO_TYPES.includes(contentType);
@@ -84,13 +114,6 @@ export async function POST(req: Request) {
  * media_assets rather than existing only in the bucket.
  */
 export async function PUT(req: Request) {
-  let user;
-  try {
-    user = await requireAdminUser();
-  } catch {
-    return NextResponse.json({ error: "Not permitted." }, { status: 403 });
-  }
-
   const recordSchema = z.object({
     key: z.string().trim().min(1).max(500),
     url: z.string().trim().min(1).max(2000),
@@ -105,6 +128,15 @@ export async function PUT(req: Request) {
   }
   const d = parsed.data;
 
+  // The key already encodes the folder the POST authorised, so re-checking it
+  // here is what stops a doctor registering an asset under someone else's
+  // prefix by calling this half of the flow directly.
+  const folder = d.key.split("/")[0] ?? "";
+  const auth = await authorizeUpload(folder);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   await prisma.mediaAsset.upsert({
     where: { storageKey: d.key },
     create: {
@@ -114,7 +146,7 @@ export async function PUT(req: Request) {
       sizeBytes: d.sizeBytes ?? null,
       alt: d.alt ?? null,
       mediaType: d.mimeType.startsWith("video/") ? "VIDEO" : "IMAGE",
-      uploadedById: user.id,
+      uploadedById: auth.userId,
     },
     update: { url: d.url, alt: d.alt ?? null },
   });

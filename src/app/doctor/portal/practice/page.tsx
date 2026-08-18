@@ -1,0 +1,111 @@
+import Link from "next/link";
+
+import { EmptyState, PageHeader } from "@/components/admin/ui";
+import ClinicsStep from "@/components/doctor/join/ClinicsStep";
+import HoursStep from "@/components/doctor/join/HoursStep";
+import PracticeSettings from "@/components/doctor/PracticeSettings";
+import { getOwnDoctor } from "@/lib/doctor/guard";
+import { prisma } from "@/lib/prisma";
+
+export const metadata = { title: "My practice" };
+export const dynamic = "force-dynamic";
+
+/**
+ * Locations, hours and diary settings, after onboarding.
+ *
+ * Deliberately the same two components the wizard uses. A doctor who opens a
+ * new branch a year later should meet the form they already know, and there is
+ * no second implementation to drift out of step with the first.
+ */
+export default async function PracticePage() {
+  const owner = await getOwnDoctor();
+  if (!owner) {
+    return (
+      <EmptyState
+        title="No doctor profile linked"
+        description="Your account is not connected to a practice yet."
+        action={
+          <Link href="/doctor/join" className="btn-primary">
+            Complete onboarding
+          </Link>
+        }
+      />
+    );
+  }
+
+  const doctor = await prisma.doctor.findUniqueOrThrow({
+    where: { id: owner.doctorId },
+    select: {
+      travelBufferMin: true,
+      requiresApproval: true,
+      priorityHoldPerDay: true,
+      clinics: {
+        orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }],
+        select: {
+          feeInr: true,
+          isPrimary: true,
+          clinic: {
+            select: {
+              id: true,
+              name: true,
+              addressLine1: true,
+              addressLine2: true,
+              area: true,
+              city: true,
+              state: true,
+              pincode: true,
+              phone: true,
+              colorKey: true,
+              photos: { select: { kind: true, url: true } },
+              facilities: { orderBy: { sortOrder: "asc" }, select: { name: true } },
+            },
+          },
+        },
+      },
+      availability: {
+        orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
+        select: {
+          id: true,
+          clinicId: true,
+          dayOfWeek: true,
+          startTime: true,
+          endTime: true,
+          slotMinutes: true,
+        },
+      },
+    },
+  });
+
+  return (
+    <div className="space-y-10">
+      <section>
+        <PageHeader
+          title="Where you practise"
+          description="Every location you consult at. Clients search by area, so keep the addresses right."
+        />
+        <ClinicsStep doctor={doctor} mode="manage" />
+      </section>
+
+      <section>
+        <PageHeader
+          title="Your hours"
+          description="Sessions per location. A booking at one clinic blocks the same time at every other — you can only be in one place."
+        />
+        <HoursStep doctor={doctor} mode="manage" />
+      </section>
+
+      <section>
+        <PageHeader
+          title="Diary settings"
+          description="How bookings reach you, and how much room you leave between locations."
+        />
+        <PracticeSettings
+          travelBufferMin={doctor.travelBufferMin}
+          requiresApproval={doctor.requiresApproval}
+          priorityHoldPerDay={doctor.priorityHoldPerDay}
+          multiClinic={doctor.clinics.length > 1}
+        />
+      </section>
+    </div>
+  );
+}

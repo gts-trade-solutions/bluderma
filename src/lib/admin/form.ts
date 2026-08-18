@@ -79,7 +79,8 @@ export async function runAction(
  * affected paths are revalidated.
  */
 export function revalidateContent(paths: string[] = []) {
-  for (const p of ["/doctor", "/patient/skin-analyzer", ...paths]) {
+  // "/" carries the DB-driven hero carousel and offer banner.
+  for (const p of ["/", "/patient/explore", "/patient/skin-analyzer", ...paths]) {
     revalidatePath(p);
   }
 }

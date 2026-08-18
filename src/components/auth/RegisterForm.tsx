@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { getSession, signIn } from "next-auth/react";
+import { postLoginPath } from "@/lib/roles";
+import { useState } from "react";
 
 import Field from "./Field";
 import FormAlert from "./FormAlert";
-import { ROLE_STORAGE_KEY, isExperience, type Experience } from "@/lib/roles";
 
 interface FormState {
   name: string;
@@ -28,23 +28,26 @@ const EMPTY: FormState = {
 export default function RegisterForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const callbackUrl = params.get("callbackUrl") || "/patient/skin-analyzer";
+  /**
+   * Which kind of account this creates.
+   *
+   * It used to be hardcoded to "patient". Everyone who registered got a client
+   * account, including clinicians who had arrived from the practitioner side —
+   * which is why they then saw "You are signed in as a client" on /doctor/join
+   * and had no way forward.
+   *
+   * Practitioners normally register through /doctor/join, which creates the
+   * DOCTOR account and the draft practice together. `?as=doctor` exists so a
+   * link from the clinician side can never land somebody on the wrong form.
+   */
+  const isDoctor = params.get("as") === "doctor";
+  const callbackUrl =
+    params.get("callbackUrl") || (isDoctor ? "/doctor/join" : "/patient/explore");
 
   const [form, setForm] = useState<FormState>(EMPTY);
   const [fields, setFields] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-
-  // Pre-select the account type from the experience chosen at the entry modal.
-  const [accountType, setAccountType] = useState<Experience>("patient");
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(ROLE_STORAGE_KEY);
-      if (isExperience(stored)) setAccountType(stored);
-    } catch {
-      /* storage unavailable — default to patient */
-    }
-  }, []);
 
   const set = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -60,7 +63,10 @@ export default function RegisterForm() {
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, accountType }),
+      body: JSON.stringify({
+        ...form,
+        accountType: isDoctor ? "doctor" : "patient",
+      }),
     });
     const data = await res.json().catch(() => ({}));
 
@@ -79,71 +85,37 @@ export default function RegisterForm() {
     });
 
     if (!signInRes || signInRes.error) {
-      router.push("/login?registered=1");
+      router.push(
+        `/login?registered=1&callbackUrl=${encodeURIComponent(callbackUrl)}`
+      );
       return;
     }
 
-    // Land doctors in the clinical hub, patients in their tools.
-    const landing =
-      accountType === "doctor" ? "/doctor" : callbackUrl;
-    router.push(landing);
+    // Route by what the account actually is, not by where they came from.
+    // A callbackUrl of /doctor/portal on a client account would otherwise push
+    // them straight into a middleware bounce to /forbidden.
+    const session = await getSession();
+    router.push(
+      session?.user?.role
+        ? postLoginPath(callbackUrl, session.user.role)
+        : callbackUrl
+    );
     router.refresh();
   }
 
   return (
     <>
       <h1 className="text-2xl font-bold text-ink sm:text-3xl">
-        Create your account
+        {isDoctor ? "Create your clinician account" : "Create your account"}
       </h1>
       <p className="mt-2 text-sm text-ink-muted">
-        Save your skin analyses, book appointments and track your progress over
-        time.
+        {isDoctor
+          ? "This is a practitioner account — separate from a client account. You will list your practice next."
+          : "Save your skin analyses, book appointments and track your progress over time."}
       </p>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-4">
         {error && <FormAlert>{error}</FormAlert>}
-
-        {/* Account type — pre-selected from the entry-modal choice */}
-        <div>
-          <span className="mb-1.5 block text-sm font-semibold text-ink">
-            I&apos;m registering as
-          </span>
-          <div className="grid grid-cols-2 gap-2.5">
-            {(["doctor", "patient"] as Experience[]).map((t) => {
-              const selected = accountType === t;
-              return (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setAccountType(t)}
-                  aria-pressed={selected}
-                  disabled={busy}
-                  className={`flex items-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-semibold transition ${
-                    selected
-                      ? "border-brand-500 bg-brand-50 text-brand-700"
-                      : "border-slate-200 text-ink-soft hover:border-brand-300"
-                  }`}
-                >
-                  <span
-                    className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
-                      selected ? "border-brand-600 bg-brand-600" : "border-slate-300"
-                    }`}
-                  >
-                    {selected && (
-                      <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                    )}
-                  </span>
-                  {t === "doctor" ? "A Doctor" : "Consultation"}
-                </button>
-              );
-            })}
-          </div>
-          <p className="mt-1.5 text-xs text-ink-muted">
-            {accountType === "doctor"
-              ? "Clinical reference, protocols and product ordering."
-              : "Treatment guides, skin analysis and clinic enquiries."}
-          </p>
-        </div>
 
         <Field
           label="Full name"

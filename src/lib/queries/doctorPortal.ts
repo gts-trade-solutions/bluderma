@@ -41,6 +41,9 @@ export async function getDoctorAppointments(
       mode: true,
       status: true,
       feeAtBooking: true,
+      /// Null for guest bookings — there is then no profile to file a
+      /// prescription into, and the portal says so instead of failing.
+      patientUserId: true,
       patientName: true,
       patientPhone: true,
       patientEmail: true,

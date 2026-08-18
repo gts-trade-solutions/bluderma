@@ -33,10 +33,10 @@ const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
         ref={ref}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
-        className={`w-full rounded-xl border px-4 py-2.5 text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:ring-2 focus:ring-offset-0 disabled:bg-slate-50 disabled:text-ink-muted ${
+        className={`w-full rounded-xl border px-4 py-2.5 text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:ring-2 focus:ring-offset-0 disabled:bg-white/[0.02] disabled:text-ink-muted ${
           error
-            ? "border-rose-300 bg-rose-50/40 focus:border-rose-400 focus:ring-rose-100"
-            : "border-slate-200 bg-white focus:border-brand-400 focus:ring-brand-100"
+            ? "border-rose-400/50 bg-rose-500/10 focus:border-rose-400 focus:ring-rose-500/20"
+            : "border-white/15 bg-white/[0.04] focus:border-brand-400 focus:ring-brand-500/25"
         } ${className}`}
       />
       {error ? (

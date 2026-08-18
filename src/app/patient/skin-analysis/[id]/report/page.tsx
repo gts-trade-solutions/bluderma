@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_DOCTOR_WHERE } from "@/lib/queries/doctorAccess";
 import { SkinReport } from "@/components/skin/SkinReport";
 import { generateSkinSummary } from "@/lib/integrations/skinSummary";
 import {
@@ -53,9 +54,9 @@ export default async function SkinReportPage({
       .catch(() => {});
   }
 
-  // Only the real imported clinic contacts — never demo/seed doctors.
+  // Every approved practitioner — see the note on the analysis page.
   const doctors = await prisma.doctor.findMany({
-    where: { isActive: true, image: "/brand/clinic-avatar.svg" },
+    where: PUBLIC_DOCTOR_WHERE,
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     select: {
       slug: true,

@@ -31,7 +31,7 @@ export default async function SkinAnalysisListPage() {
         </div>
 
         {scans.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center">
+          <div className="rounded-2xl border border-dashed border-white/20 p-10 text-center">
             <p className="text-ink-muted">You haven&apos;t run a scan yet.</p>
             <Link
               href="/patient/skin-analyzer"
@@ -56,7 +56,7 @@ export default async function SkinAnalysisListPage() {
                 <li key={s.id}>
                   <Link
                     href={`/patient/skin-analysis/${s.id}`}
-                    className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 p-4 transition hover:border-brand-300 hover:shadow-soft"
+                    className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 p-4 transition hover:border-brand-300/50 hover:shadow-soft"
                   >
                     <div>
                       <div className="font-semibold text-ink">

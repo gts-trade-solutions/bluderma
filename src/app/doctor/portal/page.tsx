@@ -1,185 +1,200 @@
 import Link from "next/link";
+import { AppointmentStatus, ApprovalState } from "@prisma/client";
 
-import { requireRole } from "@/lib/session";
-import {
-  getDoctorAppointments,
-  getDoctorForUser,
-  getDoctorStats,
-} from "@/lib/queries/doctorPortal";
-import AppointmentActions from "@/components/doctor/AppointmentActions";
-import { EmptyState, Pill, Table, Td, Th } from "@/components/admin/ui";
+import { EmptyState, PageHeader, Pill } from "@/components/admin/ui";
+import DayList from "@/components/doctor/DayList";
+import { getOwnDoctor } from "@/lib/doctor/guard";
+import { prisma } from "@/lib/prisma";
+import { membersAmong } from "@/lib/subscription/membership";
+import { swatchFor } from "@/components/doctor/clinicColors";
 
-export const metadata = { title: "Appointments" };
+export const metadata = { title: "Today" };
 export const dynamic = "force-dynamic";
 
-const DATETIME = new Intl.DateTimeFormat("en-GB", {
-  weekday: "short",
-  day: "numeric",
-  month: "short",
-  hour: "2-digit",
-  minute: "2-digit",
-  timeZone: "UTC",
-});
+/**
+ * The doctor's landing screen: what is happening today, and what needs them.
+ *
+ * Replaced the original portal home, which was a flat 200-row table of every
+ * appointment ever. That answered "what have I got" but not "what do I do
+ * now", which is the only question anybody opens a portal to ask.
+ */
 
-const STATUS_TONE: Record<string, "success" | "warn" | "danger" | "neutral"> = {
-  CONFIRMED: "success",
-  PENDING: "warn",
-  CANCELLED: "danger",
-  COMPLETED: "neutral",
-  NO_SHOW: "neutral",
-};
+/** Today in clinic wall-clock terms — see the contract in availability.ts. */
+function clinicTodayBounds() {
+  const now = new Date(Date.now() + 330 * 60_000);
+  const from = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+  return { from, to: new Date(from.getTime() + 86_400_000), seed: from.toISOString().slice(0, 10) };
+}
 
-export default async function DoctorPortalPage({
-  searchParams,
-}: {
-  searchParams: { when?: string };
-}) {
-  const user = await requireRole(["DOCTOR", "ADMIN"], "/doctor/portal");
-  const doctor = await getDoctorForUser(user.id);
-
-  // An admin, or a doctor whose login isn't linked to a directory record yet.
-  if (!doctor) {
+export default async function DoctorPortalHome() {
+  const owner = await getOwnDoctor();
+  if (!owner) {
     return (
       <EmptyState
         title="No doctor profile linked"
-        description="Your account isn't connected to a doctor record. An administrator links these from the Doctors admin."
+        description="Your account is not connected to a practice yet. Finish your onboarding, or ask an administrator to link you."
         action={
-          user.role === "ADMIN" ? (
-            <Link href="/admin/doctors" className="btn-primary">
-              Go to Doctors admin
-            </Link>
-          ) : undefined
+          <Link href="/doctor/join" className="btn-primary">
+            Complete onboarding
+          </Link>
         }
       />
     );
   }
 
-  const when = searchParams.when === "past" ? "past" : "upcoming";
-  const [appointments, stats] = await Promise.all([
-    getDoctorAppointments(doctor.id, when),
-    getDoctorStats(doctor.id),
+  const { from, to, seed } = clinicTodayBounds();
+  const now = new Date();
+
+  const [today, awaiting, upcoming, completed, clinics] = await Promise.all([
+    prisma.appointment.findMany({
+      where: { doctorId: owner.doctorId, scheduledAt: { gte: from, lt: to } },
+      orderBy: { scheduledAt: "asc" },
+      select: {
+        id: true,
+        scheduledAt: true,
+        durationMin: true,
+        status: true,
+        approvalState: true,
+        mode: true,
+        patientName: true,
+        patientPhone: true,
+        patientUserId: true,
+        isPriority: true,
+        meetingUrl: true,
+        clinic: { select: { name: true, area: true, colorKey: true } },
+      },
+    }),
+    prisma.appointment.count({
+      where: {
+        doctorId: owner.doctorId,
+        approvalState: ApprovalState.AWAITING_DOCTOR,
+        status: { not: AppointmentStatus.CANCELLED },
+        scheduledAt: { gte: now },
+      },
+    }),
+    prisma.appointment.count({
+      where: {
+        doctorId: owner.doctorId,
+        status: { in: [AppointmentStatus.CONFIRMED, AppointmentStatus.PENDING] },
+        scheduledAt: { gte: now },
+      },
+    }),
+    prisma.appointment.count({
+      where: { doctorId: owner.doctorId, status: AppointmentStatus.COMPLETED },
+    }),
+    prisma.doctorClinic.count({
+      where: { doctorId: owner.doctorId, isActive: true, clinic: { isActive: true } },
+    }),
   ]);
+
+  const members = await membersAmong(today.map((a) => a.patientUserId));
+
+  const rows = today.map((a) => ({
+    id: a.id,
+    time: a.scheduledAt.toISOString().slice(11, 16),
+    durationMin: a.durationMin || 30,
+    status: a.status,
+    approvalState: a.approvalState,
+    mode: a.mode,
+    patientName: a.patientName,
+    patientPhone: a.patientPhone,
+    isPriority: a.isPriority,
+    isMember: a.patientUserId ? members.has(a.patientUserId) : false,
+    hasMeetingUrl: Boolean(a.meetingUrl),
+    clinicName: a.clinic?.name ?? null,
+    clinicArea: a.clinic?.area ?? null,
+    clinicDot: swatchFor(a.clinic?.colorKey).dot,
+  }));
+
+  const live = rows.filter((r) => r.status !== "CANCELLED");
 
   return (
     <>
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-ink">
-            Welcome, {doctor.name}
-          </h1>
-          <p className="mt-1 text-sm text-ink-muted">
-            {doctor.clinic}, {doctor.location}
-          </p>
-        </div>
+      <PageHeader
+        title={`Good day, ${owner.name.split(" ")[0]}`}
+        description={
+          live.length === 0
+            ? "Nothing booked for today."
+            : `${live.length} ${live.length === 1 ? "appointment" : "appointments"} today.`
+        }
+        action={
+          <Link href="/doctor/portal/calendar" className="btn-primary">
+            Open calendar
+          </Link>
+        }
+      />
+
+      {awaiting > 0 && (
+        <Link
+          href="/doctor/portal/requests"
+          className="mb-6 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 transition hover:bg-amber-100"
+        >
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-amber-500 text-sm font-bold text-white">
+            {awaiting}
+          </span>
+          <span className="text-sm text-amber-900">
+            <strong className="font-bold">
+              {awaiting === 1 ? "One booking needs" : `${awaiting} bookings need`} your
+              confirmation.
+            </strong>{" "}
+            The {awaiting === 1 ? "slot is" : "slots are"} held until you decide.
+          </span>
+          <span className="ml-auto shrink-0 text-sm font-bold text-amber-800">Review →</span>
+        </Link>
+      )}
+
+      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+        <Stat label="Upcoming" value={upcoming} />
+        <Stat label="Completed" value={completed} />
+        <Stat
+          label={clinics === 1 ? "Location" : "Locations"}
+          value={clinics}
+          href="/doctor/portal/practice"
+        />
       </div>
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-3">
-        <Stat label="Upcoming" value={stats.upcoming} />
-        <Stat label="Completed" value={stats.completed} />
-        <Stat label="Cancelled" value={stats.cancelled} />
-      </div>
-
-      <div className="mb-5 flex gap-2">
-        <Tab href="/doctor/portal?when=upcoming" active={when === "upcoming"} label="Upcoming" />
-        <Tab href="/doctor/portal?when=past" active={when === "past"} label="Past" />
-      </div>
-
-      {appointments.length === 0 ? (
+      {rows.length === 0 ? (
         <EmptyState
-          title={`No ${when} appointments`}
-          description={
-            when === "upcoming"
-              ? "When someone books a consultation with you, they'll appear here."
-              : "Past appointments will be listed here once they've happened."
+          title="Nothing booked today"
+          description="When a client books you, it appears here and on your calendar."
+          action={
+            <Link href="/doctor/portal/calendar" className="btn-primary">
+              See the week
+            </Link>
           }
         />
       ) : (
-        <Table>
-          <thead>
-            <tr>
-              <Th className="w-44">When</Th>
-              <Th>Consultation</Th>
-              <Th className="w-24">Mode</Th>
-              <Th className="w-28">Status</Th>
-              <Th className="w-44 text-right">Actions</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {appointments.map((a) => (
-              <tr key={a.id} className="hover:bg-slate-50/60">
-                <Td className="font-medium text-ink-soft">
-                  {DATETIME.format(a.scheduledAt)}
-                </Td>
-                <Td>
-                  <div className="font-semibold text-ink">{a.patientName}</div>
-                  <div className="text-xs text-ink-muted">
-                    {a.patientPhone ?? a.patientEmail ?? "—"}
-                  </div>
-                  {a.notes && (
-                    <div className="mt-1 text-xs italic text-ink-muted">
-                      “{a.notes}”
-                    </div>
-                  )}
-                </Td>
-                <Td className="text-xs text-ink-soft">
-                  {a.mode === "VIDEO" ? "Video" : "In-clinic"}
-                </Td>
-                <Td>
-                  <Pill tone={STATUS_TONE[a.status] ?? "neutral"}>
-                    {a.status.charAt(0) + a.status.slice(1).toLowerCase()}
-                  </Pill>
-                </Td>
-                <Td>
-                  {a.status === "CONFIRMED" || a.status === "PENDING" ? (
-                    <AppointmentActions
-                      appointmentId={a.id}
-                      upcoming={when === "upcoming"}
-                    />
-                  ) : (
-                    <span className="block text-right text-xs text-ink-muted">
-                      —
-                    </span>
-                  )}
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+        <DayList rows={rows} daySeed={seed} />
       )}
     </>
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-        {label}
-      </p>
-      <p className="mt-1 text-3xl font-extrabold text-ink">{value}</p>
-    </div>
-  );
-}
-
-function Tab({
-  href,
-  active,
+function Stat({
   label,
+  value,
+  href,
 }: {
-  href: string;
-  active: boolean;
   label: string;
+  value: number;
+  href?: string;
 }) {
-  return (
+  const inner = (
+    <>
+      <p className="text-3xl font-bold text-ink">{value}</p>
+      <p className="mt-0.5 text-sm text-ink-muted">{label}</p>
+    </>
+  );
+  return href ? (
     <Link
       href={href}
-      className={`inline-flex items-center rounded-full border px-4 py-1.5 text-sm font-medium transition ${
-        active
-          ? "border-brand-600 bg-brand-600 text-white"
-          : "border-slate-200 bg-white text-ink-soft hover:border-brand-300"
-      }`}
+      className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-slate-300"
     >
-      {label}
+      {inner}
     </Link>
+  ) : (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5">{inner}</div>
   );
 }

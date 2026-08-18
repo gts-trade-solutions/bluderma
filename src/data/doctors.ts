@@ -2,6 +2,15 @@ import { MetricKey, seedFromString } from "./skin";
 
 export type ConsultMode = "clinic" | "video";
 
+export interface DoctorClinic {
+  id: string;
+  name: string;
+  area: string;
+  city: string;
+  feeInr: number;
+  isPrimary: boolean;
+}
+
 export interface Doctor {
   id: string;
   name: string;
@@ -22,10 +31,20 @@ export interface Doctor {
   about: string;
   verified: boolean;
   general?: boolean;
+  /** Locations this doctor consults at. The booking form must send the
+   *  chosen one — see the note on DoctorClinicDTO. */
+  clinics?: DoctorClinic[];
 }
 
-const U = (id: string) =>
-  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=600&q=80`;
+const DOCTOR_IMAGE = {
+  female1: "/images/korean/doctor-female-1-v2.png",
+  female2: "/images/korean/doctor-female-2-v2.png",
+  female3: "/images/korean/doctor-female-3-v2.png",
+  female4: "/images/korean/doctor-female-4-v2.png",
+  male1: "/images/korean/doctor-male-1-v2.png",
+  male2: "/images/korean/doctor-male-2-v2.png",
+  male3: "/images/korean/doctor-male-3-v2.png",
+} as const;
 
 export const doctors: Doctor[] = [
   {
@@ -39,7 +58,7 @@ export const doctors: Doctor[] = [
     experienceYears: 12,
     clinic: "BluDerma Skin Studio",
     location: "Bengaluru",
-    image: U("photo-1659353888906-adb3e0041693"),
+    image: DOCTOR_IMAGE.female3,
     fee: 800,
     languages: ["English", "Hindi", "Kannada"],
     services: ["Acne treatment", "Chemical peels", "Microneedling"],
@@ -59,7 +78,7 @@ export const doctors: Doctor[] = [
     experienceYears: 15,
     clinic: "BluDerma Aesthetics",
     location: "Mumbai",
-    image: U("photo-1637059824899-a441006a6875"),
+    image: DOCTOR_IMAGE.male1,
     fee: 1200,
     languages: ["English", "Hindi", "Marathi"],
     services: ["Anti-wrinkle", "Dermal fillers", "Thread lift", "HIFU"],
@@ -79,7 +98,7 @@ export const doctors: Doctor[] = [
     experienceYears: 10,
     clinic: "BluDerma Skin Studio",
     location: "Delhi",
-    image: U("photo-1673865641073-4479f93a7776"),
+    image: DOCTOR_IMAGE.female4,
     fee: 900,
     languages: ["English", "Hindi", "Punjabi"],
     services: ["Pigmentation", "Laser toning", "Melasma care"],
@@ -99,7 +118,7 @@ export const doctors: Doctor[] = [
     experienceYears: 9,
     clinic: "BluDerma Care",
     location: "Pune",
-    image: U("photo-1645066928295-2506defde470"),
+    image: DOCTOR_IMAGE.male2,
     fee: 700,
     languages: ["English", "Hindi"],
     services: ["Skin boosters", "Barrier repair", "Rosacea care"],
@@ -119,7 +138,7 @@ export const doctors: Doctor[] = [
     experienceYears: 11,
     clinic: "BluDerma Aesthetics",
     location: "Chennai",
-    image: U("photo-1643297654416-05795d62e39c"),
+    image: DOCTOR_IMAGE.female1,
     fee: 1000,
     languages: ["English", "Tamil", "Hindi"],
     services: ["Under-eye fillers", "PRP", "Skin boosters"],
@@ -139,7 +158,7 @@ export const doctors: Doctor[] = [
     experienceYears: 13,
     clinic: "BluDerma Laser Centre",
     location: "Hyderabad",
-    image: U("photo-1594824476967-48c8b964273f"),
+    image: DOCTOR_IMAGE.female2,
     fee: 1100,
     languages: ["English", "Telugu", "Hindi"],
     services: ["Laser resurfacing", "Scar revision", "Pore refining"],
@@ -167,7 +186,7 @@ export const doctors: Doctor[] = [
     experienceYears: 18,
     clinic: "BluDerma Care",
     location: "Bengaluru",
-    image: U("photo-1642975967602-653d378f3b5b"),
+    image: DOCTOR_IMAGE.male3,
     fee: 600,
     languages: ["English", "Hindi", "Kannada", "Telugu"],
     services: ["Full skin check", "Acne", "General dermatology"],
@@ -183,8 +202,12 @@ export const doctors: Doctor[] = [
  * Suggest doctors for a given analysis: rank by how well their focus overlaps
  * the patient's top concerns, always keeping a general dermatologist on the list.
  */
-export function suggestDoctors(topConcerns: MetricKey[], count = 4): Doctor[] {
-  const scored = doctors.map((d) => {
+export function suggestDoctors(
+  pool: Doctor[],
+  topConcerns: MetricKey[],
+  count = 4
+): Doctor[] {
+  const scored = pool.map((d) => {
     let score = 0;
     topConcerns.forEach((c, i) => {
       if (d.focus.includes(c)) score += (topConcerns.length - i) * 2;
@@ -196,7 +219,7 @@ export function suggestDoctors(topConcerns: MetricKey[], count = 4): Doctor[] {
   scored.sort((a, b) => b.score - a.score);
   const picked = scored.slice(0, count).map((s) => s.d);
   if (!picked.some((d) => d.general)) {
-    const gen = doctors.find((d) => d.general);
+    const gen = pool.find((d) => d.general);
     if (gen) picked[picked.length - 1] = gen;
   }
   return picked;
@@ -213,31 +236,25 @@ export interface Slot {
   period: "Morning" | "Afternoon" | "Evening";
 }
 
-/** Deterministic slot list for a doctor on a given day (9:00–18:00, 30-min). */
-export function slotsForDoctor(doctorId: string, daySeed: string): Slot[] {
-  const seed = seedFromString(doctorId + "|" + daySeed);
-  const slots: Slot[] = [];
-  let n = seed;
-  const next = () => {
-    n = (n * 1103515245 + 12345) & 0x7fffffff;
-    return n / 0x7fffffff;
-  };
-  for (let h = 9; h <= 17; h++) {
-    for (const m of [0, 30]) {
-      const label = `${String(h).padStart(2, "0")}:${m === 0 ? "00" : "30"}`;
-      const period: Slot["period"] =
-        h < 12 ? "Morning" : h < 16 ? "Afternoon" : "Evening";
-      slots.push({ label, available: next() > 0.42, period });
-    }
-  }
-  return slots;
-}
-
-/** First available slot label for a doctor on a day, or null. */
-export function nextAvailable(doctorId: string, daySeed: string): string | null {
-  const s = slotsForDoctor(doctorId, daySeed).find((x) => x.available);
-  return s ? s.label : null;
-}
+/*
+ * slotsForDoctor() and nextAvailable() were removed on 19 Aug 2026.
+ *
+ * They were a seeded linear-congruential generator: a hash of the doctor's
+ * slug decided which half-hour slots were "free". Those invented times were
+ * rendered on doctor cards as "Free today", and on the intake result and the
+ * analyzer as "Next free 10:30" — against real practitioners, immediately
+ * before a real booking. Doctors with no calendar at all showed availability;
+ * doctors who were completely free showed "Fully booked today".
+ *
+ * Real availability comes from the doctor's DoctorAvailability rows, minus
+ * bookings, time off and travel between clinics:
+ *
+ *   one doctor, one day   ->  GET /api/doctors/[slug]/slots
+ *   many doctors at once  ->  GET /api/doctors/availability  (useDoctorAvailability)
+ *
+ * The `Slot` interface above is kept because the real API returns the same
+ * shape. Do not reintroduce a generator here.
+ */
 
 export interface DayOption {
   daySeed: string;

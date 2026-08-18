@@ -8,19 +8,24 @@ import PatientHeader from "./PatientHeader";
 import {
   CalendarClock,
   Video,
+  House,
   Building2,
   MapPin,
   X,
   CheckCircle2,
   ScanFace,
 } from "@/components/icons";
-import { cancelAppointment } from "@/lib/actions/booking";
+import AppointmentControls, {
+  type AppointmentPolicyView,
+} from "./AppointmentControls";
 import type { AppointmentDTO } from "@/lib/queries/patient";
 
 export default function AppointmentsView({
   appointments,
+  policies,
 }: {
   appointments: AppointmentDTO[];
+  policies: Record<string, AppointmentPolicyView>;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -32,17 +37,7 @@ export default function AppointmentsView({
   );
   const past = appointments.filter((a) => a.isPast || a.status === "CANCELLED");
 
-  function onCancel(id: string) {
-    setBusyId(id);
-    setError(null);
-    startTransition(async () => {
-      const res = await cancelAppointment(id);
-      if (!res.ok) setError(res.error ?? "Could not cancel that appointment.");
-      // The server action revalidates; refresh pulls the new list.
-      else router.refresh();
-      setBusyId(null);
-    });
-  }
+
 
   return (
     <>
@@ -56,7 +51,7 @@ export default function AppointmentsView({
         {error && (
           <div
             role="alert"
-            className="mb-6 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700 ring-1 ring-inset ring-rose-100"
+            className="mb-6 rounded-xl bg-rose-500/[12%] px-4 py-3 text-sm text-rose-300 ring-1 ring-inset ring-rose-100"
           >
             {error}
           </div>
@@ -85,8 +80,7 @@ export default function AppointmentsView({
                   <ApptCard
                     key={a.id}
                     appt={a}
-                    busy={pending && busyId === a.id}
-                    onCancel={() => onCancel(a.id)}
+                    policy={policies[a.id]}
                   />
                 ))}
               </div>
@@ -114,30 +108,29 @@ export default function AppointmentsView({
 const STATUS_STYLE: Record<string, { label: string; className: string }> = {
   CONFIRMED: {
     label: "Confirmed",
-    className: "bg-emerald-50 text-emerald-700",
+    className: "bg-emerald-400/[12%] text-emerald-700",
   },
-  PENDING: { label: "Pending", className: "bg-amber-50 text-amber-700" },
-  CANCELLED: { label: "Cancelled", className: "bg-rose-50 text-rose-700" },
-  COMPLETED: { label: "Completed", className: "bg-slate-100 text-slate-600" },
-  NO_SHOW: { label: "Missed", className: "bg-slate-100 text-slate-600" },
+  PENDING: { label: "Pending", className: "bg-amber-400/[12%] text-amber-300" },
+  CANCELLED: { label: "Cancelled", className: "bg-rose-500/[12%] text-rose-300" },
+  COMPLETED: { label: "Completed", className: "bg-white/10 text-white/60" },
+  NO_SHOW: { label: "Missed", className: "bg-white/10 text-white/60" },
 };
 
 function ApptCard({
   appt,
-  busy,
-  onCancel,
+  policy,
 }: {
   appt: AppointmentDTO;
-  busy?: boolean;
-  onCancel?: () => void;
+  policy?: AppointmentPolicyView;
 }) {
-  const Mode = appt.mode === "video" ? Video : Building2;
+  const Mode =
+    appt.mode === "video" ? Video : appt.mode === "home" ? House : Building2;
   const status = STATUS_STYLE[appt.status] ?? STATUS_STYLE.CONFIRMED;
   const dimmed = appt.status === "CANCELLED" || appt.isPast;
 
   return (
     <div
-      className={`flex flex-col gap-4 rounded-2xl border bg-white p-5 shadow-sm sm:flex-row sm:items-center ${
+      className={`flex flex-col gap-4 rounded-2xl border bg-white/[0.04] p-5 shadow-sm sm:flex-row sm:items-center ${
         dimmed ? "opacity-70" : ""
       }`}
     >
@@ -165,12 +158,18 @@ function ApptCard({
           </span>
           <span className="inline-flex items-center gap-1">
             <Mode className="h-3.5 w-3.5" />
-            {appt.mode === "video" ? "Video consult" : "In-clinic"}
+            {appt.mode === "video"
+              ? "Video consult"
+              : appt.mode === "home"
+              ? "Home visit"
+              : "In-clinic"}
           </span>
           <span className="inline-flex items-center gap-1">
             <MapPin className="h-3.5 w-3.5" />
             {appt.mode === "video"
               ? "Link on confirmation"
+              : appt.mode === "home"
+              ? "At your address — the clinic will call to confirm"
               : `${appt.clinic}, ${appt.location}`}
           </span>
         </div>
@@ -179,14 +178,24 @@ function ApptCard({
         </p>
       </div>
 
-      {onCancel && (
-        <button
-          onClick={onCancel}
-          disabled={busy}
-          className="inline-flex items-center gap-1.5 self-start rounded-full border border-rose-200 px-4 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-50 disabled:opacity-50 sm:self-center"
-        >
-          <X className="h-4 w-4" /> {busy ? "Cancelling…" : "Cancel"}
-        </button>
+      {/* What a client may do with this booking — reschedule, cancel under
+          the clinic's policy, or rate the doctor once it has happened. */}
+      {policy && (
+        <div className="shrink-0 sm:w-64">
+          <AppointmentControls
+            appointmentId={appt.id}
+            doctorSlug={appt.doctorSlug}
+            doctorName={appt.doctorName}
+            policy={policy}
+            canReview={appt.isPast && appt.status !== "CANCELLED"}
+            reviewed={appt.hasReview}
+          />
+          {appt.cancellationFeeInr > 0 && (
+            <p className="mt-1 text-right text-[11px] text-rose-300">
+              Late-cancellation fee: ₹{appt.cancellationFeeInr}
+            </p>
+          )}
+        </div>
       )}
     </div>
   );
@@ -194,8 +203,8 @@ function ApptCard({
 
 function EmptyState() {
   return (
-    <div className="rounded-3xl border border-dashed bg-white p-10 text-center">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-500">
+    <div className="rounded-3xl border border-dashed bg-white/[0.04] p-10 text-center">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-rose-400/15 text-rose-500">
         <CalendarClock className="h-7 w-7" />
       </div>
       <h3 className="mt-4 text-lg font-bold text-ink">No appointments yet</h3>

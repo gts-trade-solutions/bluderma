@@ -34,9 +34,9 @@ type Band = {
 function band(score01: number): Band {
   const p = score01 * 100;
   if (p >= 75)
-    return { key: "good", label: "Good", hex: "#16a34a", bg: "bg-emerald-100", text: "text-emerald-600", bar: "bg-emerald-500" };
+    return { key: "good", label: "Good", hex: "#16a34a", bg: "bg-emerald-400/15", text: "text-emerald-600", bar: "bg-emerald-500" };
   if (p >= 50)
-    return { key: "fair", label: "Fair", hex: "#f59e0b", bg: "bg-amber-100", text: "text-amber-600", bar: "bg-amber-500" };
+    return { key: "fair", label: "Fair", hex: "#f59e0b", bg: "bg-amber-400/15", text: "text-amber-600", bar: "bg-amber-500" };
   return { key: "needs", label: "Needs care", hex: "#dc2626", bg: "bg-red-100", text: "text-red-600", bar: "bg-red-500" };
 }
 
@@ -114,18 +114,18 @@ export function SkinProfileDashboard({
       {/* Header + score scale */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-base font-bold uppercase tracking-wide text-slate-800">
+          <h2 className="text-base font-bold uppercase tracking-wide text-white">
             Skin Profile Analysis
           </h2>
           <p className="text-xs text-ink-muted">
             Your personalised skin health overview
           </p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+        <div className="rounded-lg bg-white/[0.04] ring-1 ring-white/10 px-3 py-2">
           <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
             Score scale (0–100)
           </div>
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-medium text-slate-600">
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-medium text-white/60">
             <ScaleDot hex="#dc2626" label="0–50 Needs care" />
             <ScaleDot hex="#f59e0b" label="50–75 Fair" />
             <ScaleDot hex="#16a34a" label="75–100 Good" />
@@ -134,7 +134,7 @@ export function SkinProfileDashboard({
       </div>
 
       {/* Radar */}
-      <div className="break-inside-avoid rounded-xl border border-slate-200 bg-white p-2 sm:p-4">
+      <div className="break-inside-avoid rounded-xl bg-white/[0.04] ring-1 ring-white/10 p-2 sm:p-4">
         <div className="h-[440px] w-full sm:h-[560px] print:h-[470px]">
           {mounted ? (
             <ResponsiveContainer width="100%" height="100%">
@@ -167,8 +167,8 @@ export function SkinProfileDashboard({
 
       {/* gauge · key insights · top strengths */}
       <div className="mt-5 grid gap-4 lg:grid-cols-3 print:grid-cols-3">
-        <div className="break-inside-avoid rounded-xl border border-slate-200 bg-white p-4 text-center">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">
+        <div className="break-inside-avoid rounded-xl bg-white/[0.04] ring-1 ring-white/10 p-4 text-center">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-white/75">
             Overall skin health score
           </div>
           <div className="mx-auto mt-3 h-32 w-32">
@@ -183,26 +183,26 @@ export function SkinProfileDashboard({
           </p>
         </div>
 
-        <div className="break-inside-avoid space-y-3 rounded-xl border border-slate-200 bg-white p-4">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">
+        <div className="break-inside-avoid space-y-3 rounded-xl bg-white/[0.04] ring-1 ring-white/10 p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-white/75">
             Key insights
           </div>
           <InsightGroup icon={ArrowDown} tone={{ bg: "bg-red-100", text: "text-red-600" }} title="Needs attention" hint="scores below 50" names={needs.map((c) => concernLabel(c.key))} />
-          <InsightGroup icon={Minus} tone={{ bg: "bg-amber-100", text: "text-amber-600" }} title="Moderate areas" hint="scores 50–75" names={moderate.map((c) => concernLabel(c.key))} />
-          <InsightGroup icon={ArrowUp} tone={{ bg: "bg-emerald-100", text: "text-emerald-600" }} title="Doing well" hint="scores above 75" names={good.map((c) => concernLabel(c.key))} />
+          <InsightGroup icon={Minus} tone={{ bg: "bg-amber-400/15", text: "text-amber-600" }} title="Moderate areas" hint="scores 50–75" names={moderate.map((c) => concernLabel(c.key))} />
+          <InsightGroup icon={ArrowUp} tone={{ bg: "bg-emerald-400/15", text: "text-emerald-600" }} title="Doing well" hint="scores above 75" names={good.map((c) => concernLabel(c.key))} />
         </div>
 
         {topStrengths.length ? (
-          <div className="break-inside-avoid rounded-xl border border-slate-200 bg-white p-4">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
+          <div className="break-inside-avoid rounded-xl bg-white/[0.04] ring-1 ring-white/10 p-4">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-white/75">
               Top strengths
             </div>
             <div className="space-y-2">
               {topStrengths.map((c) => {
                 const b = band(c.score);
                 return (
-                  <div key={c.key} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
-                    <span className="truncate text-xs font-medium text-slate-700">
+                  <div key={c.key} className="flex items-center justify-between rounded-lg bg-white/[0.04] px-3 py-2">
+                    <span className="truncate text-xs font-medium text-white/75">
                       {concernLabel(c.key)}
                     </span>
                     <span className={`shrink-0 text-sm font-bold ${b.text}`}>
@@ -220,8 +220,8 @@ export function SkinProfileDashboard({
       {/* Band recommendation cards */}
       <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4 print:grid-cols-4">
         <BandCard icon={HeartPulse} tone={{ bg: "bg-red-100", text: "text-red-600", bar: "bg-red-500" }} title="Needs care" count={needs.length} body="Focus on treating these concerns with targeted care." />
-        <BandCard icon={Droplet} tone={{ bg: "bg-amber-100", text: "text-amber-600", bar: "bg-amber-500" }} title="Fair" count={moderate.length} body="Maintain a consistent routine to keep improving." />
-        <BandCard icon={ShieldCheck} tone={{ bg: "bg-emerald-100", text: "text-emerald-600", bar: "bg-emerald-500" }} title="Good" count={good.length} body="Keep it up — these areas are in great shape." />
+        <BandCard icon={Droplet} tone={{ bg: "bg-amber-400/15", text: "text-amber-600", bar: "bg-amber-500" }} title="Fair" count={moderate.length} body="Maintain a consistent routine to keep improving." />
+        <BandCard icon={ShieldCheck} tone={{ bg: "bg-emerald-400/15", text: "text-emerald-600", bar: "bg-emerald-500" }} title="Good" count={good.length} body="Keep it up — these areas are in great shape." />
         <BandCard icon={Sparkles} tone={{ bg: "bg-blue-100", text: "text-blue-600", bar: "bg-blue-500" }} title="Daily essentials" count={null} body="Cleanse, hydrate, protect and nourish every day." />
       </div>
     </div>
@@ -277,7 +277,7 @@ function InsightGroup({
         <Icon className={`h-3.5 w-3.5 ${tone.text}`} />
       </span>
       <div className="min-w-0">
-        <div className="text-xs font-semibold text-slate-800">{title}</div>
+        <div className="text-xs font-semibold text-white">{title}</div>
         <div className="text-[11px] leading-snug text-ink-muted">{names.join(", ")}</div>
         <div className="text-[10px] text-slate-400">({hint})</div>
       </div>
@@ -299,7 +299,7 @@ function BandCard({
   body: string;
 }) {
   return (
-    <div className="flex break-inside-avoid flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
+    <div className="flex break-inside-avoid flex-col overflow-hidden rounded-xl bg-white/[0.04] ring-1 ring-white/10">
       <div className="flex-1 p-3">
         <div className="flex items-center gap-2">
           <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${tone.bg}`}>

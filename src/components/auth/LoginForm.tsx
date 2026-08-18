@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { getSession, signIn } from "next-auth/react";
+import { postLoginPath } from "@/lib/roles";
+import { useState } from "react";
 
 import Field from "./Field";
 import FormAlert from "./FormAlert";
-import { ROLE_STORAGE_KEY, isExperience, type Experience } from "@/lib/roles";
 
 /** NextAuth surfaces failures as opaque codes; translate the ones users hit. */
 const ERROR_COPY: Record<string, string> = {
@@ -36,17 +36,6 @@ export default function LoginForm() {
   const justReset = params.get("reset") === "1";
   const justRegistered = params.get("registered") === "1";
 
-  // Reflect the experience chosen at the entry modal.
-  const [experience, setExperience] = useState<Experience | null>(null);
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(ROLE_STORAGE_KEY);
-      if (isExperience(stored)) setExperience(stored);
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -64,8 +53,24 @@ export default function LoginForm() {
       return;
     }
 
-    // The server decides where each role lands; "/" resolves it.
-    router.push(callbackUrl);
+    // Where they end up depends on what the account actually is.
+    //
+    // The callbackUrl used to be followed blindly. A client who clicked
+    // "Doctor sign in" on the practitioner home page was therefore pushed to
+    // /doctor/portal, where middleware bounced them to /forbidden — a dead
+    // end reached by following a button that looked right. postLoginPath
+    // keeps the callbackUrl when the role can open it and falls back to that
+    // role's own landing page when it cannot.
+    const session = await getSession();
+    const role = session?.user?.role;
+    if (!role) {
+      setError(ERROR_COPY.CredentialsSignin);
+      setBusy(false);
+      return;
+    }
+
+    const target = postLoginPath(callbackUrl, role);
+    router.push(target);
     router.refresh();
   }
 
@@ -73,16 +78,9 @@ export default function LoginForm() {
     <>
       <h1 className="text-2xl font-bold text-ink sm:text-3xl">Welcome back</h1>
       <p className="mt-2 text-sm text-ink-muted">
-        Sign in to book appointments, track your skin analysis and access
-        clinical content.
+        Sign in to book appointments and track your skin analysis over
+        time.
       </p>
-
-      {experience && (
-        <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-brand-50 px-3.5 py-1.5 text-sm font-medium text-brand-700 ring-1 ring-inset ring-brand-100">
-          <span className="h-2 w-2 rounded-full bg-brand-500" />
-          Continuing {experience === "doctor" ? "as a Doctor" : "for a consultation"}
-        </div>
-      )}
 
       <form onSubmit={onSubmit} className="mt-8 space-y-4">
         {justRegistered && (
@@ -139,16 +137,16 @@ export default function LoginForm() {
       <p className="mt-8 text-center text-sm text-ink-muted">
         New to BluDerma?{" "}
         <Link
-          href={`/register?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+          href={`/register?callbackUrl=${encodeURIComponent(callbackUrl)}${
+            // Someone who arrived here heading for the practitioner side needs
+            // a PRACTITIONER account. Without this the "create an account"
+            // link silently made them a client, and /doctor/join then told
+            // them so with nothing they could do about it.
+            callbackUrl.startsWith("/doctor") ? "&as=doctor" : ""
+          }`}
           className="font-semibold text-brand-600 hover:text-brand-700"
         >
           Create an account
-        </Link>
-      </p>
-      <p className="mt-3 text-center text-xs text-ink-muted">
-        Are you a clinician?{" "}
-        <Link href="/doctor" className="font-semibold text-teal-600 hover:text-teal-700">
-          Request clinical access
         </Link>
       </p>
     </>

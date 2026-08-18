@@ -150,6 +150,17 @@ export function Video(p: IconProps) {
   );
 }
 
+/** Home visits — the clinician travels to the patient. */
+export function House(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M3 10.5 12 3l9 7.5" />
+      <path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5" />
+      <path d="M10 21v-6h4v6" />
+    </Svg>
+  );
+}
+
 export function Building2(p: IconProps) {
   return (
     <Svg {...p}>

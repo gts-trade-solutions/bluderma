@@ -12,11 +12,14 @@ export default function NotFound() {
         for may have moved.
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
-        <Link href="/doctor" className="btn bg-white text-brand-700 hover:bg-brand-50">
-          Doctor hub
+        <Link
+          href="/patient/explore"
+          className="btn bg-white text-brand-900 hover:bg-teal-50"
+        >
+          Back to the hub
         </Link>
-        <Link href="/patient" className="btn-outline-white">
-          Client hub
+        <Link href="/patient/skin-analyzer" className="btn-outline-white">
+          Analyse my skin
         </Link>
       </div>
     </main>

@@ -17,9 +17,32 @@ export const ADMIN_NAV: { section: string; items: NavItem[] }[] = [
   {
     section: "Operations",
     items: [
+      { label: "Doctor applications", href: "/admin/doctor-applications", icon: "user" },
       { label: "Enquiries", href: "/admin/enquiries", icon: "inbox" },
       { label: "Appointments", href: "/admin/appointments", icon: "calendar" },
+      { label: "Payments", href: "/admin/payments", icon: "card" },
+      { label: "Reviews", href: "/admin/reviews", icon: "quote" },
+      { label: "Intake leads", href: "/admin/intake", icon: "inbox" },
       { label: "Skin requests", href: "/admin/skin-requests", icon: "sparkle" },
+      { label: "Skin credits", href: "/admin/skin-credits", icon: "sparkle" },
+    ],
+  },
+  {
+    section: "Client records",
+    items: [
+      { label: "Prescriptions", href: "/admin/prescriptions", icon: "script" },
+      { label: "Purchases", href: "/admin/purchases", icon: "box" },
+      { label: "Discounts", href: "/admin/discounts", icon: "tag" },
+    ],
+  },
+  {
+    section: "Client catalogue",
+    items: [
+      { label: "Hub categories", href: "/admin/hub-categories", icon: "folder" },
+      { label: "Hub treatments", href: "/admin/hub-treatments", icon: "list" },
+      { label: "Deals", href: "/admin/deals", icon: "tag" },
+      { label: "Promos", href: "/admin/promos", icon: "image" },
+      { label: "Concerns", href: "/admin/concerns", icon: "help" },
     ],
   },
   {
@@ -38,12 +61,16 @@ export const ADMIN_NAV: { section: string; items: NavItem[] }[] = [
     section: "Configuration",
     items: [
       { label: "Users", href: "/admin/users", icon: "users" },
+      { label: "Email log", href: "/admin/email-log", icon: "inbox" },
       { label: "Site settings", href: "/admin/settings", icon: "cog" },
     ],
   },
 ];
 
 const PATHS: Record<string, string> = {
+  card: "M3 10h18M5 6h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Zm2 9h4",
+  script: "M8 4h9a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6m2-2a2 2 0 0 0-2 2m2-2v2H6m4 4h6m-6 4h6m-6 4h3",
+  tag: "M3 12V5a2 2 0 0 1 2-2h7l9 9-9 9-9-9Zm5-5.5h.01",
   grid: "M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z",
   list: "M4 6h16M4 12h16M4 18h10",
   folder: "M4 7a1 1 0 0 1 1-1h4l2 2h8a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7Z",

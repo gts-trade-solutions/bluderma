@@ -70,14 +70,14 @@ export function scoreRating(score01: number): Rating {
       label: "Good",
       textClass: "text-emerald-600",
       barClass: "bg-emerald-500",
-      chipClass: "bg-emerald-100 text-emerald-800",
+      chipClass: "bg-emerald-400/15 text-emerald-800",
     };
   if (pct >= 50)
     return {
       label: "Fair",
       textClass: "text-amber-600",
       barClass: "bg-amber-500",
-      chipClass: "bg-amber-100 text-amber-800",
+      chipClass: "bg-amber-400/15 text-amber-800",
     };
   return {
     label: "Needs care",

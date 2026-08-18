@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getCurrentUser } from "@/lib/session";
 import { getAccessState } from "@/lib/integrations/skinEntitlement";
+import { getScanOffer } from "@/lib/integrations/skinPricing";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -15,7 +16,10 @@ export async function GET() {
 
   const state = await getAccessState(user.id);
 
-  const [last, pendingRequest] = await Promise.all([
+  // What this client would pay, so the entry page can offer the right thing
+  // rather than a button that fails when they press it.
+  const [offer, last, pendingRequest] = await Promise.all([
+    getScanOffer(user.id),
     prisma.skinScan.findFirst({
       where: { userId: user.id, status: "done" },
       orderBy: { createdAt: "desc" },
@@ -31,5 +35,6 @@ export async function GET() {
     state,
     lastAnalysisId: last?.id ?? null,
     pendingRequest: pendingRequest > 0,
+    offer,
   });
 }

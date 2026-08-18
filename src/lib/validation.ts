@@ -80,11 +80,17 @@ export const enquirySchema = z.object({
 
 export const bookingSchema = z.object({
   doctorSlug: z.string().trim().min(1),
+  /**
+   * Which of the doctor's locations. Optional: a single-clinic practitioner
+   * needs no choice, and older clients that predate multi-clinic booking send
+   * nothing, in which case the primary clinic is used.
+   */
+  clinicId: z.string().trim().max(40).optional().or(z.literal("")),
   /** YYYY-MM-DD */
   daySeed: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a valid date."),
   /** HH:MM, 24h */
   time: z.string().regex(/^\d{2}:\d{2}$/, "Pick a valid time."),
-  mode: z.enum(["clinic", "video"]),
+  mode: z.enum(["clinic", "video", "home"]),
   patientName: z.string().trim().min(2, "Enter your name.").max(120),
   patientPhone: z.string().trim().max(20).optional().or(z.literal("")),
   notes: z.string().trim().max(1000).optional().or(z.literal("")),

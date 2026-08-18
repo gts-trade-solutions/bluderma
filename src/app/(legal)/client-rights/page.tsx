@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 
 import LegalDoc from "@/components/LegalDoc";
@@ -36,7 +37,7 @@ export default function ClientRightsPage() {
       <p>
         You have the right to have your personal and health-related information
         handled confidentially and used only as described in our{" "}
-        <a href="/privacy">Privacy Policy</a>.
+        <Link href="/privacy">Privacy Policy</Link>.
       </p>
 
       <h3>Informed choice and consent</h3>
@@ -57,7 +58,7 @@ export default function ClientRightsPage() {
       <p>
         You have the right to view, correct or delete the personal information
         held in your BluDerma account. See the{" "}
-        <a href="/privacy">Privacy Policy</a> for how to make a request.
+        <Link href="/privacy">Privacy Policy</Link> for how to make a request.
       </p>
 
       <h3>Raise a concern</h3>
@@ -80,7 +81,7 @@ export default function ClientRightsPage() {
         <li>
           Understand that information on BluDerma is a reference only and does
           not replace a personal consultation. Please read our{" "}
-          <a href="/precautions">Precautions</a>.
+          <Link href="/precautions">Precautions</Link>.
         </li>
         <li>Keep your account details accurate and your login secure.</li>
       </ul>

@@ -1,6 +1,7 @@
 import { AppointmentStatus } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_DOCTOR_WHERE } from "./doctorAccess";
 
 /**
  * Real slot availability, replacing the seeded PRNG that used to fake it.
@@ -31,10 +32,29 @@ export function clinicNow(): number {
 
 export type SlotPeriod = "Morning" | "Afternoon" | "Evening";
 
+/**
+ * Why a slot cannot be taken. Carried so the UI can say which, instead of
+ * greying out half a grid with no explanation — "the doctor is at another
+ * clinic" and "someone booked it" deserve different words.
+ */
+export type SlotBlock = "past" | "taken" | "timeoff" | "travel" | "members";
+
 export interface Slot {
   label: string;
   available: boolean;
   period: SlotPeriod;
+  /** The location this slot is at. Null only for legacy hours with no clinic. */
+  clinicId: string | null;
+  clinicName: string | null;
+  /** Set when `available` is false. */
+  blockedBy?: SlotBlock;
+}
+
+export interface SlotOptions {
+  /** Restrict to one location. Omitted, every clinic the doctor works at. */
+  clinicId?: string;
+  /** White Collar members see slots held back from everyone else. */
+  isMember?: boolean;
 }
 
 export interface DayOption {
@@ -87,16 +107,27 @@ export function buildDayOptions(base: Date, count = 5): DayOption[] {
 }
 
 /**
- * Slots for one doctor on one day: generated from their weekly availability,
- * minus anything already booked, minus time off, minus times already past.
+ * Slots for one doctor on one day.
+ *
+ * Generated from their weekly hours, minus what is booked, minus time off,
+ * minus what has already passed — and, now that a practitioner may hold hours
+ * at several clinics, minus what they physically cannot reach.
+ *
+ * THE MULTI-CLINIC RULE. A booking blocks the doctor, not the location. The
+ * unique index on Appointment.slotLock is keyed "<doctorId>@<ISO>", so 10:30
+ * at one clinic already makes 10:30 at another unbookable — one body cannot be
+ * in two places. What the index cannot express is the drive between them, so
+ * Doctor.travelBufferMin widens each booking at a *different* clinic into a
+ * blocked band either side. A buffer of 0 reproduces the old behaviour exactly.
  */
 export async function getSlotsForDoctor(
   doctorSlug: string,
-  daySeed: string
+  daySeed: string,
+  opts: SlotOptions = {}
 ): Promise<Slot[]> {
   const doctor = await prisma.doctor.findFirst({
-    where: { slug: doctorSlug, isActive: true },
-    select: { id: true },
+    where: { slug: doctorSlug, ...PUBLIC_DOCTOR_WHERE },
+    select: { id: true, travelBufferMin: true, priorityHoldPerDay: true },
   });
   if (!doctor) return [];
 
@@ -107,16 +138,27 @@ export async function getSlotsForDoctor(
 
   const [windows, booked, timeOff] = await Promise.all([
     prisma.doctorAvailability.findMany({
-      where: { doctorId: doctor.id, dayOfWeek, isActive: true },
+      where: {
+        doctorId: doctor.id,
+        dayOfWeek,
+        isActive: true,
+        ...(opts.clinicId ? { clinicId: opts.clinicId } : {}),
+        // A window at a clinic that has been switched off is not bookable.
+        OR: [{ clinicId: null }, { clinic: { isActive: true } }],
+      },
       orderBy: { startTime: "asc" },
+      include: { clinic: { select: { id: true, name: true } } },
     }),
+    // Deliberately NOT filtered by clinic: a booking anywhere blocks the
+    // doctor everywhere. Filtering here is the bug this whole function exists
+    // to avoid.
     prisma.appointment.findMany({
       where: {
         doctorId: doctor.id,
         scheduledAt: { gte: dayStart, lt: dayEnd },
         status: { not: AppointmentStatus.CANCELLED },
       },
-      select: { scheduledAt: true },
+      select: { scheduledAt: true, durationMin: true, clinicId: true },
     }),
     prisma.doctorTimeOff.findMany({
       where: { doctorId: doctor.id, startsAt: { lt: dayEnd }, endsAt: { gt: dayStart } },
@@ -124,51 +166,128 @@ export async function getSlotsForDoctor(
     }),
   ]);
 
-  const takenLabels = new Set(
-    booked.map((b) => b.scheduledAt.toISOString().slice(11, 16))
-  );
+  const buffer = Math.max(0, doctor.travelBufferMin);
+  // Minute-of-day for every booking, so the comparisons below stay integer
+  // arithmetic in the same frame as the window labels.
+  const bookings = booked.map((b) => ({
+    startMin: b.scheduledAt.getUTCHours() * 60 + b.scheduledAt.getUTCMinutes(),
+    durationMin: b.durationMin || 30,
+    clinicId: b.clinicId,
+  }));
+
   // Compare against the clinic wall clock, not raw UTC (see clinicNow).
   const now = clinicNow();
+  const HOLD_RELEASE_MS = 24 * 60 * 60 * 1000;
 
   const slots: Slot[] = [];
   for (const w of windows) {
     const start = labelToMinutes(w.startTime);
     const end = labelToMinutes(w.endTime);
     const step = w.slotMinutes > 0 ? w.slotMinutes : 30;
+    const clinicId = w.clinic?.id ?? null;
+    const clinicName = w.clinic?.name ?? null;
 
+    // NOTE: `t <= end` generates a slot AT endTime. That is long-standing
+    // behaviour every seeded doctor depends on; changing it here would quietly
+    // delete everyone's last appointment of the day.
     for (let t = start; t <= end; t += step) {
       const label = minutesToLabel(t);
       const instant = slotInstant(daySeed, label);
 
-      const isPast = instant.getTime() <= now;
-      const isTaken = takenLabels.has(label);
-      const isBlocked = timeOff.some(
-        (o) => instant >= o.startsAt && instant < o.endsAt
-      );
+      let blockedBy: SlotBlock | undefined;
+
+      if (instant.getTime() <= now) {
+        blockedBy = "past";
+      } else if (timeOff.some((o) => instant >= o.startsAt && instant < o.endsAt)) {
+        blockedBy = "timeoff";
+      } else {
+        for (const b of bookings) {
+          // Overlap in the doctor's day at all -> taken outright.
+          const overlaps = t < b.startMin + b.durationMin && b.startMin < t + step;
+          if (overlaps) {
+            blockedBy = "taken";
+            break;
+          }
+          // Otherwise, only a booking at a DIFFERENT clinic costs travel time.
+          // Same-clinic back-to-back appointments are the normal working day.
+          if (buffer > 0 && b.clinicId && clinicId && b.clinicId !== clinicId) {
+            const tooClose =
+              t < b.startMin + b.durationMin + buffer && b.startMin < t + step + buffer;
+            if (tooClose) {
+              blockedBy = "travel";
+              break;
+            }
+          }
+        }
+      }
 
       slots.push({
         label,
         period: periodFor(Math.floor(t / 60)),
-        available: !isPast && !isTaken && !isBlocked,
+        available: !blockedBy,
+        clinicId,
+        clinicName,
+        blockedBy,
       });
     }
   }
 
-  // A doctor could have overlapping windows; keep one entry per time.
+  // A doctor can have overlapping windows; keep one entry per time PER
+  // CLINIC. Deduping on the label alone would silently drop a second
+  // location's 10:00.
   const seen = new Set<string>();
-  return slots
-    .filter((s) => (seen.has(s.label) ? false : (seen.add(s.label), true)))
+  const unique = slots
+    .filter((s) => {
+      const key = `${s.clinicId ?? "-"}@${s.label}`;
+      return seen.has(key) ? false : (seen.add(key), true);
+    })
     .sort((a, b) => labelToMinutes(a.label) - labelToMinutes(b.label));
+
+  applyPriorityHold(unique, daySeed, doctor.priorityHoldPerDay, opts.isMember, now, HOLD_RELEASE_MS);
+  return unique;
 }
 
-/** Slots for several days at once — used to render the booking modal. */
+/**
+ * Hold back the last few slots of a day for White Collar members.
+ *
+ * The end of the day is chosen because evening appointments are what people
+ * actually compete for — holding back a 10am Tuesday would be a benefit in
+ * name only. The hold lapses 24 hours out so an unsold slot is never wasted,
+ * which also means the doctor loses nothing by switching it on.
+ *
+ * Mutates in place; the caller already owns the array.
+ */
+function applyPriorityHold(
+  slots: Slot[],
+  daySeed: string,
+  holdPerDay: number,
+  isMember: boolean | undefined,
+  now: number,
+  releaseMs: number
+): void {
+  if (holdPerDay <= 0 || isMember) return;
+
+  const openable = slots.filter((s) => s.available);
+  if (openable.length === 0) return;
+
+  for (const slot of openable.slice(-holdPerDay)) {
+    const instant = slotInstant(daySeed, slot.label).getTime();
+    // Inside the release window it belongs to whoever wants it.
+    if (instant - now <= releaseMs) continue;
+    slot.available = false;
+    slot.blockedBy = "members";
+  }
+}
+
+/** Slots for several days at once — used to render the booking page. */
 export async function getSlotsForDays(
   doctorSlug: string,
-  daySeeds: string[]
+  daySeeds: string[],
+  opts: SlotOptions = {}
 ): Promise<Record<string, Slot[]>> {
   const entries = await Promise.all(
     daySeeds.map(
-      async (seed) => [seed, await getSlotsForDoctor(doctorSlug, seed)] as const
+      async (seed) => [seed, await getSlotsForDoctor(doctorSlug, seed, opts)] as const
     )
   );
   return Object.fromEntries(entries);

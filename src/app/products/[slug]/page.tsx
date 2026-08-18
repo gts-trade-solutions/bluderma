@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import EnquiryButton from "@/components/EnquiryButton";
 import ProductGallery from "@/components/ProductGallery";
 import { getAllProductSlugs, getProduct } from "@/lib/queries/products";
-import { buildMenu, buildPatientMenu } from "@/lib/queries/nav";
+import { buildDoctorMenu, buildPatientMenu } from "@/lib/queries/nav";
 
 export async function generateStaticParams() {
   const slugs = await getAllProductSlugs();
@@ -38,7 +38,7 @@ export default async function ProductPage({
   const product = await getProduct(params.slug);
   if (!product) notFound();
 
-  const [doctorMenu] = await Promise.all([buildMenu("/doctor")]);
+  const [doctorMenu] = await Promise.all([buildDoctorMenu()]);
   const patientMenu = buildPatientMenu();
 
   const factRows = [
@@ -62,10 +62,10 @@ export default async function ProductPage({
     <>
       <RoleAwareNavbar doctorMenu={doctorMenu} patientMenu={patientMenu} />
 
-      <main className="bg-[#f7fafc]">
+      <main className="theme-light bg-[#f7fafc]">
         <div className="container-page py-8">
           <nav className="mb-6 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
-            <Link href="/doctor" className="hover:text-brand-700">
+            <Link href="/patient/explore" className="hover:text-brand-700">
               Products
             </Link>
             <span>/</span>

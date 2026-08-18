@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-slate-50" />}>
+    <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-white/[0.04]" />}>
       <ResetPasswordForm />
     </Suspense>
   );

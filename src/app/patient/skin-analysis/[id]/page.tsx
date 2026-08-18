@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_DOCTOR_WHERE } from "@/lib/queries/doctorAccess";
 import { buildPatientMenu } from "@/lib/queries/nav";
 import Navbar from "@/components/Navbar";
 import { SkinResultView } from "@/components/skin/SkinResultView";
@@ -59,10 +60,11 @@ export default async function SkinAnalysisDetailPage({
       .catch(() => {});
   }
 
-  // Only the real imported clinic contacts (they carry the neutral clinic
-  // avatar) — never the demo/seed doctors.
+  // Every approved practitioner. This used to select on the neutral clinic
+  // avatar to pick out imported real businesses; those rows have been removed
+  // from the directory, so the avatar is no longer a meaningful filter.
   const doctors = await prisma.doctor.findMany({
-    where: { isActive: true, image: "/brand/clinic-avatar.svg" },
+    where: PUBLIC_DOCTOR_WHERE,
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     select: {
       slug: true,
@@ -105,7 +107,7 @@ export default async function SkinAnalysisDetailPage({
           </div>
         </div>
 
-        <div className="mb-5 rounded-xl bg-slate-50 px-4 py-3 text-sm text-ink-soft ring-1 ring-slate-100">
+        <div className="mb-5 rounded-xl bg-white/[0.04] px-4 py-3 text-sm text-ink-soft ring-1 ring-white/10">
           Tap <span className="font-semibold">View full report</span> for your
           web chart, per-concern breakdown and a downloadable PDF.
         </div>

@@ -16,7 +16,7 @@ import {
   getTreatmentImages,
 } from "@/lib/queries/treatments";
 import { getProductsForTreatment } from "@/lib/queries/products";
-import { buildMenu, buildPatientMenu } from "@/lib/queries/nav";
+import { buildDoctorMenu, buildPatientMenu } from "@/lib/queries/nav";
 
 export async function generateStaticParams() {
   const slugs = await getAllTreatmentSlugs();
@@ -49,7 +49,7 @@ export default async function TreatmentPage({
 
   const [related, doctorMenu, products, images] = await Promise.all([
     getRelated(treatment.slug, 3),
-    buildMenu("/doctor"),
+    buildDoctorMenu(),
     getProductsForTreatment(treatment.slug),
     getTreatmentImages(treatment.slug),
   ]);
@@ -70,7 +70,7 @@ export default async function TreatmentPage({
   const rowImage = (i: number) => gallery[i]?.url ?? treatment.image;
 
   return (
-    <>
+    <div className="theme-light bg-white">
       <RoleAwareNavbar doctorMenu={doctorMenu} patientMenu={patientMenu} />
 
       {/* Hero */}
@@ -81,7 +81,7 @@ export default async function TreatmentPage({
           <div className="absolute inset-0 flex items-end">
             <div className="container-page pb-12">
               <nav className="mb-4 flex items-center gap-2 text-sm text-white/75">
-                <Link href="/doctor" className="hover:text-white">
+                <Link href="/patient/explore" className="hover:text-white">
                   Treatments
                 </Link>
                 <span>/</span>
@@ -344,7 +344,7 @@ export default async function TreatmentPage({
                   productName={treatment.product.name}
                   treatmentSlug={treatment.slug}
                 />
-                <Link href="/doctor#treatments" className="btn-outline-white">
+                <Link href="/patient/explore" className="btn-outline-white">
                   Back to all treatments
                 </Link>
               </div>
@@ -374,7 +374,7 @@ export default async function TreatmentPage({
               </h2>
             </div>
             <Link
-              href="/doctor#treatments"
+              href="/patient/explore"
               className="hidden text-sm font-semibold text-brand-600 hover:text-brand-700 sm:block"
             >
               View all →
@@ -389,7 +389,7 @@ export default async function TreatmentPage({
       </section>
 
       <Footer />
-    </>
+    </div>
   );
 }
 

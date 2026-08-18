@@ -3,6 +3,7 @@ import { Prisma, Role } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
+import { ensurePractice } from "@/lib/doctor/ensurePractice";
 import { registerSchema, fieldErrors } from "@/lib/validation";
 import { clientIp, rateLimit } from "@/lib/rateLimit";
 
@@ -11,10 +12,12 @@ import { clientIp, rateLimit } from "@/lib/rateLimit";
  * becomes the account role — but ONLY doctor or patient, never admin (the zod
  * enum rejects anything else, so the role can't be escalated from the body).
  *
- * Note: a self-registered DOCTOR account gets clinical access immediately. If
- * you want doctor sign-ups gated behind admin verification, add an `approved`
- * flag on the user and check it in isClinician()/the clinical-note route — the
- * admin Users page already exposes role management to reverse a bad signup.
+ * A DOCTOR registration also creates the draft practice, in the same
+ * transaction, so the account is never a login with nothing attached.
+ *
+ * Doctor sign-ups ARE gated: the practice starts DRAFT and is invisible to
+ * clients until an admin approves it at /admin/doctor-applications. See
+ * PUBLIC_DOCTOR_WHERE in lib/queries/doctorAccess.ts.
  */
 export async function POST(req: Request) {
   const limit = rateLimit(`register:${clientIp(req)}`, 5, 60 * 60 * 1000);
@@ -44,24 +47,36 @@ export async function POST(req: Request) {
   const isDoctor = accountType === "doctor";
 
   try {
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        phone: phone || null,
-        passwordHash: await hashPassword(password),
-        role: isDoctor ? Role.DOCTOR : Role.PATIENT,
-        // Patients get a profile record; doctors are linked to a Doctor
-        // directory entry by an admin from /admin/doctors.
-        ...(isDoctor
-          ? {}
-          : {
-              patientProfile: {
-                create: { fullName: name, phone: phone || null },
-              },
-            }),
-      },
-      select: { id: true, email: true },
+    // The login and, for a practitioner, the draft practice are created
+    // together. They used not to be: this route made a DOCTOR user and
+    // nothing else, so anyone registering here arrived at /doctor/join to be
+    // told "no practice record yet" — a dead end for the one person the
+    // wizard exists for. One transaction, so a half-made account is not a
+    // state the app can end up in.
+    const user = await prisma.$transaction(async (tx) => {
+      const created = await tx.user.create({
+        data: {
+          name,
+          email,
+          phone: phone || null,
+          passwordHash: await hashPassword(password),
+          role: isDoctor ? Role.DOCTOR : Role.PATIENT,
+          // Clients get a profile record; practitioners get a practice below.
+          ...(isDoctor
+            ? {}
+            : {
+                patientProfile: {
+                  create: { fullName: name, phone: phone || null },
+                },
+              }),
+        },
+        select: { id: true, email: true, name: true, phone: true },
+      });
+
+      if (isDoctor) {
+        await ensurePractice(created, tx);
+      }
+      return created;
     });
 
     return NextResponse.json({ ok: true, userId: user.id }, { status: 201 });

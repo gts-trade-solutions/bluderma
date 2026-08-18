@@ -92,9 +92,9 @@ export default function ClinicalNote({ slug }: { slug: string }) {
       </p>
       <div className="mt-4 flex flex-wrap gap-2.5">
         {status === "authenticated" ? (
-          <Link href="/doctor#contact" className="btn-ghost !px-5 !py-2 text-xs">
+          <a href="mailto:info@bluderma.kr?subject=Clinical%20access%20request" className="btn-ghost !px-5 !py-2 text-xs">
             Request clinical access
-          </Link>
+          </a>
         ) : (
           <>
             <Link
@@ -103,9 +103,9 @@ export default function ClinicalNote({ slug }: { slug: string }) {
             >
               Sign in
             </Link>
-            <Link href="/doctor#contact" className="btn-ghost !px-5 !py-2 text-xs">
+            <a href="mailto:info@bluderma.kr?subject=Clinical%20access%20request" className="btn-ghost !px-5 !py-2 text-xs">
               Request access
-            </Link>
+            </a>
           </>
         )}
       </div>

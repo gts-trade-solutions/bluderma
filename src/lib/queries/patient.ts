@@ -17,12 +17,18 @@ export interface AppointmentDTO {
   time: string;
   dateLabel: string;
   dateSub: string;
-  mode: "clinic" | "video";
+  mode: "clinic" | "video" | "home";
   status: AppointmentStatus;
   fee: number;
   patientName: string;
   patientPhone: string | null;
   isPast: boolean;
+  /** How many times it has been moved — the policy caps this. */
+  rescheduleCount: number;
+  /** True once the client has reviewed it, so we stop asking. */
+  hasReview: boolean;
+  /** Charged when it was cancelled late. */
+  cancellationFeeInr: number;
 }
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -67,6 +73,8 @@ export const getMyAppointments = cache(
             location: true,
           },
         },
+        // Only whether one exists — enough to stop asking for a review.
+        review: { select: { id: true } },
       },
     });
 
@@ -80,12 +88,15 @@ export const getMyAppointments = cache(
       clinic: r.doctor.clinic,
       location: r.doctor.location,
       ...labelsFor(r.scheduledAt, now),
-      mode: r.mode === "VIDEO" ? "video" : "clinic",
+      mode: r.mode === "VIDEO" ? "video" : r.mode === "HOME" ? "home" : "clinic",
       status: r.status,
       fee: r.feeAtBooking,
       patientName: r.patientName,
       patientPhone: r.patientPhone,
       isPast: r.scheduledAt.getTime() < now.getTime(),
+      rescheduleCount: r.rescheduleCount,
+      hasReview: !!r.review,
+      cancellationFeeInr: r.cancellationFeeInr,
     }));
   }
 );

@@ -87,7 +87,7 @@ export function SkinResultView({
     <div className="lg:flex lg:items-start lg:gap-6">
       {/* Stage */}
       <div className="lg:sticky lg:top-24 lg:shrink-0 lg:self-start">
-        <div className="relative mx-auto aspect-[3/4] w-full max-w-md overflow-hidden rounded-2xl bg-slate-100 lg:w-[22rem]">
+        <div className="relative mx-auto aspect-[3/4] w-full max-w-md overflow-hidden rounded-2xl bg-white/10 lg:w-[22rem]">
           {shown ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -148,7 +148,7 @@ export function SkinResultView({
                         disabled={!clickable}
                         onClick={() => toggle(c.key)}
                         className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium backdrop-blur ${
-                          active ? "bg-white text-slate-900" : "bg-black/50 text-white"
+                          active ? "bg-white/[0.04] text-white" : "bg-black/50 text-white"
                         } ${clickable ? "" : "opacity-75"}`}
                       >
                         <span
@@ -190,15 +190,15 @@ export function SkinResultView({
                 key={c.key}
                 disabled={!clickable}
                 onClick={() => toggle(c.key)}
-                className={`rounded-lg border border-slate-200 p-3 text-left transition-colors ${
+                className={`rounded-lg border border-white/10 p-3 text-left transition-colors ${
                   active ? "border-brand-500 ring-1 ring-brand-500" : ""
-                } ${clickable ? "hover:bg-slate-50" : "cursor-default"}`}
+                } ${clickable ? "hover:bg-white/[0.04]" : "cursor-default"}`}
               >
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="flex min-w-0 items-center gap-1">
                     {c.imageUrl ? (
                       <Images
-                        className={`h-3 w-3 shrink-0 ${active ? "text-brand-600" : "text-ink-muted"}`}
+                        className={`h-3 w-3 shrink-0 ${active ? "text-brand-300" : "text-ink-muted"}`}
                       />
                     ) : null}
                     <span className="truncate text-xs font-medium text-ink">

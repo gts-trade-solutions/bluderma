@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+
 import { CalendarDays } from "@/components/icons";
-import BookingModal from "@/components/skin/BookingModal";
 import type { DoctorDTO } from "@/lib/queries/types";
 
 export type RecommendedDoctor = {
@@ -30,7 +30,7 @@ function hasPhoto(url: string | null): url is string {
   return !!url && /^https?:\/\//.test(url) && !url.includes("/brand/");
 }
 
-/** Build the DoctorDTO the booking modal expects from the lean recommendation row. */
+/** Build the DoctorDTO the booking page expects from the lean recommendation row. */
 function toDoctorDTO(d: RecommendedDoctor): DoctorDTO {
   return {
     id: d.slug,
@@ -50,6 +50,10 @@ function toDoctorDTO(d: RecommendedDoctor): DoctorDTO {
     modes: ["clinic"],
     about: "",
     verified: false,
+  // This synthesises a DTO from a lean recommendation row, which carries no
+  // practice data. Empty means "no clinic picker" — the booking action falls
+  // back to the doctor's primary location, which is correct here.
+  clinics: [],
   };
 }
 
@@ -67,7 +71,7 @@ export default function DoctorRecommendations({
   doctors: RecommendedDoctor[];
   mode?: "book" | "list";
 }) {
-  const [bookingDoctor, setBookingDoctor] = useState<DoctorDTO | null>(null);
+  const router = useRouter();
 
   if (doctors.length === 0) return null;
   const bookable = mode === "book";
@@ -87,7 +91,7 @@ export default function DoctorRecommendations({
         {doctors.map((d) => (
           <li
             key={d.slug}
-            className="flex w-[82%] shrink-0 snap-start flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:w-auto"
+            className="flex w-[82%] shrink-0 snap-start flex-col gap-3 rounded-2xl bg-white/[0.04] ring-1 ring-white/10 p-4 sm:w-auto"
           >
             <div className="flex items-center gap-3">
               {hasPhoto(d.image) ? (
@@ -95,10 +99,10 @@ export default function DoctorRecommendations({
                 <img
                   src={d.image}
                   alt={d.name}
-                  className="h-12 w-12 shrink-0 rounded-full object-cover ring-1 ring-slate-200"
+                  className="h-12 w-12 shrink-0 rounded-full object-cover ring-1 ring-white/10"
                 />
               ) : (
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-50 text-sm font-bold text-brand-700 ring-1 ring-brand-100">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-400/[12%] text-sm font-bold text-brand-200 ring-1 ring-brand-300/40">
                   {initials(d.name) || "BD"}
                 </span>
               )}
@@ -111,7 +115,7 @@ export default function DoctorRecommendations({
             </div>
             {bookable && (
               <button
-                onClick={() => setBookingDoctor(toDoctorDTO(d))}
+                onClick={() => router.push(`/patient/book/${d.slug}`)}
                 className="btn-primary mt-auto w-full !py-2 text-sm"
               >
                 <CalendarDays className="h-4 w-4" /> Book appointment
@@ -121,13 +125,6 @@ export default function DoctorRecommendations({
         ))}
       </ul>
 
-      {bookable && (
-        <BookingModal
-          doctor={bookingDoctor}
-          open={!!bookingDoctor}
-          onClose={() => setBookingDoctor(null)}
-        />
-      )}
     </div>
   );
 }

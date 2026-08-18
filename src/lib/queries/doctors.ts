@@ -3,12 +3,26 @@ import { cache } from "react";
 
 import { prisma } from "@/lib/prisma";
 import type { ConsultModeDTO, DoctorDTO } from "./types";
+import { PUBLIC_DOCTOR_WHERE } from "./doctorAccess";
+
+// Re-exported so existing imports keep working; defined in doctorAccess.ts
+// because that module stays free of React cache() and can be used by scripts.
+export { PUBLIC_DOCTOR_WHERE } from "./doctorAccess";
 
 const doctorInclude = {
   focus: { select: { concern: { select: { key: true } } } },
   languages: { orderBy: { sortOrder: "asc" }, select: { name: true } },
   services: { orderBy: { sortOrder: "asc" }, select: { name: true } },
   modes: { select: { mode: true } },
+  clinics: {
+    where: { isActive: true, clinic: { isActive: true } },
+    orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }],
+    select: {
+      feeInr: true,
+      isPrimary: true,
+      clinic: { select: { id: true, name: true, area: true, city: true } },
+    },
+  },
 } satisfies Prisma.DoctorInclude;
 
 type DoctorRow = Prisma.DoctorGetPayload<{ include: typeof doctorInclude }>;
@@ -36,12 +50,20 @@ function toDTO(row: DoctorRow): DoctorDTO {
     about: row.about,
     verified: row.verified,
     general: row.isGeneral || undefined,
+    clinics: row.clinics.map((p) => ({
+      id: p.clinic.id,
+      name: p.clinic.name,
+      area: p.clinic.area,
+      city: p.clinic.city,
+      feeInr: p.feeInr,
+      isPrimary: p.isPrimary,
+    })),
   };
 }
 
 export const getDoctors = cache(async (): Promise<DoctorDTO[]> => {
   const rows = await prisma.doctor.findMany({
-    where: { isActive: true },
+    where: PUBLIC_DOCTOR_WHERE,
     orderBy: { sortOrder: "asc" },
     include: doctorInclude,
   });
@@ -51,7 +73,7 @@ export const getDoctors = cache(async (): Promise<DoctorDTO[]> => {
 export const getDoctor = cache(
   async (slug: string): Promise<DoctorDTO | null> => {
     const row = await prisma.doctor.findFirst({
-      where: { slug, isActive: true },
+      where: { slug, ...PUBLIC_DOCTOR_WHERE },
       include: doctorInclude,
     });
     return row ? toDTO(row) : null;

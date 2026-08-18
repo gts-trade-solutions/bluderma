@@ -50,6 +50,48 @@ export function isExperience(value: unknown): value is Experience {
 /** Where to send a user after signing in, when no callbackUrl was given. */
 export function landingPathForRole(role: Role): string {
   if (role === "ADMIN") return "/admin";
-  if (role === "DOCTOR") return "/doctor";
+  if (role === "DOCTOR") return "/doctor/portal";
   return "/patient/skin-analyzer";
+}
+
+/**
+ * Areas of the site that belong to one role.
+ *
+ * Mirrors the RULES table in middleware.ts. Kept in step by hand, which is
+ * acceptable because the middleware is the enforcement and this is only used
+ * to avoid sending someone somewhere they will immediately be bounced from.
+ */
+const ROLE_AREAS: { prefix: string; roles: Role[] }[] = [
+  { prefix: "/admin", roles: ["ADMIN"] },
+  { prefix: "/doctor/portal", roles: ["DOCTOR", "ADMIN"] },
+  { prefix: "/doctor/join", roles: ["DOCTOR", "ADMIN"] },
+];
+
+/**
+ * Would this role actually be allowed to open that path?
+ *
+ * Sign-in used to push straight to whatever callbackUrl it was given. A client
+ * who clicked "Doctor sign in" on the practitioner home page was therefore
+ * sent to /doctor/portal after logging in, where middleware bounced them to
+ * /forbidden — a dead end reached by following an obvious-looking button.
+ *
+ * ADMIN passes everything, matching requireRole() in lib/session.ts.
+ */
+export function canRoleOpen(path: string, role: Role): boolean {
+  if (role === "ADMIN") return true;
+  const area = ROLE_AREAS.find((a) => path.startsWith(a.prefix));
+  return !area || area.roles.includes(role);
+}
+
+/**
+ * Where to actually send someone after they sign in.
+ *
+ * An explicit callbackUrl wins — being returned to the page that asked you to
+ * sign in beats any default — but only if the account can open it. Otherwise
+ * their own landing page, which is never a bounce.
+ */
+export function postLoginPath(callbackUrl: string, role: Role): string {
+  const target = callbackUrl?.startsWith("/") ? callbackUrl : "/";
+  if (target === "/") return landingPathForRole(role);
+  return canRoleOpen(target, role) ? target : landingPathForRole(role);
 }

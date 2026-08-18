@@ -68,33 +68,64 @@ export const getFaqs = cache(async (category?: string): Promise<FaqDTO[]> => {
   });
 });
 
+const BANNER_SELECT = {
+  id: true,
+  eyebrow: true,
+  title: true,
+  titleAccent: true,
+  subtitle: true,
+  ctaLabel: true,
+  ctaHref: true,
+  mediaType: true,
+  mediaUrl: true,
+  mediaUrlTablet: true,
+  mediaUrlMobile: true,
+  posterUrl: true,
+} as const;
+
+const bannerWindow = (now: Date) => ({
+  isActive: true,
+  AND: [
+    { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+    { OR: [{ endsAt: null }, { endsAt: { gte: now } }] },
+  ],
+});
+
 export const getActiveBanner = cache(
   async (
     placement: "HOME_HERO" | "DOCTOR_HERO" | "PATIENT_HERO"
   ): Promise<BannerDTO | null> => {
-    const now = new Date();
-    const row = await prisma.banner.findFirst({
-      where: {
-        placement,
-        isActive: true,
-        AND: [
-          { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
-          { OR: [{ endsAt: null }, { endsAt: { gte: now } }] },
-        ],
-      },
+    return prisma.banner.findFirst({
+      where: { placement, ...bannerWindow(new Date()) },
       orderBy: { sortOrder: "asc" },
-      select: {
-        id: true,
-        title: true,
-        subtitle: true,
-        ctaLabel: true,
-        ctaHref: true,
-        mediaType: true,
-        mediaUrl: true,
-        posterUrl: true,
-      },
+      select: BANNER_SELECT,
     });
-    return row;
+  }
+);
+
+/**
+ * The home-visit surcharge, in whole rupees. Admin-editable under Settings →
+ * Booking; falls back to the launch figure when the row is missing.
+ */
+export async function getHomeVisitFee(): Promise<number> {
+  const row = await prisma.siteSetting.findUnique({
+    where: { key: "booking.home_visit_fee" },
+    select: { value: true },
+  });
+  const n = Number(row?.value);
+  return Number.isFinite(n) && n >= 0 ? Math.round(n) : 500;
+}
+
+/** Every live banner for a placement, in order — the home hero is a carousel. */
+export const getActiveBanners = cache(
+  async (
+    placement: "HOME_HERO" | "DOCTOR_HERO" | "PATIENT_HERO"
+  ): Promise<BannerDTO[]> => {
+    return prisma.banner.findMany({
+      where: { placement, ...bannerWindow(new Date()) },
+      orderBy: { sortOrder: "asc" },
+      select: BANNER_SELECT,
+    });
   }
 );
 

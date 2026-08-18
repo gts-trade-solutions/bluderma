@@ -22,10 +22,20 @@ export default function RoleAwareNavbar({
   fallback?: Experience;
 }) {
   const { experience } = useExperience(fallback);
+  const clinical = experience === "doctor";
+
+  // Both of these were falling back to their defaults, which are the CLIENT
+  // defaults. A doctor or admin reading a treatment page was therefore shown
+  // the "Know About You" pill — a client questionnaire CTA — and the dark
+  // chrome, which is what made the account dropdown unreadable on these
+  // .theme-light pages.
   return (
     <Navbar
       role={experience}
-      menu={experience === "patient" ? patientMenu : doctorMenu}
+      menu={clinical ? doctorMenu : patientMenu}
+      cta={clinical ? "none" : "know-you"}
+      chrome={clinical ? "light" : "dark"}
+      showLocation={!clinical}
     />
   );
 }

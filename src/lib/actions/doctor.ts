@@ -318,3 +318,82 @@ export async function updateOwnAppointmentStatus(
     return { ok: true };
   });
 }
+
+/* --------------------------- Prescriptions ------------------------------- */
+
+const prescribeSchema = z.object({
+  /** The appointment being prescribed against — proves the doctor saw them. */
+  appointmentId: z.string().trim().min(1),
+  title: z.string().trim().min(1, "What are you prescribing?").max(200),
+  notes: z.string().trim().max(4000).optional().or(z.literal("")),
+});
+
+/**
+ * A clinician issuing a prescription from their own portal.
+ *
+ * Written against an appointment rather than a patient id, which is what
+ * keeps it safe: a doctor can only prescribe to someone whose appointment is
+ * theirs. A guest booking (no linked account) has nowhere to file the
+ * prescription, so it is refused rather than silently dropped.
+ */
+export async function issuePrescription(
+  formData: FormData
+): Promise<AdminResult> {
+  return runAction("issuePrescription", async () => {
+    const owner = await requireOwnDoctor();
+    if (!owner) return { ok: false, error: "Not permitted." };
+
+    const parsed = prescribeSchema.safeParse({
+      appointmentId: formData.get("appointmentId"),
+      title: formData.get("title"),
+      notes: formData.get("notes"),
+    });
+    if (!parsed.success) {
+      return {
+        ok: false,
+        error: "Please check the form.",
+        fields: fieldErrors(parsed.error),
+      };
+    }
+    const d = parsed.data;
+
+    const appointment = await prisma.appointment.findFirst({
+      where: { id: d.appointmentId, doctorId: owner.doctorId },
+      select: { id: true, patientUserId: true, patientName: true },
+    });
+    if (!appointment) {
+      return { ok: false, error: "That appointment isn't one of yours." };
+    }
+    if (!appointment.patientUserId) {
+      return {
+        ok: false,
+        error:
+          "This booking has no client account, so there is nowhere to file a prescription.",
+      };
+    }
+
+    const row = await prisma.prescription.create({
+      data: {
+        userId: appointment.patientUserId,
+        doctorId: owner.doctorId,
+        title: d.title,
+        notes: d.notes || null,
+        issuedAt: new Date(),
+      },
+      select: { id: true },
+    });
+
+    await audit({
+      userId: owner.userId,
+      action: "create",
+      entity: "Prescription",
+      entityId: row.id,
+      after: { appointmentId: appointment.id, title: d.title },
+    });
+
+    // It appears in the client's own profile immediately.
+    revalidatePath("/patient/profile");
+    revalidatePath("/doctor/portal");
+    return { ok: true, id: row.id };
+  });
+}

@@ -64,6 +64,84 @@ export default async function AdminDashboard() {
     }),
   ]);
 
+  // The trading picture, as opposed to the content picture below it. Last 30
+  // days, because a lifetime total tells you nothing about this month.
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const [
+    takings,
+    refunded,
+    bookedRecently,
+    cancelledRecently,
+    intakeRecently,
+    pendingReviews,
+    scansUsed,
+    creditsWaiting,
+  ] = await Promise.all([
+    prisma.payment.aggregate({
+      where: { status: "PAID", paidAt: { gte: since } },
+      _sum: { amountInr: true },
+      _count: { _all: true },
+    }),
+    prisma.payment.aggregate({
+      where: { refundedAt: { gte: since } },
+      _sum: { refundedInr: true },
+    }),
+    prisma.appointment.count({ where: { createdAt: { gte: since } } }),
+    prisma.appointment.count({
+      where: { status: "CANCELLED", cancelledAt: { gte: since } },
+    }),
+    prisma.intakeResponse.count({ where: { createdAt: { gte: since } } }),
+    prisma.review.count({ where: { status: "PENDING" } }),
+    prisma.skinEntitlement.count({
+      where: { state: "consumed", updatedAt: { gte: since } },
+    }),
+    prisma.skinEntitlement.count({ where: { state: "available" } }),
+  ]);
+
+  const gross = takings._sum.amountInr ?? 0;
+  const returned = refunded._sum.refundedInr ?? 0;
+  // A cancellation rate is only meaningful against what was booked.
+  const cancelRate = bookedRecently
+    ? Math.round((cancelledRecently / bookedRecently) * 100)
+    : 0;
+
+  const money = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+
+  const metrics = [
+    {
+      label: "Net takings",
+      value: money(gross - returned),
+      sub: returned
+        ? `${money(gross)} in, ${money(returned)} refunded`
+        : `${takings._count._all} payment(s)`,
+      href: "/admin/payments",
+    },
+    {
+      label: "Bookings",
+      value: String(bookedRecently),
+      sub: `${cancelRate}% cancelled`,
+      href: "/admin/appointments",
+    },
+    {
+      label: "Intake leads",
+      value: String(intakeRecently),
+      sub: "questionnaires completed",
+      href: "/admin/intake",
+    },
+    {
+      label: "Reviews waiting",
+      value: String(pendingReviews),
+      sub: pendingReviews ? "needs a decision" : "nothing queued",
+      href: "/admin/reviews",
+    },
+    {
+      label: "Analyses run",
+      value: String(scansUsed),
+      sub: `${creditsWaiting} credit(s) unused`,
+      href: "/admin/skin-credits",
+    },
+  ];
+
   const cards = [
     {
       label: "Treatments",
@@ -100,6 +178,31 @@ export default async function AdminDashboard() {
         description="Everything the public site renders comes from here."
       />
 
+      {/* Trading, last 30 days. */}
+      <section className="mb-8">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+          Last 30 days
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {metrics.map((m) => (
+            <Link
+              key={m.label}
+              href={m.href}
+              className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-brand-300 hover:shadow-soft"
+            >
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                {m.label}
+              </p>
+              <p className="mt-1 text-2xl font-bold text-ink">{m.value}</p>
+              <p className="mt-0.5 text-xs text-ink-muted">{m.sub}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+        Content
+      </h2>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((c) => (
           <Link

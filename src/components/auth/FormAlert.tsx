@@ -11,8 +11,8 @@ export default function FormAlert({
       role={isError ? "alert" : "status"}
       className={`flex items-start gap-2.5 rounded-xl px-4 py-3 text-sm ${
         isError
-          ? "bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-100"
-          : "bg-teal-50 text-teal-800 ring-1 ring-inset ring-teal-100"
+          ? "bg-rose-500/[12%] text-rose-200 ring-1 ring-inset ring-rose-400/25"
+          : "bg-teal-500/[12%] text-teal-200 ring-1 ring-inset ring-teal-300/25"
       }`}
     >
       <svg viewBox="0 0 20 20" className="mt-0.5 h-4 w-4 shrink-0" fill="currentColor">

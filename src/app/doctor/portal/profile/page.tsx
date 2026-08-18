@@ -52,9 +52,15 @@ export default async function DoctorProfilePage() {
         action={
           user.role === "ADMIN" ? (
             <Link href="/admin/doctors" className="btn-primary">
-              Go to Doctors admin
+              Link this account
             </Link>
-          ) : undefined
+          ) : (
+            // A doctor used to get no action here at all, while all four
+            // sibling pages offered "Complete onboarding". Same offer.
+            <Link href="/doctor/join" className="btn-primary">
+              Complete onboarding
+            </Link>
+          )
         }
       />
     );

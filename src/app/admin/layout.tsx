@@ -21,11 +21,11 @@ export default async function AdminLayout({
   const user = await requireRole("ADMIN", "/admin");
 
   return (
-    <div className="min-h-screen bg-[#f7fafc]">
+    <div className="theme-light min-h-screen bg-[#f7fafc]">
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white">
         <div className="flex h-16 items-center justify-between gap-4 px-5 sm:px-8">
           <div className="flex items-center gap-3">
-            <BrandLogo href="/admin" size={44} />
+            <BrandLogo href="/admin" size={40} />
             <span className="rounded-full bg-ink px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white">
               Admin
             </span>
@@ -33,7 +33,7 @@ export default async function AdminLayout({
 
           <div className="flex items-center gap-3">
             <Link
-              href="/doctor"
+              href="/patient/explore"
               target="_blank"
               className="hidden text-sm font-medium text-ink-muted hover:text-brand-700 sm:inline"
             >

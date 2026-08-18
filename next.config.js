@@ -15,6 +15,13 @@ const nextConfig = {
       { protocol: "https", hostname: "images.pexels.com" },
     ],
   },
+  async redirects() {
+    // /patient was a page component calling redirect("/"). That leaves the
+    // bouncing entry in browser history, so pressing Back lands on it and
+    // bounces forward again — the user is stuck. A config redirect is issued
+    // before any history entry exists.
+    return [{ source: "/patient", destination: "/", permanent: true }];
+  },
   async headers() {
     // Baseline security headers on every response. A full Content-Security-
     // Policy is intentionally deferred: the app uses styled-jsx and Next's
@@ -28,8 +35,10 @@ const nextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
+            // Geolocation is allowed for our own origin only — the client hub
+            // lets a visitor fetch their own location for the navbar pill.
             key: "Permissions-Policy",
-            value: "geolocation=(), microphone=(), payment=()",
+            value: "geolocation=(self), microphone=(), payment=()",
           },
           {
             // Harmless over http; enforced by browsers only on https.

@@ -1,5 +1,7 @@
 "use client";
 
+import { useBackToClose } from "@/hooks/useBackToClose";
+
 import { useEffect, useState } from "react";
 import { submitEnquiry } from "@/lib/actions/enquiry";
 
@@ -40,6 +42,9 @@ export default function EnquiryModal({
   treatmentSlug,
   audience = "doctor",
 }: EnquiryModalProps) {
+  // Browser Back closes this rather than leaving the page behind it.
+  useBackToClose(open, onClose);
+
   const [form, setForm] = useState<FormState>(empty);
   const [submitted, setSubmitted] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -112,7 +117,7 @@ export default function EnquiryModal({
       aria-label={`Enquiry for ${productName}`}
     >
       <div className="absolute inset-0 bg-ink/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-lg animate-scale-in overflow-hidden rounded-3xl bg-white shadow-2xl">
+      <div className="theme-light relative z-10 w-full max-w-lg animate-scale-in overflow-hidden rounded-3xl bg-white shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-gradient-to-r from-brand-50 to-teal-50 p-6">
           <div>
             <p className="section-eyebrow">Enquiry to order</p>

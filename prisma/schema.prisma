@@ -46,20 +46,26 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts       Account[]
-  sessions       Session[]
-  resetTokens    PasswordResetToken[]
-  doctor         Doctor?
-  patientProfile PatientProfile?
-  analyses       SkinAnalysis[]
+  accounts           Account[]
+  sessions           Session[]
+  resetTokens        PasswordResetToken[]
+  doctor             Doctor?
+  patientProfile     PatientProfile?
+  analyses           SkinAnalysis[]
   skinScans          SkinScan[]
   skinEntitlements   SkinEntitlement[]
   skinAccessRequests SkinAccessRequest[]
-  appointments   Appointment[]        @relation("PatientAppointments")
-  assignedLeads  Enquiry[]            @relation("LeadOwner")
-  enquiryNotes   EnquiryNote[]
-  uploads        MediaAsset[]
-  auditLogs      AuditLog[]
+  appointments       Appointment[]        @relation("PatientAppointments")
+  assignedLeads      Enquiry[]            @relation("LeadOwner")
+  enquiryNotes       EnquiryNote[]
+  uploads            MediaAsset[]
+  auditLogs          AuditLog[]
+  prescriptions      Prescription[]
+  purchases          Purchase[]
+  discounts          DiscountGrant[]
+  intakes            IntakeResponse[]
+  reviews            Review[]
+  subscriptions      Subscription[]
 
   @@index([role])
   @@map("users")
@@ -383,6 +389,29 @@ model SkinConcern {
 enum ConsultMode {
   CLINIC
   VIDEO
+  /// The clinician travels to the patient. Carries a visit surcharge on top
+  /// of the consultation fee (see SiteSetting "booking.home_visit_fee").
+  HOME
+}
+
+/// Where a practitioner sits in the approval pipeline.
+///
+/// Kept on the Doctor row rather than in a separate application table so that
+/// there is one record to edit before and after approval, and resubmission
+/// after a rejection is a status change rather than a data copy. The cost is
+/// that every public read MUST filter — see PUBLIC_DOCTOR_WHERE in
+/// src/lib/queries/doctors.ts, which is the only sanctioned way to do it.
+enum DoctorStatus {
+  /// Signed up, still filling the onboarding wizard in.
+  DRAFT
+  /// Submitted, waiting on an admin.
+  PENDING
+  /// Live on the site.
+  APPROVED
+  /// Turned down, with a reason. May be edited and resubmitted.
+  REJECTED
+  /// Was approved, since withdrawn. Not deleted — appointments reference it.
+  SUSPENDED
 }
 
 model Doctor {
@@ -413,6 +442,34 @@ model Doctor {
   isActive        Boolean @default(true)
   sortOrder       Int     @default(0)
 
+  // ── Approval pipeline ────────────────────────────────────────────────
+  /// Existing rows default to APPROVED so nothing already live changes.
+  status          DoctorStatus @default(APPROVED)
+  submittedAt     DateTime?
+  reviewedAt      DateTime?
+  reviewedById    String?
+  rejectionReason String?      @db.Text
+
+  // ── Credentials ──────────────────────────────────────────────────────
+  // What makes `verified` above mean something. Captured at onboarding and
+  // checked by the admin before approval.
+  /// e.g. "Tamil Nadu Medical Council", "NMC".
+  regCouncil    String?
+  regNumber     String?
+  regYear       Int?
+  licenceDocUrl String? @db.Text
+
+  // ── Multi-clinic practice ────────────────────────────────────────────
+  /// Minutes needed to travel between two clinics. Slots at one location are
+  /// blocked this far either side of a booking at another. 0 keeps today's
+  /// behaviour for every existing doctor.
+  travelBufferMin    Int     @default(0)
+  /// When on, a booking waits for the doctor to accept it before it is
+  /// confirmed. Off by default, so existing doctors are unaffected.
+  requiresApproval   Boolean @default(false)
+  /// Slots per day held back for White Collar members until 24h out.
+  priorityHoldPerDay Int     @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -424,9 +481,15 @@ model Doctor {
   availability DoctorAvailability[]
   timeOff      DoctorTimeOff[]
   appointments Appointment[]
+  clinics      DoctorClinic[]
+
+  prescriptions Prescription[]
+
+  reviewList Review[]
 
   @@index([isActive, sortOrder])
   @@index([location])
+  @@index([status, isActive])
   @@map("doctors")
 }
 
@@ -480,9 +543,15 @@ model DoctorMode {
 
 /// Weekly recurring working hours. Slots are generated from these at read time
 /// (replaces the hashed PRNG in slotsForDoctor()).
+/// One working window. Multiple rows per day are the norm, not the
+/// exception — an Indian practice typically runs a morning and an evening
+/// session, and a doctor may hold both at different clinics.
 model DoctorAvailability {
   id          String  @id @default(cuid())
   doctorId    String
+  /// Which location these hours are at. Nullable only so the column could be
+  /// added to existing rows; the backfill sets every one of them.
+  clinicId    String?
   /// 0 = Sunday … 6 = Saturday, matching JS getDay().
   dayOfWeek   Int
   /// "09:00" — local clinic time, 24h.
@@ -491,10 +560,12 @@ model DoctorAvailability {
   slotMinutes Int     @default(30)
   isActive    Boolean @default(true)
 
-  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  doctor Doctor  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  clinic Clinic? @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
-  @@unique([doctorId, dayOfWeek, startTime])
+  @@unique([doctorId, clinicId, dayOfWeek, startTime])
   @@index([doctorId, isActive])
+  @@index([clinicId])
   @@map("doctor_availability")
 }
 
@@ -674,17 +745,45 @@ enum AppointmentStatus {
   NO_SHOW
 }
 
+/// Whether a booking still needs the doctor to accept it.
+///
+/// Deliberately separate from AppointmentStatus, which already uses PENDING to
+/// mean "payment pending" and is written from seven different places.
+enum ApprovalState {
+  /// The doctor takes bookings without reviewing them. Today's behaviour.
+  AUTO
+  /// Slot is held, waiting on the doctor.
+  AWAITING_DOCTOR
+  ACCEPTED
+  DECLINED
+}
+
+/// Who performed an action. A cancellation by the clinic and a cancellation by
+/// the client are the same status but very different events — the fee, the
+/// email and the refund obligation all differ.
+enum ActorKind {
+  PATIENT
+  DOCTOR
+  ADMIN
+  SYSTEM
+}
+
 model Appointment {
   id            String            @id @default(cuid())
   /// Null for guest bookings taken over the phone by an admin.
   patientUserId String?
   doctorId      String
+  /// Which of the doctor's locations this is at. Null on rows that predate
+  /// multi-clinic support; the backfill sets them to the primary clinic.
+  clinicId      String?
   scheduledAt   DateTime
   durationMin   Int               @default(30)
   mode          ConsultMode
   status        AppointmentStatus @default(CONFIRMED)
   /// Fee snapshot — Doctor.fee changes over time, this must not.
   feeAtBooking  Int
+  /// Home-visit surcharge at booking time. 0 for clinic and video.
+  visitFee      Int               @default(0)
 
   // Contact details as given at booking time (may differ from the profile).
   patientName  String
@@ -692,9 +791,38 @@ model Appointment {
   patientEmail String?
   notes        String? @db.Text
 
-  cancelReason       String?   @db.Text
+  // ── Doctor confirmation ──────────────────────────────────────────────
+  approvalState ApprovalState @default(AUTO)
+  approvedAt    DateTime?
+  declineReason String?       @db.Text
+
+  // ── Video / teleconsult ──────────────────────────────────────────────
+  /// The meeting link the doctor shares with the client (requirement D-10).
+  meetingUrl String? @db.Text
+
+  // ── White Collar ─────────────────────────────────────────────────────
+  /// The membership that priced this booking, if any.
+  subscriptionId String?
+  /// Rupees taken off feeAtBooking by that membership. 0 for everyone else.
+  discountInr    Int     @default(0)
+  /// Members' bookings are protected from being moved without a reason.
+  isPriority     Boolean @default(false)
+
+  cancelReason       String?    @db.Text
   cancelledAt        DateTime?
+  /// Who moved it and who called it off — see ActorKind.
+  cancelledBy        ActorKind?
+  rescheduledBy      ActorKind?
   confirmationSentAt DateTime?
+  /// Charged when a client cancels inside the fee window. 0 when free.
+  cancellationFeeInr Int        @default(0)
+  /// How many times this booking has been moved. Capped by settings, so a
+  /// slot cannot be held indefinitely by repeated rescheduling.
+  rescheduleCount    Int        @default(0)
+  /// The appointment this one replaced, when it came from a reschedule.
+  rescheduledFromId  String?
+  /// Set when a reminder has gone out, so the job never sends twice.
+  reminderSentAt     DateTime?
 
   /// "<doctorId>@<ISO datetime>" while the slot is held; NULL once cancelled.
   /// The unique index on this is what actually prevents double-booking.
@@ -703,12 +831,17 @@ model Appointment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  patient User?  @relation("PatientAppointments", fields: [patientUserId], references: [id], onDelete: SetNull)
-  doctor  Doctor @relation(fields: [doctorId], references: [id])
+  review   Review?
+  patient  User?     @relation("PatientAppointments", fields: [patientUserId], references: [id], onDelete: SetNull)
+  doctor   Doctor    @relation(fields: [doctorId], references: [id])
+  clinic   Clinic?   @relation(fields: [clinicId], references: [id], onDelete: SetNull)
+  payments Payment[]
 
   @@index([doctorId, scheduledAt])
   @@index([patientUserId, scheduledAt])
   @@index([status, scheduledAt])
+  @@index([clinicId, scheduledAt])
+  @@index([doctorId, approvalState])
   @@map("appointments")
 }
 
@@ -787,19 +920,26 @@ enum MediaType {
 }
 
 model Banner {
-  id        String          @id @default(cuid())
-  placement BannerPlacement
-  title     String?
-  subtitle  String?         @db.Text
-  ctaLabel  String?
-  ctaHref   String?
-  mediaType MediaType       @default(IMAGE)
-  mediaUrl  String          @db.Text
-  posterUrl String?         @db.Text
-  sortOrder Int             @default(0)
-  isActive  Boolean         @default(true)
-  startsAt  DateTime?
-  endsAt    DateTime?
+  id             String          @id @default(cuid())
+  placement      BannerPlacement
+  /// Small letterspaced line above the title on the hero.
+  eyebrow        String?
+  title          String?
+  /// Second title line, rendered with the brand gradient accent.
+  titleAccent    String?
+  subtitle       String?         @db.Text
+  ctaLabel       String?
+  ctaHref        String?
+  mediaType      MediaType       @default(IMAGE)
+  /// Desktop artwork. Tablet/mobile fall back to this when unset.
+  mediaUrl       String          @db.Text
+  mediaUrlTablet String?         @db.Text
+  mediaUrlMobile String?         @db.Text
+  posterUrl      String?         @db.Text
+  sortOrder      Int             @default(0)
+  isActive       Boolean         @default(true)
+  startsAt       DateTime?
+  endsAt         DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -954,4 +1094,606 @@ model EmailLog {
   @@index([status, createdAt])
   @@index([relatedId])
   @@map("email_logs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// 9. Patient records — the My Profile sections
+// ─────────────────────────────────────────────────────────────
+
+/// A prescription issued to a patient after a consultation. `fileUrl` is the
+/// uploaded PDF/image; the row exists even without one so the doctor's notes
+/// are still on record.
+model Prescription {
+  id       String   @id @default(cuid())
+  userId   String
+  doctorId String?
+  title    String
+  notes    String?  @db.Text
+  fileUrl  String?  @db.Text
+  issuedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doctor Doctor? @relation(fields: [doctorId], references: [id], onDelete: SetNull)
+
+  @@index([userId, issuedAt])
+  @@map("prescriptions")
+}
+
+/// An online purchase made by the patient. `amountInr` is their own
+/// transaction, not catalogue pricing — the catalogue itself stays price-free.
+model Purchase {
+  id        String   @id @default(cuid())
+  userId    String
+  itemName  String
+  quantity  Int      @default(1)
+  status    String   @default("PLACED")
+  amountInr Int?
+  orderedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, orderedAt])
+  @@map("purchases")
+}
+
+/// A discount made available to a patient (first-scan offer, loyalty, promo).
+/// `usedAt` doubles as the redemption record.
+model DiscountGrant {
+  id           String    @id @default(cuid())
+  userId       String
+  code         String
+  description  String
+  percentOff   Int?
+  amountOffInr Int?
+  expiresAt    DateTime?
+  usedAt       DateTime?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("discount_grants")
+}
+
+/// One completed "Help us to know you" questionnaire. Anonymous submissions
+/// keep userId null; the answers blob is the whole quiz state as submitted.
+model IntakeResponse {
+  id      String  @id @default(cuid())
+  userId  String?
+  answers Json
+  /// Human-readable one-liner for admin lists, derived at submit time.
+  summary String? @db.Text
+
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@map("intake_responses")
+}
+
+// ─────────────────────────────────────────────────────────────
+// 10. Payments (Razorpay)
+// ─────────────────────────────────────────────────────────────
+
+enum PaymentStatus {
+  CREATED
+  PAID
+  FAILED
+  REFUNDED
+}
+
+/// One payment attempt against an appointment.
+///
+/// A row is written when the Razorpay order is created and updated once the
+/// signature is verified — so an abandoned checkout leaves a CREATED row
+/// rather than nothing, and the same appointment can be retried without
+/// losing the audit trail. Amounts are whole INR; `amountMinor` keeps the
+/// paise figure actually sent to Razorpay so reconciliation never depends on
+/// re-deriving it.
+enum PaymentPurpose {
+  APPOINTMENT
+  SKIN_SCAN
+  SUBSCRIPTION
+}
+
+model Payment {
+  id             String         @id @default(cuid())
+  /// What was bought. A payment is for exactly one of the two, and the
+  /// matching id below is set — the other stays null.
+  purpose        PaymentPurpose @default(APPOINTMENT)
+  appointmentId  String?
+  /// The scan credit this payment bought, once the payment settles.
+  entitlementId  String?
+  /// The subscription term this payment bought, once the payment settles.
+  subscriptionId String?
+  userId         String?
+
+  provider          String  @default("razorpay")
+  providerOrderId   String  @unique
+  providerPaymentId String? @unique
+  /// Razorpay's returned signature, kept for dispute resolution.
+  signature         String?
+
+  amountInr     Int
+  amountMinor   Int
+  currency      String        @default("INR")
+  status        PaymentStatus @default(CREATED)
+  /// Razorpay's failure reason/description when a payment does not complete.
+  failureReason String?       @db.Text
+
+  paidAt DateTime?
+
+  /// Refunds. Razorpay is the money's system of record; these columns are our
+  /// copy of what it told us, so the ledger reconciles without a second call.
+  refundId     String?
+  refundedInr  Int?
+  refundReason String?   @db.Text
+  refundedAt   DateTime?
+  /// The admin who issued it — a refund is a person's decision.
+  refundedById String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([appointmentId, createdAt])
+  @@index([entitlementId])
+  @@index([subscriptionId])
+  @@index([purpose, status, createdAt])
+  @@index([status, createdAt])
+  @@map("payments")
+}
+
+// ─────────────────────────────────────────────────────────────
+// 11. Client-facing catalogue (the explore hub)
+// ─────────────────────────────────────────────────────────────
+//
+// Separate from Category/Treatment above, which is the clinician-facing
+// catalogue behind /treatments and carries clinical notes and orderable
+// products. This is the browse experience clients see: 18 categories, 108
+// treatments, written for patients and edited by marketing.
+//
+// List-shaped fields (areas, includes, FAQs, options) are Json rather than
+// side tables: they are edited as a block in one admin form, always read
+// whole, and never queried across rows. A join table per bullet list would
+// buy nothing and cost six more screens.
+
+model HubCategory {
+  id    String @id @default(cuid())
+  slug  String @unique
+  name  String
+  /// Key into ICONS in components/hub/icons.tsx.
+  icon  String
+  /// Short line under the tile.
+  blurb String @db.Text
+  /// Longer intro shown on the category page.
+  intro String @db.Text
+  image String @db.Text
+  /// Tailwind gradient classes for the icon chip.
+  tint  String
+
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  treatments HubTreatment[]
+  protocol   TreatmentProtocol?
+
+  @@index([isActive, sortOrder])
+  @@map("hub_categories")
+}
+
+model HubTreatment {
+  id          String  @id @default(cuid())
+  categoryId  String
+  slug        String
+  name        String
+  blurb       String  @db.Text
+  image       String  @db.Text
+  /// Treatment-specific illustrative comparison images. Both must be present
+  /// before the patient page renders the before/after slider.
+  beforeImage String? @db.Text
+  afterImage  String? @db.Text
+  /// Session count / downtime micro-fact. Never a price.
+  meta        String?
+
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  category         HubCategory          @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  beforeAfterCases HubBeforeAfterCase[]
+
+  /// The URL is /patient/explore/<category>/<treatment>, so a slug only has
+  /// to be unique inside its category.
+  @@unique([categoryId, slug])
+  @@index([categoryId, sortOrder])
+  @@map("hub_treatments")
+}
+
+model HubBeforeAfterCase {
+  id          String @id @default(cuid())
+  treatmentId String
+  beforeImage String @db.Text
+  afterImage  String @db.Text
+  sortOrder   Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  treatment HubTreatment @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
+
+  @@unique([treatmentId, sortOrder])
+  @@index([treatmentId, sortOrder])
+  @@map("hub_before_after_cases")
+}
+
+/// The clinical protocol shown on a treatment page. Held per category because
+/// every treatment in one shares the same protocol; a treatment that needs its
+/// own wording gets it through HubTreatment overrides later.
+model TreatmentProtocol {
+  id         String @id @default(cuid())
+  categoryId String @unique
+
+  /// string[] — three statements about who this suits.
+  recommendedFor Json
+  summary        String @db.Text
+  howItWorks     String @db.Text
+  /// TreatmentOption[] — { name, detail, popular }.
+  options        Json
+  /// string[]
+  areas          Json
+  duration       String
+  anaesthesia    String
+  sessions       String
+  downtime       String
+  results        String @db.Text
+  /// string[] each
+  includes       Json
+  excludes       Json
+  precautions    Json
+  sideEffects    Json
+  notSuitable    Json
+  aftercare      Json
+  /// TreatmentFaq[] — { q, a }.
+  faqs           Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  category HubCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@map("treatment_protocols")
+}
+
+// ─────────────────────────────────────────────────────────────
+// 12. Reviews, marketing content and appointment history
+// ─────────────────────────────────────────────────────────────
+
+enum ReviewStatus {
+  PENDING
+  PUBLISHED
+  REJECTED
+}
+
+/// A client's rating of the doctor they saw.
+///
+/// Anchored to an appointment rather than to a doctor, which is what makes it
+/// trustworthy: you can only review a consultation you actually attended, and
+/// only once. Reviews are moderated before they appear, because a public
+/// rating on a clinician is not something to publish unread.
+model Review {
+  id            String       @id @default(cuid())
+  appointmentId String       @unique
+  userId        String
+  doctorId      String
+  /// 1–5 whole stars.
+  rating        Int
+  title         String?
+  body          String?      @db.Text
+  status        ReviewStatus @default(PENDING)
+  /// Why it was rejected, or a note for whoever looks next.
+  adminNote     String?      @db.Text
+  publishedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doctor      Doctor       @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId, status, createdAt])
+  @@index([userId, createdAt])
+  @@map("reviews")
+}
+
+/// A promotional offer on the explore hub. Percentages only — the catalogue
+/// is price-free, so a deal advertises a discount, never a rupee figure.
+model HubDeal {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  title         String
+  treatment     String
+  categorySlug  String
+  categoryLabel String
+  image         String    @db.Text
+  /// Percentage off — the only number shown. Never a rupee amount.
+  discount      Int
+  /// What is included, e.g. "Free follow-up + take-home kit".
+  perk          String
+  /// Social proof count shown on the card.
+  claimed       Int       @default(0)
+  /// Human urgency line, e.g. "Ends in 6 days".
+  endsIn        String
+  /// "Hot" deals get the prominent rail; the rest sit in the general list.
+  isHot         Boolean   @default(false)
+  startsAt      DateTime?
+  endsAt        DateTime?
+  sortOrder     Int       @default(0)
+  isActive      Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, isHot, sortOrder])
+  @@map("hub_deals")
+}
+
+/// A slide in the trending carousel on the explore hub.
+model HubPromo {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  eyebrow   String
+  title     String
+  body      String    @db.Text
+  image     String    @db.Text
+  cta       String
+  href      String
+  startsAt  DateTime?
+  endsAt    DateTime?
+  sortOrder Int       @default(0)
+  isActive  Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("hub_promos")
+}
+
+/// A "what is bothering you?" tile, which routes into a category.
+model HubConcern {
+  id        String  @id @default(cuid())
+  slug      String  @unique
+  label     String
+  hint      String
+  image     String  @db.Text
+  /// The hub category slug this opens.
+  category  String
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("hub_concerns")
+}
+
+// ===========================================================================
+//  CLINICS
+//
+//  Until now a clinic was two free-text strings on the doctor row, which made
+//  three things impossible: a doctor holding hours at more than one location,
+//  a client searching for the nearest branch, and a calendar that can tell
+//  those locations apart. This is that entity.
+//
+//  A clinic exists independently of any doctor. Several practitioners share
+//  one; a practitioner works at several. DoctorClinic is the join, and it
+//  carries the fee because branches of the same practice charge differently.
+// ===========================================================================
+
+model Clinic {
+  id           String  @id @default(cuid())
+  slug         String  @unique
+  name         String
+  addressLine1 String
+  addressLine2 String?
+  /// Neighbourhood, e.g. "Anna Nagar". What clients actually navigate by.
+  area         String
+  city         String
+  state        String  @default("Tamil Nadu")
+  pincode      String
+  /// Set when the address has been geocoded, for "clinics near me".
+  lat          Float?
+  lng          Float?
+  phone        String?
+  email        String?
+  /// Which swatch this location gets on the doctor calendar. An explicit
+  /// column rather than a hash of the id, so it stays stable and a doctor
+  /// with two similar-looking clinics can tell them apart deliberately.
+  colorKey     String  @default("blue")
+  about        String? @db.Text
+
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  doctors      DoctorClinic[]
+  photos       ClinicPhoto[]
+  facilities   ClinicFacility[]
+  availability DoctorAvailability[]
+  appointments Appointment[]
+
+  @@index([isActive, city])
+  @@index([city, area])
+  @@map("clinics")
+}
+
+enum ClinicPhotoKind {
+  EXTERIOR
+  INTERIOR
+  ROOM
+}
+
+/// Photographs of the premises. Clients judge a clinic on these before they
+/// judge it on anything else, which is why onboarding asks for them.
+model ClinicPhoto {
+  id        String          @id @default(cuid())
+  clinicId  String
+  url       String          @db.Text
+  kind      ClinicPhotoKind @default(INTERIOR)
+  alt       String?
+  sortOrder Int             @default(0)
+
+  createdAt DateTime @default(now())
+
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@index([clinicId, kind, sortOrder])
+  @@map("clinic_photos")
+}
+
+/// Parking, lift access, in-house pharmacy, lab. Free text rather than an
+/// enum because the list grows with the network and an admin should not need
+/// a migration to add "valet".
+model ClinicFacility {
+  id        String @id @default(cuid())
+  clinicId  String
+  name      String
+  sortOrder Int    @default(0)
+
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@unique([clinicId, name])
+  @@map("clinic_facilities")
+}
+
+/// A practitioner practising at a location.
+///
+/// The fee lives here, not on Doctor, because the same doctor charges
+/// differently at a flagship branch and a suburban one. Doctor.fee remains as
+/// the headline figure and is kept in step with the primary clinic.
+model DoctorClinic {
+  doctorId  String
+  clinicId  String
+  /// Consultation fee in whole INR at this location.
+  feeInr    Int     @default(0)
+  /// The location that stands for this doctor in listings and on their card.
+  /// Exactly one per doctor; enforced in the action, not the schema.
+  isPrimary Boolean @default(false)
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@id([doctorId, clinicId])
+  @@index([clinicId, isActive])
+  @@index([doctorId, isPrimary])
+  @@map("doctor_clinics")
+}
+
+// ===========================================================================
+//  WHITE COLLAR  -  the client membership
+//
+//  Billed as a one-time order per term rather than through Razorpay's
+//  Subscriptions API: it reuses settlePayment()'s existing purpose branch and
+//  needs no dashboard Plan setup. The consequence, stated plainly, is that
+//  nothing auto-debits — a term ends and the member is asked to renew.
+//  razorpaySubscriptionId is reserved so true recurring billing can be added
+//  later without moving any data.
+// ===========================================================================
+
+enum SubscriptionInterval {
+  MONTHLY
+  ANNUAL
+}
+
+enum SubscriptionStatus {
+  /// Paid and inside its term.
+  ACTIVE
+  /// Term ran out without a renewal.
+  EXPIRED
+  /// Member stopped it. Benefits run to the end of the paid term.
+  CANCELLED
+}
+
+model SubscriptionPlan {
+  id           String               @id @default(cuid())
+  slug         String               @unique
+  name         String
+  interval     SubscriptionInterval @default(MONTHLY)
+  priceInr     Int
+  /// Struck-through "was" figure, for the annual saving. Null shows no strike.
+  compareAtInr Int?
+
+  // ── What the member actually gets ────────────────────────────────────
+  /// Taken off the consultation fee at every listed clinic.
+  discountPercent      Int     @default(0)
+  /// Skin scans granted at the start of each paid term.
+  scanCredits          Int     @default(0)
+  /// Unlocks held-back slots and protects the booking from being moved.
+  priorityBooking      Boolean @default(false)
+  /// Cancelling never costs a member the standard fee.
+  waiveCancellationFee Boolean @default(false)
+  /// Free-text bullets shown on the pricing card.
+  perks                Json?
+
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions Subscription[]
+
+  @@index([isActive, sortOrder])
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id     String @id @default(cuid())
+  userId String
+  planId String
+
+  status SubscriptionStatus @default(ACTIVE)
+
+  startedAt              DateTime  @default(now())
+  /// The moment benefits stop. Renewing extends this rather than making a row.
+  currentPeriodEnd       DateTime
+  cancelledAt            DateTime?
+  /// Reserved for the Subscriptions API. Nothing auto-debits today.
+  autoRenew              Boolean   @default(false)
+  razorpaySubscriptionId String?   @unique
+
+  /// Stops the renewal reminder going out twice for the same term.
+  renewalNoticeSentAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  @@index([userId, status])
+  @@index([status, currentPeriodEnd])
+  @@map("subscriptions")
 }

@@ -1,9 +1,19 @@
 /**
- * Import of the "derma clinic and doctors" dataset into the Doctor table as
- * clinic contacts (no display photo → neutral avatar). Idempotent: upserts by a
- * stable slug derived from the company id. Reads the committed snapshot
- * `prisma/clinics.json` (merged from the source xlsx + contacts csv), so it has
- * no external dependency.
+ * RETIRED — 18 Aug 2026. Do not run this.
+ *
+ * It imported 30 real Chennai and Kerala businesses into the Doctor table as
+ * clinic contacts. That was wrong twice: they are companies rather than
+ * practitioners, so they never belonged in a doctor directory; and the ratings,
+ * fees and availability grids attached to them were invented, which
+ * misrepresents businesses that actually trade under those names.
+ *
+ * prisma/seed-clinics.ts removed those rows and replaced them with a clearly
+ * fictional demo network. Running this again would undo that, so it refuses
+ * unless you pass --i-know-this-reimports-real-businesses.
+ *
+ * Kept rather than deleted because prisma/clinics.json is the record of where
+ * that data came from, and a future real-clinic onboarding may want the source.
+ * Any such import must target the Clinic table, not Doctor.
  *
  *   npx tsx prisma/import-clinics.ts          # dry run
  *   npx tsx prisma/import-clinics.ts --write  # apply
@@ -14,6 +24,15 @@ import fs from "fs";
 const prisma = new PrismaClient({ log: ["warn", "error"] });
 const WRITE = process.argv.includes("--write");
 const AVATAR = "/brand/clinic-avatar.svg";
+
+if (!process.argv.includes("--i-know-this-reimports-real-businesses")) {
+  console.error(
+    "This importer is retired — see the note at the top of the file.\n" +
+      "It would re-add 30 real businesses to the doctor directory as fake\n" +
+      "practitioners, undoing prisma/seed-clinics.ts."
+  );
+  process.exit(1);
+}
 
 type Row = {
   company_id: string;

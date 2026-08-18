@@ -1,0 +1,8 @@
+-- AlterTable
+ALTER TABLE `hub_deals` DROP COLUMN `note`,
+    DROP COLUMN `percentOff`,
+    ADD COLUMN `claimed` INTEGER NOT NULL DEFAULT 0,
+    ADD COLUMN `discount` INTEGER NOT NULL,
+    ADD COLUMN `endsIn` VARCHAR(191) NOT NULL,
+    ADD COLUMN `perk` VARCHAR(191) NOT NULL;
+

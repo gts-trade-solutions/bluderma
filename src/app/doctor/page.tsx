@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import Navbar from "@/components/Navbar";
-import TestingShortcut from "@/components/TestingShortcut";
 import Footer from "@/components/Footer";
 import JoinHero from "@/components/doctor/JoinHero";
 import SimpleSteps from "@/components/doctor/SimpleSteps";
@@ -60,8 +59,6 @@ export default async function DoctorHome() {
 
   return (
     <div className="theme-light bg-white">
-      {/* Testing phase only — see TestingShortcut. */}
-      <TestingShortcut from="clinic" />
 
       <Navbar
         role="doctor"

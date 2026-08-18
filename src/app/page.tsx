@@ -10,7 +10,6 @@ import {
 
 import Navbar from "@/components/Navbar";
 import RoleChooser from "@/components/RoleChooser";
-import TestingShortcut from "@/components/TestingShortcut";
 import WhiteCollarBanner from "@/components/home/WhiteCollarBanner";
 import Footer from "@/components/Footer";
 import SmartImage from "@/components/SmartImage";
@@ -79,9 +78,6 @@ export default async function Home() {
 
   return (
     <>
-      {/* Testing phase only — renders nothing in a production build unless
-          NEXT_PUBLIC_TESTING_LINKS=1. */}
-      <TestingShortcut />
 
       {/* Asked once, after the page has painted. See the component for why
           this is safe to do without hurting search indexing. */}
@@ -129,7 +125,6 @@ export default async function Home() {
         {/* The running banner the brief asks for (C-3) — the same promise the
             second slide makes, kept moving across every visit. */}
         <ComingSoonTicker />
-
 
         {/* ── Top treatments ────────────────────────────────────────── */}
         <section className="container-page pt-16">

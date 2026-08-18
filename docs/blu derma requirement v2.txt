@@ -1,0 +1,74 @@
+
+Refs: unni.app | curology.com | practo.com | tamiralife.com | asthetiq
+
+
+RULES
+  No price, clinic name or branch on treatment and deal cards. Treatment only.
+  Price shown only for: analyzers, doctor consultation, CME subscription.
+  Skin analyzer Rs.100 -> FREE.  Hair analyzer Rs.50 -> FREE (new).
+  Region dropdown everywhere. Cities first, states second.
+
+
+CLIENT
+  Home        Curology-style front page.
+              Running banner (coming soon): consult 2000-mile skincare
+              specialists within 20 minutes.
+              Navbar: "Analyze Your Skin" + region dropdown.
+
+  Categories  Lifting, Skin, Botox, Waxing, Filler, Eye Surgery, Nose Surgery
+              + Curology, Tamira Life, Asthetiq categories.
+              Hot Deals and All Deals sit under each category.
+
+  Deals       Hot Deals - attractive.   All Deals - plain.
+
+  Know Yourself   Unni's column, renamed. Blog content, magazine look,
+                  each article tied to a service.
+
+  Before/After    Own section.
+
+  Doctors     Interested doctors, consultation pricing, client before/after,
+              usual available slots, payment gateway.
+
+  Rx Skin     Skin conditions from Curology and Asthetiq.
+              Hover a condition -> one-line description.
+
+  Expert Advice   Below Rx Skin. Modal form, Curology fields.
+              "Tell us about your skin" pulls the existing analyzer report
+              (optional); if not scanned, offer to scan and come back.
+              Then: date and time / instant appointment / book procedure
+              domestic or international in clinic -> Hot Deals.
+              Nearby clinic suggestions. Home visit.
+              T&C from Practo.
+
+  Help Us To Know You   Separate page and button. Collect client profile.
+
+
+DOCTOR
+  Form        Name, qualification, location, experience, hospital, timings,
+              before/after images (optional), open box.
+  Feedback    Seen by that doctor only, after treatment or consultation.
+  Simple steps section - Practo style.
+  My Chamber  All appointments, create meeting link, share to patient.
+
+
+CME
+  Be Our Speaker + Learn. Speaker form. Invite patients or doctors.
+  Learn Forever library, subscription approx USD 10 (JCD online material).
+  Exhibitions and conferences - apply and travel.
+
+INVENTORY
+  Doctors order clinical medicines. Vendor form to list and sell.
+
+SETUP CLINIC
+  Franchise. Equipment leasing.
+
+AI SEARCH
+  Findable and citable by ChatGPT, Perplexity, Google AI Overviews.
+
+
+TO CONFIRM
+  Tamira Life - product name, client, or reference? tamiralife.com is live.
+  Asthetiq URL - asthetiq.com is a PowerPoint agency, not a clinic.
+  JCD online URL - not found.
+  Payments: deals stay price-free, consultations become payable.
+  Hair analyzer - new vendor or same engine?

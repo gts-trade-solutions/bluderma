@@ -1,0 +1,272 @@
+===============================================================================
+TAMIRA LIFE  -  PRODUCT REQUIREMENTS BRIEF
+===============================================================================
+Rev A   |   08 Aug 2026   |   Source: client verbal dump, restructured
+Status  :  NOT STARTED - scoping only. No code written against this brief yet.
+Codebase:  e:\arun\bluderma  (current working name "BluDerma" - see Q-1)
+
+Reading order: Sec 0 (references) -> Sec 1 (rules that bind everything)
+-> Sec 2-7 (modules) -> Sec 8 (open questions - answer before build).
+
+Requirement IDs are stable. Quote them in follow-ups (e.g. "change C-14").
+
+
+===============================================================================
+0.  REFERENCE SITES  -  verified 08 Aug 2026
+Requirement IDs are stable. Quote them in follow-ups (e.g. "change C-14").
+
+
+===============================================================================
+0.  REFERENCE SITES  -  verified 08 Aug 2026
+===============================================================================
+R-1  unni.app (Gangnam Unni, KR)   LIVE. Marketplace structure: category row,
+     promo carousels, deal cards, editorial column, before/after.
+R-2  curology.com                  LIVE. Used for THREE things:
+       (a) front-page / hero layout          -> C-2
+       (b) skin-condition vocabulary          -> C-30
+       (c) intake-form fields + modal pattern -> C-33
+R-3  practo.com                    LIVE (bot-blocked, browse manually).
+     Used for: T&C wording (C-38) and the "simple steps" section (D-6).
+R-4  tamiralife.com                LIVE. Chennai aesthetic-healthcare platform.
+     Specialties: Cosmetic Surgery, Hair, Aesthetic Dermatology, Women Wellness
+     Surgery, Cosmetic Dentistry, IV Therapy. Nav: Home / About / Services /
+     Doctors (+ signup, training) / Transformations / Blogs / Newsletters /
+     Careers / Contact. Also runs tamirapharmacy.com.
+     >>> Its structure matches ~80% of this brief. See Q-1.
+
+R-5  asthetiq.com                  RESOLVES, BUT WRONG SITE.
+     It is a one-person PowerPoint-design agency in the Netherlands, not a
+     skin clinic. Also checked and dead: asthaliq.com, aesthetiq.com,
+     asthetiq.in, aesthetiqclinic.com.
+     >>> BLOCKER on C-13 and C-30. Client must supply the correct URL.
+R-6  "JCD online"                  NOT FOUND (jcdonline.org/.com/.in all dead).
+     Needed for CME study material (E-6). Client must supply the correct URL.
+
+
+===============================================================================
+1.  GLOBAL RULES  -  these override any module spec below
+===============================================================================
+G-1  NO PRICES on treatment or deal cards. Ever. Treatment name only.
+G-2  NO CLINIC NAME and NO BRANCH/LOCATION on treatment or deal cards.
+G-3  Prices ARE shown in exactly three places, and nowhere else:
+       - the two analyzers (strike-through offer, G-4)
+       - doctor consultation fees (C-26)
+       - CME subscription (E-5)
+     Everything else is enquiry-first; final cost is given in consultation.
+G-4  Analyzer pricing, shown as strike-through + FREE:
+       SKIN analyzer   Rs.100  ->  FREE
+       HAIR analyzer   Rs.50   ->  FREE      (hair analyzer does not exist yet)
+G-5  Region selector is global (every page). Order: CITIES first, STATES second.
+G-6  Two audiences, two portals: CLIENT (Sec 2) and DOCTOR (Sec 3).
+     Sec 4-6 (CME / Inventory / Setup Clinic) are shared or doctor-facing.
+
+
+===============================================================================
+2.  CLIENT PORTAL
+===============================================================================
+
+--- 2.1  Home page -----------------------------------------------------------
+C-1   Client home page is the marketplace hub (not the analyzer).
+C-2   Hero/front page modelled on curology.com: oversized headline, supporting
+      line, proof tiles, one primary CTA, full-bleed photograph.
+C-3   Running/scrolling banner, marked "COMING SOON":
+      "Consult 2000-mile skincare specialists within 20 minutes."
+      (verbatim: "consult 2000miles skin care specialist within 20 mins")
+C-4   Navbar carries an "ANALYZE YOUR SKIN" button. Client side only.
+C-5   Navbar carries the region dropdown (G-5).
+
+--- 2.2  Categories ----------------------------------------------------------
+C-10  Category row, small pill style (unni.app). Named categories required:
+        Lifting | Skin | Botox | Waxing | Filler | Eye Surgery | Nose Surgery
+C-11  Plus all categories from curology.com.
+C-12  Plus all categories from tamiralife.com (R-4 list is a good start).
+C-13  Plus all categories from the asthetiq reference -- BLOCKED, see R-5.
+C-14  Hot Deals and All Deals both sit UNDER the category structure, i.e. a
+      category page shows its own hot deals and all deals.
+
+--- 2.3  Deals ---------------------------------------------------------------
+C-15  HOT DEALS  - visually attractive. Badges, urgency, colour, motion.
+C-16  ALL DEALS  - deliberately plain. No badges, no urgency, no decoration.
+C-17  Both obey G-1 and G-2: treatment name only, no price, no clinic, no branch.
+
+--- 2.4  Know Yourself  (was unni's "column") --------------------------------
+C-20  Rename unni.app's editorial "column" concept to "KNOW YOURSELF".
+C-21  Behaves like a blog, presented like a magazine - issues/features, not a
+      reverse-chronological feed.
+C-22  Each article is tied to a service/treatment.
+
+--- 2.5  Before & After ------------------------------------------------------
+C-23  Dedicated Before & After section on the client side.
+C-24  Client before/after images also appear inside the doctor block (C-26).
+
+--- 2.6  Doctor discovery block ----------------------------------------------
+C-25  A section presenting doctors. Contains, in order:
+C-26    - Interested doctors (doctors who responded / are available)
+C-27    - Doctor pricing (consultation fee - allowed under G-3)
+C-28    - Client before/after images
+C-29    - Usual available time slots
+C-30    - Payment gateway
+
+--- 2.7  Rx Skin -------------------------------------------------------------
+C-31  "RX SKIN" section listing skin CONDITIONS.
+C-32  Condition list sourced from curology.com (R-2b) and the asthetiq
+      reference (BLOCKED, R-5).
+C-33  Hovering a skin-condition category reveals a ONE-LINE description.
+
+--- 2.8  Get Expert Advice  (the main conversion flow) -----------------------
+C-34  "GET EXPERT ADVICE" section sits directly BELOW Rx Skin.
+C-35  Clicking it opens a MODAL containing a form. Modal pattern and field set
+      both taken from curology.com (R-2c) - use all their inputs.
+C-36  Inside the form, a "TELL US ABOUT YOUR SKIN" step:
+        - if the client HAS already run the skin analyzer -> their report is
+          pulled in automatically, and is OPTIONAL to review
+        - if they have NOT -> offer to run the analyzer, then return them to
+          this form at the same step (do not lose entered data)
+C-37  On form completion, offer:
+        (a) pick appointment DATE + TIME
+        (b) INSTANT appointment
+        (c) BOOK PROCEDURE - domestic and international, in-clinic
+            -> this routes the client to the Hot Deals page
+C-38  Also offer: suggested clinics NEAR the client, and a HOME VISIT option.
+C-39  Terms & Conditions wording modelled on practo.com (R-3).
+
+--- 2.9  Help Us To Know You -------------------------------------------------
+C-40  A separate page, reached by its own button: "HELP US TO KNOW YOU".
+C-41  Purpose: collect client profile information up front.
+      >>> Overlaps heavily with C-35. See Q-4.
+
+
+===============================================================================
+3.  DOCTOR PORTAL
+===============================================================================
+D-1   Doctor registration form. Fields:
+        - Name
+        - Qualification
+        - Location
+        - Experience
+        - Hospital name
+        - Timings
+        - Patient before/after images   (OPTIONAL)
+        - Open text box - any other information they wish to add
+D-2   Patient feedback is visible to the treating doctor only, and only AFTER
+      the treatment or consultation is complete.
+D-6   "Simple steps" explainer section, modelled on practo.com (R-3).
+
+D-10  MY CHAMBER - the doctor's workspace. Must:
+        - list all patient appointments for that doctor
+        - let the doctor create a meeting link
+        - share that link to the patient through the portal
+
+
+===============================================================================
+4.  CME CORNER   (Continued Medical Education)
+===============================================================================
+E-1   Two entry points: "BE OUR SPEAKER" and "LEARN".
+E-2   Speaker application form with required details. Fields TBD (Q-6).
+E-3   Ability to invite patients or doctors to a CME session.
+E-4   "LEARN FOREVER" - the education library inside CME.
+E-5   Study material is SUBSCRIPTION-based, approx USD 10 for the material.
+E-6   Material sourced from "JCD online" - URL NOT FOUND, see R-6.
+E-7   EXHIBITIONS & CONFERENCES listing, with an "Apply and Travel" action.
+
+
+===============================================================================
+5.  INVENTORY CORNER
+===============================================================================
+I-1   Doctors order clinical medicines / supplies here.
+I-2   Vendor-facing back-end form so vendors can register and list products
+      for sale on the platform.
+
+
+===============================================================================
+6.  SETUP CLINIC
+===============================================================================
+S-1   Franchise enquiry / information.
+S-2   Equipment leasing.
+
+
+===============================================================================
+7.  AI SEARCH OPTIMISATION  (AEO / GEO)
+===============================================================================
+A-1   Site must be discoverable and citable by AI search - ChatGPT Search,
+      Perplexity, Google AI Overviews, Copilot.
+A-2   Interpreted scope (client said only "optimize to ai search mode to find"):
+        - schema.org structured data: MedicalClinic, Physician, MedicalProcedure,
+          FAQPage, Article, Offer
+        - llms.txt + a crawlable, non-JS-gated text layer
+        - question-shaped headings and direct one-paragraph answers
+        - one canonical, self-contained page per treatment and per condition
+        - Know Yourself articles (C-20) written as citable answers, not SEO filler
+      >>> Confirm this reading. See Q-7.
+
+
+===============================================================================
+8.  OPEN QUESTIONS  -  answer these before any build starts
+===============================================================================
+Q-1  BRANDING. Is "Tamira Life" (a) the new name for this product, replacing
+     BluDerma, (b) the client we are building for, or (c) only a reference to
+     copy? tamiralife.com is a live Chennai platform whose structure matches
+     most of this brief. This decision affects logo, domain, copy and DB seed.
+
+Q-2  asthetiq.com is a Dutch PowerPoint agency, not a clinic. Correct URL?
+     Blocks C-13 and C-32.
+
+Q-3  "JCD online" not found. Correct URL? Blocks E-6.
+
+Q-4  "Help Us To Know You" (C-40) vs the Get Expert Advice form (C-35) - are
+     these one flow or two? If two, what does each collect that the other
+     does not?
+
+Q-5  PRICING POLICY CHANGE. Today the platform is strictly enquiry-only, no
+     prices anywhere. This brief introduces doctor pricing (C-27), a payment
+     gateway (C-30) and a CME subscription (E-5). Confirm: deals and treatments
+     stay price-free (G-1), but consultations and procedures become payable.
+
+Q-6  Speaker form (E-2) - which fields are mandatory?
+
+Q-7  Confirm the AEO scope in A-2.
+
+Q-8  HAIR ANALYZER (G-4) does not exist. Is it a second vendor integration, or
+     the same engine in a hair mode? Who supplies it?
+
+Q-9  Payment gateway (C-30) - which provider? Razorpay / Stripe / PayU?
+     International bookings (C-37c) imply multi-currency.
+
+Q-10 "Consult 2000-mile specialists within 20 minutes" (C-3) - confirm the
+     wording. Is this teleconsult with a distance-based promise, or a
+     marketing phrase only?
+
+Q-11 Rs.100 for the skin analyzer (G-4) vs the Rs.99 currently on the page.
+     Confirm Rs.100 is intended.
+
+
+===============================================================================
+9.  BUILD ORDER  -  suggested, for discussion
+===============================================================================
+Phase 1  Client home + categories + deals split (C-1..C-17), region selector,
+         navbar analyze button. Mostly extends what already exists.
+Phase 2  Rx Skin + Get Expert Advice modal + appointment booking
+         (C-31..C-39). This is the conversion engine - highest value.
+Phase 3  Doctor portal: form, My Chamber, feedback (D-1..D-10).
+Phase 4  Payment gateway + doctor pricing (C-27, C-30). Needs Q-5, Q-9.
+Phase 5  Know Yourself magazine (C-20..C-22) + AEO (A-1, A-2).
+Phase 6  CME Corner (Sec 4).
+Phase 7  Inventory Corner (Sec 5) + Setup Clinic (Sec 6).
+Phase 8  Hair analyzer (G-4). Blocked on Q-8.
+
+
+===============================================================================
+10.  ALREADY BUILT  -  not part of this brief, listed to avoid rework
+===============================================================================
+- Client hub at /patient/explore: hero, category pills, promo carousel,
+  hot deals rail, all deals rail, before/after slider, concern rail.
+- AI skin analyzer integration (entitlement, hand-off, report) at Rs.99 free-first.
+- Navbar location pill with browser geolocation + manual city picker.
+- Static catalogue: 18 categories, 108 treatments (src/data/hub.ts).
+- Admin: treatments, categories, products, doctors, users, appointments,
+  enquiries, banners, testimonials, FAQs, skin-access requests.
+- Auth (3 roles), appointment booking with double-book guard, SES email.
+
+===============================================================================
+END OF BRIEF
+===============================================================================

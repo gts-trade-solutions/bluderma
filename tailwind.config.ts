@@ -4,6 +4,11 @@ const config: Config = {
   content: [
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    // Class names live in the data layer too — category tints, score bars,
+    // concern badges. Left out of the scan they compile to nothing and the
+    // colour silently goes missing.
+    "./src/data/**/*.{js,ts}",
+    "./src/lib/**/*.{js,ts}",
   ],
   theme: {
     extend: {
@@ -34,14 +39,22 @@ const config: Config = {
           800: "#0c514b",
           900: "#0e433f",
         },
+        /*
+         * "ink" is the reading colour, and the site reads on navy now, so it
+         * is light. Flipping it here rather than at 650 call sites is the
+         * whole point of it being a token — but it does mean anything set on
+         * a white surface (a pill, a button) needs its dark colour stated
+         * explicitly rather than inherited.
+         */
         ink: {
-          DEFAULT: "#0f172a",
-          soft: "#334155",
-          muted: "#64748b",
+          DEFAULT: "#eef2f8",
+          soft: "rgba(255,255,255,0.72)",
+          muted: "rgba(255,255,255,0.52)",
         },
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "var(--font-sans)", "sans-serif"],
       },
       boxShadow: {
         card: "0 10px 30px -12px rgba(16, 42, 71, 0.18)",
@@ -81,6 +94,12 @@ const config: Config = {
           "0%, 100%": { top: "8%" },
           "50%": { top: "92%" },
         },
+        // Running banner. The track holds two identical copies, so -50%
+        // lands exactly where it started and the loop is seamless.
+        marquee: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
       },
       animation: {
         "fade-in": "fade-in 0.6s ease-out both",
@@ -90,6 +109,7 @@ const config: Config = {
         "scroll-dot": "scroll-dot 1.8s ease-in-out infinite",
         "scroll-nudge": "scroll-nudge 2s ease-in-out infinite",
         scanline: "scanline 3.2s ease-in-out infinite",
+        marquee: "marquee 34s linear infinite",
       },
     },
   },

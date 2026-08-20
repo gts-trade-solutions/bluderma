@@ -36,7 +36,7 @@ export default async function PrescriptionsPage() {
       {rows.length === 0 ? (
         <EmptyState
           title="No prescriptions yet"
-          description="Record what a clinician prescribed so the client can see it in their profile."
+          description="Record what a doctor prescribed so the client can see it in their profile."
           action={
             <Link href="/admin/prescriptions/new" className="btn-primary">
               New prescription
@@ -49,7 +49,7 @@ export default async function PrescriptionsPage() {
             <tr>
               <Th>Client</Th>
               <Th>Prescription</Th>
-              <Th className="w-40">Clinician</Th>
+              <Th className="w-40">Doctor</Th>
               <Th className="w-32">Issued</Th>
               <Th className="w-28" />
             </tr>

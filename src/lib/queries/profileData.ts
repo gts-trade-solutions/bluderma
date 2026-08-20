@@ -225,7 +225,7 @@ export const getProfilePageData = cache(
     const prescriptions: Prescription[] = rx.map((p) => ({
       id: p.id,
       issued: fmt(p.issuedAt),
-      doctor: p.doctor?.name ?? "BluDerma clinician",
+      doctor: p.doctor?.name ?? "BluDerma doctor",
       items: [p.title, ...(p.notes ? [p.notes] : [])],
       validTill: "—",
     }));

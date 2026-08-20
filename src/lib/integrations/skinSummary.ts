@@ -37,7 +37,7 @@ function templateSummary(input: SummaryInput): string {
   if (best.length)
     parts.push(`Meanwhile, your ${best.join(" and ")} are looking healthy.`);
   parts.push(
-    "A BluDerma clinician can walk you through tailored options for these results."
+    "A BluDerma doctor can walk you through tailored options for these results."
   );
   return parts.join(" ");
 }

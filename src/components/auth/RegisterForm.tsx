@@ -106,7 +106,7 @@ export default function RegisterForm() {
   return (
     <>
       <h1 className="text-2xl font-bold text-ink sm:text-3xl">
-        {isDoctor ? "Create your clinician account" : "Create your account"}
+        {isDoctor ? "Create your doctor account" : "Create your account"}
       </h1>
       <p className="mt-2 text-sm text-ink-muted">
         {isDoctor

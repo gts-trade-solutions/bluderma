@@ -421,7 +421,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
       {
         slug: "lhr-bikini",
         name: "Bikini & Intimate",
-        blurb: "Discreet, female-clinician-led sessions on request.",
+        blurb: "Discreet, female-doctor-led sessions on request.",
         image: IMG.lhr5,
         meta: "6–8 sessions",
       },
@@ -825,7 +825,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
       {
         slug: "iv-wellness-drips",
         name: "IV Wellness Drips",
-        blurb: "Clinician-supervised infusions matched to your bloodwork.",
+        blurb: "Doctor-supervised infusions matched to your bloodwork.",
         image: IMG.iv1,
         meta: "45 minutes",
       },

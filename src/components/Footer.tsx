@@ -72,7 +72,7 @@ export default function Footer() {
               the page itself, not only from a first-visit dialog somebody
               dismissed months ago. */}
           <h4 className="mt-6 text-sm font-semibold text-white">
-            For clinicians
+            For doctors
           </h4>
           <ul className="mt-4 space-y-2 text-sm text-brand-200/80">
             <li>

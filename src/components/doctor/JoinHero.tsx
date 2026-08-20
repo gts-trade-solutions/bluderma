@@ -82,7 +82,7 @@ export default function JoinHero({
           {viewer === "client" && (
             <p className="mt-4 max-w-[38rem] rounded-md border border-white/20 bg-[#06152a]/40 px-4 py-3 text-sm text-white/75">
               You are signed in as a client. Practitioner accounts are separate
-              — you will be asked to register as a clinician, and you can use
+              — you will be asked to register as a doctor, and you can use
               the same email address.
             </p>
           )}

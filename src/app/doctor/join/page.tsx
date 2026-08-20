@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import BrandLogo from "@/components/BrandLogo";
 import AccountStep from "@/components/doctor/join/AccountStep";
-import SwitchToClinician from "@/components/auth/SwitchToClinician";
+import SwitchToDoctor from "@/components/auth/SwitchToDoctor";
 import { JOIN_STEPS } from "@/data/doctorJoin";
 import { getCurrentUser } from "@/lib/session";
 import { getOwnDoctor } from "@/lib/doctor/guard";
@@ -45,11 +45,11 @@ export default async function JoinPage({
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
             Practitioner accounts are separate from client accounts, so this
-            one cannot list a practice. Sign out and register as a clinician —
+            one cannot list a practice. Sign out and register as a doctor —
             you can use the same email address.
           </p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-            <SwitchToClinician />
+            <SwitchToDoctor />
             <Link href="/patient/explore" className="btn-ghost">
               Back to BluDerma
             </Link>

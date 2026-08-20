@@ -30,7 +30,7 @@ export default function AuthLayout({
             </h2>
             <p className="mt-4 max-w-sm text-sm text-white/75">
               A trusted reference for skin treatments — built for both the
-              clinicians who deliver them and the clients who receive them.
+              doctors who deliver them and the clients who receive them.
             </p>
           </div>
 

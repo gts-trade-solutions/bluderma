@@ -258,7 +258,7 @@ export default async function TreatmentEditPage({
 
         <Card
           title="Clinical note"
-          description="Visible only to signed-in clinicians and admins. Fetched separately so it never reaches the public page."
+          description="Visible only to signed-in doctors and admins. Fetched separately so it never reaches the public page."
         >
           <TextArea
             label="Clinical note"

@@ -167,7 +167,7 @@ const RECOMMENDED: Record<string, string[]> = {
 const BASE: Pick<Detail, "includes" | "excludes" | "precautions" | "faqs"> = {
   includes: [
     "Consultation and skin assessment with the treating doctor",
-    "The procedure itself, performed by a qualified clinician",
+    "The procedure itself, performed by a qualified doctor",
     "Post-treatment review and aftercare instructions",
   ],
   excludes: [

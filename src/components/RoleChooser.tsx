@@ -8,7 +8,7 @@ import { useSession } from "next-auth/react";
 import { ROLE_STORAGE_KEY } from "@/lib/roles";
 
 /**
- * "Are you here as a client, or as a clinician?" — asked once.
+ * "Are you here as a client, or as a doctor?" — asked once.
  *
  * This replaces a thin dismissible strip at the top of the page, which was
  * the right idea executed too quietly: a single muted line above the navbar
@@ -23,7 +23,7 @@ import { ROLE_STORAGE_KEY } from "@/lib/roles";
  *
  * It is asked ONCE. After a choice — or a dismissal — the answer lives in
  * localStorage and this never renders again. Which is why the permanent
- * entry points matter just as much: a "For clinicians" link in the navbar and
+ * entry points matter just as much: a "For doctors" link in the navbar and
  * in the footer, both server-rendered, both always there. This dialog is a
  * convenience for the first visit, not the only way in.
  */
@@ -39,7 +39,7 @@ export default function RoleChooser() {
     // The site already knows who a signed-in visitor is — their role decides
     // the experience, and asking anyway is the site admitting it did not
     // check. Clearing site data, or opening on a second device, used to put
-    // this question in front of a listed clinician.
+    // this question in front of a listed doctor.
     if (status !== "unauthenticated") return;
 
     let stored: string | null = null;
@@ -125,10 +125,10 @@ export default function RoleChooser() {
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block font-bold text-ink">
-                  I&apos;m here for my skin
+                  I&apos;m here for a consultation
                 </span>
                 <span className="block text-xs text-ink-muted">
-                  Scan it free, browse treatments, book a consultation
+                  Book a doctor, scan your skin free, browse treatments
                 </span>
               </span>
               <span
@@ -151,7 +151,7 @@ export default function RoleChooser() {
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block font-bold text-ink">
-                  I&apos;m a clinician
+                  I&apos;m a doctor
                 </span>
                 <span className="block text-xs text-ink-muted">
                   List your practice — free, no commission
@@ -167,7 +167,7 @@ export default function RoleChooser() {
           </div>
 
           <p className="mt-5 text-[11px] text-ink-muted">
-            Asked once. &ldquo;For clinicians&rdquo; in the menu takes you
+            Asked once. &ldquo;For doctors&rdquo; in the menu takes you
             across at any time.
           </p>
         </div>

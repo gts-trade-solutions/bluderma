@@ -8,7 +8,7 @@ import { buildPatientMenu } from "@/lib/queries/nav";
 export const metadata: Metadata = {
   title: "AI Skin Analyzer",
   description:
-    "Snap one selfie and our AI reads 12+ skin signals in seconds — an overall score and a concern breakdown to review with a BluDerma clinician.",
+    "Snap one selfie and our AI reads 12+ skin signals in seconds — an overall score and a concern breakdown to review with a BluDerma doctor.",
 };
 
 export const dynamic = "force-dynamic";

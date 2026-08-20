@@ -106,7 +106,7 @@ export default async function EnquiriesPage({
                 </Td>
                 <Td>
                   <Pill tone={e.audience === "DOCTOR" ? "success" : "neutral"}>
-                    {e.audience === "DOCTOR" ? "Clinician" : "Consultation"}
+                    {e.audience === "DOCTOR" ? "Doctor" : "Consultation"}
                   </Pill>
                 </Td>
                 <Td className="text-xs text-ink-muted">

@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from"react";
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN:"Administrator",
-  DOCTOR:"Clinician",
+  DOCTOR:"Doctor",
   PATIENT:"Consultation",
 };
 

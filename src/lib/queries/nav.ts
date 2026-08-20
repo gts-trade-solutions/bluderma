@@ -65,7 +65,7 @@ export function buildPatientMenu(): NavNode[] {
     // The one cross-audience link. Always present and server-rendered, so the
     // doctor side stays findable after the first-visit dialog is dismissed.
     {
-      label: "For clinicians",
+      label: "For doctors",
       href: "/doctor",
       tagline: "List your practice — free, no commission",
     },
@@ -92,7 +92,7 @@ export function buildDoctorMenu(
   opts: { hasPortal?: boolean } = {}
 ): NavNode[] {
   return [
-    { label: "For clinicians", href: "/doctor", tagline: "List your practice on BluDerma" },
+    { label: "For doctors", href: "/doctor", tagline: "List your practice on BluDerma" },
     { label: "How it works", href: "/doctor#how-it-works", tagline: "Four steps, about ten minutes" },
     opts.hasPortal
       ? {

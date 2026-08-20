@@ -9,10 +9,8 @@ import {
   Clock,
   LoaderCircle,
   Lock,
-  ScanFace,
   Smartphone,
   Sparkles,
-  Star,
   Zap,
 } from "lucide-react";
 
@@ -59,7 +57,6 @@ export default function SkinAnalyzerLanding() {
     start,
     requestAccess,
     reload,
-    firstScanFree,
   } = useSkinAccess();
   const { checkout } = useRazorpayCheckout();
 
@@ -167,23 +164,29 @@ export default function SkinAnalyzerLanding() {
               </span>
             </div>
 
-            {/* One button. */}
-            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
-              <Link
-                href="/patient/know-you"
-                className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-300 to-brand-400 px-7 py-4 text-sm font-extrabold uppercase tracking-wide text-[#04121f] shadow-[0_0_40px_-6px_rgba(84,215,194,0.85)] transition hover:from-teal-200 hover:to-brand-300 active:scale-[0.98]"
-              >
-                Start your skin consultation
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-              {/* Was #how, which went with the section it pointed at. It
-                  aims at the launcher now rather than being deleted: the
-                  secondary link is what a reader uses when they are not ready
-                  to commit to the primary one, and having none puts the whole
-                  weight of the hero on a single button. */}
+            {/* The real analyzer launcher, in the hero where visitors actually
+                look. It used to sit below the fold in "Ready when you are", so
+                first-time visitors clicked the hero's consultation button and
+                never reached it. The consultation entry now lives in the navbar
+                (top-right), which frees the hero for the button people came for.
+                Keeps the #start anchor other pages deep-link to — it now scrolls
+                to the launcher here in the hero instead of a section below. */}
+            <div id="start" className="mt-8 max-w-sm scroll-mt-28">
+              {error && (
+                <div className="mb-3 rounded-xl border border-rose-300/40 bg-rose-500/[12%] px-4 py-3 text-sm text-rose-200">
+                  {error}
+                </div>
+              )}
+              <Cta
+                status={status}
+                busy={busy}
+                onStart={start}
+                onRequest={requestAccess}
+                onBuy={buyScan}
+              />
               <a
-                href="#start"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/60 underline-offset-4 transition hover:text-white hover:underline"
+                href="#reads"
+                className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-white/60 underline-offset-4 transition hover:text-white hover:underline"
               >
                 See what it reads
                 <ChevronDown className="h-4 w-4" />
@@ -203,56 +206,7 @@ export default function SkinAnalyzerLanding() {
         </div>
       </section>
 
-      {/* ── The real launcher ─────────────────────────────────────────── */}
-      <section id="start" className="scroll-mt-24 bg-white/[0.04] py-16 sm:py-20">
-        <div className="container-page">
-          <div className="mb-7 text-center">
-            <p className="section-eyebrow">Step 1 of 2</p>
-            <h2 className="display mt-2 text-3xl text-ink sm:text-4xl">
-              Now scan your skin
-            </h2>
-            <p className="mx-auto mt-2 max-w-xl text-base leading-relaxed text-ink-muted">
-              One selfie, twelve-plus signals scored against what you just told
-              us. About thirty seconds.
-            </p>
-          </div>
-
-          <div className="mx-auto max-w-xl rounded-3xl bg-white/[0.04] ring-1 ring-white/10 p-7 text-center shadow-card sm:p-10">
-            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-400/15 to-teal-400/15 text-brand-300 ring-1 ring-inset ring-brand-300/40">
-              <ScanFace className="h-7 w-7" strokeWidth={1.7} />
-            </span>
-            <h2 className="display-sm mt-5 text-2xl text-ink">
-              Ready when you are
-            </h2>
-            <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-muted">
-              {firstScanFree
-                ? "Your first scan is on us. It takes about half a minute and the result saves to your profile."
-                : "You've used your complimentary scan. Ask for another and we'll review it."}
-            </p>
-
-            {error && (
-              <div className="mx-auto mt-5 max-w-sm rounded-xl border border-rose-200 bg-rose-500/[12%] px-4 py-3 text-sm text-rose-300">
-                {error}
-              </div>
-            )}
-
-            <div className="mx-auto mt-6 max-w-sm">
-              <Cta
-                status={status}
-                busy={busy}
-                onStart={start}
-                onRequest={requestAccess}
-                onBuy={buyScan}
-              />
-              <p className="mt-3 text-xs text-ink-muted">
-                Powered by Perfect Corp · your photo is analysed, not stored.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Step 3: the appointment ───────────────────────────────────── */}
+      {/* ── The appointment ───────────────────────────────────────────── */}
       {/* The journey ends with a doctor, not with a score. A reading nobody
           acts on is a nice number and nothing else. */}
       <section
@@ -261,7 +215,7 @@ export default function SkinAnalyzerLanding() {
       >
         <div className="container-page">
           <div className="mb-7">
-            <p className="section-eyebrow">Step 2 of 2</p>
+            <p className="section-eyebrow">After your scan</p>
             <h2 className="display mt-2 text-3xl text-ink sm:text-4xl">
               Book your consultation
             </h2>
@@ -277,7 +231,7 @@ export default function SkinAnalyzerLanding() {
       </section>
 
       {/* ── What we score ─────────────────────────────────────────────── */}
-      <section className="bg-white/[0.04] py-16 sm:py-20">
+      <section id="reads" className="scroll-mt-24 bg-white/[0.04] py-16 sm:py-20">
         <div className="container-page">
           <p className="section-eyebrow">What gets read</p>
           <h2 className="display mt-2 max-w-2xl text-3xl text-ink sm:text-4xl">

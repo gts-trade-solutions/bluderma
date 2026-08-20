@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import RegisterForm from "@/components/auth/RegisterForm";
 import { getCurrentUser } from "@/lib/session";
 import { postLoginPath } from "@/lib/roles";
+import { googleConfigured } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Create an account",
@@ -27,7 +28,7 @@ export default async function RegisterPage({
 
   return (
     <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-white/[0.04]" />}>
-      <RegisterForm />
+      <RegisterForm googleEnabled={googleConfigured} />
     </Suspense>
   );
 }

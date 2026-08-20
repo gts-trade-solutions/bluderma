@@ -9,6 +9,7 @@ import { JOIN_STEPS } from "@/data/doctorJoin";
 import { getCurrentUser } from "@/lib/session";
 import { getOwnDoctor } from "@/lib/doctor/guard";
 import { ensurePractice } from "@/lib/doctor/ensurePractice";
+import { googleConfigured } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Join BluDerma",
@@ -34,7 +35,7 @@ export default async function JoinPage({
   const user = await getCurrentUser();
 
   // Nobody signed in, or a client who wandered in: start at the account step.
-  if (!user) return <Shell step={0}><AccountStep /></Shell>;
+  if (!user) return <Shell step={0}><AccountStep googleEnabled={googleConfigured} /></Shell>;
 
   if (user.role === "PATIENT") {
     return (

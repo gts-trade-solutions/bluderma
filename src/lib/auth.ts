@@ -22,7 +22,7 @@ function ipFromReq(req: unknown): string {
  * Google is optional so the app still boots before OAuth credentials are
  * issued — NextAuth throws at startup on a provider with an empty clientId.
  */
-const googleConfigured =
+export const googleConfigured =
   !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET;
 
 /**

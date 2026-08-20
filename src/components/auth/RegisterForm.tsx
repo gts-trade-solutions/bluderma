@@ -8,6 +8,8 @@ import { useState } from "react";
 
 import Field from "./Field";
 import FormAlert from "./FormAlert";
+import GoogleButton from "./GoogleButton";
+import AuthDivider from "./AuthDivider";
 
 interface FormState {
   name: string;
@@ -25,7 +27,7 @@ const EMPTY: FormState = {
   confirmPassword: "",
 };
 
-export default function RegisterForm() {
+export default function RegisterForm({ googleEnabled = false }: { googleEnabled?: boolean }) {
   const router = useRouter();
   const params = useSearchParams();
   /**
@@ -182,6 +184,19 @@ export default function RegisterForm() {
           {busy ? "Creating account…" : "Create account"}
         </button>
       </form>
+
+      {googleEnabled && (
+        <>
+          <AuthDivider />
+          {/* Google always creates a PATIENT first. For the doctor sign-up we
+              hand off to /doctor/join/start, which promotes that new account to
+              a practitioner draft; a client just lands where they were headed. */}
+          <GoogleButton
+            callbackUrl={isDoctor ? "/doctor/join/start" : callbackUrl}
+            label={isDoctor ? "Sign up as a doctor with Google" : "Sign up with Google"}
+          />
+        </>
+      )}
 
       <p className="mt-8 text-center text-sm text-ink-muted">
         Already have an account?{" "}

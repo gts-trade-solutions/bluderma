@@ -6,6 +6,8 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 
 import { startDoctorSignup } from "@/lib/actions/doctorOnboarding";
+import GoogleButton from "@/components/auth/GoogleButton";
+import AuthDivider from "@/components/auth/AuthDivider";
 
 /**
  * Step 0 — the login.
@@ -15,13 +17,14 @@ import { startDoctorSignup } from "@/lib/actions/doctorOnboarding";
  * call because NextAuth owns the cookie; doing it inside the server action
  * would mean reimplementing that.
  */
-export default function AccountStep() {
+export default function AccountStep({ googleEnabled = false }: { googleEnabled?: boolean }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [fields, setFields] = useState<Record<string, string>>({});
 
   return (
+    <>
     <form
       className="space-y-5"
       onSubmit={(e) => {
@@ -116,6 +119,19 @@ export default function AccountStep() {
         </p>
       </div>
     </form>
+
+    {googleEnabled && (
+      <>
+        <AuthDivider />
+        {/* Google creates a client account first; /doctor/join/start then
+            promotes it to a practitioner draft. */}
+        <GoogleButton
+          callbackUrl="/doctor/join/start"
+          label="Sign up as a doctor with Google"
+        />
+      </>
+    )}
+    </>
   );
 }
 

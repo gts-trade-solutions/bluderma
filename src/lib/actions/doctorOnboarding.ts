@@ -154,6 +154,33 @@ export async function startDoctorSignup(formData: FormData): Promise<AdminResult
 
 /* -------------------------- Step 1: about you --------------------------- */
 
+/**
+ * Promotes the signed-in account to a practitioner.
+ *
+ * Google (and any OAuth) sign-in always creates a PATIENT — the NextAuth
+ * adapter has no notion of "sign up as a doctor". This is the bridge: someone
+ * who chose "continue as a doctor with Google" arrives here already
+ * authenticated as a client, and this flips their role to DOCTOR. The draft
+ * practice itself is made by ensurePractice() the moment they next load
+ * /doctor/join, so this owns only the role change. Idempotent; ADMIN is left
+ * untouched (an admin visiting the bootstrap must not be demoted into the
+ * directory).
+ */
+export async function promoteCurrentUserToDoctor(): Promise<{
+  ok: boolean;
+  error?: string;
+}> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+  if (user.role === Role.PATIENT) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { role: Role.DOCTOR },
+    });
+  }
+  return { ok: true };
+}
+
 const aboutSchema = z.object({
   name: z.string().trim().min(2).max(120),
   title: z.string().trim().min(2, "e.g. MBBS, MD (Dermatology)").max(160),

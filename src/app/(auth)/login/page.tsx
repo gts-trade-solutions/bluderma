@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import LoginForm from "@/components/auth/LoginForm";
 import { getCurrentUser } from "@/lib/session";
 import { postLoginPath } from "@/lib/roles";
+import { googleConfigured } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -29,7 +30,7 @@ export default async function LoginPage({
     // useSearchParams() in the form opts this route out of static rendering,
     // so it needs a Suspense boundary.
     <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-white/[0.04]" />}>
-      <LoginForm />
+      <LoginForm googleEnabled={googleConfigured} />
     </Suspense>
   );
 }

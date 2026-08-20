@@ -8,6 +8,8 @@ import { useState } from "react";
 
 import Field from "./Field";
 import FormAlert from "./FormAlert";
+import GoogleButton from "./GoogleButton";
+import AuthDivider from "./AuthDivider";
 
 /** NextAuth surfaces failures as opaque codes; translate the ones users hit. */
 const ERROR_COPY: Record<string, string> = {
@@ -20,7 +22,7 @@ const ERROR_COPY: Record<string, string> = {
   SessionRequired: "Please sign in to continue.",
 };
 
-export default function LoginForm() {
+export default function LoginForm({ googleEnabled = false }: { googleEnabled?: boolean }) {
   const router = useRouter();
   const params = useSearchParams();
   const callbackUrl = params.get("callbackUrl") || "/";
@@ -133,6 +135,15 @@ export default function LoginForm() {
           {busy ? "Signing in…" : "Sign in"}
         </button>
       </form>
+
+      {googleEnabled && (
+        <>
+          <AuthDivider />
+          {/* Google returns to where they were headed; the account's role then
+              decides what it can open (a Google sign-in creates a client). */}
+          <GoogleButton callbackUrl={callbackUrl} label="Sign in with Google" />
+        </>
+      )}
 
       <p className="mt-8 text-center text-sm text-ink-muted">
         New to BluDerma?{" "}

@@ -55,3 +55,7 @@ prisma/generated-*.json
 # not worth 11 MB in history.
 /artifacts/
 /docs/*.png
+
+# Database dumps. They carry password hashes and every client record.
+/backups/
+*.sql.gz

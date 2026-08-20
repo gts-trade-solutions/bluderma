@@ -16,6 +16,8 @@
     "db:seed:catalog": "tsx prisma/seed-catalog.ts",
     "db:seed:demo": "tsx prisma/seed-demo-doctor.ts",
     "db:seed:demo:purge": "tsx prisma/seed-demo-doctor.ts --purge",
+    "db:dump": "tsx prisma/dump-db.ts",
+    "db:dump:schema": "tsx prisma/dump-db.ts --schema-only",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset"
   },

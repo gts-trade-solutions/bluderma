@@ -1629,12 +1629,49 @@ Every screen in the portal is driven by real rows. That is correct, and it also
 means an empty database renders a correct, empty dashboard — you cannot tell a
 working chart from a broken one.
 
-`prisma/seed-demo-doctor.ts` builds one practitioner with six months behind
-them: three clinics, eleven working windows, roughly 1,100 appointments across
-every status, sixteen published reviews and three unmoderated ones, members,
-cancellations attributed to both sides, and leave booked ahead. It also builds
-a client account with scans, prescriptions, orders, discounts and a membership,
-so both sides of the product can be walked through.
+`prisma/seed-demo-doctor.ts` builds one practitioner with **fourteen months**
+behind them: three clinics, eleven working windows, roughly 2,250 appointments
+across every status, a payment ledger with declines and refunds in it, sixteen
+published reviews and three unmoderated ones, members, cancellations attributed
+to both sides, and leave booked ahead. Over a year, because "This year" in the
+period control was otherwise indistinguishable from "Last 6 months".
+
+The client account is deep enough to judge every panel of My Profile against:
+six analyses trending upward over fourteen months, a camera scan with its
+per-concern rows and the entitlement that authorised it, eighteen visits across
+**three different doctors** (one name in "Doctors you've seen" is a panel
+nobody can assess), two membership terms — one expired, one live — five
+prescriptions, ten orders, seven discounts, a questionnaire, three reviews of
+which one is still with moderation, and the payments behind all of it.
+
+`Payment` is worth a note. The dashboard never reads it — the table has no
+`doctorId` and, with Razorpay unconfigured, no rows — which is why every figure
+on that screen is appointment-derived and says "booked value". The admin
+payments and refunds screens *do* read it, and they were empty. The seed now
+writes what a settled term looks like: mostly `PAID`, a few declined, the
+occasional refund against a clinic-side cancellation, and deliberately **not**
+one row per completed visit, because plenty of consultations are settled at the
+desk. That gap between "booked" and "paid" is real and the dashboard's wording
+depends on it.
+
+Two bugs the widening exposed, both worth recording:
+
+- The teardown deleted appointments **by doctorId**, so the demo client's
+  visits to the two other listed doctors were merely detached from the account
+  and a re-seed piled a fresh set on top of them every time. Every row the file
+  writes now carries an id prefix (`demoappt`, `democli`, `demopay`,
+  `democlipay`, `demosubpay`) and the purge deletes by prefix — exact rather
+  than approximate. `IntakeResponse` needed an explicit delete too: its
+  `userId` is `SetNull`, so removing the account left an anonymous
+  questionnaire behind.
+- Those cross-doctor visits were written with `clinicId: null`, which broke
+  `verify-booking-clinic`'s "every appointment has a clinic". A null clinic is
+  a row that predates multi-clinic support; writing new ones re-opens a closed
+  invariant. They now resolve the other doctor's own primary clinic.
+
+Inserts are batched through `createMany` with ids generated up front. One row
+at a time was fine for six months; at four hundred days it is two and a half
+thousand round trips.
 
 Three rules it works under:
 
@@ -1732,3 +1769,28 @@ Two client-side complaints with the same root cause, both fixed alongside:
   tile keeps its own colour and simply steps back, rather than being flattened
   to grey — seventeen of eighteen icons were previously colourless at any given
   moment.
+
+### Moving the data to a server
+
+`npm run db:dump` writes a full `mysqldump` to `backups/<db>-<stamp>.sql`
+(3.1 MB as of writing — 62 tables, 54 with rows). `--schema-only` for the
+structure alone; `--out` to choose the path.
+
+Three things about it that are deliberate:
+
+- **It is destructive on import.** `--add-drop-table` is what makes the dump
+  reproducible and also what makes loading it *replace* the target rather than
+  merge into it. The script prints that in full rather than burying it in a
+  comment, because "seed a fresh environment" and "restore over a live one"
+  look identical at the command line and only one of them is safe.
+- **It is a credential.** The file carries bcrypt password hashes and every
+  client record in the database. `/backups/` is gitignored.
+- **The password never reaches argv.** It goes to `mysqldump` through
+  `MYSQL_PWD`, because an argument is visible to every other process on the
+  machine through the process list. It is read out of `DATABASE_URL` and
+  percent-decoded first — ours contains an `@`, and a literal `%40` fails with
+  an authentication error that says nothing about encoding.
+
+The six-line `.env` reader is there because every other script in `prisma/`
+gets `DATABASE_URL` for free as a side effect of constructing a Prisma client.
+This one shells out to `mysqldump` and has no other reason to load the engine.

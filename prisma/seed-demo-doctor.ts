@@ -4,10 +4,17 @@
  * Every screen in the doctor portal is driven by real rows, which is correct
  * and also means an empty database shows a correct, empty dashboard — you
  * cannot tell a working chart from a broken one. This builds one practitioner
- * with six months of history behind them so the portal can actually be read:
- * three clinics, a full week of hours, ~200 appointments across every status,
- * moderated and unmoderated reviews, members, cancellations attributed to both
- * sides, and leave booked ahead.
+ * with fourteen months of history behind them so the portal can actually be
+ * read: three clinics, a full week of hours, ~2,300 appointments across every
+ * status, a payment ledger with declines and refunds in it, moderated and
+ * unmoderated reviews, members, cancellations attributed to both sides, and
+ * leave booked ahead. Over a year, so every option in the dashboard's period
+ * control - including "This year" - has something behind it.
+ *
+ * It also builds one client whose own record is deep enough to judge: six
+ * analyses trending upward, a camera scan with its per-concern rows, visits
+ * across three different doctors, two membership terms (one expired, one
+ * live), prescriptions, orders, discounts and the payments behind them.
  *
  * Two rules it works under:
  *
@@ -33,8 +40,11 @@ import {
   ApprovalState,
   ConsultMode,
   Gender,
+  PaymentPurpose,
+  PaymentStatus,
   PrismaClient,
   ReviewStatus,
+  SubscriptionStatus,
   SymptomDuration,
   VisitReason,
 } from "@prisma/client";
@@ -76,6 +86,23 @@ const pick = <T,>(xs: readonly T[]): T => xs[Math.floor(rand() * xs.length)];
 const between = (lo: number, hi: number) => lo + Math.floor(rand() * (hi - lo + 1));
 /** True with probability p. */
 const chance = (p: number) => rand() < p;
+
+/**
+ * createMany, in chunks the driver will accept.
+ *
+ * A single statement carrying two and a half thousand rows exceeds MySQL's
+ * max_allowed_packet on a default install, and the failure looks like a lost
+ * connection rather than anything to do with size.
+ */
+async function insertMany<T>(
+  rows: T[],
+  write: (chunk: T[]) => Promise<unknown>,
+  size = 400
+): Promise<void> {
+  for (let i = 0; i < rows.length; i += size) {
+    await write(rows.slice(i, i + size));
+  }
+}
 
 /* ───────────────────────────── The people ─────────────────────────────── */
 
@@ -199,9 +226,28 @@ async function purge(): Promise<void> {
   });
   const userIds = users.map((u) => u.id);
 
+  // Everything this file writes carries one of these id prefixes, which is
+  // what lets the teardown be exact instead of approximate. The earlier
+  // version deleted by doctorId, and so left behind the demo client's visits
+  // to the two OTHER listed doctors - they were merely detached from the
+  // account, and a re-seed piled a fresh set on top of them every time.
+  const APPT_PREFIXES = ["demoappt", "democli"];
+  const PAY_PREFIXES = ["demopay", "democlipay", "demosubpay"];
+
+  // Payment.appointment cascades, so appointment payments go with their
+  // appointment - but a SUBSCRIPTION payment has no appointment to hang from
+  // and Payment.userId is a plain column with no foreign key behind it.
+  for (const prefix of PAY_PREFIXES) {
+    await prisma.payment.deleteMany({ where: { id: { startsWith: prefix } } });
+  }
+  for (const prefix of APPT_PREFIXES) {
+    await prisma.appointment.deleteMany({ where: { id: { startsWith: prefix } } });
+  }
+
   if (doctor) {
     await prisma.review.deleteMany({ where: { doctorId: doctor.id } });
     await prisma.prescription.deleteMany({ where: { doctorId: doctor.id } });
+    // Anything left on this practitioner that predates the id scheme.
     await prisma.appointment.deleteMany({ where: { doctorId: doctor.id } });
     await prisma.doctorTimeOff.deleteMany({ where: { doctorId: doctor.id } });
     await prisma.doctorAvailability.deleteMany({ where: { doctorId: doctor.id } });
@@ -211,12 +257,20 @@ async function purge(): Promise<void> {
   }
 
   if (userIds.length) {
-    // Anything still pointing at these accounts from ANOTHER practitioner's
-    // history: null the link rather than deleting someone else's appointment.
+    // IntakeResponse.userId is SetNull, so deleting the account would leave an
+    // anonymous questionnaire behind rather than removing it.
+    await prisma.intakeResponse.deleteMany({
+      where: { userId: { in: userIds } },
+    });
+    // A last sweep for anything still pointing at these accounts from another
+    // practitioner's history: null the link rather than deleting somebody
+    // else's appointment.
     await prisma.appointment.updateMany({
       where: { patientUserId: { in: userIds } },
       data: { patientUserId: null },
     });
+    // Everything else - analyses, scans, entitlements, prescriptions,
+    // purchases, discounts, subscriptions - cascades from the user row.
     await prisma.user.deleteMany({ where: { id: { in: userIds } } });
   }
 
@@ -227,6 +281,15 @@ async function purge(): Promise<void> {
 
 /** Consultation fee per location — a flagship charges more than a suburb. */
 const FEES = [1600, 1400, 1200];
+
+/**
+ * How far back the diary runs.
+ *
+ * Over a year, so every option in the dashboard's period control has
+ * something behind it — including "This year", which on a six-month seed was
+ * indistinguishable from "Last 6 months".
+ */
+const DAYS_BACK = 400;
 
 /**
  * A real Indian practice: a morning session and an evening one, and the
@@ -537,9 +600,11 @@ async function main(): Promise<void> {
       return { clinic: h.clinic, from: sh * 60 + sm, to: eh * 60 + em };
     });
 
-  // 190 days back, 21 forward. The back half is what makes "Last 6 months" in
-  // the period dropdown a real answer rather than a copy of this month.
-  for (let offset = -190; offset <= 21; offset++) {
+  // 400 days back, 21 forward. Long enough that "This year" and "Last 6
+  // months" are real answers rather than copies of this month, and that last
+  // month is a full month rather than a fortnight — which is what the period
+  // dropdown is for.
+  for (let offset = -DAYS_BACK; offset <= 21; offset++) {
     const day = new Date(now.getTime() + offset * DAY);
     day.setUTCHours(0, 0, 0, 0);
     const windows = windowsFor(day.getUTCDay());
@@ -547,7 +612,7 @@ async function main(): Promise<void> {
 
     // How full the day runs. Recent weeks are busier than old ones, so the
     // sparkline and the period-on-period delta have a direction in them.
-    const recency = (offset + 190) / 211;
+    const recency = (offset + DAYS_BACK) / (DAYS_BACK + 21);
     const load = 0.35 + recency * 0.4;
 
     for (const w of windows) {
@@ -600,10 +665,16 @@ async function main(): Promise<void> {
     }
   }
 
-  let created = 0;
-  const completed: { id: string; userId: string; at: Date }[] = [];
+  const completed: { id: string; userId: string; at: Date; value: number }[] = [];
+  const paid: { apptId: string; userId: string; amount: number; at: Date }[] = [];
 
-  for (const r of rows) {
+  // Ids are generated here rather than left to `@default(cuid())` so the whole
+  // diary can go in through createMany. One row at a time was fine for six
+  // months; at four hundred days it is two and a half thousand round trips.
+  const apptRows: Record<string, unknown>[] = [];
+
+  rows.forEach((r, i) => {
+    const id = `demoappt${String(i).padStart(6, "0")}`;
     const baseFee = FEES[r.clinicIdx];
     const discount = r.patient.subscriptionId
       ? Math.round((baseFee * r.patient.discountPercent) / 100)
@@ -630,88 +701,135 @@ async function main(): Promise<void> {
       r.at.getTime() - between(1, 21) * DAY - between(0, 20) * 3_600_000
     );
 
-    const appointment = await prisma.appointment.create({
-      data: {
-        patientUserId: r.patient.id,
-        doctorId: doctor.id,
-        clinicId: clinics[r.clinicIdx].id,
-        scheduledAt: r.at,
-        durationMin: 30,
-        mode: r.mode,
-        status: r.status,
-        // feeAtBooking is POST-discount, matching the booking action.
-        feeAtBooking: baseFee - discount,
-        visitFee,
-        patientName: r.patient.name,
-        patientPhone: r.patient.phone,
-        patientEmail: r.patient.email,
-        reason: r.reason,
-        reasonDetail: pick(detail),
-        symptomDuration: pick([
-          SymptomDuration.UNDER_WEEK,
-          SymptomDuration.WEEKS_1_4,
-          SymptomDuration.MONTHS_1_6,
-          SymptomDuration.MONTHS_6_12,
-          SymptomDuration.OVER_YEAR,
-        ]),
-        severity: between(1, 5),
-        priorTreatment: chance(0.55)
-          ? pick([
-              "Benzoyl peroxide face wash from the pharmacy, about three months.",
-              "A course of doxycycline last year — it helped while I was on it.",
-              "Over-the-counter minoxidil for four months, stopped in June.",
-              "Nothing so far. This is the first time I am seeing anyone about it.",
-            ])
+    apptRows.push({
+      id,
+      patientUserId: r.patient.id,
+      doctorId: doctor.id,
+      clinicId: clinics[r.clinicIdx].id,
+      scheduledAt: r.at,
+      durationMin: 30,
+      mode: r.mode,
+      status: r.status,
+      // feeAtBooking is POST-discount, matching the booking action.
+      feeAtBooking: baseFee - discount,
+      visitFee,
+      patientName: r.patient.name,
+      patientPhone: r.patient.phone,
+      patientEmail: r.patient.email,
+      reason: r.reason,
+      reasonDetail: pick(detail),
+      symptomDuration: pick([
+        SymptomDuration.UNDER_WEEK,
+        SymptomDuration.WEEKS_1_4,
+        SymptomDuration.MONTHS_1_6,
+        SymptomDuration.MONTHS_6_12,
+        SymptomDuration.OVER_YEAR,
+      ]),
+      severity: between(1, 5),
+      priorTreatment: chance(0.55)
+        ? pick([
+            "Benzoyl peroxide face wash from the pharmacy, about three months.",
+            "A course of doxycycline last year - it helped while I was on it.",
+            "Over-the-counter minoxidil for four months, stopped in June.",
+            "Nothing so far. This is the first time I am seeing anyone about it.",
+          ])
+        : null,
+      medications: chance(0.3)
+        ? pick(["Thyroxine 50mcg daily.", "Metformin 500mg twice daily.", "None."])
+        : "None",
+      allergies: chance(0.18) ? pick(["Penicillin", "Sulfa drugs"]) : "None known",
+      isFirstVisit: r.reason !== VisitReason.FOLLOW_UP && chance(0.4),
+      patientAge: r.patient.age,
+      patientGender: r.patient.gender,
+      photoConsent: chance(0.7),
+      approvalState: r.approvalState,
+      approvedAt:
+        r.approvalState === ApprovalState.ACCEPTED
+          ? new Date(bookedAt.getTime() + between(1, 30) * 3_600_000)
           : null,
-        medications: chance(0.3)
-          ? pick(["Thyroxine 50mcg daily.", "Metformin 500mg twice daily.", "None."])
-          : "None",
-        allergies: chance(0.18) ? pick(["Penicillin", "Sulfa drugs"]) : "None known",
-        isFirstVisit: r.reason !== VisitReason.FOLLOW_UP && chance(0.4),
-        patientAge: r.patient.age,
-        patientGender: r.patient.gender,
-        photoConsent: chance(0.7),
-        approvalState: r.approvalState,
-        approvedAt:
-          r.approvalState === ApprovalState.ACCEPTED
-            ? new Date(bookedAt.getTime() + between(1, 30) * 3_600_000)
-            : null,
-        meetingUrl:
-          r.mode === ConsultMode.VIDEO
-            ? "https://meet.google.com/demo-nithya-clinic"
-            : null,
-        subscriptionId: r.patient.subscriptionId,
-        discountInr: discount,
-        isPriority: Boolean(r.patient.subscriptionId) && chance(0.5),
-        cancelledBy,
-        cancelledAt: isCancelled
-          ? new Date(r.at.getTime() - between(1, 48) * 3_600_000)
+      meetingUrl:
+        r.mode === ConsultMode.VIDEO
+          ? "https://meet.google.com/demo-nithya-clinic"
           : null,
-        cancelReason: isCancelled
-          ? cancelledBy === ActorKind.PATIENT
-            ? pick(["Travelling that week.", "Unwell.", "Work conflict."])
-            : pick(["Doctor called to an emergency.", "Clinic closed that afternoon."])
-          : null,
-        // Only a client-side cancellation inside the fee window is chargeable.
-        cancellationFeeInr:
-          isCancelled && cancelledBy === ActorKind.PATIENT && chance(0.35) ? 300 : 0,
-        // A cancelled row releases the lock, exactly as the booking action
-        // does — otherwise the slot stays unbookable forever.
-        slotLock: isCancelled ? null : `${doctor.id}@${r.at.toISOString()}`,
-        createdAt: bookedAt,
-      },
-      select: { id: true, status: true, scheduledAt: true },
+      subscriptionId: r.patient.subscriptionId,
+      discountInr: discount,
+      isPriority: Boolean(r.patient.subscriptionId) && chance(0.5),
+      cancelledBy,
+      cancelledAt: isCancelled
+        ? new Date(r.at.getTime() - between(1, 48) * 3_600_000)
+        : null,
+      cancelReason: isCancelled
+        ? cancelledBy === ActorKind.PATIENT
+          ? pick(["Travelling that week.", "Unwell.", "Work conflict."])
+          : pick(["Doctor called to an emergency.", "Clinic closed that afternoon."])
+        : null,
+      // Only a client-side cancellation inside the fee window is chargeable.
+      cancellationFeeInr:
+        isCancelled && cancelledBy === ActorKind.PATIENT && chance(0.35) ? 300 : 0,
+      // A cancelled row releases the lock, exactly as the booking action does -
+      // otherwise the slot stays unbookable forever.
+      slotLock: isCancelled ? null : `${doctor.id}@${r.at.toISOString()}`,
+      createdAt: bookedAt,
     });
 
-    created += 1;
-    if (appointment.status === AppointmentStatus.COMPLETED) {
-      completed.push({
-        id: appointment.id,
-        userId: r.patient.id,
-        at: appointment.scheduledAt,
-      });
+    const value = baseFee - discount + visitFee;
+    if (r.status === AppointmentStatus.COMPLETED) {
+      completed.push({ id, userId: r.patient.id, at: r.at, value });
+      // Most completed visits were paid for online. The rest were settled at
+      // the desk - which is exactly why the dashboard is appointment-derived
+      // and says "booked value" rather than reading this table.
+      if (chance(0.72)) {
+        paid.push({ apptId: id, userId: r.patient.id, amount: value, at: r.at });
+      }
     }
-  }
+  });
+
+  await insertMany(apptRows, (chunk) =>
+    prisma.appointment.createMany({ data: chunk as never })
+  );
+  const created = apptRows.length;
+
+  /* -- The money, as its own ledger --------------------------------------- */
+
+  // Payment has no doctorId and, with Razorpay unconfigured, no rows at all -
+  // which is why the dashboard never reads it. The admin payments and refunds
+  // screens DO read it, though, and they were empty. This is what a settled
+  // term looks like: mostly PAID, a few declined, and the occasional refund
+  // against a cancellation the clinic caused.
+  const payments: Record<string, unknown>[] = [];
+  paid.forEach((pay, i) => {
+    const settledAt = new Date(pay.at.getTime() - between(1, 72) * 3_600_000);
+    const failed = chance(0.06);
+    const refunded = !failed && chance(0.03);
+    const n = String(i).padStart(8, "0");
+    payments.push({
+      id: `demopay${n}`,
+      purpose: PaymentPurpose.APPOINTMENT,
+      appointmentId: pay.apptId,
+      userId: pay.userId,
+      provider: "razorpay",
+      providerOrderId: `order_demo${n}`,
+      providerPaymentId: failed ? null : `pay_demo${n}`,
+      amountInr: pay.amount,
+      amountMinor: pay.amount * 100,
+      currency: "INR",
+      status: failed
+        ? PaymentStatus.FAILED
+        : refunded
+          ? PaymentStatus.REFUNDED
+          : PaymentStatus.PAID,
+      failureReason: failed ? "Payment declined by the issuing bank." : null,
+      paidAt: failed ? null : settledAt,
+      refundId: refunded ? `rfnd_demo${n}` : null,
+      refundedInr: refunded ? pay.amount : null,
+      refundReason: refunded ? "Appointment cancelled by the clinic." : null,
+      refundedAt: refunded ? new Date(settledAt.getTime() + 2 * DAY) : null,
+      createdAt: new Date(settledAt.getTime() - 3_600_000),
+    });
+  });
+  await insertMany(payments, (chunk) =>
+    prisma.payment.createMany({ data: chunk as never })
+  );
 
   /* ── Reviews ──────────────────────────────────────────────────────── */
 
@@ -821,18 +939,6 @@ async function main(): Promise<void> {
     select: { id: true },
   });
 
-  if (plans.length) {
-    await prisma.subscription.create({
-      data: {
-        userId: clientUser.id,
-        planId: plans[0].id,
-        status: "ACTIVE",
-        startedAt: new Date(now.getTime() - 40 * DAY),
-        currentPeriodEnd: new Date(now.getTime() + 320 * DAY),
-      },
-    });
-  }
-
   await seedClientRecord(clientUser.id, doctor.id, clinics[0].id, now);
 
   /* ── What was built ───────────────────────────────────────────────── */
@@ -841,10 +947,12 @@ async function main(): Promise<void> {
   console.table({
     appointments: created,
     completed: completed.length,
+    payments: payments.length,
     publishedReviews: published,
     pendingReviews: PENDING_REVIEWS.length,
     clinics: clinics.length,
     clients: patients.length + 1,
+    daysOfHistory: DAYS_BACK,
   });
   console.log(`
   DOCTOR   ${DOCTOR_EMAIL}
@@ -863,8 +971,17 @@ async function main(): Promise<void> {
 }
 
 /**
- * The signed-in client's own record: scans, prescriptions, orders, discounts
- * and a visit history with the demo practitioner.
+ * The signed-in client's own record.
+ *
+ * Every section of My Profile reads from a different table, so a thin client
+ * makes eight panels look broken at once. This fills all of them: fourteen
+ * months of visits across three doctors, six analyses trending upward, a
+ * camera scan with its per-concern rows, prescriptions, orders, a wallet's
+ * worth of discounts, two subscription terms — one expired, one live — and
+ * the payments behind all of it.
+ *
+ * The visits deliberately do NOT all belong to the demo doctor. "Doctors
+ * you've seen" with one name in it is a panel that cannot be judged.
  */
 async function seedClientRecord(
   userId: string,
@@ -873,171 +990,445 @@ async function seedClientRecord(
   now: Date
 ): Promise<void> {
   const concerns = await prisma.skinConcern.findMany({
-    select: { id: true },
+    select: { id: true, key: true },
     orderBy: { sortOrder: "asc" },
   });
 
-  // Three scans over four months, improving — so the profile's progress view
-  // has a direction rather than one lonely reading.
+  /* -- Six analyses over fourteen months, improving ---------------------- */
+
+  // A single reading is a number; six are a trajectory, which is the whole
+  // point of storing every metric rather than the worst three.
   const SCANS = [
-    { daysAgo: 118, overall: 61, type: "Combination", age: 32 },
-    { daysAgo: 62, overall: 68, type: "Combination", age: 31 },
-    { daysAgo: 12, overall: 76, type: "Normal to combination", age: 29 },
+    { daysAgo: 412, overall: 54, type: "Oily, combination", age: 34 },
+    { daysAgo: 331, overall: 58, type: "Oily, combination", age: 33 },
+    { daysAgo: 246, overall: 61, type: "Combination", age: 33 },
+    { daysAgo: 158, overall: 66, type: "Combination", age: 32 },
+    { daysAgo: 74, overall: 71, type: "Normal to combination", age: 30 },
+    { daysAgo: 11, overall: 78, type: "Normal to combination", age: 29 },
   ];
-  for (const s of SCANS) {
+
+  for (const scan of SCANS) {
     const analysis = await prisma.skinAnalysis.create({
       data: {
         userId,
-        overall: s.overall,
-        skinType: s.type,
-        estimatedAge: s.age,
-        createdAt: new Date(now.getTime() - s.daysAgo * DAY),
+        overall: scan.overall,
+        skinType: scan.type,
+        estimatedAge: scan.age,
+        createdAt: new Date(now.getTime() - scan.daysAgo * DAY),
       },
       select: { id: true },
     });
     if (!concerns.length) continue;
-    // All twelve metrics are stored, not only the worst three — that is what
+    // All twelve metrics are stored, not only the worst three - that is what
     // makes "re-scan and compare" possible later.
     await prisma.skinAnalysisScore.createMany({
       data: concerns.map((c, i) => ({
         analysisId: analysis.id,
         concernId: c.id,
-        score: Math.max(20, Math.min(95, s.overall + between(-18, 14))),
+        score: Math.max(20, Math.min(95, scan.overall + between(-18, 14))),
         topRank: i < 3 ? i + 1 : null,
       })),
     });
   }
 
-  // A short history with the demo practitioner, including one still ahead.
-  const visits: { daysAgo: number; status: AppointmentStatus; reason: VisitReason }[] = [
+  /* -- One camera scan, with the entitlement that authorised it ---------- */
+
+  // The other analyser. Both systems exist and a booking can attach either,
+  // so a record carrying only the simulator's output tests half the chain.
+  const grant = await prisma.skinEntitlement.create({
+    data: {
+      userId,
+      state: "consumed",
+      source: "free",
+      consumedAt: new Date(now.getTime() - 11 * DAY),
+      createdAt: new Date(now.getTime() - 12 * DAY),
+    },
+    select: { id: true },
+  });
+
+  const scan = await prisma.skinScan.create({
+    data: {
+      userId,
+      analyzerAnalysisId: `demo-scan-${grant.id}`,
+      grantId: grant.id,
+      status: "done",
+      kind: "face",
+      summary: {
+        overall: 78,
+        skin_type: "Normal to combination",
+        skin_age: 29,
+        top_concerns: ["acne", "pores", "ageSpots"],
+      },
+      completedAt: new Date(now.getTime() - 11 * DAY),
+      createdAt: new Date(now.getTime() - 11 * DAY),
+    },
+    select: { id: true },
+  });
+
+  await prisma.skinScanIssue.createMany({
+    data: [
+      { scanId: scan.id, issueType: "acne", score: 34, confidence: 0.91, severityBand: "mild" },
+      { scanId: scan.id, issueType: "pores", score: 41, confidence: 0.88, severityBand: "mild" },
+      { scanId: scan.id, issueType: "ageSpots", score: 47, confidence: 0.83, severityBand: "moderate" },
+      { scanId: scan.id, issueType: "wrinkles", score: 72, confidence: 0.79, severityBand: "none" },
+      { scanId: scan.id, issueType: "redness", score: 68, confidence: 0.85, severityBand: "none" },
+      { scanId: scan.id, issueType: "hydration", score: 64, confidence: 0.9, severityBand: "mild" },
+    ],
+  });
+
+  // A spare credit, so the analyser's "you have a scan available" state is
+  // reachable too.
+  await prisma.skinEntitlement.create({
+    data: { userId, state: "available", source: "granted" },
+  });
+
+  /* -- Fourteen months of visits, across three doctors ------------------- */
+
+  // Two other listed doctors, so "Doctors you've seen" has more than one row.
+  // Their own primary clinic comes with them: an appointment with a null
+  // clinicId is a row that predates multi-clinic support, and writing new ones
+  // breaks the invariant verify-booking-clinic exists to hold.
+  const others = await prisma.doctor.findMany({
+    where: { slug: { in: ["aarti-menon", "meera-iyer"] }, isActive: true },
+    select: {
+      id: true,
+      name: true,
+      clinics: {
+        where: { isActive: true },
+        orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }],
+        take: 1,
+        select: { clinicId: true },
+      },
+    },
+  });
+
+  type Visit = {
+    daysAgo: number;
+    status: AppointmentStatus;
+    reason: VisitReason;
+    mode?: ConsultMode;
+    doctorIdx?: number; // -1 = the demo doctor
+    cancelledBy?: ActorKind;
+  };
+
+  const VISITS: Visit[] = [
+    { daysAgo: 404, status: AppointmentStatus.COMPLETED, reason: VisitReason.ACNE },
+    { daysAgo: 383, status: AppointmentStatus.COMPLETED, reason: VisitReason.FOLLOW_UP },
+    { daysAgo: 340, status: AppointmentStatus.COMPLETED, reason: VisitReason.ACNE, doctorIdx: 0 },
+    { daysAgo: 297, status: AppointmentStatus.CANCELLED, reason: VisitReason.FOLLOW_UP, cancelledBy: ActorKind.PATIENT },
+    { daysAgo: 268, status: AppointmentStatus.COMPLETED, reason: VisitReason.FOLLOW_UP, mode: ConsultMode.VIDEO },
+    { daysAgo: 221, status: AppointmentStatus.COMPLETED, reason: VisitReason.PIGMENTATION },
+    { daysAgo: 189, status: AppointmentStatus.NO_SHOW, reason: VisitReason.FOLLOW_UP },
+    { daysAgo: 160, status: AppointmentStatus.COMPLETED, reason: VisitReason.PIGMENTATION, doctorIdx: 1 },
+    { daysAgo: 131, status: AppointmentStatus.COMPLETED, reason: VisitReason.COSMETIC_PROCEDURE },
     { daysAgo: 96, status: AppointmentStatus.COMPLETED, reason: VisitReason.ACNE },
+    { daysAgo: 74, status: AppointmentStatus.COMPLETED, reason: VisitReason.FOLLOW_UP, mode: ConsultMode.VIDEO },
     { daysAgo: 54, status: AppointmentStatus.COMPLETED, reason: VisitReason.FOLLOW_UP },
+    { daysAgo: 33, status: AppointmentStatus.COMPLETED, reason: VisitReason.SCARS, doctorIdx: 0 },
     { daysAgo: 21, status: AppointmentStatus.COMPLETED, reason: VisitReason.PIGMENTATION },
-    { daysAgo: -9, status: AppointmentStatus.CONFIRMED, reason: VisitReason.FOLLOW_UP },
+    { daysAgo: 6, status: AppointmentStatus.COMPLETED, reason: VisitReason.FOLLOW_UP, mode: ConsultMode.HOME },
+    { daysAgo: -4, status: AppointmentStatus.CONFIRMED, reason: VisitReason.FOLLOW_UP },
+    { daysAgo: -18, status: AppointmentStatus.CONFIRMED, reason: VisitReason.COSMETIC_PROCEDURE, mode: ConsultMode.VIDEO },
+    { daysAgo: -31, status: AppointmentStatus.CONFIRMED, reason: VisitReason.FOLLOW_UP, doctorIdx: 0 },
   ];
-  for (const v of visits) {
+
+  const clientCompleted: { id: string; at: Date; amount: number; doctorId: string }[] = [];
+
+  for (let i = 0; i < VISITS.length; i++) {
+    const v = VISITS[i];
     const at = new Date(now.getTime() - v.daysAgo * DAY);
-    // 11:15 rather than on the half hour, so this never collides with a slot
+    // 11:15 rather than on the half hour, so these never collide with a slot
     // the generated diary above already took.
     at.setUTCHours(11, 15, 0, 0);
+
+    const other =
+      v.doctorIdx === undefined ? undefined : others[v.doctorIdx];
+    const target = other
+      ? {
+          id: other.id,
+          // Falls back to the demo practice's own location rather than null:
+          // a directory doctor with no DoctorClinic row would otherwise write
+          // an appointment nobody can say the address of.
+          clinicId: other.clinics[0]?.clinicId ?? clinicId,
+        }
+      : { id: doctorId, clinicId };
+
+    const mode = v.mode ?? ConsultMode.CLINIC;
+    const visitFee = mode === ConsultMode.HOME ? 600 : 0;
+    const fee = 1440;
+    const isCancelled =
+      v.status === AppointmentStatus.CANCELLED ||
+      v.status === AppointmentStatus.NO_SHOW;
+
+    const id = `democli${String(i).padStart(4, "0")}`;
+
     await prisma.appointment.create({
       data: {
+        id,
         patientUserId: userId,
-        doctorId,
-        clinicId,
+        doctorId: target.id,
+        clinicId: target.clinicId,
         scheduledAt: at,
         durationMin: 30,
-        mode: ConsultMode.CLINIC,
+        mode,
         status: v.status,
         approvalState: ApprovalState.ACCEPTED,
         approvedAt: new Date(at.getTime() - 2 * DAY),
-        feeAtBooking: 1440,
-        visitFee: 0,
+        feeAtBooking: fee,
+        visitFee,
         patientName: "Demo Client",
         patientPhone: "+91 90000 22233",
         patientEmail: CLIENT_EMAIL,
         reason: v.reason,
-        reasonDetail:
-          "Jawline breakouts, and some pigmentation left behind by older spots.",
+        reasonDetail: pick(DETAIL[v.reason] ?? DETAIL.OTHER!),
         symptomDuration: SymptomDuration.MONTHS_6_12,
-        severity: 3,
+        severity: between(2, 4),
+        priorTreatment:
+          "Benzoyl peroxide wash before I started here, and a course of doxycycline two years ago.",
         medications: "None",
         allergies: "None known",
+        isFirstVisit: i === 0,
         patientAge: 29,
         patientGender: Gender.FEMALE,
         photoConsent: true,
+        meetingUrl:
+          mode === ConsultMode.VIDEO
+            ? "https://meet.google.com/demo-nithya-clinic"
+            : null,
         discountInr: 160,
-        slotLock: `${doctorId}@${at.toISOString()}`,
+        cancelledBy: v.cancelledBy ?? (isCancelled ? ActorKind.PATIENT : null),
+        cancelledAt: isCancelled ? new Date(at.getTime() - 2 * DAY) : null,
+        cancelReason: isCancelled ? "Could not travel that week." : null,
+        // The lock is keyed on the doctor, so two doctors can hold the same
+        // wall-clock slot - which is correct, they are different people.
+        slotLock: isCancelled ? null : `${target.id}@${at.toISOString()}`,
         createdAt: new Date(at.getTime() - 9 * DAY),
       },
     });
+
+    if (v.status === AppointmentStatus.COMPLETED) {
+      clientCompleted.push({ id, at, amount: fee + visitFee, doctorId: target.id });
+    }
   }
+
+  /* -- What they paid ---------------------------------------------------- */
+
+  await prisma.payment.createMany({
+    data: clientCompleted.map((c, i) => {
+      const n = String(i).padStart(4, "0");
+      return {
+        id: `democlipay${n}`,
+        purpose: PaymentPurpose.APPOINTMENT,
+        appointmentId: c.id,
+        userId,
+        provider: "razorpay",
+        providerOrderId: `order_democli${n}`,
+        providerPaymentId: `pay_democli${n}`,
+        amountInr: c.amount,
+        amountMinor: c.amount * 100,
+        status: PaymentStatus.PAID,
+        paidAt: new Date(c.at.getTime() - 3_600_000),
+        createdAt: new Date(c.at.getTime() - 2 * 3_600_000),
+      };
+    }),
+  });
+
+  /* -- Two membership terms: one spent, one live ------------------------- */
+
+  const plans = await prisma.subscriptionPlan.findMany({
+    where: { isActive: true },
+    orderBy: { sortOrder: "asc" },
+    select: { id: true, priceInr: true },
+  });
+
+  if (plans.length) {
+    // An expired term first. A membership page that has only ever seen one
+    // subscription cannot show what a renewal looks like.
+    const past = await prisma.subscription.create({
+      data: {
+        userId,
+        planId: plans[0].id,
+        status: SubscriptionStatus.EXPIRED,
+        startedAt: new Date(now.getTime() - 400 * DAY),
+        currentPeriodEnd: new Date(now.getTime() - 41 * DAY),
+        createdAt: new Date(now.getTime() - 400 * DAY),
+      },
+      select: { id: true },
+    });
+
+    const live = await prisma.subscription.create({
+      data: {
+        userId,
+        // The annual tier where one exists, so the renewal is an upgrade.
+        planId: plans[plans.length - 1].id,
+        status: SubscriptionStatus.ACTIVE,
+        startedAt: new Date(now.getTime() - 40 * DAY),
+        currentPeriodEnd: new Date(now.getTime() + 325 * DAY),
+        createdAt: new Date(now.getTime() - 40 * DAY),
+      },
+      select: { id: true },
+    });
+
+    await prisma.payment.createMany({
+      data: [
+        {
+          id: "demosubpay0001",
+          purpose: PaymentPurpose.SUBSCRIPTION,
+          subscriptionId: past.id,
+          userId,
+          providerOrderId: "order_demosub0001",
+          providerPaymentId: "pay_demosub0001",
+          amountInr: plans[0].priceInr,
+          amountMinor: plans[0].priceInr * 100,
+          status: PaymentStatus.PAID,
+          paidAt: new Date(now.getTime() - 400 * DAY),
+          createdAt: new Date(now.getTime() - 400 * DAY),
+        },
+        {
+          id: "demosubpay0002",
+          purpose: PaymentPurpose.SUBSCRIPTION,
+          subscriptionId: live.id,
+          userId,
+          providerOrderId: "order_demosub0002",
+          providerPaymentId: "pay_demosub0002",
+          amountInr: plans[plans.length - 1].priceInr,
+          amountMinor: plans[plans.length - 1].priceInr * 100,
+          status: PaymentStatus.PAID,
+          paidAt: new Date(now.getTime() - 40 * DAY),
+          createdAt: new Date(now.getTime() - 40 * DAY),
+        },
+      ],
+    });
+  }
+
+  /* -- Prescriptions ----------------------------------------------------- */
 
   await prisma.prescription.createMany({
     data: [
       {
         userId,
         doctorId,
-        title: "Acne — 12 week plan",
+        title: "Acne - 12 week plan",
         notes:
           "Adapalene 0.1% at night, alternate nights for the first fortnight and then daily. Non-comedogenic sunscreen every morning. Clindamycin gel to active spots only, maximum eight weeks. Review at six weeks with photographs.",
-        issuedAt: new Date(now.getTime() - 96 * DAY),
+        issuedAt: new Date(now.getTime() - 404 * DAY),
       },
       {
         userId,
         doctorId,
-        title: "Pigmentation — maintenance",
+        title: "Acne - maintenance after the first course",
         notes:
-          "Azelaic acid 15% in the morning. Sunscreen SPF 50 reapplied every three hours outdoors — this is the treatment, not an addition to it. Stop the earlier clindamycin.",
+          "Continue adapalene three nights a week. Stop the clindamycin - eight weeks is the limit and resistance is the reason. Keep the sunscreen daily.",
+        issuedAt: new Date(now.getTime() - 268 * DAY),
+      },
+      {
+        userId,
+        doctorId,
+        title: "Pigmentation - starting course",
+        notes:
+          "Triple combination cream at night for eight weeks, then twice weekly. Sunscreen SPF 50 reapplied every three hours outdoors - this is the treatment, not an addition to it.",
+        issuedAt: new Date(now.getTime() - 221 * DAY),
+      },
+      {
+        userId,
+        doctorId: others[0]?.id ?? doctorId,
+        title: "Post-procedure care",
+        notes:
+          "Bland emollient four times daily for five days. No actives, no exfoliation and no sun for two weeks. Call the clinic if there is any blistering.",
+        issuedAt: new Date(now.getTime() - 131 * DAY),
+      },
+      {
+        userId,
+        doctorId,
+        title: "Pigmentation - maintenance",
+        notes:
+          "Azelaic acid 15% in the morning. Sunscreen SPF 50 reapplied every three hours outdoors. Stop the earlier clindamycin.",
         issuedAt: new Date(now.getTime() - 21 * DAY),
       },
     ],
   });
 
+  /* -- Orders ------------------------------------------------------------ */
+
   await prisma.purchase.createMany({
     data: [
-      {
-        userId,
-        itemName: "Barrier Repair Moisturiser 50ml",
-        quantity: 1,
-        status: "DELIVERED",
-        amountInr: 1450,
-        orderedAt: new Date(now.getTime() - 74 * DAY),
-      },
-      {
-        userId,
-        itemName: "Mineral Sunscreen SPF 50 PA++++",
-        quantity: 2,
-        status: "DELIVERED",
-        amountInr: 2380,
-        orderedAt: new Date(now.getTime() - 41 * DAY),
-      },
-      {
-        userId,
-        itemName: "Gentle Foaming Cleanser 150ml",
-        quantity: 1,
-        status: "SHIPPED",
-        amountInr: 890,
-        orderedAt: new Date(now.getTime() - 5 * DAY),
-      },
-      {
-        userId,
-        itemName: "Niacinamide 10% Serum 30ml",
-        quantity: 1,
-        status: "PROCESSING",
-        amountInr: 1120,
-        orderedAt: new Date(now.getTime() - 1 * DAY),
-      },
+      { userId, itemName: "Gentle Foaming Cleanser 150ml", quantity: 1, status: "DELIVERED", amountInr: 890, orderedAt: new Date(now.getTime() - 396 * DAY) },
+      { userId, itemName: "Adapalene 0.1% Gel 15g", quantity: 1, status: "DELIVERED", amountInr: 640, orderedAt: new Date(now.getTime() - 380 * DAY) },
+      { userId, itemName: "Mineral Sunscreen SPF 50 PA++++", quantity: 2, status: "DELIVERED", amountInr: 2380, orderedAt: new Date(now.getTime() - 291 * DAY) },
+      { userId, itemName: "Barrier Repair Moisturiser 50ml", quantity: 1, status: "DELIVERED", amountInr: 1450, orderedAt: new Date(now.getTime() - 214 * DAY) },
+      { userId, itemName: "Vitamin C 15% Serum 30ml", quantity: 1, status: "DELIVERED", amountInr: 1890, orderedAt: new Date(now.getTime() - 157 * DAY) },
+      { userId, itemName: "Post-Procedure Recovery Kit", quantity: 1, status: "DELIVERED", amountInr: 3200, orderedAt: new Date(now.getTime() - 130 * DAY) },
+      { userId, itemName: "Azelaic Acid 15% Cream 30g", quantity: 1, status: "DELIVERED", amountInr: 1240, orderedAt: new Date(now.getTime() - 74 * DAY) },
+      { userId, itemName: "Mineral Sunscreen SPF 50 PA++++", quantity: 2, status: "DELIVERED", amountInr: 2380, orderedAt: new Date(now.getTime() - 41 * DAY) },
+      { userId, itemName: "Gentle Foaming Cleanser 150ml", quantity: 1, status: "SHIPPED", amountInr: 890, orderedAt: new Date(now.getTime() - 5 * DAY) },
+      { userId, itemName: "Niacinamide 10% Serum 30ml", quantity: 1, status: "PROCESSING", amountInr: 1120, orderedAt: new Date(now.getTime() - 1 * DAY) },
     ],
   });
 
+  /* -- Offers used ------------------------------------------------------- */
+
   await prisma.discountGrant.createMany({
     data: [
-      {
-        userId,
-        code: "FIRSTSCAN",
-        description: "First skin analysis, free",
-        percentOff: 100,
-        usedAt: new Date(now.getTime() - 118 * DAY),
-        createdAt: new Date(now.getTime() - 120 * DAY),
-      },
-      {
-        userId,
-        code: "WHITECOLLAR10",
-        description: "White Collar — 10% off every consultation",
-        percentOff: 10,
-        usedAt: new Date(now.getTime() - 21 * DAY),
-        createdAt: new Date(now.getTime() - 40 * DAY),
-      },
-      {
-        userId,
-        code: "MONSOON15",
-        description: "Monsoon skin week — 15% off a peel course",
-        percentOff: 15,
-        expiresAt: new Date(now.getTime() + 26 * DAY),
-        createdAt: new Date(now.getTime() - 9 * DAY),
-      },
+      { userId, code: "FIRSTSCAN", description: "First skin analysis, free", percentOff: 100, usedAt: new Date(now.getTime() - 412 * DAY), createdAt: new Date(now.getTime() - 414 * DAY) },
+      { userId, code: "WELCOME200", description: "Rs 200 off your first order", amountOffInr: 200, usedAt: new Date(now.getTime() - 396 * DAY), createdAt: new Date(now.getTime() - 410 * DAY) },
+      { userId, code: "WHITECOLLAR10", description: "White Collar - 10% off every consultation", percentOff: 10, usedAt: new Date(now.getTime() - 268 * DAY), createdAt: new Date(now.getTime() - 400 * DAY) },
+      { userId, code: "SUMMERSKIN", description: "Summer skin week - 20% off a peel course", percentOff: 20, usedAt: new Date(now.getTime() - 131 * DAY), createdAt: new Date(now.getTime() - 140 * DAY) },
+      { userId, code: "REFER500", description: "Rs 500 referral credit", amountOffInr: 500, usedAt: new Date(now.getTime() - 74 * DAY), createdAt: new Date(now.getTime() - 80 * DAY) },
+      { userId, code: "WHITECOLLAR15", description: "White Collar Annual - 15% off every consultation", percentOff: 15, usedAt: new Date(now.getTime() - 21 * DAY), createdAt: new Date(now.getTime() - 40 * DAY) },
+      // Unused and still running, so the profile can show a live offer too.
+      { userId, code: "MONSOON15", description: "Monsoon skin week - 15% off a peel course", percentOff: 15, expiresAt: new Date(now.getTime() + 26 * DAY), createdAt: new Date(now.getTime() - 9 * DAY) },
     ],
+  });
+
+  /* -- Reviews they left ------------------------------------------------- */
+
+  // Anchored to visits that actually happened, which is what makes a rating
+  // mean anything. One is still with moderation.
+  const reviewable = clientCompleted.slice(-3);
+  const COPY = [
+    { rating: 5, title: "Two years of trying things myself", body: "Should have come sooner. The plan was explained properly and the follow-ups were booked before I left each time.", status: ReviewStatus.PUBLISHED },
+    { rating: 5, title: "Pigmentation has faded", body: "Slow but steady, and I was told at the start it would be slow. No overselling at any point.", status: ReviewStatus.PUBLISHED },
+    { rating: 4, title: "Home visit worked well", body: "Could not travel and the home visit was arranged the same week. Worth the extra charge.", status: ReviewStatus.PENDING },
+  ];
+  for (let i = 0; i < reviewable.length && i < COPY.length; i++) {
+    const target = reviewable[i];
+    const c = COPY[i];
+    await prisma.review.create({
+      data: {
+        appointmentId: target.id,
+        userId,
+        doctorId: target.doctorId,
+        rating: c.rating,
+        title: c.title,
+        body: c.body,
+        status: c.status,
+        publishedAt:
+          c.status === ReviewStatus.PUBLISHED
+            ? new Date(target.at.getTime() + 4 * DAY)
+            : null,
+        createdAt: new Date(target.at.getTime() + DAY),
+      },
+    });
+  }
+
+  /* -- The questionnaire ------------------------------------------------- */
+
+  await prisma.intakeResponse.create({
+    data: {
+      userId,
+      answers: {
+        concern: "acne",
+        skinType: "combination",
+        duration: "over_year",
+        tried: ["otc_wash", "antibiotics"],
+        routine: "cleanser_moisturiser_sunscreen",
+        budget: "mid",
+        mode: "clinic",
+      },
+      summary:
+        "Combination skin, acne over a year, has tried an OTC wash and oral antibiotics. Prefers a clinic visit.",
+      createdAt: new Date(now.getTime() - 415 * DAY),
+    },
   });
 }
 

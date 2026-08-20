@@ -165,13 +165,30 @@ export default async function DoctorTodayPage() {
       )}
 
       <div className="mb-7 grid gap-4 sm:grid-cols-3">
-        <StatTile label="Upcoming" value={upcoming} hint="Confirmed and pending" />
-        <StatTile label="Completed" value={completed} hint="All time" />
+        <StatTile
+          label="Upcoming"
+          value={upcoming}
+          hint="Confirmed and pending"
+          accent="brand"
+          icon="calendar"
+          index={0}
+        />
+        <StatTile
+          label="Completed"
+          value={completed}
+          hint="All time"
+          accent="teal"
+          icon="chart"
+          index={1}
+        />
         <StatTile
           label={clinics === 1 ? "Location" : "Locations"}
           value={clinics}
           hint="Manage hours and fees"
           href="/doctor/portal/practice"
+          accent="amber"
+          icon="clinic"
+          index={2}
         />
       </div>
 

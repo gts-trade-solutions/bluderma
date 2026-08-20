@@ -54,7 +54,7 @@ export const SKIN_CONDITIONS: SkinCondition[] = [
     name: "Acne",
     line: "Blocked, inflamed pores that surface as papules, pustules and cysts.",
     detail:
-      "Acne starts when oil and dead skin plug a follicle and bacteria multiply inside it. It is treated by controlling oil, clearing the plug and calming the inflammation — usually together, rarely with one product.",
+      "Acne starts when oil and dead skin plug a follicle and bacteria multiply inside it. It is treated by controlling oil, clearing the plug and calming the inflammation, usually together, rarely with one product.",
     category: "acne-scars",
     group: "Breakouts",
     signs: ["Red, tender spots", "Whiteheads", "Flares before periods"],
@@ -72,7 +72,7 @@ export const SKIN_CONDITIONS: SkinCondition[] = [
   {
     slug: "blackheads",
     name: "Blackheads & congestion",
-    line: "Open plugs that oxidise dark — most often across the nose and chin.",
+    line: "Open plugs that oxidise dark, most often across the nose and chin.",
     detail:
       "Congestion is oil that has sat in the pore long enough to harden. Extraction clears what is there; only a routine change keeps it from refilling.",
     category: "glass-skin",
@@ -84,7 +84,7 @@ export const SKIN_CONDITIONS: SkinCondition[] = [
     name: "Acne scars",
     line: "The pits, rolling dips and raised marks acne leaves once it clears.",
     detail:
-      "Scarring is a collagen problem, not a pigment one, so it needs remodelling — microneedling, fractional laser or subcision — rather than brightening.",
+      "Scarring is a collagen problem, not a pigment one, so it needs remodelling, microneedling, fractional laser or subcision, rather than brightening.",
     category: "acne-scars",
     group: "Texture",
     signs: ["Shadows in side light", "Uneven surface", "Ice-pick marks"],
@@ -94,7 +94,7 @@ export const SKIN_CONDITIONS: SkinCondition[] = [
     name: "Post-acne marks",
     line: "Flat brown or red patches left where a spot used to be.",
     detail:
-      "Unlike scars these sit at skin level and fade on their own — but months faster with pigment-directed treatment and daily sun protection.",
+      "Unlike scars these sit at skin level and fade on their own, but months faster with pigment-directed treatment and daily sun protection.",
     category: "pigmentation",
     group: "Pigment",
     signs: ["Flat to touch", "Brown or pink", "Darker after sun"],
@@ -106,7 +106,7 @@ export const SKIN_CONDITIONS: SkinCondition[] = [
     name: "Melasma",
     line: "Symmetrical brown patches on the cheeks, forehead and upper lip.",
     detail:
-      "Hormone and heat driven, and famously prone to rebound. Treated slowly and conservatively — aggressive lasers frequently make it worse.",
+      "Hormone and heat driven, and famously prone to rebound. Treated slowly and conservatively. Aggressive lasers frequently make it worse.",
     category: "pigmentation",
     group: "Pigment",
     signs: ["Both cheeks alike", "Worse in summer", "Returns after sun"],
@@ -136,7 +136,7 @@ export const SKIN_CONDITIONS: SkinCondition[] = [
     name: "Dark circles",
     line: "Under-eye shadowing from pigment, thin skin, or the hollow beneath.",
     detail:
-      "Three different causes that look alike and are treated completely differently — which is why an in-person look decides the plan.",
+      "Three different causes that look alike and are treated completely differently, which is why an in-person look decides the plan.",
     category: "eyes",
     group: "Pigment",
     signs: ["Worse when tired", "Blue or brown tint", "Hollow rim"],
@@ -210,7 +210,7 @@ export const SKIN_CONDITIONS: SkinCondition[] = [
     name: "Dryness & dehydration",
     line: "Tight, dull skin that drinks in moisturiser and asks for more.",
     detail:
-      "Dry skin lacks oil; dehydrated skin lacks water — and oily skin can be dehydrated too. The distinction changes the entire routine.",
+      "Dry skin lacks oil; dehydrated skin lacks water, and oily skin can be dehydrated too. The distinction changes the entire routine.",
     category: "glass-skin",
     group: "Barrier",
     signs: ["Tight after cleansing", "Fine crepe lines", "Flaky patches"],
@@ -220,7 +220,7 @@ export const SKIN_CONDITIONS: SkinCondition[] = [
     name: "Eczema & dermatitis",
     line: "Itchy, inflamed patches that come and go in the same places.",
     detail:
-      "Medical dermatology, not aesthetics. It is settled first — no elective procedure runs on inflamed skin.",
+      "Medical dermatology, not aesthetics. It is settled first, no elective procedure runs on inflamed skin.",
     category: "skin-health",
     group: "Barrier",
     signs: ["Itch first", "Cracked skin", "Flares in seasons"],
@@ -262,7 +262,7 @@ export const SKIN_CONDITIONS: SkinCondition[] = [
     name: "Unwanted hair",
     line: "Regrowth that shaving and waxing only ever postpone.",
     detail:
-      "Laser targets pigment in the follicle, so it works in cycles — a course, not a session. Hormonal causes are checked first.",
+      "Laser targets pigment in the follicle, so it works in cycles, a course, not a session. Hormonal causes are checked first.",
     category: "hair-removal",
     group: "Hair",
     signs: ["Coarse regrowth", "Ingrowns", "Shadow after shaving"],
@@ -274,7 +274,7 @@ export const SKIN_CONDITIONS: SkinCondition[] = [
     name: "Hair fall",
     line: "Shedding beyond the normal hundred strands a day.",
     detail:
-      "Diffuse shedding usually has a cause you can find — iron, thyroid, illness, stress. Bloodwork before any treatment plan.",
+      "Diffuse shedding usually has a cause you can find, iron, thyroid, illness, stress. Bloodwork before any treatment plan.",
     category: "hair-restoration",
     group: "Hair",
     signs: ["Strands on the pillow", "Thinner ponytail", "Started suddenly"],
@@ -304,7 +304,7 @@ export const SKIN_CONDITIONS: SkinCondition[] = [
     name: "Thinning ponytail",
     line: "The same hair tie going round one more time than it used to.",
     detail:
-      "A density change you feel before you see it. Measuring it early — with a scalp scope rather than a mirror — is what makes regrowth realistic.",
+      "A density change you feel before you see it. Measuring it early, with a scalp scope rather than a mirror, is what makes regrowth realistic.",
     category: "hair-restoration",
     group: "Hair",
     signs: ["Extra loop on the tie", "Flatter volume", "Gradual over a year"],
@@ -324,7 +324,7 @@ export const SKIN_CONDITIONS: SkinCondition[] = [
     name: "Bald patches",
     line: "Sharply defined smooth circles that appeared without warning.",
     detail:
-      "Alopecia areata is autoimmune, not cosmetic. It is treated medically and often regrows — a hair transplant into an active patch is the wrong answer.",
+      "Alopecia areata is autoimmune, not cosmetic. It is treated medically and often regrows, a hair transplant into an active patch is the wrong answer.",
     category: "hair-restoration",
     group: "Hair",
     signs: ["Round and smooth", "Appeared suddenly", "No itch or scaling"],
@@ -334,7 +334,7 @@ export const SKIN_CONDITIONS: SkinCondition[] = [
     name: "Breakage & damage",
     line: "Hair snapping mid-length from heat, bleach or tight styling.",
     detail:
-      "Breakage is a shaft problem, not a follicle one — so it looks like hair loss and is treated nothing like it. The fix starts with what you stop doing.",
+      "Breakage is a shaft problem, not a follicle one, so it looks like hair loss and is treated nothing like it. The fix starts with what you stop doing.",
     category: "hair-restoration",
     group: "Hair",
     signs: ["Short broken strands", "Rough ends", "Never reaches length"],
@@ -364,7 +364,7 @@ export const SKIN_CONDITIONS: SkinCondition[] = [
     name: "Postpartum shedding",
     line: "Heavy loss two to four months after giving birth.",
     detail:
-      "Hormonal, expected, and self-limiting in most cases — the hair held through pregnancy sheds at once. Support and reassurance beat aggressive treatment.",
+      "Hormonal, expected, and self-limiting in most cases, the hair held through pregnancy sheds at once. Support and reassurance beat aggressive treatment.",
     category: "hair-restoration",
     group: "Hair",
     signs: ["Handfuls when washing", "Starts around month 3", "Regrows in a fringe"],
@@ -376,7 +376,7 @@ export const SKIN_CONDITIONS: SkinCondition[] = [
     name: "Body & back acne",
     line: "Breakouts across the back, chest and shoulders that clothes aggravate.",
     detail:
-      "Same disease, different skin — thicker, with a higher risk of scarring. Sweat, friction and fabric matter as much as the topical does.",
+      "Same disease, different skin, thicker, with a higher risk of scarring. Sweat, friction and fabric matter as much as the topical does.",
     category: "acne-scars",
     group: "Body",
     signs: ["Worse after workouts", "Under straps", "Leaves dark marks"],
@@ -438,7 +438,7 @@ export const SKIN_CONDITIONS: SkinCondition[] = [
     name: "Milia",
     line: "Tiny hard white bumps under the eyes that never come to a head.",
     detail:
-      "Keratin trapped just below the surface. They cannot be squeezed out — extraction with a sterile lance takes a few seconds and is done in clinic.",
+      "Keratin trapped just below the surface. They cannot be squeezed out. Extraction with a sterile lance takes a few seconds and is done in clinic.",
     category: "skin-health",
     group: "Texture",
     signs: ["Firm white dots", "Around the eyes", "Never inflamed"],
@@ -458,7 +458,7 @@ export const SKIN_CONDITIONS: SkinCondition[] = [
     name: "Skin tags & moles",
     line: "Small growths on the neck, lids or underarms that catch on things.",
     detail:
-      "Removal is quick, but the examination comes first — anything changing in size, colour or border is checked before it is touched.",
+      "Removal is quick, but the examination comes first, anything changing in size, colour or border is checked before it is touched.",
     category: "skin-health",
     group: "Texture",
     signs: ["Soft and hanging", "In skin folds", "Catch on jewellery"],

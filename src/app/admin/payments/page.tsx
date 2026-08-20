@@ -55,7 +55,7 @@ export default async function PaymentsPage() {
         description={
           isRazorpayConfigured()
             ? `Razorpay is connected. ₹${collected.toLocaleString("en-IN")} collected across ${paid.length} payment(s). Refunds are issued here and mirrored in the Razorpay dashboard.`
-            : "Razorpay keys are not set on this environment — bookings are settled at the clinic."
+            : "Razorpay keys are not set on this environment. Bookings are settled at the clinic."
         }
       />
 
@@ -110,7 +110,7 @@ export default async function PaymentsPage() {
                       {r.refundedInr ? (
                         <span className="block text-xs text-ink-muted">
                           ₹{r.refundedInr.toLocaleString("en-IN")} returned
-                          {r.refundReason ? ` — ${r.refundReason}` : ""}
+                          {r.refundReason ? `${r.refundReason}` : ""}
                         </span>
                       ) : null}
                       <RefundDialog

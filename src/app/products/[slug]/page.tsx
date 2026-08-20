@@ -25,7 +25,7 @@ export async function generateMetadata({
   const product = await getProduct(params.slug);
   if (!product) return { title: "Product not found" };
   return {
-    title: `${product.name}${product.brand ? ` — ${product.brand}` : ""}`,
+    title: `${product.name}${product.brand ? ` by ${product.brand}` : ""}`,
     description: product.seoDescription ?? undefined,
   };
 }

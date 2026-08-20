@@ -29,7 +29,7 @@ export default function AuthLayout({
               Dermatology &amp; aesthetic care, made clear
             </h2>
             <p className="mt-4 max-w-sm text-sm text-white/75">
-              A trusted reference for skin treatments — built for both the
+              A trusted reference for skin treatments, built for both the
               doctors who deliver them and the clients who receive them.
             </p>
           </div>

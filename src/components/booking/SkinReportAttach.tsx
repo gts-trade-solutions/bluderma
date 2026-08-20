@@ -83,7 +83,7 @@ export default function SkinReportAttach({
 
       {state.kind === "error" && (
         <p className="mt-2 text-sm text-amber-300">
-          We could not check for your report just now. You can still book — the
+          We could not check for your report just now. You can still book. The
           doctor can pull it up during the consultation.
         </p>
       )}
@@ -117,7 +117,7 @@ export default function SkinReportAttach({
             Run a free analysis
           </Link>
           <p className="mt-2 text-xs text-ink-muted">
-            Opens in a new tab — your booking stays as it is.
+            Opens in a new tab. Your booking stays as it is.
           </p>
         </div>
       )}

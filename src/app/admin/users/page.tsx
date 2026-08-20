@@ -56,7 +56,7 @@ export default async function UsersPage({
     <>
       <PageHeader
         title="Users"
-        description="Every account. Change a role or deactivate an account — this is how you approve or revoke doctor access."
+        description="Every account. Change a role or deactivate an account. This is how you approve or revoke doctor access."
       />
 
       <div className="mb-5 flex flex-wrap gap-2">

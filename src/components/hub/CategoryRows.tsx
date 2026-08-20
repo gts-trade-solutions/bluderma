@@ -46,7 +46,11 @@ export default function CategoryRows({ limit = 8 }: { limit?: number }) {
               </Link>
             </div>
 
-            <Rail ariaLabel={`${category.name} treatments`} className="gap-3">
+            <Rail
+              ariaLabel={`${category.name} treatments`}
+              className="gap-3"
+              bleed="column"
+            >
               {category.treatments.slice(0, limit).map((treatment) => (
                 <TreatmentLabel
                   key={treatment.slug}

@@ -120,7 +120,7 @@ export default function ConsultationStep() {
                 No doctor of ours holds a clinic in {city} yet.
               </p>
               <p className="mx-auto mt-1 max-w-md text-sm text-ink-muted">
-                Everyone below consults by video, so you can still be seen —
+                Everyone below consults by video, so you can still be seen,
                 usually the same week.
               </p>
             </div>

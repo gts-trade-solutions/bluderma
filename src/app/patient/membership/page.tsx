@@ -74,7 +74,7 @@ export default async function MembershipPage() {
           {/* Stated rather than buried: this is a term, not a standing order. */}
           <p className="mx-auto mt-10 max-w-2xl text-center text-sm text-ink-muted">
             A membership runs for the term you buy and then stops. Nothing is
-            auto-debited and there is no standing mandate on your card — we email
+            auto-debited and there is no standing mandate on your card. We email
             you before it ends, and renewing is a decision you make each time.
           </p>
         </div>

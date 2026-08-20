@@ -37,7 +37,7 @@ export default async function PendingPreview({
     <>
       <PageHead
         eyebrow="In review"
-        title={`Thanks, ${first} — it's with our team`}
+        title={`Thanks, ${first}: it's with our team`}
         sub="We check every practitioner's council registration before they go live. It usually takes a couple of working days, and you will get an email either way."
       />
 
@@ -70,7 +70,7 @@ export default async function PendingPreview({
       {advisory.length > 0 && (
         <Panel
           title="While you wait"
-          sub="None of these hold up your approval — they are what makes a listing worth booking."
+          sub="None of these hold up your approval. They are what makes a listing worth booking."
         >
           <ul className="space-y-2">
             {advisory.map((g) => (

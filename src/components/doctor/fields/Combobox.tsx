@@ -30,7 +30,7 @@ export default function Combobox({
   hint,
   placeholder,
   required,
-  emptyText = "No matches — your own wording is fine",
+  emptyText = "No matches: your own wording is fine",
   onPick,
   error: explicitError,
 }: {

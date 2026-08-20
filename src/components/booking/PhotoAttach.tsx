@@ -133,7 +133,7 @@ export default function PhotoAttach({
     <div className="rounded-2xl bg-white/[0.04] p-4 ring-1 ring-white/10">
       <p className="text-sm font-bold text-ink">
         Photos of the area{" "}
-        <span className="font-normal text-ink-muted">— optional</span>
+        <span className="font-normal text-ink-muted">optional</span>
       </p>
       <p className="mt-1 text-xs text-ink-muted">
         A clear, well-lit photo helps your doctor prepare before you arrive. Up

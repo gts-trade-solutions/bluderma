@@ -56,7 +56,7 @@ export default async function SettingsPage() {
               <code className="rounded bg-white/60 px-1">S3_BUCKET</code>,{" "}
               <code className="rounded bg-white/60 px-1">AWS_REGION</code> and your
               IAM keys to <code className="rounded bg-white/60 px-1">.env</code> to
-              enable them. Until then, image fields accept a pasted URL — which is
+              enable them. Until then, image fields accept a pasted URL, which is
               how all the seeded content already works.
             </Alert>
           )}

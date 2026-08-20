@@ -33,7 +33,7 @@ export const CALLBACK_TOLERANCE_SEC = 300; // ±5 minutes clock skew
 function assertSecret(): void {
   if (!SECRET) {
     throw new Error(
-      "SKIN_ANALYZER_SHARED_SECRET is not set — refusing to sign/verify."
+      "SKIN_ANALYZER_SHARED_SECRET is not set, refusing to sign/verify."
     );
   }
 }

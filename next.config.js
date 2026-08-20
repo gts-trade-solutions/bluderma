@@ -27,15 +27,27 @@ const nextConfig = {
   // Don't leak the framework version in a response header.
   poweredByHeader: false,
   images: {
-    // Unoptimized keeps the MVP dependency-free (no sharp) and works offline-friendly.
-    unoptimized: true,
+    // Optimisation is ON as of 20 Aug 2026. It was off so the MVP could ship
+    // without sharp, and the cost of that had grown: every photograph on a
+    // photograph-heavy site was served at full size, in its original format,
+    // at whatever dimensions the source happened to be. That is the largest
+    // single drag on Largest Contentful Paint here, and LCP is a ranking
+    // input, not just a nicety.
+    //
+    // THE CONSEQUENCE TO KNOW: with `unoptimized: true`, remotePatterns were
+    // not enforced and any host worked. They are enforced now, so an image
+    // from a host not listed below returns 400 rather than rendering. Every
+    // host currently in the database is covered — 884 rows on our own S3
+    // bucket and 9 on Pexels — and a new one has to be added here.
+    formats: ["image/avif", "image/webp"],
+    // A day. These are catalogue photographs that change when an admin
+    // replaces them, not per-request content.
+    minimumCacheTTL: 86_400,
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "plus.unsplash.com" },
       { protocol: "https", hostname: "images.pexels.com" },
-      // Our own storage. Listed even though `unoptimized` currently makes
-      // remotePatterns moot, because the day optimisation is turned on is
-      // exactly the day nobody will remember that every image now lives here.
+      // Our own storage. This is the day the comment above was written for.
       ...ownImageHosts(),
     ],
   },

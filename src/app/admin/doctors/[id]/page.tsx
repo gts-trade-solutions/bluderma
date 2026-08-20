@@ -81,7 +81,7 @@ export default async function DoctorEditPage({
         description={
           doctor?.userId
             ? "This doctor has a linked login and can see their own appointments."
-            : "Directory record only — no login attached yet."
+            : "Directory record only: no login attached yet."
         }
       />
 

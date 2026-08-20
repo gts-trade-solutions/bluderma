@@ -374,7 +374,7 @@ export default function BookingWizard({
                   <div className="mt-6">
                     {slots.filter((s) => s.available).length === 0 ? (
                       <p className="text-sm text-ink-muted">
-                        Nothing left on that day — try another.
+                        Nothing left on that day, try another.
                       </p>
                     ) : (
                       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
@@ -484,7 +484,7 @@ export default function BookingWizard({
                 <p className="mt-1 text-xs text-ink-muted">
                   {reasonDetail.trim().length < 10
                     ? `${10 - reasonDetail.trim().length} more characters`
-                    : "Thank you — that is genuinely useful."}
+                    : "Thank you. That is genuinely useful."}
                 </p>
               </div>
 
@@ -537,10 +537,10 @@ export default function BookingWizard({
                 </legend>
                 <div className="mt-2.5 flex flex-wrap gap-2">
                   <Chip on={isFirstVisit === false} onClick={() => setIsFirstVisit(false)}>
-                    Yes — this is a follow-up
+                    Yes: this is a follow-up
                   </Chip>
                   <Chip on={isFirstVisit === true} onClick={() => setIsFirstVisit(true)}>
-                    No — first visit
+                    No: first visit
                   </Chip>
                 </div>
               </fieldset>
@@ -586,12 +586,12 @@ export default function BookingWizard({
             <div className="mt-8 space-y-5 border-t border-white/10 pt-7">
               <p className="text-sm font-bold text-ink">
                 A little history{" "}
-                <span className="font-normal text-ink-muted">— optional</span>
+                <span className="font-normal text-ink-muted">optional</span>
               </p>
 
               <Note
                 label="What have you already tried?"
-                hint="Creams, tablets, treatments — so the doctor does not prescribe the same thing again."
+                hint="Creams, tablets, treatments: so the doctor does not prescribe the same thing again."
                 value={priorTreatment}
                 onChange={setPriorTreatment}
                 placeholder="e.g. Benzoyl peroxide for 3 months, one course of antibiotics."
@@ -608,7 +608,7 @@ export default function BookingWizard({
                 hint="Medicines, foods, anything you react to. Say so if you have none."
                 value={allergies}
                 onChange={setAllergies}
-                placeholder="e.g. Penicillin — rash. Otherwise none."
+                placeholder="e.g. Penicillin: rash. Otherwise none."
               />
               <Note
                 label="Anything else the doctor should know?"
@@ -636,7 +636,7 @@ export default function BookingWizard({
                 The doctor may take clinical photographs of the affected area
                 during my consultation, and keep them in my medical record.
                 <span className="mt-0.5 block text-xs text-ink-muted">
-                  You can decline and still be seen — say no here and the doctor
+                  You can decline and still be seen. Say no here and the doctor
                   will ask you again in person if they need to.
                 </span>
               </span>
@@ -719,7 +719,7 @@ export default function BookingWizard({
             {!signedIn ? (
               <div className="mt-6 rounded-2xl bg-brand-400/[12%] p-4 ring-1 ring-brand-300/30">
                 <p className="text-sm text-ink-soft">
-                  Sign in to confirm. Your choices are kept — you will come
+                  Sign in to confirm. Your choices are kept. You will come
                   straight back here.
                 </p>
                 <Link
@@ -948,7 +948,7 @@ function Confirmed({
           k="Where"
           v={
             mode === "video"
-              ? "Video — link to follow"
+              ? "Video: link to follow"
               : mode === "home"
               ? "Home visit"
               : clinicName

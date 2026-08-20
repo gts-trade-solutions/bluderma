@@ -185,7 +185,7 @@ export default function AssistTextArea({
       {variants && variants.length > 0 && (
         <div className="mt-3 space-y-2" aria-live="polite">
           <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-            Pick one and edit it — nothing is saved until you submit
+            Pick one and edit it. Nothing is saved until you submit
           </p>
           {variants.map((v) => (
             <div

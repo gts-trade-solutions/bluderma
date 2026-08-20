@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/session";
 import { getAccessState } from "@/lib/integrations/skinEntitlement";
 import { getScanOffer } from "@/lib/integrations/skinPricing";
 import { prisma } from "@/lib/prisma";
+import { isRazorpayConfigured } from "@/lib/payments/razorpay";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,5 +37,10 @@ export async function GET() {
     lastAnalysisId: last?.id ?? null,
     pendingRequest: pendingRequest > 0,
     offer,
+    // Whether a card can actually be charged on THIS deployment. Without it
+    // the hub card would offer "Buy another scan for ₹99" on a build with no
+    // Razorpay keys, and the button would fail after the click rather than
+    // before it. A price nobody can pay is worse than an honest fallback.
+    payable: isRazorpayConfigured(),
   });
 }

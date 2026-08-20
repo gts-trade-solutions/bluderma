@@ -159,7 +159,7 @@ export default function EnquiryModal({
             <p className="mx-auto mt-2 max-w-sm text-sm text-ink-muted">
               Thanks, {form.name || "there"}. Your enquiry for{" "}
               <span className="font-medium text-ink">{productName}</span> has
-              reached our team — we&apos;ll get back to you shortly.
+              reached our team. We&apos;ll get back to you shortly.
             </p>
             <button onClick={onClose} className="btn-primary mt-6">
               Done

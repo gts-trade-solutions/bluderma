@@ -53,8 +53,10 @@ export default function SmartImage({
   if (mode === "natural") {
     return (
       /* eslint-disable-next-line @next/next/no-img-element -- natural-ratio
-         figure; next/image fill would reintroduce the crop this mode exists
-         to avoid, and images are served unoptimized anyway. */
+         figure. next/image's fill would reintroduce the crop this mode exists
+         to avoid. It does now forgo optimisation, which the rest of the site
+         gained on 20 Aug 2026; worth revisiting with width/height once these
+         figures' intrinsic sizes are known. */
       <img
         src={src}
         alt={alt}

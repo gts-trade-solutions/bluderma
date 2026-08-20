@@ -153,7 +153,7 @@ export default function MembershipPlans({
                 </Link>
               ) : !payable ? (
                 <p className="mt-7 rounded-xl bg-white/5 px-4 py-3 text-center text-sm text-ink-muted">
-                  Online payment is not switched on yet — contact us to start a
+                  Online payment is not switched on yet. Contact us to start a
                   membership.
                 </p>
               ) : (

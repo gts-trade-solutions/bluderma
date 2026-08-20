@@ -135,7 +135,7 @@ export default function ArticlePage({ params }: Params) {
                     </p>
                     <p className="mt-1 text-sm text-ink-muted">
                       {category.treatments.length} treatments · no prices, no
-                      clinic names — enquiry first.
+                      clinic names, enquiry first.
                     </p>
                   </div>
                   <ArrowRight className="h-5 w-5 shrink-0 text-brand-300 transition-transform group-hover:translate-x-0.5" />

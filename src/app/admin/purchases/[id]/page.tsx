@@ -58,7 +58,7 @@ export default async function PurchaseEditPage({
             defaultValue={row?.userId ?? ""}
             options={clients.map((c) => ({
               value: c.id,
-              label: c.name ? `${c.name} — ${c.email}` : c.email,
+              label: c.name ? `${c.name}: ${c.email}` : c.email,
             }))}
           />
         </Card>

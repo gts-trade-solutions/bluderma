@@ -36,7 +36,7 @@ export default function NoteForm({
         name="body"
         rows={3}
         required
-        placeholder="Add a note — a call summary, next step, anything the team should see."
+        placeholder="Add a note, a call summary, next step, anything the team should see."
         className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
       />
       {error && <p className="text-xs text-rose-600">{error}</p>}

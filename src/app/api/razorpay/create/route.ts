@@ -98,7 +98,7 @@ export async function POST(req: Request) {
       ok: true,
       unavailable: true,
       appointmentId,
-      message: "Online payment isn't enabled yet — pay at the clinic.",
+      message: "Online payment isn't enabled yet. Pay at the clinic.",
     });
   }
 

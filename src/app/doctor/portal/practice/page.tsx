@@ -93,7 +93,7 @@ export default async function PracticePage() {
       <section>
         <PageHead
           title="Your hours"
-          sub="Sessions per location. A booking at one clinic blocks the same time at every other — you can only be in one place."
+          sub="Sessions per location. A booking at one clinic blocks the same time at every other. You can only be in one place."
         />
         <HoursStep doctor={doctor} mode="manage" />
       </section>

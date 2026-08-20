@@ -47,7 +47,7 @@ export default function GrantCredits({
           <option value="">Pick a client…</option>
           {clients.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name ? `${c.name} — ${c.email}` : c.email}
+              {c.name ? `${c.name}: ${c.email}` : c.email}
             </option>
           ))}
         </select>
@@ -75,7 +75,7 @@ export default function GrantCredits({
           type="text"
           name="reason"
           required
-          placeholder="Scan failed on 12 Aug — re-issued"
+          placeholder="Scan failed on 12 Aug, re-issued"
           className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm"
         />
       </label>
@@ -93,7 +93,7 @@ export default function GrantCredits({
       )}
       {done && !error && (
         <p className="w-full text-xs font-medium text-teal-700">
-          Credit granted — the client can start an analysis now.
+          Credit granted: the client can start an analysis now.
         </p>
       )}
     </form>

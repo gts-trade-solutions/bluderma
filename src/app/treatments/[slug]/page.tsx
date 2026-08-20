@@ -143,7 +143,7 @@ export default async function TreatmentPage({
                 <div className="relative aspect-[4/3] overflow-hidden rounded-3xl shadow-card ring-1 ring-black/[0.04]">
                   <SmartImage
                     src={rowImage(0)}
-                    alt={`${treatment.name} — what it addresses`}
+                    alt={`${treatment.name}: what it addresses`}
                     sizes="(max-width: 1024px) 100vw, 45vw"
                     className="transition-transform duration-700 hover:scale-[1.03]"
                   />
@@ -188,7 +188,7 @@ export default async function TreatmentPage({
               eyebrow="The solution"
               title="How the treatment works"
               image={rowImage(1)}
-              imageAlt={`${treatment.name} — how it works`}
+              imageAlt={`${treatment.name}: how it works`}
             >
               <p className="leading-relaxed text-ink-soft">
                 {treatment.howItWorks}
@@ -216,7 +216,7 @@ export default async function TreatmentPage({
               eyebrow="Suitability"
               title="Who it's ideal for"
               image={rowImage(2)}
-              imageAlt={`${treatment.name} — who it's for`}
+              imageAlt={`${treatment.name}: who it's for`}
               reverse
             >
               <p className="leading-relaxed text-ink-soft">

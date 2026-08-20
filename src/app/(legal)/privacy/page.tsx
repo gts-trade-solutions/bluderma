@@ -31,7 +31,7 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Authentication:</strong> a password, which is stored only as a
-          salted hash — we never store it in plain text.
+          salted hash. We never store it in plain text.
         </li>
         <li>
           <strong>Consultations and enquiries:</strong> the treatment,
@@ -86,7 +86,7 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Service providers:</strong> vetted providers that host and run
-          the platform on our behalf — for example cloud hosting and object
+          the platform on our behalf, for example cloud hosting and object
           storage, database hosting and transactional email delivery. They may
           process data only on our instructions.
         </li>

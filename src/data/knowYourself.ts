@@ -43,11 +43,11 @@ export const ARTICLES: Article[] = [
     categoryLabel: "Acne & Scars",
     cover: true,
     answer:
-      "Because almost every acne treatment suppresses the cause rather than removing it. Oil production, follicle stickiness and bacterial load all return to baseline within weeks of stopping — so clearance is the halfway mark of a plan, not the end of it. Most protocols step down to a maintenance dose instead of stopping outright.",
+      "Because almost every acne treatment suppresses the cause rather than removing it. Oil production, follicle stickiness and bacterial load all return to baseline within weeks of stopping, so clearance is the halfway mark of a plan, not the end of it. Most protocols step down to a maintenance dose instead of stopping outright.",
     body: [
       {
         heading: "Clearance is not a cure",
-        text: "A course that clears active lesions has changed the skin's behaviour only for as long as it is running. Retinoids keep follicles shedding normally; oil control keeps the environment inhospitable. Withdraw both and the follicle reverts to what it was doing before — usually within six to ten weeks, which is why relapse feels sudden.",
+        text: "A course that clears active lesions has changed the skin's behaviour only for as long as it is running. Retinoids keep follicles shedding normally; oil control keeps the environment inhospitable. Withdraw both and the follicle reverts to what it was doing before, usually within six to ten weeks, which is why relapse feels sudden.",
       },
       {
         heading: "What maintenance actually looks like",
@@ -70,7 +70,7 @@ export const ARTICLES: Article[] = [
     category: "pigmentation",
     categoryLabel: "Pigmentation & Melasma",
     answer:
-      "No — and any clinic promising permanence is selling you a rebound. Melasma is a chronic, hormone- and heat-driven condition. Laser can clear a great deal of visible pigment, but the pigment cells stay primed; without sun discipline and a maintenance topical, it returns, often darker than before treatment.",
+      "No: and any clinic promising permanence is selling you a rebound. Melasma is a chronic, hormone- and heat-driven condition. Laser can clear a great deal of visible pigment, but the pigment cells stay primed; without sun discipline and a maintenance topical, it returns, often darker than before treatment.",
     body: [
       {
         heading: "Why aggressive settings backfire",
@@ -93,7 +93,7 @@ export const ARTICLES: Article[] = [
     category: "botox",
     categoryLabel: "Botox & Anti-Wrinkle",
     answer:
-      "Age is the wrong test. The question is whether a line is still dynamic — visible only when you move — or already etched at rest. Relaxing a dynamic line stops it becoming a static one, which is cheaper and more effective than resurfacing later. If you have no lines at rest and none on movement, there is nothing to prevent yet.",
+      "Age is the wrong test. The question is whether a line is still dynamic, visible only when you move, or already etched at rest. Relaxing a dynamic line stops it becoming a static one, which is cheaper and more effective than resurfacing later. If you have no lines at rest and none on movement, there is nothing to prevent yet.",
     body: [
       {
         heading: "The mirror test",
@@ -101,7 +101,7 @@ export const ARTICLES: Article[] = [
       },
       {
         heading: "What over-treatment looks like",
-        text: "A frozen upper face is not a dosing accident, it is a briefing failure. Movement is retained by treating fewer units across more points, and by leaving the frontalis partly active — worth saying out loud at the consultation.",
+        text: "A frozen upper face is not a dosing accident, it is a briefing failure. Movement is retained by treating fewer units across more points, and by leaving the frontalis partly active, worth saying out loud at the consultation.",
       },
     ],
   },
@@ -116,7 +116,7 @@ export const ARTICLES: Article[] = [
     category: "glass-skin",
     categoryLabel: "Glass Skin & Glow",
     answer:
-      "Yes, if you sit near a window. Standard glass blocks UVB but lets most UVA through, and UVA is the wavelength that drives pigment and collagen loss. Screens are irrelevant by comparison — the visible light they emit is a rounding error next to a window at midday.",
+      "Yes, if you sit near a window. Standard glass blocks UVB but lets most UVA through, and UVA is the wavelength that drives pigment and collagen loss. Screens are irrelevant by comparison. The visible light they emit is a rounding error next to a window at midday.",
     body: [
       {
         heading: "The window problem",
@@ -147,13 +147,13 @@ export const ARTICLES: Article[] = [
       },
       {
         heading: "The three-month lag",
-        text: "Hair responds to an insult roughly three months after it happens. The illness, crash diet or surgery that caused today's shedding is usually a season back — worth reconstructing before assuming it is genetic.",
+        text: "Hair responds to an insult roughly three months after it happens. The illness, crash diet or surgery that caused today's shedding is usually a season back. Worth reconstructing before assuming it is genetic.",
       },
     ],
   },
   {
     slug: "peel-vs-laser",
-    title: "Chemical peel or laser — which one do I actually need?",
+    title: "Chemical peel or laser, which one do I actually need?",
     dek: "A decision made on depth and downtime, not on which sounds more advanced.",
     issue: "Issue 02 · Spring",
     section: "Treatment file",
@@ -216,7 +216,7 @@ export const ARTICLES: Article[] = [
       },
       {
         heading: "Why creams disappoint",
-        text: "Most under-eye creams address pigment. If your shadow is structural, no cream reaches the problem — volume does, and only after an examination confirms it is the hollow you are seeing.",
+        text: "Most under-eye creams address pigment. If your shadow is structural, no cream reaches the problem. Volume does, and only after an examination confirms it is the hollow you are seeing.",
       },
     ],
   },

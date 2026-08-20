@@ -70,6 +70,18 @@ export default function ProfileNav({
     return () => observer.disconnect();
   }, [sections]);
 
+  // Keep the active pill visible on a phone. Without this the highlight moves
+  // to something off-screen as you scroll, which is the same as having no
+  // highlight at all. `nearest` so it only scrolls when it has to, and
+  // `block: "nearest"` so it never drags the PAGE around.
+  useEffect(() => {
+    if (!active) return;
+    const pill = document.querySelector<HTMLElement>(
+      `[data-pill="${CSS.escape(active)}"]`
+    );
+    pill?.scrollIntoView({ inline: "nearest", block: "nearest", behavior: "smooth" });
+  }, [active]);
+
   return (
     <>
       {/* ── Phone: a sticky strip ──────────────────────────────────────── */}
@@ -80,13 +92,19 @@ export default function ProfileNav({
         // the strip bleeds edge to edge instead of sitting in a gutter.
         className="sticky top-20 z-30 -mx-5 border-b border-white/10 bg-[#070d1c]/95 px-5 py-2.5 backdrop-blur sm:-mx-8 sm:px-8 lg:hidden"
       >
-        <ul className="flex snap-x gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {/* Ten pills never fit a phone, and the scrollbar is hidden — so the
+            row is faded at the right edge to say "there is more this way".
+            Without it the strip reads as a complete list of four. The mask is
+            in the same direction as the scroll, and it is decoration only:
+            the pills themselves stay fully reachable. */}
+        <ul className="flex snap-x gap-2 overflow-x-auto pr-6 [-ms-overflow-style:none] [mask-image:linear-gradient(to_right,black_calc(100%-2.5rem),transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {sections.map((s) => (
             <li key={s.id} className="shrink-0 snap-start">
               <a
                 href={`#${s.id}`}
+                data-pill={s.id}
                 aria-current={active === s.id ? "true" : undefined}
-                className={`inline-flex items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-semibold transition ${
+                className={`inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-semibold transition ${
                   active === s.id
                     ? "bg-white text-[#070d1c]"
                     : "bg-white/[0.06] text-ink-soft ring-1 ring-inset ring-white/10"

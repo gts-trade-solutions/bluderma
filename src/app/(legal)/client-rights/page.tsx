@@ -27,9 +27,9 @@ export default function ClientRightsPage() {
 
       <h3>Clear, honest information</h3>
       <p>
-        You have the right to plain-language information about treatments —
-        what they involve, what they can and cannot do, typical recovery, and
-        known risks and side effects — so you can make an informed choice. Our
+        You have the right to plain-language information about treatments.
+        What they involve, what they can and cannot do, typical recovery, and
+        known risks and side effects, so you can make an informed choice. Our
         content is educational and does not replace an in-person assessment.
       </p>
 

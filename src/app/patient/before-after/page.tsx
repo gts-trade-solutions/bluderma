@@ -14,7 +14,7 @@ import { BEFORE_AFTER, HUB_CATEGORIES } from "@/data/hub";
 export const metadata: Metadata = {
   title: "Before & After",
   description:
-    "Paired photographs showing what each course of treatment is aimed at — acne, melasma, scarring, lifting and hair — with the session count and timeframe for each.",
+    "Paired photographs showing what each course of treatment is aimed at, acne, melasma, scarring, lifting and hair, with the session count and timeframe for each.",
 };
 
 /**
@@ -52,7 +52,7 @@ export default function BeforeAfterPage() {
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-muted">
               Every pair below carries the number of sessions and the time it
-              took. No clinic, no branch, no price — what a course costs is
+              took. No clinic, no branch, no price. What a course costs is
               settled in consultation.
             </p>
           </div>

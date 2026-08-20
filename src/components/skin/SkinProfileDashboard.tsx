@@ -176,7 +176,7 @@ export function SkinProfileDashboard({
           </div>
           <p className="mt-3 text-xs leading-snug text-ink-muted">
             {overallBand?.key === "good"
-              ? "Great condition — keep up your routine."
+              ? "Great condition: keep up your routine."
               : overallBand?.key === "fair"
                 ? "Focus on consistent care to improve your skin health."
                 : "A focused routine will lift your skin health."}
@@ -221,7 +221,7 @@ export function SkinProfileDashboard({
       <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4 print:grid-cols-4">
         <BandCard icon={HeartPulse} tone={{ bg: "bg-red-100", text: "text-red-600", bar: "bg-red-500" }} title="Needs care" count={needs.length} body="Focus on treating these concerns with targeted care." />
         <BandCard icon={Droplet} tone={{ bg: "bg-amber-400/15", text: "text-amber-600", bar: "bg-amber-500" }} title="Fair" count={moderate.length} body="Maintain a consistent routine to keep improving." />
-        <BandCard icon={ShieldCheck} tone={{ bg: "bg-emerald-400/15", text: "text-emerald-600", bar: "bg-emerald-500" }} title="Good" count={good.length} body="Keep it up — these areas are in great shape." />
+        <BandCard icon={ShieldCheck} tone={{ bg: "bg-emerald-400/15", text: "text-emerald-600", bar: "bg-emerald-500" }} title="Good" count={good.length} body="Keep it up. These areas are in great shape." />
         <BandCard icon={Sparkles} tone={{ bg: "bg-blue-100", text: "text-blue-600", bar: "bg-blue-500" }} title="Daily essentials" count={null} body="Cleanse, hydrate, protect and nourish every day." />
       </div>
     </div>

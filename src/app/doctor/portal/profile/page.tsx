@@ -238,7 +238,7 @@ export default async function DoctorProfilePage() {
                   defaultValue={doctor[sdef.key] ?? ""}
                   hint={
                     sdef.handleBase
-                      ? "A handle or the full link — either works."
+                      ? "A handle or the full link, either works."
                       : undefined
                   }
                 />
@@ -360,7 +360,7 @@ export default async function DoctorProfilePage() {
               <TextField
                 label="Reason"
                 name="reason"
-                placeholder="Optional — e.g. Annual leave"
+                placeholder="Optional: e.g. Annual leave"
               />
             </div>
           </EntityForm>
@@ -498,7 +498,7 @@ function ListingPreview({
           <strong className="font-semibold text-slate-700">
             Registration on file
           </strong>{" "}
-          — {[doctor.regCouncil, doctor.regNumber, doctor.regYear].filter(Boolean).join(" · ")}.
+          is {[doctor.regCouncil, doctor.regNumber, doctor.regYear].filter(Boolean).join(" · ")}.
           Checked by our team and never shown to clients.
         </p>
       )}

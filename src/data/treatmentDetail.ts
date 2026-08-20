@@ -87,7 +87,7 @@ const RECOMMENDED: Record<string, string[]> = {
     "A heavy jaw, a gummy smile or underarm sweating you want addressed",
   ],
   fillers: [
-    "Your face reads as tired rather than lined — flat cheeks, hollow temples",
+    "Your face reads as tired rather than lined, flat cheeks, hollow temples",
     "You want a contour refined, not a face changed",
     "Creams have plateaued because the problem is volume, not surface",
   ],
@@ -178,13 +178,13 @@ const BASE: Pick<Detail, "includes" | "excludes" | "precautions" | "faqs"> = {
   precautions: [
     "Tell the doctor about every medicine and supplement you take, including blood thinners and isotretinoin.",
     "Avoid alcohol and blood-thinning painkillers for 24 hours before and after, unless prescribed.",
-    "Sun exposure before or after the treatment increases the risk of pigmentation — use SPF 50 daily.",
+    "Sun exposure before or after the treatment increases the risk of pigmentation, use SPF 50 daily.",
     "Reschedule if the treatment area has an active infection, cold sore or open wound.",
   ],
   faqs: [
     {
       q: "How do I know this is the right treatment for me?",
-      a: "You don't yet, and neither do we from a page. The assessment decides it — quite often the answer is a different treatment, or the same one at a different depth or interval.",
+      a: "You don't yet, and neither do we from a page. The assessment decides it. Quite often the answer is a different treatment, or the same one at a different depth or interval.",
     },
     {
       q: "What does it cost?",
@@ -202,7 +202,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
   "glass-skin": {
     ...BASE,
     summary:
-      "Hydration-led treatments that improve how light reflects off the skin — the finish Korean dermatology calls glass skin. It is a barrier and water-content result, not a bleaching one.",
+      "Hydration-led treatments that improve how light reflects off the skin, the finish Korean dermatology calls glass skin. It is a barrier and water-content result, not a bleaching one.",
     howItWorks:
       "Micro-injected or infused hyaluronic acid holds water in the dermis while the barrier is repaired on the surface. Better-hydrated skin scatters less light, which is what reads as glow.",
     options: [
@@ -227,7 +227,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
       "Pregnancy and breastfeeding, for injectable options",
     ],
     aftercare: [
-      "Leave the skin bare for 12 hours — no makeup over injection points",
+      "Leave the skin bare for 12 hours, no makeup over injection points",
       "No sauna, steam or heavy exercise for 24 hours",
       "Daily SPF 50, reapplied",
     ],
@@ -279,7 +279,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
       "The injected protein blocks the signal between nerve and muscle at the treated points. The muscle relaxes, the skin above it stops folding, and the line softens. It wears off as the signal returns.",
     options: [
       { name: "One area", detail: "Forehead, frown lines or crow's feet" },
-      { name: "Three areas", detail: "Upper face — the usual first course", popular: true },
+      { name: "Three areas", detail: "Upper face: the usual first course", popular: true },
       { name: "Advanced", detail: "Jawline slimming, gummy smile, neck bands or underarms" },
     ],
     areas: ["Forehead", "Frown lines", "Crow's feet", "Jawline", "Neck bands", "Underarms"],
@@ -312,9 +312,9 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
     summary:
       "Injectable gel used to replace structural volume the face has lost, or to refine a contour. It restores what has deflated rather than pulling what has descended.",
     howItWorks:
-      "Hyaluronic acid gel is placed at a chosen depth — deep on bone for structure, superficially for fine lines. It holds water and gives physical support, and dissolves gradually over months.",
+      "Hyaluronic acid gel is placed at a chosen depth, deep on bone for structure, superficially for fine lines. It holds water and gives physical support, and dissolves gradually over months.",
     options: [
-      { name: "Single syringe", detail: "One area — lips, tear trough or chin" },
+      { name: "Single syringe", detail: "One area: lips, tear trough or chin" },
       { name: "Two syringes", detail: "Midface restoration or full contouring", popular: true },
       { name: "Full assessment", detail: "Staged plan across several areas and visits" },
     ],
@@ -327,7 +327,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
     sideEffects: [
       "Swelling, bruising and tenderness",
       "Lumps or asymmetry that usually settle or can be adjusted",
-      "Rarely, vascular occlusion — which is why it is a doctor-only procedure",
+      "Rarely, vascular occlusion: which is why it is a doctor-only procedure",
     ],
     notSuitable: [
       "Pregnancy and breastfeeding",
@@ -346,12 +346,12 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
   laser: {
     ...BASE,
     summary:
-      "Light and energy devices tuned to a specific target in the skin — pigment, vessels, water or collagen — to resurface, clear or tighten without a scalpel.",
+      "Light and energy devices tuned to a specific target in the skin, pigment, vessels, water or collagen, to resurface, clear or tighten without a scalpel.",
     howItWorks:
       "Each wavelength is absorbed preferentially by one chromophore. Choosing the wavelength, the energy and the pulse duration is what makes it selective, and what makes settings matter more than the machine's brand name.",
     options: [
       { name: "Single session", detail: "A test-and-treat first pass at conservative settings" },
-      { name: "Course of four", detail: "Spaced 3–4 weeks apart — the usual protocol", popular: true },
+      { name: "Course of four", detail: "Spaced 3–4 weeks apart, the usual protocol", popular: true },
       { name: "Combination", detail: "Two wavelengths in one visit, where the assessment supports it" },
     ],
     areas: ["Full face", "Neck", "Chest", "Hands", "Localised patches"],
@@ -374,7 +374,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
     ],
     aftercare: [
       "No sun, and SPF 50 reapplied through the day",
-      "No actives — retinoids, acids, vitamin C — for 5 days",
+      "No actives, retinoids, acids, vitamin C, for 5 days",
       "Do not pick or scrub flaking skin",
     ],
   },
@@ -385,7 +385,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
     summary:
       "Permanent hair reduction using a laser tuned to the pigment in the follicle. It works in cycles, which is why it is always a course and never a single appointment.",
     howItWorks:
-      "The laser heats melanin inside the follicle and disables it — but only follicles currently in their growth phase respond, and at any moment that is a fraction of them. Sessions are spaced to catch the rest as they cycle in.",
+      "The laser heats melanin inside the follicle and disables it, but only follicles currently in their growth phase respond, and at any moment that is a fraction of them. Sessions are spaced to catch the rest as they cycle in.",
     options: [
       { name: "Small area", detail: "Upper lip, chin, underarms or bikini line" },
       { name: "Medium area", detail: "Half arms, half legs or back", popular: true },
@@ -409,7 +409,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
       "Pregnancy, by convention rather than evidence of harm",
     ],
     aftercare: [
-      "Shave between sessions — never wax, thread or pluck",
+      "Shave between sessions: never wax, thread or pluck",
       "No sauna, steam or hot showers for 24 hours",
       "Daily SPF on exposed areas throughout the course",
     ],
@@ -421,7 +421,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
     summary:
       "Medical and regenerative treatment for shedding and thinning, aimed at holding the hair you still have while regrowing what recently went.",
     howItWorks:
-      "Growth factors, micro-injections and medical therapy work on the follicle's cycle — prolonging the growth phase and reversing miniaturisation. Follicles that have been dormant for years do not come back, which is why timing matters.",
+      "Growth factors, micro-injections and medical therapy work on the follicle's cycle, prolonging the growth phase and reversing miniaturisation. Follicles that have been dormant for years do not come back, which is why timing matters.",
     options: [
       { name: "Single session", detail: "Scalp assessment with a first treatment" },
       { name: "Course of four", detail: "Monthly, then quarterly maintenance", popular: true },
@@ -440,13 +440,13 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
     ],
     notSuitable: [
       "Active scalp infection or inflammatory scalp disease",
-      "Untreated iron, thyroid or vitamin D deficiency — those are corrected first",
+      "Untreated iron, thyroid or vitamin D deficiency. Those are corrected first",
       "Bleeding disorders or anticoagulant therapy, without clearance",
     ],
     aftercare: [
       "No hair wash for 24 hours",
       "No colouring or chemical treatments for a week",
-      "Blood tests before starting — shedding usually has a cause worth finding",
+      "Blood tests before starting. Shedding usually has a cause worth finding",
     ],
   },
 
@@ -456,7 +456,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
     summary:
       "Treatment for active acne and for what it leaves behind. The two are different problems: the first is inflammatory, the second is a collagen defect, and they are treated in that order.",
     howItWorks:
-      "Active acne is settled first with medical therapy and gentle procedures. Scarring is then remodelled — microneedling, fractional laser or subcision break the tethering and drive new collagen into the depression.",
+      "Active acne is settled first with medical therapy and gentle procedures. Scarring is then remodelled, microneedling, fractional laser or subcision break the tethering and drive new collagen into the depression.",
     options: [
       { name: "Active acne protocol", detail: "Medical management with supporting procedures" },
       { name: "Scar revision course", detail: "6 sessions, 4 weeks apart", popular: true },
@@ -480,7 +480,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
       "Keloid scarring tendency, without a test patch",
     ],
     aftercare: [
-      "Barrier repair only for 5 days — no actives",
+      "Barrier repair only for 5 days, no actives",
       "SPF 50 daily, reapplied, throughout the course",
       "Do not pick; scarring is what you are here to fix",
     ],
@@ -490,7 +490,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
   pigmentation: {
     ...BASE,
     summary:
-      "Treatment for melasma, sun damage, post-inflammatory marks and uneven tone — deliberately conservative, because pigment punished aggressively tends to come back worse.",
+      "Treatment for melasma, sun damage, post-inflammatory marks and uneven tone, deliberately conservative, because pigment punished aggressively tends to come back worse.",
     howItWorks:
       "Pigment production is suppressed with topical and oral therapy while existing pigment is broken up with low-fluence laser or peels. Sun protection is part of the treatment, not advice bolted on afterwards.",
     options: [
@@ -503,7 +503,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
     anaesthesia: "None usually needed",
     sessions: "6–10 sessions, 2–4 weeks apart, then maintenance",
     downtime: "None to 3 days of light flaking, depending on depth",
-    results: "Gradual — expect months, not weeks, and expect to maintain it",
+    results: "Gradual: expect months, not weeks, and expect to maintain it",
     sideEffects: [
       "Stinging and redness during and after treatment",
       "Light flaking for a few days",
@@ -515,7 +515,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
       "Isotretinoin within 6 months, for deeper peels",
     ],
     aftercare: [
-      "SPF 50 every day, reapplied — this is the treatment, not an add-on",
+      "SPF 50 every day, reapplied. This is the treatment, not an add-on",
       "No scrubs, acids or retinoids for 5 days after each session",
       "Expect maintenance; melasma is controlled rather than cured",
     ],
@@ -525,7 +525,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
   eyes: {
     ...BASE,
     summary:
-      "Treatment for the under-eye — shadowing, hollowing, crepey skin and puffiness. Which one you have decides the treatment entirely, and they look alike in a mirror.",
+      "Treatment for the under-eye, shadowing, hollowing, crepey skin and puffiness. Which one you have decides the treatment entirely, and they look alike in a mirror.",
     howItWorks:
       "Pigment is treated topically and with gentle laser; hollowing is filled at a deep, conservative level; crepey skin is thickened with boosters or energy; true fat herniation is surgical and is referred, not treated.",
     options: [
@@ -540,7 +540,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
     downtime: "Swelling and bruising for 3–7 days after injectables",
     results: "Immediate for volume, settling at 2–4 weeks. Pigment work takes months.",
     sideEffects: [
-      "Bruising — the under-eye bruises more readily than anywhere else",
+      "Bruising: the under-eye bruises more readily than anywhere else",
       "Swelling, sometimes lasting a week",
       "Lumps or a bluish tinge if placed too superficially",
     ],
@@ -560,7 +560,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
   nose: {
     ...BASE,
     summary:
-      "Non-surgical reshaping of the nasal profile with filler — straightening a dorsal hump in appearance, lifting the tip, improving symmetry. It adds; it cannot reduce.",
+      "Non-surgical reshaping of the nasal profile with filler, straightening a dorsal hump in appearance, lifting the tip, improving symmetry. It adds; it cannot reduce.",
     howItWorks:
       "Small, precise amounts of firm filler are placed along the dorsum and at the tip to change the profile line. It is one of the highest-risk injectable sites, and is doctor-only for that reason.",
     options: [
@@ -577,11 +577,11 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
     sideEffects: [
       "Swelling and tenderness",
       "Bruising around the bridge and under the eyes",
-      "Rarely, vascular occlusion — the reason this is never a salon procedure",
+      "Rarely, vascular occlusion: the reason this is never a salon procedure",
     ],
     notSuitable: [
       "Previous surgical rhinoplasty, without specialist assessment",
-      "Wanting the nose made smaller — filler cannot reduce",
+      "Wanting the nose made smaller. Filler cannot reduce",
       "Active skin infection over the nose",
       "Pregnancy and breastfeeding",
     ],
@@ -596,7 +596,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
   "face-contour": {
     ...BASE,
     summary:
-      "Reshaping the lower face and jawline — slimming a heavy masseter, defining a jaw, reducing submental fullness — without surgery.",
+      "Reshaping the lower face and jawline, slimming a heavy masseter, defining a jaw, reducing submental fullness, without surgery.",
     howItWorks:
       "Muscle bulk is reduced with a relaxant, fat pockets with injectable lipolysis or cooling, and definition added with structural filler along the jaw. Most plans use two of the three.",
     options: [
@@ -651,7 +651,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
       "Uneven contour, which is why placement and staging matter",
     ],
     notSuitable: [
-      "Treating obesity — this is a contouring tool, not a weight-loss one",
+      "Treating obesity: this is a contouring tool, not a weight-loss one",
       "Hernia in the treatment area",
       "Pregnancy and breastfeeding",
       "Cold-related disorders, for cooling protocols",
@@ -659,7 +659,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
     aftercare: [
       "Massage the area as instructed after cooling",
       "Stay hydrated and keep moving",
-      "Hold your weight steady — results are undone by regain",
+      "Hold your weight steady. Results are undone by regain",
     ],
   },
 
@@ -667,7 +667,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
   wellness: {
     ...BASE,
     summary:
-      "Intravenous and nutritional support used alongside skin treatment — hydration, antioxidants and correction of deficiencies that show up in skin and hair.",
+      "Intravenous and nutritional support used alongside skin treatment, hydration, antioxidants and correction of deficiencies that show up in skin and hair.",
     howItWorks:
       "Nutrients are delivered intravenously, bypassing gut absorption. It is worth doing where a deficiency is documented; it is not a substitute for treating the skin itself.",
     options: [
@@ -677,14 +677,14 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
     ],
     areas: ["Systemic"],
     duration: "45–60 minutes",
-    anaesthesia: "None — a cannula is placed",
+    anaesthesia: "None: a cannula is placed",
     sessions: "Weekly for 4–6 weeks, then monthly",
     downtime: "None",
     results: "Immediate for hydration; weeks for anything correcting a deficiency",
     sideEffects: [
       "Bruising or irritation at the cannula site",
       "A cool sensation or metallic taste during infusion",
-      "Rarely, an allergic reaction — which is why it is supervised",
+      "Rarely, an allergic reaction, which is why it is supervised",
     ],
     notSuitable: [
       "Kidney or heart disease, without physician clearance",
@@ -693,7 +693,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
     ],
     aftercare: [
       "Eat before the appointment",
-      "Bloodwork before starting a course — treating an undocumented deficiency is guesswork",
+      "Bloodwork before starting a course. Treating an undocumented deficiency is guesswork",
       "Keep the cannula site clean and dry for a few hours",
     ],
   },
@@ -704,7 +704,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
     summary:
       "A staged plan built backwards from a date. The sequence matters as much as the treatments: medical problems first, resurfacing second, hydration last.",
     howItWorks:
-      "Six months out, acne, pigment and scarring are treated, because they need multiple sessions and time to settle. The final weeks are polish only — nothing new is introduced inside the last fortnight.",
+      "Six months out, acne, pigment and scarring are treated, because they need multiple sessions and time to settle. The final weeks are polish only. Nothing new is introduced inside the last fortnight.",
     options: [
       { name: "Six-month plan", detail: "Full correction with monthly reviews", popular: true },
       { name: "Three-month plan", detail: "Focused correction and glow" },
@@ -727,7 +727,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
     aftercare: [
       "No first-time treatments in the final fortnight",
       "Hydration and rest in the last two weeks",
-      "Keep a written schedule — the sequence is the plan",
+      "Keep a written schedule. The sequence is the plan",
     ],
   },
 
@@ -737,7 +737,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
     summary:
       "The same treatments, adjusted for male skin: thicker dermis, denser beard growth, higher sebum, and usually a brief for definition rather than softening.",
     howItWorks:
-      "Dosing and depth are adjusted upward for thicker tissue and stronger muscles, and the aesthetic brief is different — a jaw is defined rather than slimmed, a brow is kept flat rather than lifted.",
+      "Dosing and depth are adjusted upward for thicker tissue and stronger muscles, and the aesthetic brief is different. A jaw is defined rather than slimmed, a brow is kept flat rather than lifted.",
     options: [
       { name: "Line softening", detail: "Upper face, dosed for male musculature" },
       { name: "Jaw and chin definition", detail: "Structural contouring", popular: true },
@@ -759,7 +759,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
     ],
     aftercare: [
       "No shaving over treated skin for 48 hours",
-      "SPF daily — male facial skin is usually under-protected",
+      "SPF daily: male facial skin is usually under-protected",
     ],
   },
 
@@ -767,7 +767,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
   dental: {
     ...BASE,
     summary:
-      "Smile aesthetics assessed alongside the face — whitening, alignment and the framing of the lips and gums that a purely dental view misses.",
+      "Smile aesthetics assessed alongside the face, whitening, alignment and the framing of the lips and gums that a purely dental view misses.",
     howItWorks:
       "Discolouration is lifted with professional-strength agents under supervision; shape and alignment are handled restoratively; the gum line and lip position are treated as part of the face, not separately.",
     options: [
@@ -787,7 +787,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
       "Uneven result on restorations, which do not whiten",
     ],
     notSuitable: [
-      "Untreated decay or gum disease — those are treated first",
+      "Untreated decay or gum disease. Those are treated first",
       "Pregnancy and breastfeeding",
       "Expecting crowns or veneers to change shade",
     ],
@@ -802,7 +802,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
   "skin-health": {
     ...BASE,
     summary:
-      "Medical dermatology — the conditions that are treated because they are a problem, not because of how they look. These are settled before any elective work begins.",
+      "Medical dermatology: the conditions that are treated because they are a problem, not because of how they look. These are settled before any elective work begins.",
     howItWorks:
       "Diagnosis first, with a physical examination and, where needed, dermoscopy, patch testing or biopsy. Treatment is medical and evidence-led, and inflamed skin is calmed before any procedure runs on it.",
     options: [
@@ -821,7 +821,7 @@ const CATEGORY_DETAIL: Record<string, Omit<Detail, "recommendedFor">> = {
       "Discussed individually, because they are specific to the treatment",
     ],
     notSuitable: [
-      "Nothing is ruled out in advance — that is what the consultation is for",
+      "Nothing is ruled out in advance. That is what the consultation is for",
     ],
     aftercare: [
       "Complete the course as prescribed, including when it looks better",
@@ -835,7 +835,7 @@ const OVERRIDES: Record<string, Partial<Detail>> = {
   hydrafacial: {
     duration: "45 minutes",
     anaesthesia: "None",
-    downtime: "None at all — it is designed to be done before an event",
+    downtime: "None at all: it is designed to be done before an event",
     sessions: "Monthly",
     options: [
       { name: "Signature", detail: "Cleanse, extract and hydrate · 45 minutes" },

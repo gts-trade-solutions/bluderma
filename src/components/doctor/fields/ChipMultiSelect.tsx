@@ -245,7 +245,7 @@ export default function ChipMultiSelect({
                   {matched.length === 0 ? (
                     <p className="text-xs text-slate-600">
                       Nothing in our catalogue matched that. Type it into the
-                      box above and press Enter — your own wording is fine.
+                      box above and press Enter. Your own wording is fine.
                     </p>
                   ) : (
                     <>

@@ -369,7 +369,7 @@ export default function IntakeFlow() {
           >
             {outstanding.missing > 0
               ? `${outstanding.missing} of ${outstanding.total} still to answer on this step`
-              : "All answered — you can continue"}
+              : "All answered: you can continue"}
           </p>
         )}
         <div className="mx-auto flex max-w-[27rem] items-center justify-between gap-4">
@@ -722,7 +722,7 @@ function ProofScreen() {
         ))}
       </div>
       <p className="mt-1 text-[11px] text-ink-muted">
-        Illustrative comparisons — these show the kind of change each course
+        Illustrative comparisons: these show the kind of change each course
         aims at. They are not photographs of BluDerma clients, and results vary.
       </p>
 
@@ -885,7 +885,7 @@ function NoteScreen({
           Have a skin report? Attach it.
         </p>
         <p className="mt-1 text-[13px] text-ink-muted">
-          Optional — it makes the advice sharper.
+          Optional: it makes the advice sharper.
         </p>
 
         {(report.kind === "none" ||
@@ -899,7 +899,7 @@ function NoteScreen({
             />
             <AttachRow
               icon={Paperclip}
-              label="Upload a report — PDF or photo"
+              label="Upload a report: PDF or photo"
               onClick={() => fileRef.current?.click()}
             />
             <Link
@@ -910,7 +910,7 @@ function NoteScreen({
               <span className="flex items-center gap-3">
                 <ScanFace className="h-4 w-4 text-brand-300" />
                 <span className="text-sm font-bold text-ink">
-                  Haven&apos;t scanned yet — scan now
+                  Haven&apos;t scanned yet: scan now
                 </span>
               </span>
               <ArrowRight className="h-4 w-4 shrink-0 text-ink-muted" />

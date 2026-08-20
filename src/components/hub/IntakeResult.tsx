@@ -178,7 +178,7 @@ export default function IntakeResult({
         <p className="mt-1.5 max-w-xl text-sm text-ink-muted">
           Matched on what you told us
           {report.kind === "analysis" && " and on your skin analysis"}. Fees
-          below are for the consultation — treatment costs are quoted only after
+          below are for the consultation. Treatment costs are quoted only after
           an assessment.
         </p>
 

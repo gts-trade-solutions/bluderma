@@ -27,7 +27,7 @@ function templateSummary(input: SummaryInput): string {
   if (pct != null) {
     const band =
       pct >= 75 ? "a strong result" : pct >= 50 ? "a solid baseline" : "a good place to start";
-    parts.push(`Your skin scored ${pct}/100 overall — ${band}.`);
+    parts.push(`Your skin scored ${pct}/100 overall, ${band}.`);
   }
   if (input.skinType) parts.push(`Your skin type reads as ${input.skinType}.`);
   if (worst.length)

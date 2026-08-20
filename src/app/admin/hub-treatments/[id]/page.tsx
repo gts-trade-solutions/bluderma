@@ -47,7 +47,7 @@ export default async function HubTreatmentEditPage({
     <>
       <PageHeader
         title={isNew ? "New treatment" : `Edit ${row!.name}`}
-        description="Its page renders the category protocol — edit that under Hub categories."
+        description="Its page renders the category protocol, edit that under Hub categories."
       />
 
       <EntityForm
@@ -109,7 +109,7 @@ export default async function HubTreatmentEditPage({
               name="meta"
               defaultValue={row?.meta ?? ""}
               placeholder="3 sessions · no downtime"
-              hint="Session or downtime note. Never a price — the catalogue is price-free."
+              hint="Session or downtime note. Never a price: the catalogue is price-free."
             />
             <ImageField
               label="Image"

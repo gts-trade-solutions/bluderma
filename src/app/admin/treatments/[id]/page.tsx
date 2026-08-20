@@ -56,7 +56,7 @@ export default async function TreatmentEditPage({
         <PageHeader title="New treatment" />
         <Card>
           <p className="text-sm text-ink-soft">
-            Create a category first — every treatment belongs to one.
+            Create a category first. Every treatment belongs to one.
           </p>
         </Card>
       </>
@@ -198,7 +198,7 @@ export default async function TreatmentEditPage({
               label="Procedure steps"
               name="procedureSteps"
               rows={5}
-              hint="One per line, in order — rendered as a numbered list."
+              hint="One per line, in order, rendered as a numbered list."
               defaultValue={bulletText(BulletKind.PROCEDURE_STEP)}
             />
             <div className="grid gap-5 sm:grid-cols-2">

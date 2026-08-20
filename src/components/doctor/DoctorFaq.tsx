@@ -10,7 +10,7 @@
 const FAQS = [
   {
     q: "What does it cost?",
-    a: "Listing is free and we take no commission on your consultation fee. If a client pays you through BluDerma, the payment gateway's own charge applies to the transaction — that is Razorpay's fee, not ours, and it is the same rate you would pay taking the card yourself.",
+    a: "Listing is free and we take no commission on your consultation fee. If a client pays you through BluDerma, the payment gateway's own charge applies to the transaction. That is Razorpay's fee, not ours, and it is the same rate you would pay taking the card yourself.",
   },
   {
     q: "Who decides my fee?",
@@ -18,11 +18,11 @@ const FAQS = [
   },
   {
     q: "How long does approval take?",
-    a: "Usually two working days. We check your registration number against your medical council's own register before you go live — that check is the whole reason the verified mark on your profile is worth anything. If something does not match we tell you exactly what and you resubmit; nothing you entered is lost.",
+    a: "Usually two working days. We check your registration number against your medical council's own register before you go live. That check is the whole reason the verified mark on your profile is worth anything. If something does not match we tell you exactly what and you resubmit; nothing you entered is lost.",
   },
   {
     q: "I work at more than one clinic. Will they clash?",
-    a: "No. A booking at one location blocks that time at every other, because you can only be in one place. You also set the travel time between your clinics, and we block that either side — so you are never scheduled somewhere you cannot physically reach.",
+    a: "No. A booking at one location blocks that time at every other, because you can only be in one place. You also set the travel time between your clinics, and we block that either side, so you are never scheduled somewhere you cannot physically reach.",
   },
   {
     q: "Do I have to accept every booking?",
@@ -34,11 +34,11 @@ const FAQS = [
   },
   {
     q: "Can I take my patients' records with me if I leave?",
-    a: "Prescriptions you issue belong to the client's record and stay with them. Your own profile and hours are yours to delete. We do not hold your client list hostage — ask and we will export what relates to your practice.",
+    a: "Prescriptions you issue belong to the client's record and stay with them. Your own profile and hours are yours to delete. We do not hold your client list hostage. Ask and we will export what relates to your practice.",
   },
   {
     q: "Do you do video consultations?",
-    a: "Yes. Tick it during onboarding, and you paste your own meeting link against each video appointment — we share it with the client and put it in their reminder. We do not run the video call ourselves, so use whatever platform you already trust.",
+    a: "Yes. Tick it during onboarding, and you paste your own meeting link against each video appointment. We share it with the client and put it in their reminder. We do not run the video call ourselves, so use whatever platform you already trust.",
   },
 ];
 

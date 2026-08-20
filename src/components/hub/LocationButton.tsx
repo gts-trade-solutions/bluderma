@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from"react";
 import { Check, Loader2, LocateFixed, MapPin, X } from"lucide-react";
 
-import { REGION_CITIES, REGION_STATES } from"@/data/regions";
 import { useClientLocation } from"@/hooks/useClientLocation";
 
 /**
@@ -86,8 +85,8 @@ export default function LocationButton({
             <div>
               <p className="text-sm font-semibold text-ink">Your location</p>
               <p className="mt-0.5 text-xs text-ink-muted">
-                Used to show what&apos;s available near you. Stored on this
-                device only.
+                Anywhere in the world. Used to show what is available near
+                you, stored on this device only and never sent to us.
               </p>
             </div>
             <button
@@ -129,43 +128,13 @@ export default function LocationButton({
             </p>
           )}
 
-          {/* Cities first, states second — the order is specified (G-5). */}
-          <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-ink-muted">
-            Cities
-          </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {REGION_CITIES.map((city) => (
-              <RegionChip
-                key={city}
-                label={city}
-                active={location?.label === city}
-                onSelect={() => {
-                  setCity(city);
-                  setOpen(false);
-                }}
-              />
-            ))}
-          </div>
-
-          <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-ink-muted">
-            States
-          </p>
-          <div className="mt-2 max-h-32 overflow-y-auto pr-1">
-            <div className="flex flex-wrap gap-1.5">
-              {REGION_STATES.map((state) => (
-                <RegionChip
-                  key={state}
-                  label={state}
-                  active={location?.label === state}
-                  onSelect={() => {
-                    setCity(state);
-                    setOpen(false);
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-
+          {/* The curated lists of Indian cities and states are gone.
+              The client's note: "do not give any city name, it gives an India
+              feeling". Naming a dozen Indian cities in the chooser is the site
+              telling a visitor where it thinks they are, and where it thinks
+              it belongs. Detection reads the device, and the field below takes
+              anywhere in the world — both of which let the visitor say where
+              they are without us proposing it. */}
           <form
             className="mt-4 flex gap-2"
             onSubmit={(e) => {
@@ -177,9 +146,10 @@ export default function LocationButton({
             }}
           >
             <input
+              autoFocus
               value={custom}
               onChange={(e) => setCustom(e.target.value)}
-              placeholder="Other city or state…"
+              placeholder="Enter your city or area…"
               className="min-w-0 flex-1 rounded-xl border border-white/10 px-3 py-2 text-sm outline-none focus:border-brand-400"
             />
             <button
@@ -204,28 +174,5 @@ export default function LocationButton({
         </div>
       )}
     </div>
-  );
-}
-
-function RegionChip({
-  label,
-  active,
-  onSelect,
-}: {
-  label: string;
-  active: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      onClick={onSelect}
-      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition ${ active
-          ?"bg-brand-600 text-white"
-          :"bg-white/10 text-ink-soft hover:bg-brand-400/[12%] hover:text-brand-200"
-      }`}
-    >
-      {active && <Check className="h-3 w-3" />}
-      {label}
-    </button>
   );
 }

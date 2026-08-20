@@ -28,11 +28,15 @@ export default function KnowYouCta({
   const href = "/patient/know-you";
 
   // Full-width, for the sidebar rail.
+  // White, not brand blue: the rail card behind this is a teal gradient now,
+  // and a saturated blue button on it reads as muddy rather than as the
+  // card's primary action. It matches the skin analyser's button, which is
+  // the point — the three cards are siblings.
   if (variant === "rail") {
     return (
       <Link
         href={href}
-        className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 active:scale-[0.98]"
+        className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-white px-4 py-2.5 text-sm font-bold text-brand-900 transition hover:bg-teal-100 active:scale-[0.98]"
       >
         <ClipboardList className="h-4 w-4" />
         Know about you
@@ -66,7 +70,7 @@ export default function KnowYouCta({
             <p className="mt-3 max-w-lg text-sm leading-relaxed text-ink-muted">
               Tell us about your skin, your routine and what you&apos;ve already
               tried. Attach your skin analysis or an old report if you have one
-              — it&apos;s optional. At the end you&apos;ll see the doctors who
+it&apos;s optional. At the end you&apos;ll see the doctors who
               match, their fees and their next free slot.
             </p>
 
@@ -141,7 +145,7 @@ export default function KnowYouCta({
             </h2>
             <p className="mt-1.5 max-w-lg text-sm text-white/80">
               Answer a few questions and a dermatologist will tell you what
-              you&apos;re actually looking at — then you can book a slot, take an
+              you&apos;re actually looking at. Then you can book a slot, take an
               instant appointment, or ask for a home visit.
             </p>
           </div>

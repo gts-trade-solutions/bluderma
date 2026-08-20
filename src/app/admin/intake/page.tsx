@@ -63,7 +63,7 @@ export default async function IntakePage({
     <>
       <PageHeader
         title="Intake leads"
-        description="Completed questionnaires from the client hub. Anonymous ones have no account attached — the answers are still the lead."
+        description="Completed questionnaires from the client hub. Anonymous ones have no account attached. The answers are still the lead."
       />
 
       <div className="mb-5 flex flex-wrap gap-2">

@@ -1110,7 +1110,7 @@ Three fixes, in increasing order of reach:
 ### A test that did not test anything
 
 `prisma/verify-theme.ts` sweeps every page for a light background without the
-class. Its first pattern ended in `` — and a word boundary after `]` never
+class. Its first pattern ended in `\b` — and a word boundary after `]` never
 matches, so it skipped `bg-[#f7fafc]`: the exact class that caused the bug. It
 reported 0 offenders on the unfixed code.
 

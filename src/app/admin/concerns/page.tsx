@@ -72,7 +72,7 @@ export default async function ConcernsPage() {
                   </code>
                   {!known.has(c.category) && (
                     <span className="mt-1 block text-xs font-semibold text-rose-600">
-                      No such category — this tile is a dead end
+                      No such category: this tile is a dead end
                     </span>
                   )}
                 </Td>

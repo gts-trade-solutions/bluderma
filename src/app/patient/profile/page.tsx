@@ -107,7 +107,7 @@ export default async function ProfilePage() {
               </h1>
               {MEMBERSHIP && (
                 <span
-                  title={`${MEMBERSHIP.planName} — ${MEMBERSHIP.discountPercent}% off consultations, until ${MEMBERSHIP.endsOn}`}
+                  title={`${MEMBERSHIP.planName}: ${MEMBERSHIP.discountPercent}% off consultations, until ${MEMBERSHIP.endsOn}`}
                   className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400/25 to-amber-200/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-200 ring-1 ring-amber-300/40"
                 >
                   <span aria-hidden>◆</span>
@@ -139,7 +139,7 @@ export default async function ProfilePage() {
               <div className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl bg-teal-400/[12%] px-5 py-4 ring-1 ring-inset ring-teal-300/25">
                 <CalendarDays className="h-5 w-5 shrink-0 text-teal-200" />
                 <p className="text-sm text-ink-soft">
-                  Next appointment —{" "}
+                  Next appointment:{" "}
                   <span className="font-bold text-ink">{upcoming[0].doctor}</span>
                   , {upcoming[0].date} at {upcoming[0].time} · {upcoming[0].mode}
                 </p>
@@ -176,7 +176,7 @@ export default async function ProfilePage() {
                             </span>
                           </p>
                         </div>
-                        <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-ink-soft">
+                        <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 text-center text-[11px] font-semibold text-ink-soft">
                           {r.skinType}
                         </span>
                       </div>
@@ -216,7 +216,7 @@ export default async function ProfilePage() {
               icon={Stethoscope}
               eyebrow="What we're working on"
               title="My conditions"
-              sub="Drawn from your own scans and from what you chose as the reason at booking. Not a diagnosis — that comes from a doctor."
+              sub="Drawn from your own scans and from what you chose as the reason at booking. Not a diagnosis: that comes from a doctor."
             >
               {CONDITIONS.length > 0 ? (
                 <ul className="grid gap-3 sm:grid-cols-2">
@@ -267,24 +267,20 @@ export default async function ProfilePage() {
               {APPOINTMENTS.length > 0 ? (
                 <div className="card-soft divide-y divide-white/10 overflow-hidden">
                   {APPOINTMENTS.map((a) => (
-                    <div
+                    <Row
                       key={a.id}
-                      className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-ink">{a.doctor}</p>
-                        <p className="mt-0.5 text-xs text-ink-muted">
-                          {a.specialty} · {a.mode}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <p className="text-sm font-medium text-ink-soft">
-                          {a.date}
-                          <span className="ml-1.5 text-ink-muted">{a.time}</span>
-                        </p>
-                        <Status value={a.status} />
-                      </div>
-                    </div>
+                      title={a.doctor}
+                      sub={`${a.specialty} · ${a.mode}`}
+                      meta={
+                        <>
+                          <span className="text-sm font-medium text-ink-soft">
+                            {a.date}
+                            <span className="ml-1.5 text-ink-muted">{a.time}</span>
+                          </span>
+                          <Status value={a.status} />
+                        </>
+                      }
+                    />
                   ))}
                 </div>
               ) : (
@@ -337,13 +333,13 @@ export default async function ProfilePage() {
                   {PRESCRIPTIONS.map((rx) => (
                     <div key={rx.id} className="card-soft p-5">
                       <div className="flex items-start justify-between gap-3">
-                        <div>
+                        <div className="min-w-0">
                           <p className="text-sm font-bold text-ink">{rx.doctor}</p>
                           <p className="mt-0.5 text-xs text-ink-muted">
                             Issued {rx.issued}
                           </p>
                         </div>
-                        <button className="btn-ghost !px-3 !py-1.5 text-xs">
+                        <button className="btn-ghost shrink-0 !px-3 !py-1.5 text-xs">
                           <Download className="h-3.5 w-3.5" /> PDF
                         </button>
                       </div>
@@ -380,23 +376,21 @@ export default async function ProfilePage() {
               {PROCEDURES.length > 0 ? (
                 <div className="card-soft divide-y divide-white/10 overflow-hidden">
                   {PROCEDURES.map((p) => (
-                    <div
+                    <Row
                       key={p.id}
-                      className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-ink">{p.name}</p>
-                        <p className="mt-0.5 text-xs text-ink-muted">
-                          {p.category} · {p.doctor}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span className="rounded-full bg-brand-400/[14%] px-2.5 py-1 text-[11px] font-semibold text-brand-200">
-                          {p.sessions}
-                        </span>
-                        <p className="text-sm font-medium text-ink-soft">{p.date}</p>
-                      </div>
-                    </div>
+                      title={p.name}
+                      sub={`${p.category} · ${p.doctor}`}
+                      meta={
+                        <>
+                          <span className="rounded-full bg-brand-400/[14%] px-2.5 py-1 text-[11px] font-semibold text-brand-200">
+                            {p.sessions}
+                          </span>
+                          <span className="text-sm font-medium text-ink-soft">
+                            {p.date}
+                          </span>
+                        </>
+                      }
+                    />
                   ))}
                 </div>
               ) : (
@@ -449,26 +443,24 @@ export default async function ProfilePage() {
 
               <div className="card-soft mt-3 divide-y divide-white/10 overflow-hidden">
                 {DEMO_WALLET.movements.map((mv) => (
-                  <div
+                  <Row
                     key={mv.id}
-                    className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-ink">{mv.label}</p>
-                      <p className="mt-0.5 text-xs text-ink-muted">{mv.detail}</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-xs text-ink-muted">{mv.on}</span>
-                      <span
-                        className={`text-sm font-bold tabular-nums ${
-                          mv.amountInr >= 0 ? "text-teal-300" : "text-ink-soft"
-                        }`}
-                      >
-                        {mv.amountInr >= 0 ? "+" : "−"}
-                        {money(Math.abs(mv.amountInr))}
-                      </span>
-                    </div>
-                  </div>
+                    title={mv.label}
+                    sub={mv.detail}
+                    meta={
+                      <>
+                        <span className="text-xs text-ink-muted">{mv.on}</span>
+                        <span
+                          className={`text-sm font-bold tabular-nums ${
+                            mv.amountInr >= 0 ? "text-teal-300" : "text-ink-soft"
+                          }`}
+                        >
+                          {mv.amountInr >= 0 ? "+" : "−"}
+                          {money(Math.abs(mv.amountInr))}
+                        </span>
+                      </>
+                    }
+                  />
                 ))}
               </div>
             </Section>
@@ -581,7 +573,7 @@ export default async function ProfilePage() {
                     <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">
                       {a.line1}
                       <br />
-                      {a.line2} — {a.pincode}
+                      {a.line2}, {a.pincode}
                     </p>
                     <p className="mt-2.5 text-xs text-ink-muted">
                       {a.homeVisitAvailable
@@ -608,7 +600,7 @@ export default async function ProfilePage() {
                       <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">
                         {c.addressLine1}
                         <br />
-                        {c.city} — {c.pincode}
+                        {c.city}, {c.pincode}
                       </p>
                       {c.phone && (
                         <p className="mt-2 text-xs text-ink-muted">{c.phone}</p>
@@ -627,7 +619,7 @@ export default async function ProfilePage() {
               {/* Stated plainly rather than faked. Clinic.lat/lng exist and
                   nothing populates them, so no distance is printed anywhere. */}
               <p className="mt-4 text-xs leading-relaxed text-ink-muted">
-                We list clinics by area rather than by distance — we do not hold
+                We list clinics by area rather than by distance. We do not hold
                 coordinates for every location yet, and a distance we cannot
                 calculate is not one worth showing you.
               </p>
@@ -644,21 +636,19 @@ export default async function ProfilePage() {
               {PURCHASES.length > 0 ? (
                 <div className="card-soft divide-y divide-white/10 overflow-hidden">
                   {PURCHASES.map((o) => (
-                    <div
+                    <Row
                       key={o.id}
-                      className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-ink">{o.item}</p>
-                        <p className="mt-0.5 text-xs text-ink-muted">
-                          {o.kind} · {o.date}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <p className="text-sm font-bold text-ink">{money(o.amount)}</p>
-                        <Status value={o.status} />
-                      </div>
-                    </div>
+                      title={o.item}
+                      sub={`${o.kind} · ${o.date}`}
+                      meta={
+                        <>
+                          <span className="text-sm font-bold text-ink">
+                            {money(o.amount)}
+                          </span>
+                          <Status value={o.status} />
+                        </>
+                      }
+                    />
                   ))}
                 </div>
               ) : (
@@ -743,9 +733,9 @@ export default async function ProfilePage() {
                 <ul className="mt-3 grid gap-3 sm:grid-cols-2">
                   {PLANS.map((p) => (
                     <li key={p.slug} className="card-soft p-5">
-                      <div className="flex items-baseline justify-between gap-3">
-                        <p className="text-sm font-bold text-ink">{p.name}</p>
-                        <p className="text-right">
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                        <p className="min-w-0 text-sm font-bold text-ink">{p.name}</p>
+                        <p className="shrink-0 text-right">
                           <span className="display-sm text-xl text-ink">
                             {money(p.priceInr)}
                           </span>
@@ -797,7 +787,7 @@ export default async function ProfilePage() {
                   Nothing auto-debits.
                 </span>{" "}
                 A membership runs for the term you buy and then stops. There is no
-                standing mandate on your card — we email you before it ends and
+                standing mandate on your card. We email you before it ends and
                 renewing is a decision you make each time.
               </p>
             </Section>
@@ -869,6 +859,49 @@ function Section({
 }
 
 /**
+ * One line of a list: what it is on the left, what it costs or when or what
+ * state on the right.
+ *
+ * This shape was written out four times — appointments, treatments, wallet
+ * movements, orders — each with `justify-between` and a `min-w-0` that had no
+ * `flex-1` beside it. On a phone that did the worst of both things: the meta
+ * was pushed to the far edge while there was room, then dropped onto its own
+ * line LEFT-aligned the moment there was not, so the same list changed shape
+ * twice between a small phone and a large one.
+ *
+ * It stacks below `sm` rather than wrapping. 360px minus the page gutter and
+ * the card padding leaves roughly 280px, and "Dr. Nithya Raghavan" beside
+ * "Thursday, 21 Aug 2026 11:15" does not fit in 280px at any size worth
+ * reading. Stacked, both get the full width and the eye reads down one
+ * column instead of hunting across two.
+ */
+function Row({
+  title,
+  sub,
+  meta,
+}: {
+  title: React.ReactNode;
+  sub?: React.ReactNode;
+  /** Right-hand side on a desktop; a wrapped line under the title on a phone. */
+  meta: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-2 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5 sm:py-4">
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-bold text-ink">{title}</p>
+        {sub && <p className="mt-0.5 text-xs text-ink-muted">{sub}</p>}
+      </div>
+      {/* shrink-0 so a long title never squeezes a price or a status pill into
+          an ellipsis; flex-wrap so two pieces of meta stack rather than
+          overflow when the title has taken the width. */}
+      <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+        {meta}
+      </div>
+    </div>
+  );
+}
+
+/**
  * The badge that separates a mock-up from a record.
  *
  * Deliberately not subtle. A wallet balance a client cannot tell from their
@@ -877,7 +910,7 @@ function Section({
 function SampleTag() {
   return (
     <span
-      title="Illustrative content — this feature has no data behind it yet."
+      title="Illustrative content: this feature has no data behind it yet."
       className="inline-flex items-center gap-1 rounded-full bg-amber-400/[14%] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-300 ring-1 ring-inset ring-amber-300/30"
     >
       Sample

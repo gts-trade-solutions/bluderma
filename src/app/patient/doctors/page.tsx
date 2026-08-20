@@ -16,7 +16,7 @@ import { getDoctors } from "@/lib/queries/doctors";
 export const metadata: Metadata = {
   title: "Our doctors",
   description:
-    "Dermatologists and aesthetic physicians available for consultation — their specialties, consultation fees, usual free slots and how to book, in clinic, by video or at home.",
+    "Dermatologists and aesthetic physicians available for consultation, their specialties, consultation fees, usual free slots and how to book, in clinic, by video or at home.",
 };
 
 /**
@@ -51,7 +51,7 @@ export default async function DoctorsPage() {
               The people who&apos;ll actually treat you
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-muted">
-              Consultation fees are shown up front — the one place on this site
+              Consultation fees are shown up front, the one place on this site
               a price appears before you speak to someone. What a treatment
               costs is quoted after an assessment, never from a menu.
             </p>

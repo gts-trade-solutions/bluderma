@@ -194,7 +194,7 @@ export default async function DashboardHome({
                 {m.isComplete
                   ? "Nothing was booked in this period."
                   : "Nothing booked yet."}{" "}
-                Your listing is live, so this fills in as clients find you —
+                Your listing is live, so this fills in as clients find you,
                 and your booking link is at the bottom of this page.
               </p>
             ) : (
@@ -267,7 +267,13 @@ export default async function DashboardHome({
 
       {/* ── Where the money sits, and where the week has room ────────── */}
       <div className="mb-7 grid gap-5 lg:grid-cols-3">
-        <Panel title={m.periodLabel} sub="Booked value by state.">
+        <Panel
+          title={m.periodLabel}
+          sub="Booked value by state."
+          accent="brand"
+          icon="chart"
+          index={0}
+        >
           <RevenueDonut
             realised={m.revenue.realised}
             scheduled={m.revenue.scheduled}
@@ -288,6 +294,9 @@ export default async function DashboardHome({
 
         <Panel
           className="lg:col-span-2"
+          accent="teal"
+          icon="calendar"
+          index={1}
           title="Your week"
           sub={`${m.utilisation.weeklyCapacity} slots a week. Filled portion is booked.`}
         >
@@ -295,7 +304,7 @@ export default async function DashboardHome({
           {m.utilisation.emptiest && m.utilisation.emptiest.free > 0 && (
             <p className="mt-3 rounded-xl bg-slate-50 px-4 py-2.5 text-sm text-slate-700">
               <strong className="font-bold">{m.utilisation.emptiest.label}</strong> has
-              the most room — about {m.utilisation.emptiest.free} slots unbooked
+              the most room, about {m.utilisation.emptiest.free} slots unbooked
               over four weeks.
             </p>
           )}
@@ -338,6 +347,9 @@ export default async function DashboardHome({
       <div className="mb-7 grid gap-5 lg:grid-cols-2">
         {/* ── Demand ───────────────────────────────────────────────────── */}
         <Panel
+          accent="violet"
+          icon="pulse"
+          index={2}
           title="What clients come to you for"
           sub="From what each of them chose when booking, over 90 days."
         >
@@ -352,7 +364,10 @@ export default async function DashboardHome({
         </Panel>
 
         {/* ── Practice health, as gauges ───────────────────────────────── */}
-        <Panel title="How your practice runs" sub="Last 90 days.">
+        <Panel
+          accent="teal"
+          icon="chart"
+          index={3} title="How your practice runs" sub="Last 90 days.">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <Gauge
               label="Cancelled"
@@ -462,6 +477,9 @@ export default async function DashboardHome({
       {/* ── Pipeline and locations ─────────────────────────────────────── */}
       <div className="mb-7 grid gap-5 lg:grid-cols-2">
         <Panel
+          accent="brand"
+          icon="inbox"
+          index={4}
           title="From request to seen"
           sub="Last 90 days. Where bookings drop out."
         >
@@ -504,6 +522,9 @@ export default async function DashboardHome({
         </Panel>
 
         <Panel
+          accent="amber"
+          icon="clinic"
+          index={5}
           title={m.clinicSplit.length > 1 ? "Across your locations" : "Your location"}
           sub="Bookings and booked value, last 90 days."
         >
@@ -550,6 +571,9 @@ export default async function DashboardHome({
           mixing "here is a number" with "do this" makes both easier to skip. */}
       <div className="mb-7 grid gap-5 lg:grid-cols-3">
         <Panel
+          accent="amber"
+          icon="user"
+          index={6}
           title="Your listing"
           sub={
             listingGaps.length
@@ -589,6 +613,9 @@ export default async function DashboardHome({
         </Panel>
 
         <Panel
+          accent="slate"
+          icon="calendar"
+          index={7}
           title="Time off ahead"
           sub="Days already blocked out."
           action={
@@ -630,6 +657,9 @@ export default async function DashboardHome({
         </Panel>
 
         <Panel
+          accent="teal"
+          icon="link"
+          index={8}
           title="Your booking link"
           sub="Send it to anyone. It books straight into this calendar."
         >
@@ -648,6 +678,9 @@ export default async function DashboardHome({
       {/* ── When the day fills ─────────────────────────────────────────── */}
       <div className="mb-7">
         <Panel
+          accent="violet"
+          icon="clock"
+          index={9}
           title="When your day fills"
           sub="Bookings by start hour, in clock order, last 90 days."
         >
@@ -657,6 +690,9 @@ export default async function DashboardHome({
 
       {/* ── Reviews ────────────────────────────────────────────────────── */}
       <Panel
+        accent="rose"
+        icon="star"
+        index={10}
         title="What clients say"
         sub={
           m.reviews.count > 0

@@ -60,7 +60,7 @@ export async function saveDoctor(
           ok: false,
           error: "No account found with that email.",
           fields: {
-            linkedUserEmail: "No account with this email — create it first.",
+            linkedUserEmail: "No account with this email. Create it first.",
           },
         };
       }

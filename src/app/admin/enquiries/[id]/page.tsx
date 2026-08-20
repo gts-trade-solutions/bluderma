@@ -119,7 +119,7 @@ export default async function EnquiryDetailPage({
             )}
           </Card>
 
-          <Card title="Notes" description="Internal — never shown to the enquirer.">
+          <Card title="Notes" description="Internal: never shown to the enquirer.">
             <NoteForm
               action={async (formData) => {
                 "use server";

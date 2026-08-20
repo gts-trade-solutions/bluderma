@@ -47,7 +47,7 @@ export function SkinResultView({
   const contextual = sel ? (
     <p className="text-xs leading-relaxed text-white/90">
       <b>{concernLabel(sel)}</b>
-      {concernDescription(sel) ? ` · ${concernDescription(sel)}` : ""} — tap
+      {concernDescription(sel) ? ` · ${concernDescription(sel)}` : ""}tap
       again to clear
     </p>
   ) : aiSummary ? (

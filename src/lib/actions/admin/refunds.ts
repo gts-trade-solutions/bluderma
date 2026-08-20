@@ -63,7 +63,7 @@ export async function refundPayment(formData: FormData): Promise<AdminResult> {
     if (payment.status !== PaymentStatus.PAID) {
       return {
         ok: false,
-        error: `Only a paid payment can be refunded — this one is ${payment.status}.`,
+        error: `Only a paid payment can be refunded. This one is ${payment.status}.`,
       };
     }
     if (!payment.providerPaymentId) {

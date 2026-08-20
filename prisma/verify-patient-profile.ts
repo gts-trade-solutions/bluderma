@@ -83,6 +83,78 @@ check(
   !/className="hidden shrink-0 items-center gap-1 text-sm font-semibold text-brand-200[^"]*sm:inline-flex"/.test(page)
 );
 
+/* ── It has to work on a phone ───────────────────────────────────────── */
+
+// Four lists (appointments, treatments, wallet, orders) each wrote out the
+// same row by hand: `justify-between` with a `min-w-0` that had no `flex-1`
+// beside it. On a phone the meta was pushed to the far edge while there was
+// room, then dropped onto its own line LEFT-aligned the moment there was not,
+// so the same list changed shape between a small phone and a large one.
+check(
+  "list rows go through one shared component",
+  (page.match(/<Row/g) ?? []).length >= 4,
+  `${(page.match(/<Row/g) ?? []).length} found`
+);
+check("that component exists", /function Row\(/.test(page));
+check(
+  "no row still hand-rolls the old pattern",
+  !/flex flex-wrap items-center justify-between gap-3 px-5 py-4/.test(page)
+);
+// The fix that matters: the title column has to GROW, or justify-between
+// strands the meta against the far edge.
+check(
+  "the title column grows rather than just permitting shrink",
+  /min-w-0 flex-1/.test(page)
+);
+check(
+  "rows stack below sm instead of wrapping",
+  /flex flex-col gap-2 px-4 py-3\.5 sm:flex-row/.test(page)
+);
+check(
+  "and pay less padding to the gutter on a phone",
+  /px-4 py-3\.5 sm:[\s\S]{0,60}sm:px-5/.test(page)
+);
+// A price or a status pill must never be squeezed by a long title.
+check("meta never shrinks", /flex shrink-0 flex-wrap items-center/.test(page));
+
+// Anything that sits beside prose and cannot usefully compress.
+for (const [what, near] of [
+  ["the skin-type pill", "shrink-0 rounded-full bg-white/10"],
+  ["the prescription PDF button", "btn-ghost shrink-0"],
+  ["the plan price", 'shrink-0 text-right'],
+] as const) {
+  check(`${what} is protected from squeeze`, page.includes(near));
+}
+
+// The strip: ten pills, hidden scrollbar. Without an affordance it reads as a
+// complete list of the four that happen to fit.
+check("the phone strip hints that it scrolls", /mask-image:linear-gradient/.test(nav));
+check(
+  "the active pill is scrolled into view",
+  /scrollIntoView\(\{ inline: "nearest"/.test(nav)
+);
+check(
+  "pills meet a 44px touch target",
+  /min-h-11/.test(nav),
+  "min-h-11 is 2.75rem = 44px, the smallest comfortable tap"
+);
+
+// Nothing may be wider than the viewport.
+for (const [file, src] of [
+  ["profile/page.tsx", page],
+  ["ProfileNav.tsx", nav],
+] as const) {
+  check(`${file} uses no viewport-width unit`, !/w-screen|100vw/.test(src));
+}
+// The one negative margin is deliberate: it matches container-page's own
+// px-5 sm:px-8 so the strip bleeds edge to edge without overflowing.
+const bleeds = [...nav.matchAll(/-mx-(\d+)/g)].map((m) => m[1]);
+check(
+  "the strip's bleed matches the container's padding",
+  bleeds.length > 0 && bleeds.every((n) => n === "5" || n === "8"),
+  bleeds.join(",") || "none"
+);
+
 /* ── Sample panels are marked as such ────────────────────────────────── */
 
 check("the page defines a Sample badge", /function SampleTag/.test(page));

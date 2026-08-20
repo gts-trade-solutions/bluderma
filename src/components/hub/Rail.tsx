@@ -13,10 +13,26 @@ export default function Rail({
   ariaLabel,
   className = "",
   arrows = "overlay",
+  bleed = "page",
 }: {
   children: React.ReactNode;
   ariaLabel: string;
   className?: string;
+  /**
+   * How far the track is allowed to run past its own box.
+   *
+   * "page" bleeds by exactly container-page's padding, so the first card lines
+   * up with the text while the scroll surface reaches the edge of the screen.
+   * That is right when the rail's parent IS the padded container.
+   *
+   * "column" stops bleeding at `lg`, and is right when the rail sits in a grid
+   * COLUMN instead. On the explore page the content column has a sticky
+   * analyser panel beside it, and a rail bleeding 32px to the right ran
+   * underneath that panel: the treatment cards looked cut off, because they
+   * were being painted over. The bleed is still correct below `lg`, where the
+   * grid collapses to one column inside container-page.
+   */
+  bleed?: "page" | "column";
   /**
    * "overlay" floats the arrows over the ends of the track — right for deal
    * cards and photographs, where a disc on top of an image reads as a
@@ -60,7 +76,11 @@ export default function Rail({
       onScroll={measure}
       aria-label={ariaLabel}
       className={`no-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 ${
-        arrows === "overlay" ? "-mx-5 px-5 sm:-mx-8 sm:px-8" : ""
+        arrows === "overlay"
+          ? bleed === "column"
+            ? "-mx-5 px-5 sm:-mx-8 sm:px-8 lg:mx-0 lg:px-0"
+            : "-mx-5 px-5 sm:-mx-8 sm:px-8"
+          : ""
       } ${className}`}
     >
       {children}

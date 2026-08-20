@@ -29,7 +29,7 @@ export const JOIN_STEPS: JoinStep[] = [
   {
     id: "credentials",
     title: "Your registration",
-    sub: "We check every practitioner's council registration before they go live. Nothing here is shown publicly — it is what earns the verified mark.",
+    sub: "We check every practitioner's council registration before they go live. Nothing here is shown publicly. It is what earns the verified mark.",
   },
   {
     id: "clinics",
@@ -39,7 +39,7 @@ export const JOIN_STEPS: JoinStep[] = [
   {
     id: "hours",
     title: "Your hours",
-    sub: "When you see clients, at each location. A morning session at one clinic and an evening at another is normal — add both.",
+    sub: "When you see clients, at each location. A morning session at one clinic and an evening at another is normal, add both.",
   },
   {
     id: "consult",

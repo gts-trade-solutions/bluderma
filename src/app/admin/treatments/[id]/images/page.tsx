@@ -52,7 +52,7 @@ export default async function TreatmentImagesPage({
       </div>
 
       <PageHeader
-        title={`Images — ${treatment.name}`}
+        title={`Images: ${treatment.name}`}
         description="Before/after, result and how-it-works images shown on the treatment page. The hero image is set on the main treatment form."
       />
 

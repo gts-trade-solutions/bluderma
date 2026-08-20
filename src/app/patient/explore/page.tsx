@@ -32,7 +32,7 @@ import SectionHead from "@/components/hub/SectionHead";
 export const metadata: Metadata = {
   title: "Explore Treatments",
   description:
-    "Browse every skin, hair and aesthetic treatment BluDerma covers — by category, sub-category or concern — with a free AI skin analysis alongside.",
+    "Browse every skin, hair and aesthetic treatment BluDerma covers, by category, sub-category or concern, with a free AI skin analysis alongside.",
 };
 
 export const dynamic = "force-dynamic";
@@ -79,7 +79,7 @@ export default async function ExplorePage({
               </h1>
               <p className="mt-2 max-w-xl text-sm text-ink-muted">
                 {categories.length} categories, {treatmentCount}{" "}
-                treatments. No prices and no clinic names on the cards — that
+                treatments. No prices and no clinic names on the cards. That
                 comes from a doctor, after an assessment.
               </p>
             </div>
@@ -109,7 +109,7 @@ export default async function ExplorePage({
               <SectionHead
                 eyebrow="The whole catalogue"
                 title="Every category, at a glance"
-                sub="Each row scrolls. Names and what they do — no prices, no clinic names."
+                sub="Each row scrolls. Names and what they do, no prices, no clinic names."
               />
               <CategoryRows />
             </section>
@@ -149,7 +149,7 @@ export default async function ExplorePage({
                   rate.
                 </p>
               </div>
-              <Rail ariaLabel="Hot deals">
+              <Rail ariaLabel="Hot deals" bleed="column">
                 {deals.hot.map((d) => (
                   <DealCard key={d.slug} deal={d} />
                 ))}
@@ -165,7 +165,7 @@ export default async function ExplorePage({
                   title="Deals &amp; packages"
                   sub="Course bundles and seasonal offers, open to everyone."
                 />
-                <Rail ariaLabel="Deals and packages">
+                <Rail ariaLabel="Deals and packages" bleed="column">
                   {deals.regular.map((d) => (
                     <DealCard key={d.slug} deal={d} size="sm" />
                   ))}
@@ -254,7 +254,7 @@ export default async function ExplorePage({
                 sub="Direct answers to what clients actually ask, each tied to a service."
                 action={{ label: "Read the issue", href: "/patient/know-yourself" }}
               />
-              <Rail ariaLabel="Know Yourself articles">
+              <Rail ariaLabel="Know Yourself articles" bleed="column">
                 {ARTICLES.slice(0, 6).map((a) => (
                   <Link
                     key={a.slug}
@@ -304,7 +304,7 @@ export default async function ExplorePage({
                   href="/patient/skin-analyzer"
                   className="inline-flex shrink-0 items-center gap-2 rounded-full bg-white/[0.04] px-6 py-3.5 text-sm font-bold text-brand-100 transition hover:bg-teal-400/[12%]"
                 >
-                  Scan my skin — free
+                  Scan my skin: free
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>

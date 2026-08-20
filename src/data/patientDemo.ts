@@ -36,14 +36,14 @@ export const DEMO_WALLET = {
   movements: [
     {
       id: "w1",
-      label: "Cashback — consultation",
+      label: "Cashback: consultation",
       detail: "5% back on your visit to Dr. Nithya Raghavan",
       amountInr: 70,
       on: "12 Aug 2026",
     },
     {
       id: "w2",
-      label: "Paid — Niacinamide 10% Serum",
+      label: "Paid: Niacinamide 10% Serum",
       detail: "Wallet used at checkout",
       amountInr: -1_120,
       on: "9 Aug 2026",
@@ -57,14 +57,14 @@ export const DEMO_WALLET = {
     },
     {
       id: "w4",
-      label: "Cashback — order",
+      label: "Cashback: order",
       detail: "Mineral Sunscreen SPF 50",
       amountInr: 119,
       on: "22 Jul 2026",
     },
     {
       id: "w5",
-      label: "Refund — cancelled appointment",
+      label: "Refund: cancelled appointment",
       detail: "Cancelled by the clinic, refunded in full",
       amountInr: 1_400,
       on: "14 Jul 2026",
@@ -93,7 +93,7 @@ export const DEMO_PAY_LATER = {
   plans: [
     {
       id: "bnpl1",
-      item: "Acne scar resurfacing — 4 session course",
+      item: "Acne scar resurfacing: 4 session course",
       totalInr: 24_000,
       paidInr: 12_000,
       instalmentInr: 4_000,
@@ -103,7 +103,7 @@ export const DEMO_PAY_LATER = {
     },
     {
       id: "bnpl2",
-      item: "Laser hair reduction — full face",
+      item: "Laser hair reduction: full face",
       totalInr: 12_000,
       paidInr: 6_000,
       instalmentInr: 3_000,
@@ -115,7 +115,7 @@ export const DEMO_PAY_LATER = {
   howItWorks: [
     "Split any treatment course over ₹5,000 into three, six or nine instalments.",
     "Three months is at no cost. Longer terms carry the provider's own interest, shown before you agree.",
-    "Approval is a soft check and takes about a minute — it does not affect your credit score.",
+    "Approval is a soft check and takes about a minute. It does not affect your credit score.",
     "Instalments are collected automatically. Missing one is a provider charge, never a clinic one.",
   ],
 };

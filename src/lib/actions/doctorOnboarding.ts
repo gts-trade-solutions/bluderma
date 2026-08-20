@@ -144,7 +144,7 @@ export async function startDoctorSignup(formData: FormData): Promise<AdminResult
         return {
           ok: false,
           error: "An account with this email already exists.",
-          fields: { email: "Already registered — sign in instead." },
+          fields: { email: "Already registered: sign in instead." },
         };
       }
       throw err;
@@ -190,7 +190,7 @@ const aboutSchema = z.object({
   about: z
     .string()
     .trim()
-    .min(40, "Write at least a couple of sentences — clients read this.")
+    .min(40, "Write at least a couple of sentences. Clients read this.")
     .max(2000),
 });
 

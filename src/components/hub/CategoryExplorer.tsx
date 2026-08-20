@@ -62,7 +62,7 @@ export default function CategoryExplorer({
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search a treatment or a concern — botox, acne, hair fall…"
+          placeholder="Search a treatment or a concern, botox, acne, hair fall…"
           aria-label="Search treatments"
           className="w-full rounded-2xl bg-white/[0.04] ring-1 ring-white/10 py-3.5 pl-11 pr-11 text-sm text-ink outline-none transition placeholder:text-ink-muted focus:border-brand-400 focus:ring-4 focus:ring-brand-300/40"
         />
@@ -89,7 +89,7 @@ export default function CategoryExplorer({
             ) : (
               <>
                 Nothing matches &ldquo;{query.trim()}&rdquo;. Try a concern
-                instead — &ldquo;pigmentation&rdquo;, &ldquo;hair&rdquo;,
+                instead, &ldquo;pigmentation&rdquo;, &ldquo;hair&rdquo;,
                 &ldquo;lifting&rdquo;.
               </>
             )}
@@ -207,7 +207,7 @@ export default function CategoryExplorer({
 
           <p className="mt-5 rounded-2xl bg-white/[0.04] ring-1 ring-white/10 px-4 py-3 text-xs leading-relaxed text-ink-muted">
             Not every treatment here suits every skin. Which of these is right
-            for you — and how many sessions it takes — is decided after an
+            for you, and how many sessions it takes, is decided after an
             assessment, not from this list.
           </p>
         </>

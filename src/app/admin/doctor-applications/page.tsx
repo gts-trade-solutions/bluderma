@@ -213,7 +213,7 @@ export default async function DoctorApplicationsPage({
                       </>
                     ) : (
                       <span className="font-semibold text-rose-600">
-                        Not provided — cannot approve
+                        Not provided: cannot approve
                       </span>
                     )}
                   </Fact>

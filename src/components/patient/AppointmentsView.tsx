@@ -177,7 +177,7 @@ function ApptCard({
             {appt.mode === "video"
               ? "Link on confirmation"
               : appt.mode === "home"
-              ? "At your address — the clinic will call to confirm"
+              ? "At your address: the clinic will call to confirm"
               : `${appt.clinic}, ${appt.location}`}
           </span>
         </div>
@@ -237,7 +237,7 @@ function EmptyState() {
       <h3 className="mt-4 text-lg font-bold text-ink">No appointments yet</h3>
       <p className="mx-auto mt-2 max-w-sm text-sm text-ink-muted">
         Run a skin analysis to get matched with the right doctor, then book a
-        slot — your appointments will show up here.
+        slot. Your appointments will show up here.
       </p>
       <Link href="/patient/skin-analyzer" className="btn-primary mt-6">
         <ScanFace className="h-4 w-4" /> Start skin analysis

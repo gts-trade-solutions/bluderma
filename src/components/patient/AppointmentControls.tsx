@@ -103,7 +103,7 @@ export default function AppointmentControls({
       ) : policy.reschedule.kind !== "not_applicable" ? (
         <span className="text-xs text-ink-muted">
           {policy.reschedule.kind === "limit_reached"
-            ? `Moved ${policy.reschedule.max} times — call reception`
+            ? `Moved ${policy.reschedule.max} times: call reception`
             : `Call reception to move it`}
         </span>
       ) : null}
@@ -308,7 +308,7 @@ function ReschedulePanel({
           </div>
           {slots.filter((s) => s.available).length === 0 && (
             <p className="mt-2 text-xs text-ink-muted">
-              Nothing free that day — try another.
+              Nothing free that day, try another.
             </p>
           )}
         </>

@@ -61,7 +61,7 @@ export default function RefundDialog({
       <input type="hidden" name="paymentId" value={paymentId} />
 
       <p className="text-xs font-semibold text-ink">
-        Refund {patient} — up to ₹{maxInr.toLocaleString("en-IN")}
+        Refund {patient}: up to ₹{maxInr.toLocaleString("en-IN")}
       </p>
 
       <div className="mt-2 flex flex-wrap items-center gap-2">

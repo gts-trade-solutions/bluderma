@@ -37,13 +37,13 @@ export default function PortalPreview() {
               If you consult at three locations, you currently keep three
               diaries and reconcile them in your head. Here they are one grid,
               colour-coded, and the system refuses to book you into two places
-              at once — including the drive between them.
+              at once, including the drive between them.
             </p>
 
             <ul className="mt-8 space-y-4">
               <Feature
                 title="Click any booking"
-                body="Their skin analysis, questionnaire answers, contact details and every appointment they have had with you — in a panel, without leaving the week."
+                body="Their skin analysis, questionnaire answers, contact details and every appointment they have had with you, in a panel, without leaving the week."
               />
               <Feature
                 title="Confirm, move or cancel from there"
@@ -111,7 +111,7 @@ export default function PortalPreview() {
                   2
                 </span>
                 <p className="text-xs font-semibold text-amber-900">
-                  Two bookings waiting for you to confirm — their slots are held
+                  Two bookings waiting for you to confirm. Their slots are held
                   until you do.
                 </p>
               </div>

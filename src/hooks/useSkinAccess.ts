@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { useRazorpayCheckout } from "./useRazorpayCheckout";
+
 export type SkinStatus =
   | { authed: false }
   | {
@@ -12,6 +14,8 @@ export type SkinStatus =
         | { status: "none" };
       lastAnalysisId: string | null;
       pendingRequest: boolean;
+      /** True when this deployment can actually take a card. */
+      payable?: boolean;
       /** What another scan costs, and whether this one is free. */
       offer?: {
         free: boolean;
@@ -31,6 +35,7 @@ export function useSkinAccess() {
   const [status, setStatus] = useState<SkinStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { checkout } = useRazorpayCheckout();
 
   const load = useCallback(async () => {
     try {
@@ -63,6 +68,39 @@ export function useSkinAccess() {
     }
   }, []);
 
+  /**
+   * Buy another analysis.
+   *
+   * This lived only on the analyser's own landing page, so the card on the
+   * browse hub offered "request another scan" instead — an admin had to
+   * approve it, while the card sat there quoting a price. A visitor who is
+   * shown a figure expects to be able to pay it.
+   *
+   * One POST. /api/skin/purchase creates the order and the Payment row;
+   * useRazorpayCheckout handles all three of its answers: a real order, a
+   * free grant, or the gateway not being configured on this build.
+   *
+   * The credit is granted when the payment SETTLES, not when checkout opens
+   * (see releaseScanCredit in lib/payments/settle.ts), so an abandoned
+   * payment leaves nothing behind and this only has to reload.
+   */
+  const purchase = useCallback(async () => {
+    setBusy(true);
+    setError(null);
+    const outcome = await checkout({
+      createUrl: "/api/skin/purchase",
+      body: {},
+      description: "Skin analysis",
+      reference: "skin-scan",
+    });
+    if (outcome.status === "paid" || outcome.status === "no_payment_due") {
+      await load();
+    } else if (outcome.status === "failed") {
+      setError(outcome.error);
+    }
+    setBusy(false);
+  }, [checkout, load]);
+
   const requestAccess = useCallback(async () => {
     setBusy(true);
     setError(null);
@@ -91,7 +129,14 @@ export function useSkinAccess() {
     setError,
     reload: load,
     start,
+    purchase,
     requestAccess,
     firstScanFree,
+    /** What another analysis costs, from settings. Never hardcoded in a card. */
+    priceInr: status?.authed ? status.offer?.priceInr ?? null : null,
+    /** Whether asking staff is still offered when payment is unavailable. */
+    allowRequests: status?.authed ? status.offer?.allowRequests ?? false : false,
+    /** Whether a card can be charged here at all. */
+    payable: status?.authed ? status.payable === true : false,
   };
 }

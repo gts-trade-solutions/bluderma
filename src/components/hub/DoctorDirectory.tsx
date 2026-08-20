@@ -212,7 +212,7 @@ function DirectoryCard({
             ))
           ) : (
             <span className="text-xs text-ink-muted">
-              No open times this week — ask for another date.
+              No open times this week, ask for another date.
             </span>
           )}
         </div>

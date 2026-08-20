@@ -142,12 +142,18 @@ check(
     css.indexOf(".theme-light .bg-white") > -1
 );
 
+//
+// JoinHero was on this list and is not any more. It became a LIGHT island
+// on a dark page rather than a dark one on a light page: the client's note
+// was that the old treatment was dull and the image was not visible under
+// the overlay. It still uses translucent whites, but on a pale ground where
+// they are simply correct, so `on-dark` has nothing to undo. Its hazard is
+// the opposite one, and the check for it is at the foot of this file.
 // Every dark surface rendered inside a theme-light page needs the class.
 const DARK_SURFACE = /bg-\[#0[0-9a-f]{5}\]/;
 for (const f of [
   "src/components/doctor/PortalRail.tsx",
   "src/components/doctor/dashboard/DashboardHome.tsx",
-  "src/components/doctor/JoinHero.tsx",
 ]) {
   const src = read(f);
   const name = f.split("/").pop();
@@ -173,7 +179,7 @@ for (const f of [
 // can only ever be right on one of the two.
 const DARK_PAGE_DIRS = ["src/components/booking"];
 const SOLID_LIGHT =
-  /bg-white(?![/\d-])|border-slate-[1-4]00|ring-slate-[1-4]00/;
+  /\bbg-white(?![/\d-])|\bborder-slate-[1-4]00\b|\bring-slate-[1-4]00\b/;
 
 for (const dir of DARK_PAGE_DIRS) {
   for (const f of walk(dir)) {
@@ -185,7 +191,7 @@ for (const dir of DARK_PAGE_DIRS) {
     );
     // Accents on a dark ground need the light steps, not the dark ones.
     const darkAccents = [
-      ...src.matchAll(/text-(?:amber|brand|teal|rose|emerald)-[6-9]00/g),
+      ...src.matchAll(/text-(?:amber|brand|teal|rose|emerald)-[6-9]00\b/g),
     ].map((m) => m[0]);
     // …unless they sit on a saturated fill, where dark-on-light is correct.
     const onFill = darkAccents.filter((a) => {
@@ -231,7 +237,7 @@ const front = read("src/app/doctor/page.tsx");
 // gone, and a naive substring test would read that comment as the bug.
 check(
   "the doctor front door is not theme-light",
-  !/className="[^"]*theme-light/.test(front)
+  !/className="[^"]*\btheme-light\b/.test(front)
 );
 check("it paints the shared surface", front.includes("bg-[var(--surface)]"));
 check("its navbar is not forced light", !front.includes('chrome="light"'));
@@ -324,6 +330,192 @@ wordOffenders.forEach((o) => fails.push(`  retired word: ${o}`));
 check("the detector catches the label that shipped", RETIRED.test("For clinicians"));
 check("and is not tripped by 'Clinical note'", !RETIRED.test("Clinical note"));
 
+
+/* ------------------------------------------------------------------------
+   A rail must never be wider than the column it sits in
+   --------------------------------------------------------------------- */
+// Rail bleeds by exactly container-page's padding so the scroll surface can
+// reach the edge of the screen. That is right when its parent IS the padded
+// container, and wrong when it sits in a grid COLUMN: on the explore page the
+// content column has a sticky analyser panel beside it, and a rail bleeding
+// 32px to the right ran underneath it. The treatment cards looked cut off
+// because they were being painted over.
+const rail = read("src/components/hub/Rail.tsx");
+check("Rail can be told it lives in a column", /bleed\?:\s*"page"\s*\|\s*"column"/.test(rail));
+check(
+  "and stops bleeding at lg when it does",
+  /lg:mx-0 lg:px-0/.test(rail),
+  "below lg the grid collapses into container-page, where the bleed is correct"
+);
+
+// Every rail rendered inside the explore page's content column, or inside a
+// component only used there.
+for (const f of [
+  "src/app/patient/explore/page.tsx",
+  "src/components/hub/CategoryRows.tsx",
+  "src/components/hub/ConcernRail.tsx",
+  "src/components/hub/BeforeAfter.tsx",
+  "src/components/hub/CategoryPills.tsx",
+]) {
+  const src = read(f);
+  const rails = (src.match(/<Rail/g) ?? []).length;
+  const scoped = (src.match(/bleed="column"/g) ?? []).length;
+  check(
+    `${f.split("/").pop()} scopes every rail to its column`,
+    rails === 0 || scoped >= rails,
+    `${scoped} of ${rails}`
+  );
+}
+
+/* ------------------------------------------------------------------------
+   The three analyser cards are siblings
+   --------------------------------------------------------------------- */
+// The skin card was given a gradient and the other two were left flat, so the
+// rail read as one real product and two afterthoughts.
+const analyzer = read("src/components/hub/AnalyzerRail.tsx");
+const gradients = (analyzer.match(/bg-gradient-to-br from-\w+-\d00/g) ?? []).length;
+check("all three analyser cards carry a gradient", gradients >= 3, `${gradients} found`);
+const hues = new Set(
+  [...analyzer.matchAll(/bg-gradient-to-br from-(\w+)-\d00/g)].map((m) => m[1])
+);
+check("each in its own hue", hues.size >= 3, [...hues].join(", "));
+
+/* ------------------------------------------------------------------------
+   One sign-in, and it says so
+   --------------------------------------------------------------------- */
+const loginForm = read("src/components/auth/LoginForm.tsx");
+check(
+  "the login page states that one sign-in serves both roles",
+  /One sign-in for clients and doctors/.test(loginForm)
+);
+check("and offers a doctor a way to register as one", /as=doctor/.test(loginForm));
+
+/* ------------------------------------------------------------------------
+   The site does not name cities at a visitor
+   --------------------------------------------------------------------- */
+const locationBtn = read("src/components/hub/LocationButton.tsx");
+check(
+  "the location chooser proposes no cities of its own",
+  !/REGION_CITIES|REGION_STATES/.test(locationBtn)
+);
+check(
+  "it still detects, and still takes free text",
+  /Use my current location/.test(locationBtn) && /<input/.test(locationBtn)
+);
+// The pill echoes the VISITOR's own city, which is why the feature survives:
+// a Korean visitor sees Seoul, not Chennai. What made the site read as Indian
+// was the curated list it proposed, and that is what went.
+check(
+  "and proposes nothing of its own",
+  !/RegionChip/.test(locationBtn),
+  "the chip renderer is orphaned once the lists are gone"
+);
+check(
+  "its copy names no country",
+  // Comments stripped: the note explaining WHY the Indian lists went would
+  // otherwise read as the lists still being there. Same trap as theme-light.
+  !/India|Indian|Tamil Nadu|Chennai|Bengaluru|Mumbai/.test(codeOnly(locationBtn))
+);
+
+/* ------------------------------------------------------------------------
+   Client or doctor, answered by a control rather than a paragraph
+   --------------------------------------------------------------------- */
+const toggle = read("src/components/auth/AudienceToggle.tsx");
+check("an audience toggle exists", /export default function AudienceToggle/.test(toggle));
+check("it is a tablist", /role="tablist"/.test(toggle));
+// The switch must not look like it changes credentials. It changes where you
+// are headed and which account "create one" makes; the role lives on the
+// account and postLoginPath() routes on that.
+check(
+  "it writes the choice to the URL so a refresh keeps it",
+  /router\.replace/.test(toggle)
+);
+for (const [f, key] of [
+  ["src/components/auth/LoginForm.tsx", "role"],
+  ["src/components/auth/RegisterForm.tsx", "as"],
+] as const) {
+  const src = read(f);
+  check(`${f.split("/").pop()} shows the toggle`, /<AudienceToggle/.test(src));
+  check(`${f.split("/").pop()} keys it on ${key}`, src.includes(key));
+}
+const lf = read("src/components/auth/LoginForm.tsx");
+check(
+  "an explicit callbackUrl still beats the toggle",
+  /explicitCallback \|\|/.test(lf),
+  "somebody who clicked 'sign in to book this' goes back to that booking"
+);
+check(
+  "and the register link follows the toggle",
+  /audience === "doctor"[\s\S]{0,120}as=doctor/.test(lf)
+);
+
+/* ------------------------------------------------------------------------
+   The doctor page has to be looked at, not only read
+   --------------------------------------------------------------------- */
+// The client's note was that it "feels like the same old home page". The whole
+// page carried exactly ONE photograph, the hero background, while the client
+// side is built out of editorial imagery.
+//
+// The clinic band that briefly lived here is gone: BluDerma is a marketplace,
+// not a clinic operator, and "rooms you would be consulting in" claimed a
+// relationship to those premises that it does not have.
+for (const f of [
+  "src/components/doctor/JoinHero.tsx",
+  "src/components/doctor/WhyList.tsx",
+  "src/components/doctor/SimpleSteps.tsx",
+]) {
+  const src = read(f);
+  check(`${f.split("/").pop()} carries photography`, /<SmartImage/.test(src));
+}
+
+// And it must be ITS OWN photography. Reaching into the client pool put a
+// picture on the banner that a visitor had already met in the catalogue,
+// which is what "that banner image is already used" meant.
+const doctorImgs = read("src/data/doctorImages.ts");
+check("the practitioner side has a pool of its own", /DOCTOR_IMG/.test(doctorImgs));
+check(
+  "sourced from a host next.config already allows",
+  /images\.pexels\.com/.test(doctorImgs)
+);
+for (const f of [
+  "src/components/doctor/JoinHero.tsx",
+  "src/components/doctor/SimpleSteps.tsx",
+]) {
+  const src = read(f);
+  check(
+    `${f.split("/").pop()} does not reuse the client pool`,
+    !src.includes('from "@/data/hubImages"')
+  );
+}
+
+/* ------------------------------------------------------------------------
+   The doctor hero is a light island on a dark page
+   --------------------------------------------------------------------- */
+// `text-ink` and its siblings resolve to a near-WHITE outside .theme-light,
+// so on a pale ground they are invisible. Every colour in there has to be a
+// literal, the same rule PortalPreview's calendar sketch documents.
+const hero = read("src/components/doctor/JoinHero.tsx");
+check(
+  "the hero uses no dark-theme ink token",
+  // Comments stripped: the note explaining WHY there is no ink token here
+  // would otherwise read as an ink token. Third time this file has hit it.
+  !/text-ink/.test(codeOnly(hero)),
+  "they would be white type on a white ground"
+);
+check("it names its own slate instead", /text-slate-\d{3}/.test(hero));
+// The complaint that caused the rebuild: a scrim heavy enough to carry type
+// across a whole frame is heavy enough to destroy the picture under it.
+// The strongest proof on the page must not be a desktop-only luxury. The
+// first cut was `hidden sm:block`, which removed it entirely on phones.
+check(
+  "the brief card stacks on a phone rather than hiding",
+  !/hidden[^"]*sm:block[^"]*rounded-2xl bg-white\/95/.test(hero) &&
+    /sm:absolute sm:-bottom-5/.test(hero)
+);
+check(
+  "the photograph carries no full-frame scrim",
+  !/inset-0 bg-gradient-to-[rt] from-\[#0/.test(hero)
+);
 
 console.log(`\n${pass} passed, ${fails.length} failed`);
 if (fails.length) {

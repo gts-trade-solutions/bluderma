@@ -16,6 +16,33 @@ import Link from "next/link";
  * The canvas is light on purpose. This is read across a whole clinic day, and
  * the calendar's per-clinic colour coding needs a high-contrast ground. The
  * dark chrome lives in the rail, where the brand belongs.
+ *
+ * ── The 2026 rebuild ─────────────────────────────────────────────────────
+ * The client's words were "cluttered", "boring" and "not interactive", and
+ * all three came from one cause: every panel had identical weight. The same
+ * white, the same ring, the same shadow, stacked down a flat grey page, with
+ * no motion anywhere. Nothing led, so everything competed, so it read as
+ * dense — and a screen where nothing responds to a cursor reads as a static
+ * report rather than a tool.
+ *
+ * What changed, and the rule behind each:
+ *
+ *   ACCENT   A panel can carry a hue and a glyph. Colour is how the eye
+ *            finds a section without reading it. Used sparingly: an accent
+ *            on everything is the same as an accent on nothing.
+ *
+ *   LIFT     Anything that can be clicked rises under the cursor and settles
+ *            when pressed. This is the whole of "interactive" — feedback on
+ *            the things that DO something, and stillness on the things that
+ *            merely say something.
+ *
+ *   ENTER    Panels fade up on mount, staggered by position. It costs one
+ *            animation and turns a page that appears all at once into one
+ *            that arrives.
+ *
+ * Every motion here sits behind `prefers-reduced-motion`, which is not a nicety
+ * on a medical product: vestibular disorders are a real condition and this is
+ * a screen people use all day.
  */
 
 /* ------------------------------ Page head ------------------------------ */
@@ -32,17 +59,28 @@ export function PageHead({
   action?: React.ReactNode;
 }) {
   return (
-    <header className="mb-7 flex flex-wrap items-start justify-between gap-4">
+    <header className="mb-7 flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
         {eyebrow && (
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand-600">
+          // A short gradient rule ahead of the eyebrow. It is two pixels of
+          // brand on a page that otherwise has none above the fold, and it
+          // gives the heading a place to start rather than floating.
+          <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-brand-600">
+            <span
+              aria-hidden
+              className="h-[3px] w-7 rounded-full bg-gradient-to-r from-brand-500 to-teal-400"
+            />
             {eyebrow}
           </p>
         )}
-        <h1 className="mt-1 font-display text-2xl font-bold tracking-[-0.02em] text-slate-900 sm:text-3xl">
+        <h1 className="mt-2 font-display text-[26px] font-bold leading-tight tracking-[-0.03em] text-slate-900 sm:text-[32px]">
           {title}
         </h1>
-        {sub && <p className="mt-1.5 max-w-2xl text-sm text-slate-500">{sub}</p>}
+        {sub && (
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
+            {sub}
+          </p>
+        )}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </header>
@@ -51,33 +89,99 @@ export function PageHead({
 
 /* -------------------------------- Surface ------------------------------ */
 
+/** The hues a panel may carry. Full class strings; Tailwind sees no interpolation. */
+const ACCENTS = {
+  brand: {
+    tile: "bg-gradient-to-br from-brand-500 to-brand-600 text-white",
+    edge: "from-brand-400/70",
+  },
+  teal: {
+    tile: "bg-gradient-to-br from-teal-500 to-emerald-500 text-white",
+    edge: "from-teal-400/70",
+  },
+  amber: {
+    tile: "bg-gradient-to-br from-amber-400 to-orange-500 text-white",
+    edge: "from-amber-400/70",
+  },
+  violet: {
+    tile: "bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white",
+    edge: "from-violet-400/70",
+  },
+  rose: {
+    tile: "bg-gradient-to-br from-rose-500 to-pink-500 text-white",
+    edge: "from-rose-400/70",
+  },
+  slate: {
+    tile: "bg-gradient-to-br from-slate-400 to-slate-500 text-white",
+    edge: "from-slate-300/70",
+  },
+} as const;
+
+export type Accent = keyof typeof ACCENTS;
+
 export function Panel({
   title,
   sub,
   action,
+  accent,
+  icon,
   padded = true,
   className = "",
+  /** Position in its group, for the staggered entrance. */
+  index = 0,
   children,
 }: {
   title?: string;
   sub?: string;
   action?: React.ReactNode;
+  /** A hue for the header glyph and the top edge. Omit for a quiet panel. */
+  accent?: Accent;
+  /** Glyph key. Only rendered when an accent is set, so the two travel together. */
+  icon?: string;
   padded?: boolean;
   /** For grid spans at the call site. */
   className?: string;
+  index?: number;
   children: React.ReactNode;
 }) {
+  const skin = accent ? ACCENTS[accent] : null;
+
   return (
-    <section className={`overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05),0_12px_32px_-20px_rgba(15,23,42,0.22)] ring-1 ring-slate-200/80 ${className}`}>
+    <section
+      className={`portal-enter group/panel relative overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05),0_12px_32px_-20px_rgba(15,23,42,0.22)] ring-1 ring-slate-200/80 transition duration-200 hover:shadow-[0_1px_2px_rgba(15,23,42,0.05),0_18px_44px_-22px_rgba(15,23,42,0.4)] hover:ring-slate-300 ${className}`}
+      // Staggered so a screenful arrives rather than appearing. Capped: past
+      // about eight the last panel is visibly late and it stops reading as
+      // polish.
+      style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
+    >
+      {/* A hairline of the accent along the top. Enough to tell two adjacent
+          panels apart at a glance; not enough to be decoration. */}
+      {skin && (
+        <span
+          aria-hidden
+          className={`absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r to-transparent ${skin.edge}`}
+        />
+      )}
+
       {(title || action) && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
-          <div className="min-w-0">
-            {title && (
-              <h2 className="font-display text-base font-bold text-slate-900">
-                {title}
-              </h2>
+          <div className="flex min-w-0 items-center gap-3">
+            {skin && icon && (
+              <span
+                aria-hidden
+                className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl shadow-sm transition duration-200 group-hover/panel:scale-105 ${skin.tile}`}
+              >
+                <GlyphIcon name={icon} />
+              </span>
             )}
-            {sub && <p className="mt-0.5 text-xs text-slate-500">{sub}</p>}
+            <div className="min-w-0">
+              {title && (
+                <h2 className="font-display text-base font-bold text-slate-900">
+                  {title}
+                </h2>
+              )}
+              {sub && <p className="mt-0.5 text-xs text-slate-500">{sub}</p>}
+            </div>
           </div>
           {action}
         </div>
@@ -94,45 +198,97 @@ export function StatTile({
   value,
   hint,
   href,
+  icon,
+  accent = "brand",
+  delta,
+  index = 0,
   tone = "plain",
 }: {
   label: string;
   value: string | number;
   hint?: string;
   href?: string;
+  icon?: string;
+  accent?: Accent;
+  /** Change on the previous period, as a fraction. Null when there is none. */
+  delta?: number | null;
+  index?: number;
   /** `attention` is for a number the doctor is meant to act on. */
   tone?: "plain" | "attention";
 }) {
+  const skin = ACCENTS[accent];
+
   const body = (
     <>
-      {/* Label first, small and set wide: the eye lands on the figure either
-          way, and this way it already knows what it is looking at. */}
-      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
-        {label}
-      </p>
+      {/* A soft bloom of the accent behind the figure. It is what stops four
+          tiles in a row reading as four identical boxes. */}
+      <span
+        aria-hidden
+        className={`pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full opacity-[0.14] blur-2xl transition-opacity duration-300 group-hover/stat:opacity-25 ${skin.tile}`}
+      />
+
+      <div className="relative flex items-start justify-between gap-3">
+        {/* Label first, small and set wide: the eye lands on the figure either
+            way, and this way it already knows what it is looking at. */}
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
+          {label}
+        </p>
+        {icon && (
+          <span
+            aria-hidden
+            className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg shadow-sm transition duration-200 group-hover/stat:scale-110 ${skin.tile}`}
+          >
+            <GlyphIcon name={icon} />
+          </span>
+        )}
+      </div>
+
       <p
-        className={`mt-2 font-display text-3xl font-bold tracking-[-0.02em] tabular-nums ${
+        className={`relative mt-2 font-display text-3xl font-bold tracking-[-0.02em] tabular-nums ${
           tone === "attention" ? "text-amber-600" : "text-slate-900"
         }`}
       >
         {value}
       </p>
-      {hint && <p className="mt-1.5 text-xs leading-relaxed text-slate-500">{hint}</p>}
+
+      <div className="relative mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+        {/* Null is a real answer: a first month has nothing to compare to, and
+            printing +100% would be inventing a trend. */}
+        {delta !== null && delta !== undefined && (
+          <span
+            className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums ${
+              delta >= 0
+                ? "bg-teal-50 text-teal-700"
+                : "bg-rose-50 text-rose-700"
+            }`}
+          >
+            {delta >= 0 ? "▲" : "▼"}
+            {Math.abs(Math.round(delta * 100))}%
+          </span>
+        )}
+        {hint && <p className="text-xs leading-relaxed text-slate-500">{hint}</p>}
+      </div>
     </>
   );
 
   const shell =
-    "relative overflow-hidden rounded-2xl bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/80";
+    "portal-enter group/stat relative overflow-hidden rounded-2xl bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/80 transition duration-200";
+  const style = { animationDelay: `${Math.min(index, 8) * 45}ms` };
 
   return href ? (
     <Link
       href={href}
-      className={`${shell} block transition hover:shadow-[0_1px_2px_rgba(15,23,42,0.05),0_10px_28px_-18px_rgba(15,23,42,0.35)] hover:ring-slate-300`}
+      style={style}
+      // Rises under the cursor and settles when pressed. The whole of
+      // "interactive" is feedback on the things that do something.
+      className={`${shell} block hover:-translate-y-0.5 hover:shadow-[0_1px_2px_rgba(15,23,42,0.05),0_16px_36px_-20px_rgba(15,23,42,0.45)] hover:ring-slate-300 active:translate-y-0`}
     >
       {body}
     </Link>
   ) : (
-    <div className={shell}>{body}</div>
+    <div style={style} className={shell}>
+      {body}
+    </div>
   );
 }
 
@@ -150,10 +306,10 @@ export function Empty({
   icon?: "calendar" | "inbox" | "clinic" | "user";
 }) {
   return (
-    <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-6 py-14 text-center">
+    <div className="rounded-2xl border border-dashed border-slate-300 bg-gradient-to-b from-white/70 to-slate-50/50 px-6 py-14 text-center">
       <span
         aria-hidden
-        className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-400"
+        className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 ring-1 ring-inset ring-white"
       >
         <GlyphIcon name={icon} />
       </span>
@@ -220,9 +376,12 @@ export function Tag({
 /* -------------------------------- Buttons ------------------------------ */
 
 export const portalBtn =
-  "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2";
-export const portalBtnPrimary = `${portalBtn} bg-brand-600 text-white hover:bg-brand-700`;
-export const portalBtnQuiet = `${portalBtn} border border-slate-200 bg-white text-slate-700 hover:bg-slate-50`;
+  "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 active:scale-[0.97]";
+// A gradient rather than a flat fill, and a shadow in the button's own hue —
+// the same treatment the client side gives its primary action, so a doctor
+// who has seen the public site recognises this one.
+export const portalBtnPrimary = `${portalBtn} bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-[0_6px_18px_-6px_rgba(31,111,214,0.7)] hover:from-brand-700 hover:to-brand-600 hover:shadow-[0_8px_22px_-6px_rgba(31,111,214,0.85)]`;
+export const portalBtnQuiet = `${portalBtn} border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50`;
 
 /* -------------------------------- Glyphs ------------------------------- */
 
@@ -236,6 +395,10 @@ const PATHS: Record<string, string> = {
     "M4 13h4l1.5 3h5L16 13h4M5 5h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z",
   clinic: "M4 20V9l8-5 8 5v11M9 20v-6h6v6M12 8v3M10.5 9.5h3",
   user: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM5 20a7 7 0 0 1 14 0",
+  link: "M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1",
+  star: "M12 3l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 18.3 5.9 21.6l1.4-6.8L2.2 10.1l6.9-.8z",
+  clock: "M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z",
+  pulse: "M3 12h4l2-6 3.5 12L16 9l1.5 3H21",
 };
 
 export function GlyphIcon({ name }: { name: string }) {

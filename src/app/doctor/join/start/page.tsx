@@ -70,7 +70,7 @@ export default function DoctorGoogleBootstrap() {
               Setting up your practitioner account…
             </h1>
             <p className="mt-1 text-sm text-slate-600">
-              One moment — taking you to your application.
+              One moment: taking you to your application.
             </p>
           </>
         )}

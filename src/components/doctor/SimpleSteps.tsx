@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import SmartImage from "@/components/SmartImage";
+import { DOCTOR_IMG } from "@/data/doctorImages";
+
 import { doctorCta } from "@/lib/doctor/viewer";
 
 /**
@@ -12,23 +15,27 @@ import { doctorCta } from "@/lib/doctor/viewer";
 const STEPS = [
   {
     n: "01",
+    img: DOCTOR_IMG.consultRoom,
     title: "Tell us about your practice",
-    body: "Your qualifications, where you consult and when. Add as many locations as you work at — each one keeps its own hours and its own fee.",
+    body: "Your qualifications, where you consult and when. Add as many locations as you work at. Each one keeps its own hours and its own fee.",
   },
   {
     n: "02",
+    img: DOCTOR_IMG.examining,
     title: "We check your registration",
     body: "Against your medical council's own register. It is what lets us put a verified mark on your profile and mean it. Usually done within two working days.",
   },
   {
     n: "03",
+    img: DOCTOR_IMG.treatmentRoom,
     title: "You go live",
-    body: "You appear in search and in the recommendations we make after a client's skin analysis — matched on what you actually treat, not who paid most.",
+    body: "You appear in search and in the recommendations we make after a client's skin analysis. Matched on what you actually treat, not who paid most.",
   },
   {
     n: "04",
+    img: DOCTOR_IMG.treatmentWide,
     title: "Bookings land in your calendar",
-    body: "With the client's analysis and questionnaire attached. Confirm each one yourself or let them book straight in — your choice, changeable any time.",
+    body: "With the client's analysis and questionnaire attached. Confirm each one yourself or let them book straight in, your choice, changeable any time.",
   },
 ];
 
@@ -48,7 +55,7 @@ export default function SimpleSteps({
             Four steps, about ten minutes
           </h2>
           <p className="mt-4 text-lg leading-relaxed text-ink-soft">
-            You can stop halfway and come back — everything saves as you go.
+            You can stop halfway and come back. Everything saves as you go.
           </p>
         </div>
 
@@ -56,13 +63,33 @@ export default function SimpleSteps({
           {STEPS.map((s) => (
             <li
               key={s.n}
-              className="relative rounded-2xl bg-white/[0.04] p-6 ring-1 ring-white/10"
+              className="group relative overflow-hidden rounded-2xl bg-white/[0.04] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:ring-teal-300/40"
             >
-              <span className="text-sm font-bold tracking-widest text-teal-300">
-                {s.n}
-              </span>
-              <h3 className="mt-3 text-lg font-bold text-ink">{s.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-ink-soft">{s.body}</p>
+              {/* A photograph per step. Four identical text boxes was the
+                  same failure the bento above had: nothing to look at, so
+                  nothing read. */}
+              <div className="relative h-36 overflow-hidden">
+                <SmartImage
+                  src={s.img}
+                  alt=""
+                  mode="fill"
+                  sizes="(min-width: 1024px) 25vw, 100vw"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div
+                  aria-hidden
+                  className="absolute inset-0 bg-gradient-to-t from-[#070d1c] via-[#070d1c]/30 to-transparent"
+                />
+                <span className="absolute left-4 top-4 grid h-9 w-9 place-items-center rounded-xl bg-[#04101f]/70 text-sm font-extrabold text-teal-300 ring-1 ring-inset ring-white/20 backdrop-blur">
+                  {s.n}
+                </span>
+              </div>
+              <div className="p-6 pt-5">
+                <h3 className="text-lg font-bold text-ink">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+                  {s.body}
+                </p>
+              </div>
             </li>
           ))}
         </ol>

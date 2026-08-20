@@ -32,7 +32,7 @@ export default function PracticeSettings({
           name="requiresApproval"
           label="Confirm each booking myself"
           defaultChecked={requiresApproval}
-          hint="The slot is held while you decide and the client is told you are reviewing it. Leave this off and bookings confirm on the spot — fewer people abandon a booking that is instantly confirmed."
+          hint="The slot is held while you decide and the client is told you are reviewing it. Leave this off and bookings confirm on the spot, fewer people abandon a booking that is instantly confirmed."
         />
       </Card>
 
@@ -45,7 +45,7 @@ export default function PracticeSettings({
             min={0}
             max={240}
             defaultValue={String(travelBufferMin)}
-            hint="We block this much either side of a booking at a different clinic. Set it to the worst realistic journey, not the best — an optimistic number here becomes a client waiting in an empty room."
+            hint="We block this much either side of a booking at a different clinic. Set it to the worst realistic journey, not the best, an optimistic number here becomes a client waiting in an empty room."
           />
         </Card>
       )}
@@ -61,7 +61,7 @@ export default function PracticeSettings({
           min={0}
           max={10}
           defaultValue={String(priorityHoldPerDay)}
-          hint="Taken from the end of the day, where demand is highest. The hold lifts 24 hours before, so an unsold slot is never wasted — you lose nothing by turning it on. Zero switches it off."
+          hint="Taken from the end of the day, where demand is highest. The hold lifts 24 hours before, so an unsold slot is never wasted. You lose nothing by turning it on. Zero switches it off."
         />
       </Card>
     </EntityForm>

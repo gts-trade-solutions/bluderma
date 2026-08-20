@@ -72,7 +72,7 @@ export default async function PrescriptionEditPage({
               defaultValue={row?.userId ?? ""}
               options={clients.map((c) => ({
                 value: c.id,
-                label: c.name ? `${c.name} — ${c.email}` : c.email,
+                label: c.name ? `${c.name}: ${c.email}` : c.email,
               }))}
             />
             <SelectField
@@ -94,14 +94,14 @@ export default async function PrescriptionEditPage({
               name="title"
               required
               defaultValue={row?.title ?? ""}
-              placeholder="Tretinoin 0.025% — nightly"
+              placeholder="Tretinoin 0.025%: nightly"
             />
             <TextArea
               label="Notes"
               name="notes"
               rows={4}
               defaultValue={row?.notes ?? ""}
-              hint="Dosage, duration, cautions — whatever the client should see."
+              hint="Dosage, duration, cautions: whatever the client should see."
             />
             <div className="grid gap-5 sm:grid-cols-2">
               <TextField

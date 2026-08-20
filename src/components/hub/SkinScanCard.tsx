@@ -70,8 +70,8 @@ export default function SkinScanCard() {
           </h2>
 
           <p className="mt-5 max-w-md text-[15px] leading-relaxed text-white/60">
-            One selfie. Twelve-plus signals scored — acne, pores, hydration,
-            pigmentation, dark circles, wrinkles — and a plain-English read on
+            One selfie. Twelve-plus signals scored, acne, pores, hydration,
+            pigmentation, dark circles, wrinkles, and a plain-English read on
             what to treat first, and in what order.
           </p>
 
@@ -271,7 +271,7 @@ function Cta({
         )}
         {status.state.status === "reserved"
           ? "Continue your analysis"
-          : "Analyse my skin — free"}
+          : "Analyse my skin: free"}
         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
       </button>
       {past}

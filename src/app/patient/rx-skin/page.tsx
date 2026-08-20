@@ -12,9 +12,9 @@ import SkinScanCard from "@/components/hub/SkinScanCard";
 import { SKIN_CONDITIONS } from "@/data/rxSkin";
 
 export const metadata: Metadata = {
-  title: "Rx Skin — skin conditions",
+  title: "Rx Skin: skin conditions",
   description:
-    "Every skin and hair condition BluDerma treats, described in one line each — acne, melasma, rosacea, scarring, hair fall and more — with what treats each one.",
+    "Every skin and hair condition BluDerma treats, described in one line each, acne, melasma, rosacea, scarring, hair fall and more, with what treats each one.",
 };
 
 /**
@@ -47,7 +47,7 @@ export default function RxSkinPage() {
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-muted">
               {SKIN_CONDITIONS.length} conditions, one line each. Hover or tap
-              any of them to see what it actually is — then follow through to
+              any of them to see what it actually is, then follow through to
               what treats it.
             </p>
           </div>

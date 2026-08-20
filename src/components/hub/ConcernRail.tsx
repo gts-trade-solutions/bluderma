@@ -7,7 +7,7 @@ import Rail from "./Rail";
 /** "What's bothering you?" — concern-first shortcuts into the categories. */
 export default function ConcernRail({ concerns }: { concerns: HubConcern[] }) {
   return (
-    <Rail ariaLabel="Skin concerns">
+    <Rail ariaLabel="Skin concerns" bleed="column">
       {concerns.map((c) => (
         <Link
           key={c.slug}

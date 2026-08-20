@@ -46,7 +46,7 @@ export default async function DealEditPage({
     <>
       <PageHeader
         title={isNew ? "New deal" : `Edit ${row!.title}`}
-        description="Shown on the explore hub. A percentage only — the catalogue never shows rupee prices."
+        description="Shown on the explore hub. A percentage only: the catalogue never shows rupee prices."
       />
 
       <EntityForm
@@ -136,7 +136,7 @@ export default async function DealEditPage({
                 name="categoryLabel"
                 required
                 defaultValue={row?.categoryLabel ?? ""}
-                hint="Shown on the card — usually the category name."
+                hint="Shown on the card, usually the category name."
               />
             </div>
             <ImageField

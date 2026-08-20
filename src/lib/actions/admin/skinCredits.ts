@@ -74,7 +74,7 @@ export async function revokeScanCredit(id: string): Promise<AdminResult> {
     if (before.state !== "available") {
       return {
         ok: false,
-        error: `Only an unused credit can be revoked — this one is ${before.state}.`,
+        error: `Only an unused credit can be revoked. This one is ${before.state}.`,
       };
     }
 

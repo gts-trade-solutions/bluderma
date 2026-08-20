@@ -27,7 +27,7 @@ export default async function DealsPage() {
     <>
       <PageHeader
         title="Deals"
-        description="Offers on the explore hub. They stop showing themselves after their end date — no deploy needed."
+        description="Offers on the explore hub. They stop showing themselves after their end date, no deploy needed."
         action={
           <Link href="/admin/deals/new" className="btn-primary">
             New deal

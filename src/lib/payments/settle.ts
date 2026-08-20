@@ -236,18 +236,18 @@ async function sendBookingReceipt(
   const when = appt.scheduledAt.toISOString().replace("T", " ").slice(0, 16);
   const where =
     appt.mode === "VIDEO"
-      ? "Video consult — link to follow"
+      ? "Video consult: link to follow"
       : appt.mode === "HOME"
-      ? "Home visit — the clinic will call to confirm the address"
+      ? "Home visit: the clinic will call to confirm the address"
       : `${appt.doctor.clinic}, ${appt.doctor.location}`;
 
   await sendEmail({
     to: appt.patientEmail,
     template: "booking-confirmation",
     relatedId: appt.id,
-    subject: `Payment received — your appointment with ${appt.doctor.name} is confirmed`,
-    text: `Hi ${appt.patientName},\n\nWe've received ₹${amountInr}. Your appointment with ${appt.doctor.name} on ${when} (UTC) is confirmed.\nWhere: ${where}\nPayment reference: ${paymentId}\n\n— BluDerma`,
-    html: `<p>Hi ${appt.patientName},</p><p>We've received <strong>₹${amountInr}</strong>. Your appointment with <strong>${appt.doctor.name}</strong> on <strong>${when}</strong> (UTC) is confirmed.</p><p>Where: ${where}<br/>Payment reference: ${paymentId}</p><p>— BluDerma</p>`,
+    subject: `Payment received: your appointment with ${appt.doctor.name} is confirmed`,
+    text: `Hi ${appt.patientName},\n\nWe've received ₹${amountInr}. Your appointment with ${appt.doctor.name} on ${when} (UTC) is confirmed.\nWhere: ${where}\nPayment reference: ${paymentId}\n\n, BluDerma`,
+    html: `<p>Hi ${appt.patientName},</p><p>We've received <strong>₹${amountInr}</strong>. Your appointment with <strong>${appt.doctor.name}</strong> on <strong>${when}</strong> (UTC) is confirmed.</p><p>Where: ${where}<br/>Payment reference: ${paymentId}</p><p>, BluDerma</p>`,
   }).catch((e) => console.error("payment receipt email failed", e));
 }
 
@@ -267,9 +267,9 @@ async function sendScanReceipt(
     to: user.email,
     template: "booking-confirmation",
     relatedId: paymentId,
-    subject: "Payment received — your skin analysis is ready to run",
-    text: `Hi ${user.name ?? "there"},\n\nWe've received ₹${amountInr}. Your skin analysis is unlocked and waiting in your account.\nPayment reference: ${paymentId}\n\n— BluDerma`,
-    html: `<p>Hi ${user.name ?? "there"},</p><p>We've received <strong>₹${amountInr}</strong>. Your skin analysis is unlocked and waiting in your account.</p><p>Payment reference: ${paymentId}</p><p>— BluDerma</p>`,
+    subject: "Payment received: your skin analysis is ready to run",
+    text: `Hi ${user.name ?? "there"},\n\nWe've received ₹${amountInr}. Your skin analysis is unlocked and waiting in your account.\nPayment reference: ${paymentId}\n\n, BluDerma`,
+    html: `<p>Hi ${user.name ?? "there"},</p><p>We've received <strong>₹${amountInr}</strong>. Your skin analysis is unlocked and waiting in your account.</p><p>Payment reference: ${paymentId}</p><p>, BluDerma</p>`,
   }).catch((e) => console.error("scan receipt email failed", e));
 }
 
@@ -316,7 +316,7 @@ async function sendMembershipReceipt(
     to: user.email,
     template: "booking-confirmation",
     subject: `Your ${sub.plan.name} membership is active`,
-    text: `Hi ${name},\n\nYour ${sub.plan.name} membership is active until ${until}.\n\nPaid: ₹${amountInr}\nPayment reference: ${providerPaymentId}\n\n— BluDerma`,
-    html: `<p>Hi ${name},</p><p>Your <strong>${sub.plan.name}</strong> membership is active until <strong>${until}</strong>.</p><p>Paid: ₹${amountInr}<br/>Payment reference: ${providerPaymentId}</p><p>— BluDerma</p>`,
+    text: `Hi ${name},\n\nYour ${sub.plan.name} membership is active until ${until}.\n\nPaid: ₹${amountInr}\nPayment reference: ${providerPaymentId}\n\n, BluDerma`,
+    html: `<p>Hi ${name},</p><p>Your <strong>${sub.plan.name}</strong> membership is active until <strong>${until}</strong>.</p><p>Paid: ₹${amountInr}<br/>Payment reference: ${providerPaymentId}</p><p>, BluDerma</p>`,
   }).catch((e) => console.error("membership receipt failed", e));
 }

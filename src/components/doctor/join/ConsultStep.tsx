@@ -69,7 +69,7 @@ export default function ConsultStep({
 
       <Card
         title="What you treat"
-        description="Used to match you to clients whose analysis flags these concerns. Pick the ones you genuinely focus on rather than everything you can do — over-claiming just puts you in front of the wrong people."
+        description="Used to match you to clients whose analysis flags these concerns. Pick the ones you genuinely focus on rather than everything you can do. Over-claiming just puts you in front of the wrong people."
       >
         <div className="flex flex-wrap gap-1.5">
           {concerns.map((c) => (

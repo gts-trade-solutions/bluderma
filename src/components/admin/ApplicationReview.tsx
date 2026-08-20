@@ -128,7 +128,7 @@ export default function ApplicationReview({
 
         {status === "DRAFT" && (
           <p className="self-center text-sm text-ink-muted">
-            Not submitted yet — they are still filling it in.
+            Not submitted yet: they are still filling it in.
           </p>
         )}
       </div>

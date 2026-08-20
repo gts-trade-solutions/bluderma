@@ -120,9 +120,9 @@ export async function draftAboutVariants(
 
 Use ONLY the facts listed below. Do not invent qualifications, awards, hospital names, patient numbers, success rates, years of experience, or any statistic that is not listed. Do not promise outcomes. Do not mention prices.
 
-Write in the third person, and NEVER use a gendered pronoun. The practitioner's gender is not given and must not be guessed from their name. Refer to them by name, by "the doctor", or rewrite the sentence — do not use "he", "she", "his" or "her".
+Write in the third person, and NEVER use a gendered pronoun. The practitioner's gender is not given and must not be guessed from their name. Refer to them by name, by "the doctor", or rewrite the sentence. Do not use "he", "she", "his" or "her".
 
-60 to 110 words. Plain prose — no markdown, no bullet points, no headings.
+60 to 110 words. Plain prose: no markdown, no bullet points, no headings.
 
 Tone: ${TONE_BRIEF[tone]}
 

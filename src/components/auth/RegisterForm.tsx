@@ -10,6 +10,7 @@ import Field from "./Field";
 import FormAlert from "./FormAlert";
 import GoogleButton from "./GoogleButton";
 import AuthDivider from "./AuthDivider";
+import AudienceToggle from "./AudienceToggle";
 
 interface FormState {
   name: string;
@@ -112,9 +113,15 @@ export default function RegisterForm({ googleEnabled = false }: { googleEnabled?
       </h1>
       <p className="mt-2 text-sm text-ink-muted">
         {isDoctor
-          ? "This is a doctor account — separate from a client account. You will list your practice next."
+          ? "This is a doctor account, separate from a client account. You will list your practice next."
           : "Save your skin analyses, book appointments and track your progress over time."}
       </p>
+
+      {/* The same control as the sign-in page, writing `as` instead of `role`.
+          Registering is where choosing wrong actually costs something: the two
+          account types are separate, and a doctor who lands on the client form
+          finds out at /doctor/join. */}
+      <AudienceToggle value={isDoctor ? "doctor" : "client"} paramKey="as" />
 
       <form onSubmit={onSubmit} className="mt-8 space-y-4">
         {error && <FormAlert>{error}</FormAlert>}
@@ -148,7 +155,7 @@ export default function RegisterForm({ googleEnabled = false }: { googleEnabled?
           name="phone"
           autoComplete="tel"
           placeholder="+91 98765 43210"
-          hint="Optional — used only for appointment reminders."
+          hint="Optional: used only for appointment reminders."
           value={form.phone}
           onChange={set("phone")}
           error={fields.phone}

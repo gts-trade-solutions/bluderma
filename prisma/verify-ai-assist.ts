@@ -161,7 +161,7 @@ check("prompts forbid guessed pronouns", /NEVER use a gendered pronoun/.test(src
 const templateSrc = read("src/lib/integrations/aiAssistCore.ts");
 check(
   "the template uses no gendered pronoun either",
-  !/(he|she|his|her|him)/i.test(
+  !/\b(he|she|his|her|him)\b/i.test(
     templateSrc.split("export function templateAbout")[1].split("export function templateClinicAbout")[0]
   )
 );

@@ -386,7 +386,7 @@ function Body({ detail, onDone }: { detail: Detail; onDone: () => void }) {
                   <span className="font-semibold text-teal-700">Given</span>
                 ) : (
                   <span className="font-semibold text-amber-700">
-                    Not given — ask before photographing
+                    Not given: ask before photographing
                   </span>
                 )}
               </Row>
@@ -500,7 +500,7 @@ function Body({ detail, onDone }: { detail: Detail; onDone: () => void }) {
           {isPast && !a.patientUserId && (
             <p className="text-xs text-slate-400">
               This client has no BluDerma account, so a prescription cannot be
-              filed to them here — issue it at the clinic.
+              filed to them here. Issue it at the clinic.
             </p>
           )}
 
@@ -647,7 +647,7 @@ function RescheduleForm({
         required={isPriority}
         placeholder={
           isPriority
-            ? "Required — this client holds a priority membership"
+            ? "Required: this client holds a priority membership"
             : "Reason (optional, shown to the client)"
         }
         className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"

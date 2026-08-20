@@ -17,7 +17,6 @@ import {
 import ConsultationStep from "@/components/skin/ConsultationStep";
 import PublishedReviewsSection from "@/components/PublishedReviewsSection";
 import { useSkinAccess } from "@/hooks/useSkinAccess";
-import { useRazorpayCheckout } from "@/hooks/useRazorpayCheckout";
 import { IMG } from "@/data/hubImages";
 import { metrics } from "@/data/skin";
 
@@ -56,34 +55,12 @@ export default function SkinAnalyzerLanding() {
     setError,
     start,
     requestAccess,
+    purchase,
     reload,
   } = useSkinAccess();
-  const { checkout } = useRazorpayCheckout();
 
-  /**
-   * Buy another scan.
-   *
-   * One POST. /api/skin/purchase creates the order and the Payment row, and
-   * useRazorpayCheckout handles all three of its answers: a real order, a free
-   * grant, or the gateway not being configured on this build.
-   *
-   * The credit itself is granted when the payment SETTLES, not when checkout
-   * opens — see releaseScanCredit in lib/payments/settle.ts — so an abandoned
-   * payment leaves nothing behind and this only has to reload the state.
-   */
-  const buyScan = async () => {
-    const outcome = await checkout({
-      createUrl: "/api/skin/purchase",
-      body: {},
-      description: "Skin analysis",
-      reference: "skin-scan",
-    });
-    if (outcome.status === "paid" || outcome.status === "no_payment_due") {
-      await reload();
-    } else if (outcome.status === "failed") {
-      setError(outcome.error);
-    }
-  };
+  // purchase moved into useSkinAccess so the hub card and this page cannot
+  // drift apart. `purchase` below is the same function.
 
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get("error");
@@ -182,7 +159,7 @@ export default function SkinAnalyzerLanding() {
                 busy={busy}
                 onStart={start}
                 onRequest={requestAccess}
-                onBuy={buyScan}
+                onBuy={purchase}
               />
               <a
                 href="#reads"
@@ -221,7 +198,7 @@ export default function SkinAnalyzerLanding() {
             </h2>
             <p className="mt-2 max-w-2xl text-base leading-relaxed text-ink-muted">
               Doctors in your city can see you in person. Anyone further away
-              consults by video — so the right specialist is not decided by how
+              consults by video, so the right specialist is not decided by how
               near they happen to be.
             </p>
           </div>
@@ -279,7 +256,7 @@ export default function SkinAnalyzerLanding() {
             {[
               {
                 q: "Is the analysis a diagnosis?",
-                a: "No. It measures what a camera can see and turns it into scores. Anything that needs an examination — a mole, a rash, a lesion — is a doctor's call, not a camera's.",
+                a: "No. It measures what a camera can see and turns it into scores. Anything that needs an examination, a mole, a rash, a lesion, is a doctor's call, not a camera's.",
               },
               {
                 q: "What happens to my photo?",
@@ -321,7 +298,7 @@ export default function SkinAnalyzerLanding() {
                 Everything else lives on the hub
               </h2>
               <p className="mt-2 max-w-lg text-sm text-white/80">
-                Treatments, deals, conditions and the doctors who treat them —
+                Treatments, deals, conditions and the doctors who treat them,
                 all in one place, with no prices on the treatment cards.
               </p>
             </div>
@@ -412,7 +389,7 @@ function Cta({
           )}
           {state.status === "reserved"
             ? "Continue your analysis"
-            : "Analyze my skin — free"}
+            : "Analyze my skin: free"}
         </button>
         {viewLast}
       </div>
@@ -441,7 +418,7 @@ function Cta({
           className="btn-primary inline-flex w-full justify-center disabled:opacity-70"
         >
           {busy ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Buy another scan — ₹{offer!.priceInr.toLocaleString("en-IN")}
+          Buy another scan for ₹{offer!.priceInr.toLocaleString("en-IN")}
         </button>
       )}
 

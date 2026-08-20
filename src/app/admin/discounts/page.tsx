@@ -35,7 +35,7 @@ export default async function DiscountsPage() {
       {rows.length === 0 ? (
         <EmptyState
           title="No discounts yet"
-          description="Grant a client a code — a first-scan offer, a loyalty credit, a promo."
+          description="Grant a client a code, a first-scan offer, a loyalty credit, a promo."
           action={
             <Link href="/admin/discounts/new" className="btn-primary">
               New discount

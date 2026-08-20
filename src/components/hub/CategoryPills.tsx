@@ -19,7 +19,7 @@ export default function CategoryPills({
   activeSlug?: string;
 }) {
   return (
-    <Rail ariaLabel="Treatment categories" className="gap-2.5 py-1">
+    <Rail ariaLabel="Treatment categories" className="gap-2.5 py-1" bleed="column">
       {categories.map((c) => {
         const Icon = categoryIcon(c.icon);
         const active = c.slug === activeSlug;

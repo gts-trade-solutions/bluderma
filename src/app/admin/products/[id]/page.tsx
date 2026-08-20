@@ -248,7 +248,7 @@ export default async function ProductEditPage({
 
         <Card
           title="Internal"
-          description="Reference price is stored for staff only and is NEVER shown on the public site — the site is enquiry-to-order."
+          description="Reference price is stored for staff only and is NEVER shown on the public site. The site is enquiry-to-order."
         >
           <div className="grid gap-5 sm:grid-cols-2">
             <TextField

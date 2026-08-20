@@ -109,7 +109,7 @@ export default function RoleChooser() {
             Welcome to BluDerma
           </h2>
           <p className="mx-auto mt-2 max-w-xs text-sm text-ink-soft">
-            So we show you the right thing — which are you here as?
+            So we show you the right thing, which are you here as?
           </p>
 
           <div className="mt-6 grid gap-3">
@@ -154,7 +154,7 @@ export default function RoleChooser() {
                   I&apos;m a doctor
                 </span>
                 <span className="block text-xs text-ink-muted">
-                  List your practice — free, no commission
+                  List your practice: free, no commission
                 </span>
               </span>
               <span

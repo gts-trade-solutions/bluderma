@@ -81,9 +81,9 @@ export async function GET(req: Request) {
     const when = a.scheduledAt.toISOString().replace("T", " ").slice(0, 16);
     const where =
       a.mode === "VIDEO"
-        ? "Video consult — your link follows separately"
+        ? "Video consult: your link follows separately"
         : a.mode === "HOME"
-        ? "Home visit — the clinic will call to confirm the address"
+        ? "Home visit: the clinic will call to confirm the address"
         : `${a.doctor.clinic}, ${a.doctor.location}`;
     const changeLine = policy.receptionPhone
       ? `Need to change it? Call reception on ${policy.receptionPhone}, or manage it in your account.`
@@ -94,8 +94,8 @@ export async function GET(req: Request) {
       template: "booking-confirmation",
       relatedId: a.id,
       subject: `Tomorrow: your appointment with ${a.doctor.name}`,
-      text: `Hi ${a.patientName},\n\nThis is a reminder of your appointment with ${a.doctor.name} on ${when} (UTC).\nWhere: ${where}\n${changeLine}\n\n— BluDerma`,
-      html: `<p>Hi ${a.patientName},</p><p>This is a reminder of your appointment with <strong>${a.doctor.name}</strong> on <strong>${when}</strong> (UTC).</p><p>Where: ${where}</p><p>${changeLine}</p><p>— BluDerma</p>`,
+      text: `Hi ${a.patientName},\n\nThis is a reminder of your appointment with ${a.doctor.name} on ${when} (UTC).\nWhere: ${where}\n${changeLine}\n\n, BluDerma`,
+      html: `<p>Hi ${a.patientName},</p><p>This is a reminder of your appointment with <strong>${a.doctor.name}</strong> on <strong>${when}</strong> (UTC).</p><p>Where: ${where}</p><p>${changeLine}</p><p>, BluDerma</p>`,
     }).catch((e) => console.error("reminder email failed", a.id, e));
 
     // Stamped whether or not the mail succeeded: the log records the failure,

@@ -7,7 +7,7 @@ import IntakeFlow from "@/components/hub/IntakeFlow";
 export const metadata: Metadata = {
   title: "Your skin consultation",
   description:
-    "Answer a few questions about your goals, your skin and your health, and see the doctors who match — what they charge and when they're free.",
+    "Answer a few questions about your goals, your skin and your health, and see the doctors who match. What they charge and when they're free.",
   robots: { index: false, follow: false },
 };
 

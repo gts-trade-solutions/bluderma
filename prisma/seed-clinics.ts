@@ -55,7 +55,7 @@ interface ClinicSeed {
 const CLINICS: ClinicSeed[] = [
   {
     slug: "bluderma-aesthetics-nungambakkam",
-    name: "BluDerma Aesthetics — Nungambakkam",
+    name: "BluDerma Aesthetics, Nungambakkam",
     addressLine1: "2nd Floor, 14 Sterling Road",
     area: "Nungambakkam",
     city: "Chennai",
@@ -71,7 +71,7 @@ const CLINICS: ClinicSeed[] = [
   },
   {
     slug: "bluderma-aesthetics-adyar",
-    name: "BluDerma Aesthetics — Adyar",
+    name: "BluDerma Aesthetics, Adyar",
     addressLine1: "31 Sardar Patel Road",
     area: "Adyar",
     city: "Chennai",
@@ -86,7 +86,7 @@ const CLINICS: ClinicSeed[] = [
   },
   {
     slug: "bluderma-skin-studio-anna-nagar",
-    name: "BluDerma Skin Studio — Anna Nagar",
+    name: "BluDerma Skin Studio, Anna Nagar",
     addressLine1: "W-52, 3rd Avenue",
     area: "Anna Nagar",
     city: "Chennai",
@@ -101,7 +101,7 @@ const CLINICS: ClinicSeed[] = [
   },
   {
     slug: "bluderma-skin-studio-indiranagar",
-    name: "BluDerma Skin Studio — Indiranagar",
+    name: "BluDerma Skin Studio, Indiranagar",
     addressLine1: "780 12th Main Road, HAL 2nd Stage",
     area: "Indiranagar",
     city: "Bengaluru",
@@ -116,7 +116,7 @@ const CLINICS: ClinicSeed[] = [
   },
   {
     slug: "bluderma-care-koramangala",
-    name: "BluDerma Care — Koramangala",
+    name: "BluDerma Care, Koramangala",
     addressLine1: "118 80 Feet Road, 4th Block",
     area: "Koramangala",
     city: "Bengaluru",
@@ -126,12 +126,12 @@ const CLINICS: ClinicSeed[] = [
     lng: 77.6245,
     phone: "+91 80 4000 1205",
     colorKey: "amber",
-    about: "Weekend-heavy clinic built around working hours — open till 8pm Saturday.",
+    about: "Weekend-heavy clinic built around working hours. Open till 8pm Saturday.",
     facilities: ["Parking", "Wheelchair access", "Card payment"],
   },
   {
     slug: "bluderma-aesthetics-bandra",
-    name: "BluDerma Aesthetics — Bandra West",
+    name: "BluDerma Aesthetics, Bandra West",
     addressLine1: "Ground Floor, 9 Turner Road",
     area: "Bandra West",
     city: "Mumbai",
@@ -146,7 +146,7 @@ const CLINICS: ClinicSeed[] = [
   },
   {
     slug: "bluderma-laser-centre-jubilee-hills",
-    name: "BluDerma Laser Centre — Jubilee Hills",
+    name: "BluDerma Laser Centre, Jubilee Hills",
     addressLine1: "Plot 402, Road No. 36",
     area: "Jubilee Hills",
     city: "Hyderabad",
@@ -161,7 +161,7 @@ const CLINICS: ClinicSeed[] = [
   },
   {
     slug: "bluderma-care-koregaon-park",
-    name: "BluDerma Care — Koregaon Park",
+    name: "BluDerma Care, Koregaon Park",
     addressLine1: "5 Lane 7, North Main Road",
     area: "Koregaon Park",
     city: "Pune",
@@ -176,7 +176,7 @@ const CLINICS: ClinicSeed[] = [
   },
   {
     slug: "bluderma-skin-studio-greater-kailash",
-    name: "BluDerma Skin Studio — Greater Kailash",
+    name: "BluDerma Skin Studio, Greater Kailash",
     addressLine1: "M-24, GK-1 Main Market",
     area: "Greater Kailash",
     city: "New Delhi",
@@ -345,7 +345,7 @@ async function seedPractices() {
       select: { id: true },
     });
     if (!doctor) {
-      console.log(`  skip ${p.doctorSlug} — no such doctor`);
+      console.log(`  skip ${p.doctorSlug}: no such doctor`);
       continue;
     }
 

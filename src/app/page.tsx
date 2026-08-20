@@ -21,9 +21,12 @@ import { getActiveBanners, getSettings } from "@/lib/queries/content";
 import TopTreatments from "@/components/home/TopTreatments";
 import OfferBanner, { OFFER_DEFAULTS } from "@/components/home/OfferBanner";
 import { HUB_CATEGORIES, TOTAL_TREATMENTS } from "@/data/hub";
+import JsonLd from "@/components/JsonLd";
+import { organisationLd, webSiteLd } from "@/lib/seo";
+import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
-  title: "BluDerma — skin care that starts with your skin",
+  title: "BluDerma: skin care that starts with your skin",
   description:
     "Scan your skin free, browse every skin, hair and aesthetic treatment with no prices on the cards, and book the doctor who matches what you actually need.",
 };
@@ -39,9 +42,22 @@ export const metadata: Metadata = {
 export default async function Home() {
   // Admin-managed hero slides. With none published the carousel falls back
   // to its built-in set, so an empty CMS never blanks the top of the site.
-  const [banners, settings] = await Promise.all([
+  const [banners, settings, clinics] = await Promise.all([
     getActiveBanners("HOME_HERO"),
     getSettings(),
+    prisma.clinic.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      select: {
+        name: true,
+        addressLine1: true,
+        area: true,
+        city: true,
+        state: true,
+        pincode: true,
+        phone: true,
+      },
+    }),
   ]);
   const offerEnabled = settings["offer.enabled"] !== "false";
   const offer = {
@@ -76,6 +92,13 @@ export default async function Home() {
 
   return (
     <>
+
+      {/* Two entities, both keyed by @id so any other page can reference them
+          rather than restate them. Read from the same tables the clinic pages
+          use: structured data that disagrees with the page it sits on is a
+          manual penalty, not a bug. */}
+      <JsonLd data={webSiteLd()} />
+      <JsonLd data={organisationLd({ clinics })} />
 
       {/* Asked once, after the page has painted. See the component for why
           this is safe to do without hurting search indexing. */}
@@ -215,7 +238,7 @@ export default async function Home() {
                 </h2>
                 <p className="mt-2 max-w-xl text-sm text-white/80">
                   Your skin, your routine, what you&apos;ve already tried, and
-                  a skin report if you have one — optional. At the end you see
+                  a skin report if you have one, optional. At the end you see
                   the doctors who match you.
                 </p>
               </div>
@@ -243,11 +266,11 @@ export default async function Home() {
             {[
               {
                 q: "Is BluDerma a clinic or a marketplace?",
-                a: "Both, in that order. The doctors are ours or partnered, the assessment is real, and the catalogue exists so you can see what is possible before you walk in — not so you can order a procedure like a takeaway.",
+                a: "Both, in that order. The doctors are ours or partnered, the assessment is real, and the catalogue exists so you can see what is possible before you walk in. Not so you can order a procedure like a takeaway.",
               },
               {
                 q: "What does the free scan actually give me?",
-                a: "An overall score, twelve-plus individual signals, and the three that need attention first. It is a measurement, not a diagnosis — what it means for you is settled with a doctor.",
+                a: "An overall score, twelve-plus individual signals, and the three that need attention first. It is a measurement, not a diagnosis. What it means for you is settled with a doctor.",
               },
               {
                 q: "Do I have to book anything to get advice?",
@@ -255,7 +278,7 @@ export default async function Home() {
               },
               {
                 q: "Can I be seen at home, or by video?",
-                a: "Yes to both, where the doctor offers it — every doctor lists which modes they take, and the home visit carries a stated visit charge.",
+                a: "Yes to both, where the doctor offers it. Every doctor lists which modes they take, and the home visit carries a stated visit charge.",
               },
             ].map((f) => (
               <details key={f.q} className="group">

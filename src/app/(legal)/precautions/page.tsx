@@ -29,7 +29,7 @@ export default function PrecautionsPage() {
         </li>
         <li>
           Ask about the specific product to be used, its expected results,
-          alternatives, downtime and risks — and make sure you understand them
+          alternatives, downtime and risks, and make sure you understand them
           before giving consent.
         </li>
         <li>
@@ -67,7 +67,7 @@ export default function PrecautionsPage() {
       <p>
         Injectables such as dermal fillers, botulinum toxin and skin boosters
         should only be administered by trained medical professionals using
-        sterile technique. Ask your practitioner how complications are managed —
+        sterile technique. Ask your practitioner how complications are managed,
         for example, that hyaluronidase is available where hyaluronic-acid
         fillers are used.
       </p>
@@ -92,11 +92,11 @@ export default function PrecautionsPage() {
           injectable.
         </li>
         <li>
-          Signs of an allergic reaction — difficulty breathing, or swelling of
+          Signs of an allergic reaction, difficulty breathing, or swelling of
           the lips, tongue or throat (call emergency services).
         </li>
         <li>
-          Signs of infection — spreading redness, warmth, pus or fever.
+          Signs of infection: spreading redness, warmth, pus or fever.
         </li>
       </ul>
 

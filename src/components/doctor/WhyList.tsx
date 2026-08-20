@@ -1,5 +1,8 @@
 import { VisitReason } from "@prisma/client";
 
+import SmartImage from "@/components/SmartImage";
+import { DOCTOR_IMG } from "@/data/doctorImages";
+
 /**
  * What listing actually gets a practitioner.
  *
@@ -81,7 +84,7 @@ export default function WhyList() {
               </h3>
               <p className="mt-3 max-w-md text-sm leading-relaxed text-white/75">
                 Every booking arrives with a structured history the client
-                filled in themselves — {REASON_COUNT} presenting concerns to
+                filled in themselves: {REASON_COUNT} presenting concerns to
                 choose from, plus their own description, and their skin
                 analysis attached where they have run one.
               </p>
@@ -110,7 +113,7 @@ export default function WhyList() {
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-ink-muted">
                   A booking anywhere blocks that time everywhere, because you
-                  can only be in one place — and we block the drive between
+                  can only be in one place, and we block the drive between
                   them too.
                 </p>
               </div>
@@ -134,11 +137,40 @@ export default function WhyList() {
             </div>
           </article>
 
+          {/* ── A photograph, because seven text tiles is a wall ────── */}
+          {/* The bento was entirely typographic and the client's note was
+              that the page has no imagery. This is also the only tile that
+              can show the thing being described: a consultation where the
+              reading has already been done. */}
+          <article className="group relative col-span-full overflow-hidden rounded-3xl ring-1 ring-white/10 lg:col-span-4 lg:row-span-1">
+            <div className="relative h-56 lg:h-full lg:min-h-[15rem]">
+              <SmartImage
+                src={DOCTOR_IMG.briefingTablet}
+                alt="A dermatologist examining a client's skin at the clinic"
+                mode="fill"
+                sizes="(min-width: 1024px) 33vw, 100vw"
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div
+                aria-hidden
+                className="absolute inset-0 bg-gradient-to-t from-[#04101f] via-[#04101f]/40 to-transparent"
+              />
+              <div className="absolute inset-x-0 bottom-0 p-5">
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-teal-300">
+                  In the room
+                </p>
+                <p className="mt-1.5 text-[15px] font-bold leading-snug text-white">
+                  You spend the consultation treating, not interviewing.
+                </p>
+              </div>
+            </div>
+          </article>
+
           {/* ── The three quiet ones ───────────────────────────────── */}
           <Small
             glyph="shield"
             title="Verified means something"
-            body="We check your registration against your council's own register before you go live. Two days, not two minutes — which is the point."
+            body="We check your registration against your council's own register before you go live. Two days, not two minutes, which is the point."
           />
           <Small
             glyph="target"
@@ -203,7 +235,7 @@ function ExampleBrief() {
 
       <p className="mt-3 border-l-2 border-teal-400/50 pl-3 text-[13px] leading-relaxed text-white/70">
         “Breakouts along the jaw that flare the week before my period. Tried a
-        benzoyl peroxide wash for three months — no change.”
+        benzoyl peroxide wash for three months, no change.”
       </p>
 
       <figcaption className="mt-3 text-[10px] text-white/40">

@@ -178,9 +178,9 @@ export const PRESCRIPTIONS: Prescription[] = [
     issued: "27 Jul 2026",
     doctor: "Dr. Aarti Menon",
     items: [
-      "Adapalene 0.1% gel — nightly, alternate days for 2 weeks",
-      "Niacinamide 10% serum — morning",
-      "Broad-spectrum SPF 50 — every morning, reapplied",
+      "Adapalene 0.1% gel: nightly, alternate days for 2 weeks",
+      "Niacinamide 10% serum: morning",
+      "Broad-spectrum SPF 50: every morning, reapplied",
     ],
     validTill: "27 Oct 2026",
   },
@@ -189,8 +189,8 @@ export const PRESCRIPTIONS: Prescription[] = [
     issued: "12 Jun 2026",
     doctor: "Dr. Aarti Menon",
     items: [
-      "Benzoyl peroxide 2.5% — short contact, alternate evenings",
-      "Ceramide barrier cream — twice daily",
+      "Benzoyl peroxide 2.5%: short contact, alternate evenings",
+      "Ceramide barrier cream: twice daily",
     ],
     validTill: "12 Sep 2026",
   },
@@ -242,7 +242,7 @@ export const PROCEDURES: ProcedureRecord[] = [
   },
   {
     id: "pr-2",
-    name: "Chemical Peel — superficial",
+    name: "Chemical Peel: superficial",
     category: "Acne & Scars",
     date: "12 Jun 2026",
     sessions: "2 of 4 complete",
@@ -269,7 +269,7 @@ export const DISCOUNTS: DiscountRecord[] = [
   {
     id: "dc-2",
     label: "Medi-facial course",
-    detail: "Fortnight offer — 3-session bundle",
+    detail: "Fortnight offer: 3-session bundle",
     usedOn: "14 Jun 2026",
     saved: "25%",
   },

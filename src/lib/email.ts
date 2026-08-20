@@ -81,7 +81,7 @@ async function deliver(input: SendEmailInput): Promise<string | null> {
     // SES configured we must not leak valid tokens into server logs.
     if (process.env.NODE_ENV === "production") {
       console.warn(
-        `[email] SES not configured — dropping ${input.template} to ${input.to} (body withheld). Configure EMAIL_FROM + AWS creds.`
+        `[email] SES not configured, dropping ${input.template} to ${input.to} (body withheld). Configure EMAIL_FROM + AWS creds.`
       );
     } else {
       console.info(
@@ -200,7 +200,7 @@ export function enquiryNotificationEmail(e: {
     .join("");
 
   return {
-    subject: `New ${isDoctor ? "doctor" : "consultation"} enquiry — ${e.name}`,
+    subject: `New ${isDoctor ? "doctor" : "consultation"} enquiry from ${e.name}`,
     text,
     html: `
       <p style="font-size:15px;color:#0f172a">New enquiry received via BluDerma.</p>
@@ -216,13 +216,13 @@ export function passwordResetEmail(name: string | null, url: string) {
   const greeting = name ? `Hi ${name},` : "Hi,";
   return {
     subject: "Reset your BluDerma password",
-    text: `${greeting}\n\nUse the link below to choose a new password. It expires in 60 minutes.\n\n${url}\n\nIf you didn't ask for this, you can ignore this email — your password won't change.\n\n— BluDerma`,
+    text: `${greeting}\n\nUse the link below to choose a new password. It expires in 60 minutes.\n\n${url}\n\nIf you didn't ask for this, you can ignore this email, your password won't change.\n\nBluDerma`,
     html: `
       <p>${greeting}</p>
       <p>Use the link below to choose a new password. It expires in 60 minutes.</p>
       <p><a href="${url}">Reset my password</a></p>
-      <p style="color:#64748b;font-size:13px">If you didn't ask for this, you can ignore this email — your password won't change.</p>
-      <p style="color:#64748b;font-size:13px">— BluDerma</p>
+      <p style="color:#64748b;font-size:13px">If you didn't ask for this, you can ignore this email. Your password won't change.</p>
+      <p style="color:#64748b;font-size:13px">BluDerma</p>
     `,
   };
 }

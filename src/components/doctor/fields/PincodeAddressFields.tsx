@@ -103,7 +103,7 @@ export default function PincodeAddressFields({
       case "looking":
         return "Looking it up…";
       case "found":
-        return "Filled in from India Post — correct anything that is not right.";
+        return "Filled in from India Post. Correct anything that is not right.";
       case "unknown":
         return "We do not recognise that PIN code. Fill the rest in yourself.";
       case "failed":
@@ -162,7 +162,7 @@ export default function PincodeAddressFields({
         onPick={setArea}
         error={errors?.area}
         hint="The neighbourhood clients navigate by."
-        emptyText="Type the neighbourhood — your own wording is fine"
+        emptyText="Type the neighbourhood: your own wording is fine"
       />
 
       <div>

@@ -49,7 +49,7 @@ export default function CredentialsStep({
             options={[
               { value: "", label: "Select a council" },
               ...MEDICAL_COUNCILS.map((c) => ({ value: c, label: c })),
-              { value: "Other", label: "Other — tell us below" },
+              { value: "Other", label: "Other: tell us below" },
             ]}
             required
           />

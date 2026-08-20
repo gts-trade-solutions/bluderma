@@ -34,10 +34,10 @@ async function notify(
     to,
     template: "enquiry-notification",
     subject,
-    text: `Hi ${name},\n\n${lines.join("\n\n")}\n\n— BluDerma`,
+    text: `Hi ${name},\n\n${lines.join("\n\n")}\n\n: BluDerma`,
     html: `<p>Hi ${name},</p>${lines
       .map((l) => `<p>${l}</p>`)
-      .join("")}<p>— BluDerma</p>`,
+.join("")}<p>: BluDerma</p>`,
   }).catch((e) => console.error("application decision email failed", e));
 }
 
@@ -121,7 +121,7 @@ const rejectSchema = z.object({
   reason: z
     .string()
     .trim()
-    .min(10, "Say what needs changing — they see this and act on it.")
+    .min(10, "Say what needs changing. They see this and act on it.")
     .max(1000),
 });
 
@@ -185,7 +185,7 @@ export async function rejectDoctor(formData: FormData): Promise<AdminResult> {
       [
         "We have looked at your application and need something adjusted before we can list you:",
         `<strong>${parsed.data.reason}</strong>`,
-        "Sign in and open your profile to make the change — everything you entered is still there — then submit it again.",
+        "Sign in and open your profile to make the change, everything you entered is still there, then submit it again.",
       ]
     );
 

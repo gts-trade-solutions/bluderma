@@ -127,7 +127,7 @@ export const doctors: Doctor[] = [
     services: ["Skin boosters", "Barrier repair", "Rosacea care"],
     modes: ["clinic", "video"],
     about:
-      "Focuses on dry, sensitive and reactive skin — rebuilding a resilient barrier before targeted treatment.",
+      "Focuses on dry, sensitive and reactive skin, rebuilding a resilient barrier before targeted treatment.",
     verified: true,
   },
   {
@@ -147,7 +147,7 @@ export const doctors: Doctor[] = [
     services: ["Under-eye fillers", "PRP", "Skin boosters"],
     modes: ["clinic"],
     about:
-      "Rejuvenation specialist for tired eyes — dark circles, hollows and puffiness with subtle, refreshed results.",
+      "Rejuvenation specialist for tired eyes, dark circles, hollows and puffiness with subtle, refreshed results.",
     verified: true,
   },
   {

@@ -24,6 +24,7 @@ import {
   evaluateReschedule,
 } from "@/lib/booking/policy";
 import { getBookingPolicy } from "@/lib/booking/policySettings";
+import { clashMessage, findClientClash } from "@/lib/booking/clientClashes";
 import { PUBLIC_DOCTOR_WHERE } from "@/lib/queries/doctorAccess";
 import { getMembership, benefitsOf } from "@/lib/subscription/membership";
 import { applyMemberDiscount } from "@/lib/subscription/plan";
@@ -46,6 +47,19 @@ export interface BookingResult extends ActionResult {
    */
   awaiting?: boolean;
 }
+
+/**
+ * How many future appointments one client may hold at once.
+ *
+ * Generous on purpose: a course of treatment across several clinics can
+ * legitimately be six or seven bookings deep. This is a backstop against slot
+ * hoarding, not a scheduling policy, and it counts only what is still ahead —
+ * attending or cancelling always makes room.
+ */
+const MAX_OPEN_BOOKINGS = 8;
+
+/** Appointment.durationMin's schema default, which client bookings take. */
+const DEFAULT_DURATION_MIN = 30;
 
 /** The lock value whose unique index prevents two people holding one slot. */
 function slotLockFor(doctorId: string, at: Date): string {
@@ -80,10 +94,32 @@ export async function bookAppointment(input: unknown): Promise<BookingResult> {
   }
   const d = parsed.data;
 
+  // The hourly rate limit caps how FAST someone books; nothing capped how many
+  // slots they could sit on. Fifteen bookings an hour, repeated daily, quietly
+  // takes a practice's diary out of circulation, and every held slot is one a
+  // real patient was shown as unavailable.
+  const openBookings = await prisma.appointment.count({
+    where: {
+      patientUserId: user.id,
+      status: { in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED] },
+      scheduledAt: { gte: new Date() },
+    },
+  });
+  if (openBookings >= MAX_OPEN_BOOKINGS) {
+    return {
+      ok: false,
+      error: `You already have ${openBookings} upcoming appointments. Please attend or cancel one before booking another.`,
+    };
+  }
+
   const doctor = await prisma.doctor.findFirst({
     where: { slug: d.doctorSlug, ...PUBLIC_DOCTOR_WHERE },
     select: {
       id: true,
+      // Selected only so the self-booking check below is possible at all.
+      // Its absence was not an oversight to be spotted by reading the guard;
+      // there was no guard, and the data to write one was never loaded.
+      userId: true,
       name: true,
       fee: true,
       clinic: true,
@@ -107,6 +143,19 @@ export async function bookAppointment(input: unknown): Promise<BookingResult> {
   });
   if (!doctor) {
     return { ok: false, error: "That doctor is no longer available." };
+  }
+
+  // A practitioner may absolutely be a patient — middleware deliberately lets
+  // a DOCTOR account use /patient/appointments and /patient/profile, and a
+  // dermatologist is entitled to see a dermatologist. What they cannot do is
+  // book themselves: it consumes their own slot, puts them in their own
+  // calendar as their own patient, feeds the travel-buffer maths a nonsense
+  // journey, and opens the door to reviewing themselves afterwards.
+  if (doctor.userId && doctor.userId === user.id) {
+    return {
+      ok: false,
+      error: "This is your own practice. Pick another doctor to book with.",
+    };
   }
 
   const wantedMode =
@@ -218,6 +267,16 @@ export async function bookAppointment(input: unknown): Promise<BookingResult> {
     return { ok: false, error: "That slot has just been taken. Pick another." };
   }
 
+  // The same rule the platform already enforces for doctors, applied to the
+  // person being seen. slotLock is keyed on the doctor, so it never stopped
+  // one client holding 10:30 with three different practitioners.
+  // The create below does not set durationMin, so every client booking takes
+  // the schema default. Named rather than inlined so the two cannot drift.
+  const clash = await findClientClash(user.id, scheduledAt, DEFAULT_DURATION_MIN);
+  if (clash) {
+    return { ok: false, error: clashMessage(clash) };
+  }
+
   // Online settlement only happens when the gateway is configured and there
   // is something to charge; otherwise the visit is paid at the clinic and
   // the appointment confirms on the spot.
@@ -301,7 +360,7 @@ export async function bookAppointment(input: unknown): Promise<BookingResult> {
       const when = `${d.daySeed} at ${d.time}`;
       const where =
         d.mode === "video"
-          ? "Video consult — link to follow"
+          ? "Video consult: link to follow"
           : practice
           ? `${practice.clinic.name}, ${practice.clinic.area}, ${practice.clinic.city}`
           : `${doctor.clinic}, ${doctor.location}`;
@@ -314,11 +373,11 @@ export async function bookAppointment(input: unknown): Promise<BookingResult> {
           ? `Your appointment request with ${doctor.name}`
           : `Your appointment with ${doctor.name} is confirmed`,
         text: awaiting
-          ? `Hi ${d.patientName},\n\nWe have asked ${doctor.name} to confirm ${when}.\nWhere: ${where}\nConsultation fee: ₹${payableInr}${savedLine}\n\nYour slot is held while they review it, and we will email you as soon as they respond.\n\n— BluDerma`
-          : `Hi ${d.patientName},\n\nYour appointment with ${doctor.name} is confirmed for ${when}.\nWhere: ${where}\nConsultation fee: ₹${payableInr}${savedLine}\n\nManage or cancel it any time from your BluDerma account.\n\n— BluDerma`,
+          ? `Hi ${d.patientName},\n\nWe have asked ${doctor.name} to confirm ${when}.\nWhere: ${where}\nConsultation fee: ₹${payableInr}${savedLine}\n\nYour slot is held while they review it, and we will email you as soon as they respond.\n\n, BluDerma`
+          : `Hi ${d.patientName},\n\nYour appointment with ${doctor.name} is confirmed for ${when}.\nWhere: ${where}\nConsultation fee: ₹${payableInr}${savedLine}\n\nManage or cancel it any time from your BluDerma account.\n\n, BluDerma`,
         html: awaiting
-          ? `<p>Hi ${d.patientName},</p><p>We have asked <strong>${doctor.name}</strong> to confirm <strong>${when}</strong>.</p><p>Where: ${where}<br/>Consultation fee: ₹${payableInr}${savedLine.replace("\n", "<br/>")}</p><p>Your slot is held while they review it, and we will email you as soon as they respond.</p><p>— BluDerma</p>`
-          : `<p>Hi ${d.patientName},</p><p>Your appointment with <strong>${doctor.name}</strong> is confirmed for <strong>${when}</strong>.</p><p>Where: ${where}<br/>Consultation fee: ₹${payableInr}${savedLine.replace("\n", "<br/>")}</p><p>Manage or cancel it any time from your BluDerma account.</p><p>— BluDerma</p>`,
+          ? `<p>Hi ${d.patientName},</p><p>We have asked <strong>${doctor.name}</strong> to confirm <strong>${when}</strong>.</p><p>Where: ${where}<br/>Consultation fee: ₹${payableInr}${savedLine.replace("\n", "<br/>")}</p><p>Your slot is held while they review it, and we will email you as soon as they respond.</p><p>, BluDerma</p>`
+          : `<p>Hi ${d.patientName},</p><p>Your appointment with <strong>${doctor.name}</strong> is confirmed for <strong>${when}</strong>.</p><p>Where: ${where}<br/>Consultation fee: ₹${payableInr}${savedLine.replace("\n", "<br/>")}</p><p>Manage or cancel it any time from your BluDerma account.</p><p>, BluDerma</p>`,
         // A failed confirmation email must not undo a valid booking.
       }).catch((e) => console.error("confirmation email failed", e));
     }
@@ -558,6 +617,19 @@ export async function rescheduleAppointment(input: {
   }
   if (!slot.available) {
     return { ok: false, error: "That slot has just been taken. Pick another." };
+  }
+
+  // Moving a booking must not land it on top of another of the client's own.
+  // Their existing row is excluded, or every reschedule would clash with the
+  // appointment being rescheduled.
+  const clash = await findClientClash(
+    user.id,
+    scheduledAt,
+    DEFAULT_DURATION_MIN,
+    appointment.id
+  );
+  if (clash) {
+    return { ok: false, error: clashMessage(clash) };
   }
 
   try {

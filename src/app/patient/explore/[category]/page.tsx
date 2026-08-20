@@ -137,7 +137,7 @@ export default async function CategoryPage({ params }: Params) {
 
           <p className="card-soft mt-5 px-4 py-3 text-xs leading-relaxed text-ink-muted">
             Not every treatment here suits every skin. Which of these is right
-            for you — and how many sessions it takes — is decided after an
+            for you, and how many sessions it takes, is decided after an
             assessment, not from this list.
           </p>
         </section>

@@ -67,7 +67,7 @@ export function buildPatientMenu(): NavNode[] {
     {
       label: "For doctors",
       href: "/doctor",
-      tagline: "List your practice — free, no commission",
+      tagline: "List your practice: free, no commission",
     },
   ];
 }

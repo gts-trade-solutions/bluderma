@@ -298,7 +298,7 @@ export const INTAKE_TERMS = [
   "Advice given online is limited by what a doctor can see on a screen. Anything that needs an examination will be moved to a clinic visit.",
   "Consultation fees are payable to the doctor and are shown before you confirm. Treatment costs are quoted only after an assessment.",
   "Appointments can be rescheduled or cancelled up to 4 hours before the slot.",
-  "In an emergency, do not wait for an online consultation — go to the nearest hospital.",
+  "In an emergency, do not wait for an online consultation, go to the nearest hospital.",
 ];
 
 /*

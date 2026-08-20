@@ -16,7 +16,7 @@ import Rail from "./Rail";
 export default function BeforeAfter({ cases }: { cases: BeforeAfterCase[] }) {
   return (
     <>
-      <Rail ariaLabel="Before and after results">
+      <Rail ariaLabel="Before and after results" bleed="column">
         {cases.map((c) => (
           <CaseCard key={c.slug} data={c} />
         ))}
@@ -27,7 +27,7 @@ export default function BeforeAfter({ cases }: { cases: BeforeAfterCase[] }) {
         </span>{" "}
         These show the kind of change each course is aimed at; they are not
         photographs of BluDerma clients and will be replaced by consented
-        client images. Results vary — the session counts and timeframes shown
+        client images. Results vary: the session counts and timeframes shown
         are typical, not a promise.
       </p>
     </>
@@ -69,7 +69,7 @@ function CaseCard({ data }: { data: BeforeAfterCase }) {
         onDragStart={(e) => e.preventDefault()}
       >
         {/* After sits underneath; the before layer is clipped over it. */}
-        <SmartImage src={data.after} alt={`${data.concern} — after`} sizes="340px" />
+        <SmartImage src={data.after} alt={`${data.concern}: after`} sizes="340px" />
 
         <div
           className="absolute inset-0 overflow-hidden"
@@ -77,7 +77,7 @@ function CaseCard({ data }: { data: BeforeAfterCase }) {
         >
           <SmartImage
             src={data.before}
-            alt={`${data.concern} — before`}
+            alt={`${data.concern}: before`}
             sizes="340px"
           />
         </div>

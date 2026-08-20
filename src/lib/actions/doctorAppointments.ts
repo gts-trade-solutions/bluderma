@@ -65,7 +65,7 @@ function placeOf(a: {
   if (a.mode === "HOME") return "Home visit";
   return a.clinic
     ? `${a.clinic.name}, ${a.clinic.area}, ${a.clinic.city}`
-    : "Clinic — details to follow";
+    : "Clinic: details to follow";
 }
 
 /* ------------------------- Accept / decline ---------------------------- */
@@ -129,7 +129,7 @@ const declineSchema = z.object({
   reason: z
     .string()
     .trim()
-    .min(3, "Tell the client why — they see this.")
+    .min(3, "Tell the client why. They see this.")
     .max(400),
 });
 
@@ -328,7 +328,7 @@ const cancelSchema = z.object({
   reason: z
     .string()
     .trim()
-    .min(3, "Tell the client why — they see this.")
+    .min(3, "Tell the client why. They see this.")
     .max(400),
 });
 

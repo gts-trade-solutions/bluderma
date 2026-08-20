@@ -10,6 +10,7 @@ import Field from "./Field";
 import FormAlert from "./FormAlert";
 import GoogleButton from "./GoogleButton";
 import AuthDivider from "./AuthDivider";
+import AudienceToggle, { type Audience } from "./AudienceToggle";
 
 /** NextAuth surfaces failures as opaque codes; translate the ones users hit. */
 const ERROR_COPY: Record<string, string> = {
@@ -25,7 +26,17 @@ const ERROR_COPY: Record<string, string> = {
 export default function LoginForm({ googleEnabled = false }: { googleEnabled?: boolean }) {
   const router = useRouter();
   const params = useSearchParams();
-  const callbackUrl = params.get("callbackUrl") || "/";
+
+  // Which side of the toggle we are on. Held in the URL so a refresh or a
+  // Back press keeps it.
+  const audience: Audience = params.get("role") === "doctor" ? "doctor" : "client";
+
+  // An explicit request always wins: somebody who clicked "sign in to book
+  // this appointment" goes back to that appointment whatever the toggle says.
+  // With none, the toggle picks the destination.
+  const explicitCallback = params.get("callbackUrl");
+  const callbackUrl =
+    explicitCallback || (audience === "doctor" ? "/doctor/portal" : "/");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -80,14 +91,26 @@ export default function LoginForm({ googleEnabled = false }: { googleEnabled?: b
     <>
       <h1 className="text-2xl font-bold text-ink sm:text-3xl">Welcome back</h1>
       <p className="mt-2 text-sm text-ink-muted">
-        Sign in to book appointments and track your skin analysis over
-        time.
+        {audience === "doctor"
+          ? "Sign in to your practice: your calendar, your requests and your dashboard."
+          : "Sign in to book appointments and track your skin analysis over time."}
+      </p>
+
+      <AudienceToggle value={audience} />
+
+      {/* One line, not the paragraph this used to be. The toggle above says
+          which side you are on; the only thing left worth stating is that
+          getting it wrong costs nothing, because the role lives on the
+          account and postLoginPath() routes on that, not on the switch. */}
+      <p className="mt-3 text-center text-xs text-ink-muted">
+        One sign-in for clients and doctors. Either choice reaches the same
+        box, and we take you where your account belongs.
       </p>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-4">
         {justRegistered && (
           <FormAlert tone="success">
-            Your account is ready — sign in to continue.
+            Your account is ready, sign in to continue.
           </FormAlert>
         )}
         {justReset && (
@@ -145,7 +168,26 @@ export default function LoginForm({ googleEnabled = false }: { googleEnabled?: b
         </>
       )}
 
+      {/* The half that was genuinely breaking: a doctor who followed a plain
+          "create an account" link got a CLIENT account and only discovered it
+          at /doctor/join. The link now carries the toggle's answer. */}
       <p className="mt-8 text-center text-sm text-ink-muted">
+        {audience === "doctor" ? "Not listed yet?" : "New to BluDerma?"}{" "}
+        <Link
+          href={
+            audience === "doctor"
+              ? "/register?as=doctor&callbackUrl=%2Fdoctor%2Fportal"
+              : `/register?callbackUrl=${encodeURIComponent(callbackUrl)}`
+          }
+          className="font-semibold text-brand-600 hover:text-brand-700"
+        >
+          {audience === "doctor"
+            ? "Create a doctor account"
+            : "Create an account"}
+        </Link>
+      </p>
+
+      <p className="hidden">
         New to BluDerma?{" "}
         <Link
           href={`/register?callbackUrl=${encodeURIComponent(callbackUrl)}${

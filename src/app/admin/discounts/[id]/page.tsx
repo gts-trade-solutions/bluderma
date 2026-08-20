@@ -64,14 +64,14 @@ export default async function DiscountEditPage({
             defaultValue={row?.userId ?? ""}
             options={clients.map((c) => ({
               value: c.id,
-              label: c.name ? `${c.name} — ${c.email}` : c.email,
+              label: c.name ? `${c.name}: ${c.email}` : c.email,
             }))}
           />
         </Card>
 
         <Card
           title="The offer"
-          description="Set a percentage or a rupee amount — one of the two is required."
+          description="Set a percentage or a rupee amount. One of the two is required."
         >
           <div className="space-y-5">
             <div className="grid gap-5 sm:grid-cols-2">

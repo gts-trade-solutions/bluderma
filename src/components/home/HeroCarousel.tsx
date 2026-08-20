@@ -66,7 +66,7 @@ const SLIDES: HeroSlideData[] = [
     key: "teleconsult",
     eyebrow: "WORLD-CLASS EXPERTISE. FROM THE COMFORT OF HOME.",
     title: "Consult a World-Class Aesthetician",
-    titleAccent: "— 2,000 Miles Away.",
+    titleAccent: "2,000 Miles Away.",
     body: "Get personalized aesthetic and skincare guidance through convenient online consultations.",
     image: {
       desktop: IMG.homeHeroTeleconsult,
@@ -90,7 +90,7 @@ const SLIDES: HeroSlideData[] = [
   },
   {
     key: "financing",
-    eyebrow: "AESTHETIC FINANCING — GET STARTED TODAY.",
+    eyebrow: "AESTHETIC FINANCING: GET STARTED TODAY.",
     title: "Avail Now.",
     titleAccent: "Pay Later.",
     body: "Make your aesthetic journey more accessible with flexible financing options.",

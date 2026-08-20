@@ -58,6 +58,8 @@ export async function submitReview(input: unknown): Promise<ActionResult> {
       doctorId: true,
       status: true,
       scheduledAt: true,
+      // To refuse a practitioner rating their own practice.
+      doctor: { select: { userId: true } },
     },
   });
 
@@ -66,6 +68,22 @@ export async function submitReview(input: unknown): Promise<ActionResult> {
   }
   if (appointment.status === AppointmentStatus.CANCELLED) {
     return { ok: false, error: "You can't review a cancelled appointment." };
+  }
+  // A consultation nobody attended is not one anybody can rate. This blocked
+  // CANCELLED and not NO_SHOW, so the one person who definitely did not see
+  // the doctor was the one person still able to score them.
+  if (appointment.status === AppointmentStatus.NO_SHOW) {
+    return {
+      ok: false,
+      error: "This appointment was marked as a no-show, so it can't be reviewed.",
+    };
+  }
+  // Booking your own practice is refused at the booking action, but rows
+  // predating that guard exist and an admin can enter a booking by hand. A
+  // rating is public and drives the directory's ordering, so the last line of
+  // defence belongs here rather than only at the point of sale.
+  if (appointment.doctor?.userId && appointment.doctor.userId === user.id) {
+    return { ok: false, error: "You can't review your own practice." };
   }
   // A consultation that has not happened yet cannot be reviewed, whatever its
   // status says.

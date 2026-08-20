@@ -59,11 +59,11 @@ export async function generateInsights(
             content: `You advise a dermatology practitioner on running their clinic. Below are their actual figures as JSON.
 
 Write 3 or 4 suggestions. These are read at a glance on a dashboard, so they
-must be very short — the number does the work, not the sentence.
+must be very short. The number does the work, not the sentence.
 
 Rules:
 - "metric": ONE figure copied exactly from the JSON (e.g. "12%", "2", "Rs 2,500"). Omit if no figure fits.
-- "title": at most 4 words, written as a human phrase — never the JSON field name. "Thursday is quietest", not "Emptiest Free".
+- "title": at most 4 words, written as a human phrase, never the JSON field name. "Thursday is quietest", not "Emptiest Free".
 - "body": at most 12 words. One clause naming the action. No preamble like "Consider" or "You should".
 - Vary "kind" to match the subject: calendar for scheduling, money for revenue, people for patients, star for reviews, clock for things waiting on you.
 - Each suggestion must be about a different thing. Do not restate one figure three ways.

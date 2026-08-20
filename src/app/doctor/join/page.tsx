@@ -46,8 +46,8 @@ export default async function JoinPage({
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
             Practitioner accounts are separate from client accounts, so this
-            one cannot list a practice. Sign out and register as a doctor —
-            you can use the same email address.
+            one cannot list a practice. Sign out and register as a doctor.
+            You can use the same email address.
           </p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
             <SwitchToDoctor />
@@ -151,7 +151,7 @@ function Shell({
             </p>
             <p className="mt-1 text-sm text-rose-800">{rejection}</p>
             <p className="mt-2 text-xs text-rose-700">
-              Make them below and submit again — nothing you entered has been lost.
+              Make them below and submit again. Nothing you entered has been lost.
             </p>
           </div>
         )}

@@ -19,7 +19,7 @@ import {
 export const metadata: Metadata = {
   title: "Know Yourself",
   description:
-    "The BluDerma magazine — direct answers to the questions clients actually ask about acne, melasma, ageing, hair fall and treatment choices, each tied to a service.",
+    "The BluDerma magazine: direct answers to the questions clients actually ask about acne, melasma, ageing, hair fall and treatment choices, each tied to a service.",
 };
 
 /**

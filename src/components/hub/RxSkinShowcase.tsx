@@ -76,7 +76,7 @@ export default function RxSkinShowcase() {
           href="/patient/explore/hair-restoration"
           image={IMG.hair1}
           conditions={pick(HAIR_TRACK)}
-          fallback="Shedding, thinning and scalp conditions — and what separates them."
+          fallback="Shedding, thinning and scalp conditions, and what separates them."
         />
       </div>
     </div>
@@ -149,7 +149,7 @@ function TrackCard({
           <p className="text-[13px] leading-snug text-ink-soft">
             {active ? (
               <>
-                <span className="font-bold text-ink">{active.name} — </span>
+                <span className="font-bold text-ink">{active.name}: </span>
                 {active.line}
               </>
             ) : (

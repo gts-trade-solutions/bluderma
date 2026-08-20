@@ -112,7 +112,7 @@ export const treatments: Treatment[] = [
     summary:
       "Precisely dosed botulinum toxin softens the muscle activity that drives expression lines on the forehead, between the brows and around the eyes.",
     concern:
-      "Dynamic wrinkles — the lines that appear or deepen when a patient frowns, raises the brows or smiles — respond poorly to creams because their cause is repetitive muscle movement. Left untreated, these etch into static lines over time.",
+      "Dynamic wrinkles: the lines that appear or deepen when a patient frowns, raises the brows or smiles, respond poorly to creams because their cause is repetitive muscle movement. Left untreated, these etch into static lines over time.",
     concernPoints: [
       "Horizontal forehead lines",
       "Frown lines between the eyebrows (glabella)",
@@ -158,7 +158,7 @@ export const treatments: Treatment[] = [
     tagline: "Restore volume, contour and structural support",
     image: IMG.procFiller,
     summary:
-      "Hyaluronic-acid fillers replace lost volume and redefine facial contours — cheeks, lips, chin, jawline and tear troughs — with immediate, reversible results.",
+      "Hyaluronic-acid fillers replace lost volume and redefine facial contours, cheeks, lips, chin, jawline and tear troughs, with immediate, reversible results.",
     concern:
       "Age-related fat-pad descent and bone remodelling flatten the midface, deepen folds and blunt the jawline. Some patients also seek enhancement of naturally under-projected features such as lips or chin.",
     concernPoints: [
@@ -216,7 +216,7 @@ export const treatments: Treatment[] = [
       "Early photoageing",
     ],
     howItWorks:
-      "Rapid, low-energy laser pulses are passed across the skin over multiple sessions. The light is absorbed by melanin, fragmenting pigment into particles the body clears naturally, while sub-cellular heating encourages a subtle collagen response — all at energy levels tuned to be safe for darker skin types.",
+      "Rapid, low-energy laser pulses are passed across the skin over multiple sessions. The light is absorbed by melanin, fragmenting pigment into particles the body clears naturally, while sub-cellular heating encourages a subtle collagen response, all at energy levels tuned to be safe for darker skin types.",
     procedureSteps: [
       "Skin-type and pigment assessment",
       "Eye shielding and cooling preparation",
@@ -398,7 +398,7 @@ export const treatments: Treatment[] = [
     tagline: "Targeted clearance of spots, patches and dark marks",
     image: IMG.pairPigmentA,
     summary:
-      "A combination approach — topicals, peels and laser — that lightens sunspots, freckles and post-inflammatory marks while protecting against recurrence.",
+      "A combination approach, topicals, peels and laser, that lightens sunspots, freckles and post-inflammatory marks while protecting against recurrence.",
     concern:
       "Localised dark spots from sun exposure, hormones or previous inflammation create an uneven, aged appearance. Single-modality treatment often disappoints because pigment sits at different depths and is driven by ongoing triggers.",
     concernPoints: [
@@ -544,7 +544,7 @@ export const treatments: Treatment[] = [
     summary:
       "Fine needles create controlled micro-channels that trigger natural collagen production, improving acne scars, texture, pores and fine lines.",
     concern:
-      "Textural concerns — acne scarring, enlarged pores, crepey fine lines and dull surface — are hard to shift topically because they originate in the skin's structural layers.",
+      "Textural concerns, acne scarring, enlarged pores, crepey fine lines and dull surface, are hard to shift topically because they originate in the skin's structural layers.",
     concernPoints: [
       "Rolling and boxcar acne scars",
       "Enlarged pores and uneven texture",
@@ -734,9 +734,9 @@ export const treatments: Treatment[] = [
     tagline: "A structured, whole-face rejuvenation roadmap",
     image: IMG.portraitSmile,
     summary:
-      "A physician-designed programme that sequences prevention, correction and maintenance — combining skincare, injectables and energy devices into one plan.",
+      "A physician-designed programme that sequences prevention, correction and maintenance, combining skincare, injectables and energy devices into one plan.",
     concern:
-      "Ageing shows across multiple layers at once — lines, volume loss, laxity, tone and texture. Treating one concern in isolation gives incomplete, sometimes unbalanced, results.",
+      "Ageing shows across multiple layers at once, lines, volume loss, laxity, tone and texture. Treating one concern in isolation gives incomplete, sometimes unbalanced, results.",
     concernPoints: [
       "Combined lines, volume loss and laxity",
       "Dull tone and rough texture",

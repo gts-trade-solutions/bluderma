@@ -25,7 +25,7 @@ export default async function HubCategoriesPage() {
     <>
       <PageHeader
         title="Hub categories"
-        description="What clients browse at /patient/explore — 18 categories and the treatments beneath them."
+        description="What clients browse at /patient/explore, 18 categories and the treatments beneath them."
         action={
           <Link href="/admin/hub-categories/new" className="btn-primary">
             New category

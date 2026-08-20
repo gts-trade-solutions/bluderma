@@ -151,7 +151,7 @@ const DETAIL: Partial<Record<VisitReason, string[]>> = {
   ],
   HAIR_LOSS: [
     "Shedding in the shower for about six months; the parting looks wider.",
-    "Thinning at the crown — my father had the same at this age.",
+    "Thinning at the crown. My father had the same at this age.",
   ],
   ANTI_AGEING: [
     "Fine lines around the eyes that have set in over the last year.",
@@ -170,7 +170,7 @@ const DETAIL: Partial<Record<VisitReason, string[]>> = {
   COSMETIC_PROCEDURE: ["Asking about options before a family wedding in March."],
   FUNGAL_INFECTION: ["A ring-shaped rash on the neck that is spreading slowly."],
   MOLE_CHECK: ["A mole on the back that my partner says has changed shape."],
-  OTHER: ["General skin check — nothing specific, but I would like advice."],
+  OTHER: ["General skin check: nothing specific, but I would like advice."],
 };
 
 const REVIEW_COPY: { rating: number; title: string; body: string }[] = [
@@ -348,7 +348,7 @@ async function main(): Promise<void> {
       title: "MBBS, MD (Dermatology), Fellowship in Cosmetic Dermatology",
       specialty: "Dermatology & Cosmetic Dermatology",
       experienceYears: 14,
-      clinic: "BluDerma Aesthetics — Nungambakkam",
+      clinic: "BluDerma Aesthetics, Nungambakkam",
       location: "Chennai",
       image: PHOTO,
       phone: "+91 90000 11122",
@@ -360,7 +360,7 @@ async function main(): Promise<void> {
       youtube: "https://youtube.com/@drnithyaskin",
       fee: 1400,
       about:
-        "Dr. Nithya Raghavan is a consultant dermatologist practising in Chennai for fourteen years, with a clinical interest in adult acne, melasma and hair loss. She trained at Madras Medical College and went on to a fellowship in cosmetic dermatology, and she now runs three clinics across the city — Nungambakkam, Adyar and Anna Nagar. Consultations begin with what the skin is doing rather than with a procedure: most plans start with medical management, and lasers or injectables are offered only where they add something topical treatment cannot. She sees adults and adolescents, and consults in Tamil, English, Malayalam and Hindi. (Demonstration profile — not a real registration.)",
+        "Dr. Nithya Raghavan is a consultant dermatologist practising in Chennai for fourteen years, with a clinical interest in adult acne, melasma and hair loss. She trained at Madras Medical College and went on to a fellowship in cosmetic dermatology, and she now runs three clinics across the city, Nungambakkam, Adyar and Anna Nagar. Consultations begin with what the skin is doing rather than with a procedure: most plans start with medical management, and lasers or injectables are offered only where they add something topical treatment cannot. She sees adults and adolescents, and consults in Tamil, English, Malayalam and Hindi. (Demonstration profile: not a real registration.)",
       verified: true,
       isActive: true,
       isGeneral: false,
@@ -899,14 +899,14 @@ async function main(): Promise<void> {
         userId: t.userId,
         doctorId: doctor.id,
         title: pick([
-          "Acne — 12 week plan",
-          "Melasma — maintenance",
-          "Hair loss — 6 month course",
-          "Eczema — flare management",
+          "Acne: 12 week plan",
+          "Melasma: maintenance",
+          "Hair loss: 6 month course",
+          "Eczema: flare management",
         ]),
         notes: pick([
           "Adapalene 0.1% at night, pea-sized, alternate nights for the first fortnight. Non-comedogenic sunscreen every morning, reapplied at lunch. Review in six weeks.",
-          "Triple combination cream at night for eight weeks, then twice weekly. Sunscreen SPF 50 is the treatment, not an extra — reapply every three hours outdoors.",
+          "Triple combination cream at night for eight weeks, then twice weekly. Sunscreen SPF 50 is the treatment, not an extra, reapply every three hours outdoors.",
           "Minoxidil 5% twice daily to a dry scalp. Oral supplement with dinner. Photographs at the same angle each month; review at twelve weeks.",
           "Emollient twice daily and after every wash. Topical steroid for flares only, maximum ten days. Avoid soap on the affected areas.",
         ]),

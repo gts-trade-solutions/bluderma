@@ -63,7 +63,7 @@ export default async function ProtocolPage({
   return (
     <>
       <PageHeader
-        title={`${category.name} — protocol`}
+        title={`${category.name}: protocol`}
         description={`Rendered on all ${category._count.treatments} treatment page(s) in this category.`}
       />
 

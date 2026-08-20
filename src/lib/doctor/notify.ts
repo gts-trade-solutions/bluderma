@@ -12,7 +12,7 @@ import { sendEmail } from "@/lib/email";
  * made and can see on their calendar.
  */
 
-const SIGN_OFF = "— BluDerma";
+const SIGN_OFF = "BluDerma";
 
 function when(at: Date): string {
   return `${at.toISOString().slice(0, 10)} at ${at.toISOString().slice(11, 16)}`;
@@ -111,7 +111,7 @@ export async function notifyCancelledByClinic(
   if (!p.to) return;
   const body = wrap([
     `Hi ${p.patientName},`,
-    `We are sorry — your appointment with ${p.doctorName} on <strong>${when(p.at)}</strong> has been cancelled by the clinic.`,
+    `We are sorry, your appointment with ${p.doctorName} on <strong>${when(p.at)}</strong> has been cancelled by the clinic.`,
     ...(p.reason ? [`Reason: ${p.reason}`] : []),
     p.refundDue
       ? "You have not been charged a cancellation fee, and anything already paid will be refunded to the original payment method. Refunds usually clear within 5-7 working days."
@@ -196,10 +196,10 @@ export async function notifyDoctorOfBooking(p: {
     // should not have to open each one to find the urgent case.
     subject: p.needsApproval
       ? `${p.urgent ? "[Urgent] " : ""}Appointment request from ${p.patientName}${
-          p.reasonLine ? ` — ${p.reasonLine}` : ""
+          p.reasonLine ? `: ${p.reasonLine}` : ""
         }`
       : `${p.urgent ? "[Urgent] " : ""}New booking: ${p.patientName}${
-          p.reasonLine ? ` — ${p.reasonLine}` : ""
+          p.reasonLine ? `: ${p.reasonLine}` : ""
         }`,
     ...body,
   }).catch((e) => console.error("doctor booking notice failed", e));

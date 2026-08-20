@@ -29,8 +29,8 @@ export default function TermsPage() {
 
       <h2>2. Not medical advice</h2>
       <p>
-        All content on BluDerma — including treatment descriptions, mechanisms,
-        protocols, indications and product information — is provided for general
+        All content on BluDerma, including treatment descriptions, mechanisms,
+        protocols, indications and product information. Is provided for general
         information and professional reference only. It is <strong>not</strong>{" "}
         medical advice, diagnosis or treatment, and it does not create a
         doctor&ndash;patient relationship. Decisions about any treatment must be
@@ -61,7 +61,7 @@ export default function TermsPage() {
         </li>
         <li>
           Doctor accounts may be granted clinical access. We may verify,
-          suspend, downgrade or remove any account — for example where
+          suspend, downgrade or remove any account, for example where
           eligibility cannot be confirmed or these terms are breached.
         </li>
         <li>Tell us promptly at info@bluderma.kr if you suspect unauthorised use.</li>

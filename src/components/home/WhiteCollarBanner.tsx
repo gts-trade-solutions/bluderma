@@ -98,7 +98,7 @@ export default async function WhiteCollarBanner() {
             <p className="mt-2 text-sm leading-relaxed text-white/60">
               Doctors can hold back a few of the day&rsquo;s most-wanted slots
               for members. If nobody takes them, the hold lifts 24 hours before
-              and they open to everyone — so a member gets first refusal, not a
+              and they open to everyone, so a member gets first refusal, not a
               slot nobody else could ever have had.
             </p>
             <p className="mt-4 text-sm leading-relaxed text-white/60">

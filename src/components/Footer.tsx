@@ -103,7 +103,7 @@ export default function Footer() {
         <div className="container-page flex flex-col items-center justify-between gap-2 py-5 text-xs text-brand-300/70 sm:flex-row">
           <p>© {new Date().getFullYear()} BluDerma. All rights reserved.</p>
           <p>
-            For informational use only — not a substitute for professional
+            For informational use only, not a substitute for professional
             medical advice.
           </p>
         </div>

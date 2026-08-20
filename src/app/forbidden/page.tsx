@@ -80,7 +80,7 @@ export default async function ForbiddenPage({
             <strong className="font-semibold text-ink">
               {user.name || user.email}
             </strong>
-            {user.name && user.email ? ` (${user.email})` : ""} —{" "}
+            {user.name && user.email ? ` (${user.email})` : ""} is{" "}
             {ROLE_WORD[user.role] ?? "a different kind of account"}.
           </p>
         )}

@@ -116,7 +116,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     icon: "sparkles",
     blurb: "Boosters, medi-facials, brightening",
     intro:
-      "The hydration-first route to that lit-from-within finish — injectable boosters, medical facials and barrier repair, layered over weeks rather than forced in one sitting.",
+      "The hydration-first route to that lit-from-within finish, injectable boosters, medical facials and barrier repair, layered over weeks rather than forced in one sitting.",
     image: IMG.portraitGlow,
     tint: "from-sky-500 to-cyan-400 text-white",
     treatments: [
@@ -170,7 +170,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     icon: "lift",
     blurb: "Threads, HIFU, RF microneedling",
     intro:
-      "Non-surgical lift — energy devices and absorbable threads that tighten laxity along the jawline, cheeks and neck without a scalpel.",
+      "Non-surgical lift: energy devices and absorbable threads that tighten laxity along the jawline, cheeks and neck without a scalpel.",
     image: IMG.portraitStudio,
     tint: "from-violet-500 to-fuchsia-400 text-white",
     treatments: [
@@ -224,7 +224,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     icon: "syringe",
     blurb: "Lines, sweating, slimming",
     intro:
-      "Botulinum toxin, dosed conservatively. Softens expression lines while keeping movement — and treats sweating, jaw clenching and a heavy masseter too.",
+      "Botulinum toxin, dosed conservatively. Softens expression lines while keeping movement, and treats sweating, jaw clenching and a heavy masseter too.",
     image: IMG.procInject,
     tint: "from-blue-600 to-indigo-500 text-white",
     treatments: [
@@ -278,7 +278,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     icon: "droplet",
     blurb: "Lips, cheeks, chin, under-eye",
     intro:
-      "Hyaluronic acid placed to restore what time removed — never to add what was never there. Every filler used here is reversible.",
+      "Hyaluronic acid placed to restore what time removed. Never to add what was never there. Every filler used here is reversible.",
     image: IMG.procFiller,
     tint: "from-rose-500 to-pink-400 text-white",
     treatments: [
@@ -332,7 +332,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     icon: "zap",
     blurb: "Toning, resurfacing, redness",
     intro:
-      "Wavelength chosen for your concern and your skin tone. Indian and South-Asian skin needs conservative settings — that is the default here, not an option.",
+      "Wavelength chosen for your concern and your skin tone. Indian and South-Asian skin needs conservative settings. That is the default here, not an option.",
     image: IMG.procLaserFace,
     tint: "from-amber-500 to-orange-400 text-white",
     treatments: [
@@ -346,7 +346,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
       {
         slug: "carbon-peel",
         name: "Carbon Laser Peel",
-        blurb: "The 'Hollywood peel' — instant clarity before an event.",
+        blurb: "The 'Hollywood peel': instant clarity before an event.",
         image: IMG.procPeel,
         meta: "Single session · no downtime",
       },
@@ -386,7 +386,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     icon: "scissors",
     blurb: "Face, body, full-package",
     intro:
-      "Diode and Nd:YAG platforms selected by skin type, with cooling throughout. Course-based — hair only responds in its growth phase.",
+      "Diode and Nd:YAG platforms selected by skin type, with cooling throughout. Course-based: hair only responds in its growth phase.",
     image: IMG.lhr1,
     tint: "from-teal-500 to-emerald-400 text-white",
     treatments: [
@@ -400,7 +400,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
       {
         slug: "lhr-underarms",
         name: "Underarms",
-        blurb: "Fast, high-satisfaction area — usually under ten minutes.",
+        blurb: "Fast, high-satisfaction area: usually under ten minutes.",
         image: IMG.lhr1,
         meta: "6 sessions",
       },
@@ -440,7 +440,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     icon: "sprout",
     blurb: "PRP, GFC, transplant, hair fall",
     intro:
-      "Hair loss is diagnosed before it is treated — bloodwork and trichoscopy first, then the regenerative or surgical route that actually fits the pattern.",
+      "Hair loss is diagnosed before it is treated, bloodwork and trichoscopy first, then the regenerative or surgical route that actually fits the pattern.",
     image: IMG.hair1,
     tint: "from-lime-500 to-green-400 text-white",
     treatments: [
@@ -454,7 +454,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
       {
         slug: "gfc-therapy",
         name: "GFC Growth Factor",
-        blurb: "Concentrated growth factors — a step beyond standard PRP.",
+        blurb: "Concentrated growth factors: a step beyond standard PRP.",
         image: IMG.hair4,
         meta: "4–6 sessions",
       },
@@ -529,7 +529,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
       {
         slug: "comedone-extraction",
         name: "Medical Extraction",
-        blurb: "Sterile clearing of comedones — never at home, never nails.",
+        blurb: "Sterile clearing of comedones, never at home, never nails.",
         image: IMG.acne3,
         meta: "Monthly",
       },
@@ -548,7 +548,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     icon: "sun",
     blurb: "Melasma, dark spots, tanning",
     intro:
-      "Pigment is stubborn and it recurs. The plan here is always three-part: reduce, protect and maintain — with sun protection treated as part of the treatment.",
+      "Pigment is stubborn and it recurs. The plan here is always three-part: reduce, protect and maintain, with sun protection treated as part of the treatment.",
     image: IMG.pairPigmentA,
     tint: "from-yellow-500 to-amber-400 text-white",
     treatments: [
@@ -656,7 +656,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     icon: "aperture",
     blurb: "Liquid rhinoplasty, tip refinement",
     intro:
-      "Non-surgical nose work — camouflage of a dorsal hump, tip support and bridge definition using filler and threads. Reversible, and done in under an hour.",
+      "Non-surgical nose work, camouflage of a dorsal hump, tip support and bridge definition using filler and threads. Reversible, and done in under an hour.",
     image: IMG.portraitSerum,
     tint: "from-slate-500 to-zinc-400 text-white",
     treatments: [
@@ -710,7 +710,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     icon: "hexagon",
     blurb: "V-line, double chin, cheeks",
     intro:
-      "Shaping the lower face — slimming what is heavy, supporting what has dropped and defining the border between face and neck.",
+      "Shaping the lower face. Slimming what is heavy, supporting what has dropped and defining the border between face and neck.",
     image: IMG.pairLiftA,
     tint: "from-purple-500 to-violet-400 text-white",
     treatments: [
@@ -818,7 +818,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     icon: "heart-pulse",
     blurb: "Drips, deficiencies, skin nutrition",
     intro:
-      "Skin reflects what is happening internally. Deficiency screening first, then targeted repletion — oral where it works, intravenous where it does not.",
+      "Skin reflects what is happening internally. Deficiency screening first, then targeted repletion. Oral where it works, intravenous where it does not.",
     image: IMG.iv2,
     tint: "from-emerald-500 to-teal-400 text-white",
     treatments: [
@@ -839,7 +839,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
       {
         slug: "deficiency-screening",
         name: "Deficiency Screening",
-        blurb: "Ferritin, D, B12 and thyroid — the four that show on skin.",
+        blurb: "Ferritin, D, B12 and thyroid. The four that show on skin.",
         image: IMG.clinic2,
         meta: "1 visit",
       },
@@ -872,14 +872,14 @@ export const HUB_CATEGORIES: HubCategory[] = [
     icon: "crown",
     blurb: "Timed countdown packages",
     intro:
-      "Everything reverse-engineered from your date. Nothing new is started inside the final fortnight — that rule is what keeps the day itself uneventful.",
+      "Everything reverse-engineered from your date. Nothing new is started inside the final fortnight. That rule is what keeps the day itself uneventful.",
     image: IMG.bridal1,
     tint: "from-pink-500 to-rose-400 text-white",
     treatments: [
       {
         slug: "bridal-6-month",
         name: "6-Month Bridal Plan",
-        blurb: "The full runway — acne, pigment, texture, then glow.",
+        blurb: "The full runway: acne, pigment, texture, then glow.",
         image: IMG.bridal2,
         meta: "Staged over 24 weeks",
       },
@@ -900,7 +900,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
       {
         slug: "pre-event-glow",
         name: "Pre-Event Glow Facial",
-        blurb: "Safe 72 hours before — no peeling, no surprises.",
+        blurb: "Safe 72 hours before, no peeling, no surprises.",
         image: IMG.facial1,
         meta: "Single session",
       },
@@ -926,7 +926,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     icon: "user",
     blurb: "Beard, hair, jaw, sweat",
     intro:
-      "Male skin is thicker, oilier and more vascular. Same devices, different settings — and a plan that survives a shave every morning.",
+      "Male skin is thicker, oilier and more vascular. Same devices, different settings, and a plan that survives a shave every morning.",
     image: IMG.men1,
     tint: "from-zinc-600 to-slate-500 text-white",
     treatments: [
@@ -1222,7 +1222,7 @@ export const HUB_PROMOS: HubPromo[] = [
     slug: "bridal-countdown",
     eyebrow: "Countdown",
     title: "Six months out is the sweet spot",
-    body: "Every bridal plan is reverse-engineered from your date — and nothing new starts in the last fortnight.",
+    body: "Every bridal plan is reverse-engineered from your date, and nothing new starts in the last fortnight.",
     image: IMG.bridal1,
     cta: "Plan my countdown",
     href: "/patient/explore/bridal",
@@ -1416,7 +1416,7 @@ export const BEFORE_AFTER: BeforeAfterCase[] = [
     timeframe: "6 months",
     before: IMG.pairScarA,
     after: IMG.pairScarB,
-    quote: "Not gone — but I stopped noticing them in photos, which was the goal.",
+    quote: "Not gone: but I stopped noticing them in photos, which was the goal.",
     initials: "A.D.",
     age: "29",
   },

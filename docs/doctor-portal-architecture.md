@@ -1794,3 +1794,93 @@ Three things about it that are deliberate:
 The six-line `.env` reader is there because every other script in `prisma/`
 gets `DATABASE_URL` for free as a side effect of constructing a Prisma client.
 This one shells out to `mysqldump` and has no other reason to load the engine.
+
+---
+
+## Appendix W — Google sign-in is wired correctly and cannot work
+
+Asked to check whether Google sign-in was linked properly. The code half is
+right in every respect, which is precisely why it was worth checking: nothing
+in the repository is wrong, and every BluDerma user would still have hit
+`Error 400: redirect_uri_mismatch`.
+
+### What is correct
+
+- `GoogleProvider` registers, gated on `googleConfigured` so an unconfigured
+  app still boots — NextAuth throws at startup on a provider with an empty
+  `clientId`.
+- `PrismaAdapter` is attached; sessions are JWT because credentials sign-in
+  requires it, and the adapter still handles OAuth user creation and linking.
+- `Account.refresh_token`, `access_token` and `id_token` are all `@db.Text`.
+  This is the single most common MySQL failure with NextAuth: Google's
+  `id_token` is a long JWT that does not fit the default `VARCHAR(191)`, and
+  the sign-in then dies at the database with an error that says nothing about
+  OAuth.
+- `allowDangerousEmailAccountLinking: false`, which is the right call —
+  silently attaching a Google login to an existing password account is an
+  account-takeover vector when the email was never verified. It has a visible
+  consequence, and `LoginForm` carries copy for `OAuthAccountNotLinked`
+  instead of showing a bare error code.
+- Google always creates a `PATIENT` (the adapter has no notion of intent), so
+  the doctor sign-up routes through `/doctor/join/start` →
+  `promoteCurrentUserToDoctor()`, which only ever promotes a PATIENT and
+  leaves an ADMIN alone.
+
+### What is broken, and where
+
+The OAuth client's **Authorised redirect URIs** list, in a Google Cloud
+project this repository shares with another product. None of BluDerma's
+callbacks is on it — not production, and not even localhost.
+
+That failure lives entirely outside the codebase. No amount of reading the
+source finds it, which is why `prisma/verify-google-oauth.ts` asks Google
+directly: one read-only GET per redirect URI to the authorization endpoint,
+which answers before any user is involved. The client_id is public by design
+(it ships in every browser redirect); the secret is never sent.
+
+### The trap in that probe, and the controls that caught it
+
+A first pass reported all three URIs as **accepted**, and it was wrong.
+
+An unauthenticated request to Google's auth endpoint is bounced to the sign-in
+page *before* the redirect URI is validated, so a bare `302` is byte-identical
+for a registered and an unregistered URI. Following the chain and decoding the
+`authError` payload — base64url protobuf, with the reason as plain ASCII
+inside — is the only reading that is not a guess.
+
+The second pass then reported everything as **rejected**, which is equally
+unfalsifiable: a probe that fails everything looks the same as a probe that is
+simply broken. So the suite runs two controls:
+
+- a URI that cannot be registered, which must come back with a *different*
+  error (`invalid_request`, not `redirect_uri_mismatch`);
+- and a positive case, to prove it can report a pass at all.
+
+Both were exercised by hand against a sibling domain registered in the same
+project: `OK ... reached sign-in` alongside `FAIL ... redirect_uri_mismatch`,
+in one run. If the controls misbehave, the suite prints **INCONCLUSIVE** and
+withholds a verdict rather than inventing one.
+
+The linked-account count is reported and is deliberately *not* a check. Zero
+is what a brand-new environment looks like and also what a broken one looks
+like — the number cannot tell you it works, only that somebody once got
+through.
+
+### What has to happen outside the repo
+
+In the Google Cloud console, on this OAuth client, add under **Authorised
+redirect URIs**:
+
+```
+http://localhost:3000/api/auth/callback/google
+https://<production-domain>/api/auth/callback/google
+```
+
+and the bare origins under **Authorised JavaScript origins**. Production's
+`NEXTAUTH_URL` must match its domain exactly and carry no trailing slash —
+NextAuth builds the callback by concatenation, so a trailing slash yields a
+double slash that will not match what Google holds.
+
+Worth a separate decision: the OAuth client belongs to a shared project, so
+the consent screen shows *that* project's app name and support email. A
+product asking people to sign in should own its own client.

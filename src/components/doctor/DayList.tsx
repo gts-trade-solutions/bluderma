@@ -28,6 +28,9 @@ export interface DayRow {
   clinicName: string | null;
   clinicArea: string | null;
   clinicDot: string;
+  /** One-line intake summary. Null for bookings taken before we asked. */
+  reason: string | null;
+  urgent: boolean;
 }
 
 const MODE_LABEL: Record<string, string> = {
@@ -61,7 +64,7 @@ export default function DayList({
 
   return (
     <>
-      <ol className="space-y-2">
+      <ol className="space-y-2.5">
         {rows.map((r, i) => {
           const prev = rows[i - 1];
           const gap =
@@ -75,32 +78,36 @@ export default function DayList({
             <li key={r.id}>
               {/* Only worth drawing a gap the doctor could actually use. */}
               {gap >= 30 && (
-                <p className="py-1 pl-[76px] text-xs font-medium text-slate-400">
+                <p className="flex items-center gap-2 py-1.5 pl-[88px] text-xs font-medium text-slate-400">
                   {gapLabel(gap)}
                 </p>
               )}
               <button
                 onClick={() => setOpenId(r.id)}
-                className={`flex w-full items-center gap-4 rounded-2xl border bg-white p-4 text-left transition hover:border-slate-300 ${
-                  awaiting ? "border-amber-300" : "border-slate-200"
+                className={`flex w-full items-center gap-4 rounded-2xl bg-white p-4 text-left shadow-[0_1px_2px_rgba(15,23,42,0.05)] ring-1 transition hover:shadow-[0_1px_2px_rgba(15,23,42,0.05),0_10px_28px_-18px_rgba(15,23,42,0.35)] ${
+                  awaiting
+                    ? "ring-amber-300 hover:ring-amber-400"
+                    : "ring-slate-200/80 hover:ring-slate-300"
                 } ${cancelled ? "opacity-55" : ""}`}
               >
-                <div className="w-14 shrink-0 text-right">
+                {/* The time is the column a doctor scans down, so it gets its
+                    own tabular gutter rather than sharing the name's line. */}
+                <div className="w-16 shrink-0 border-r border-slate-100 pr-4 text-right">
                   <p
-                    className={`text-sm font-bold tabular-nums ${
-                      cancelled ? "text-slate-400 line-through" : "text-ink"
+                    className={`font-display text-base font-bold tabular-nums ${
+                      cancelled ? "text-slate-400 line-through" : "text-slate-900"
                     }`}
                   >
                     {r.time}
                   </p>
-                  <p className="text-[11px] text-slate-400">{r.durationMin}m</p>
+                  <p className="text-[11px] text-slate-400">{r.durationMin} min</p>
                 </div>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span
                       className={`font-semibold ${
-                        cancelled ? "text-slate-400 line-through" : "text-ink"
+                        cancelled ? "text-slate-400 line-through" : "text-slate-900"
                       }`}
                     >
                       {r.patientName}
@@ -116,6 +123,19 @@ export default function DayList({
                       </span>
                     )}
                   </div>
+                  {/* The reason sits directly under the name: a doctor
+                      scanning their day should not have to open each row to
+                      find out what any of them are for. */}
+                  {r.reason && (
+                    <p
+                      className={`mt-0.5 truncate text-xs font-semibold ${
+                        r.urgent ? "text-rose-600" : "text-slate-600"
+                      }`}
+                    >
+                      {r.urgent && "● "}
+                      {r.reason}
+                    </p>
+                  )}
                   <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
                     <span>{MODE_LABEL[r.mode] ?? r.mode}</span>
                     {r.clinicName && (

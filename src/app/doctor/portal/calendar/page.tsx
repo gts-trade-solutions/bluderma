@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { EmptyState, PageHeader } from "@/components/admin/ui";
+import {
+  Empty,
+  PageHead,
+  portalBtnPrimary,
+} from "@/components/doctor/portalUi";
 import DoctorCalendar from "@/components/doctor/DoctorCalendar";
 import { getOwnDoctor } from "@/lib/doctor/guard";
 import {
@@ -37,11 +41,11 @@ export default async function CalendarPage({
   const owner = await getOwnDoctor();
   if (!owner) {
     return (
-      <EmptyState
+      <Empty
         title="No doctor profile linked"
-        description="Your account is not connected to a practice yet. Finish your onboarding, or ask an administrator to link you."
+        body="Your account is not connected to a practice yet. Finish your onboarding, or ask an administrator to link you."
         action={
-          <Link href="/doctor/join" className="btn-primary">
+          <Link href="/doctor/join" className={portalBtnPrimary}>
             Complete onboarding
           </Link>
         }
@@ -66,9 +70,9 @@ export default async function CalendarPage({
 
   return (
     <>
-      <PageHeader
+      <PageHead
         title="Calendar"
-        description={
+        sub={
           data.clinics.length > 1
             ? `Your list across ${data.clinics.length} locations. Colours mark the clinic; a booking anywhere blocks the same time everywhere.`
             : "Your appointments. Click any booking to see the client, their analysis and what you can do about it."

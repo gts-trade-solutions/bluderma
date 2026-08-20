@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import ImageField from "@/components/admin/ImageField";
+import PincodeAddressFields from "@/components/doctor/fields/PincodeAddressFields";
 import { removeClinic, saveClinicStep } from "@/lib/actions/doctorOnboarding";
 import { COMMON_FACILITIES } from "@/data/doctorJoin";
 import { swatchFor } from "@/components/doctor/clinicColors";
@@ -42,9 +43,14 @@ export default function ClinicsStep({
   // The wizard needs a "save and continue" footer; the practice page, where
   // this same component is reused for ongoing edits, does not.
   mode = "join",
+  nextHref = "/doctor/join?step=4",
+  backHref = "/doctor/join?step=2",
 }: {
   doctor: { clinics: ClinicView[] };
   mode?: "join" | "manage";
+  /** Overridden when this step is hosted inside the portal. */
+  nextHref?: string;
+  backHref?: string;
 }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(doctor.clinics.length === 0);
@@ -89,10 +95,10 @@ export default function ClinicsStep({
 
       {mode === "join" && doctor.clinics.length > 0 && !adding && !editing && (
         <div className="flex items-center gap-3 border-t border-slate-100 pt-5">
-          <Link href="/doctor/join?step=4" className="btn-primary">
+          <Link href={nextHref} className="btn-primary">
             Save and continue
           </Link>
-          <Link href="/doctor/join?step=2" className="btn-ghost">
+          <Link href={backHref} className="btn-ghost">
             Back
           </Link>
         </div>
@@ -241,29 +247,15 @@ function ClinicForm({
         error={fields.addressLine2}
       />
       <div className="grid gap-4 sm:grid-cols-2">
-        <Text
-          name="area"
-          label="Area"
-          defaultValue={c?.area}
-          hint="The neighbourhood clients navigate by."
-          error={fields.area}
-          required
-        />
-        <Text name="city" label="City" defaultValue={c?.city} error={fields.city} required />
-        <Text
-          name="state"
-          label="State"
-          defaultValue={c?.state ?? "Tamil Nadu"}
-          error={fields.state}
-          required
-        />
-        <Text
-          name="pincode"
-          label="PIN code"
-          defaultValue={c?.pincode}
-          inputMode="numeric"
-          error={fields.pincode}
-          required
+        {/* PIN code first, because it fills the other three. */}
+        <PincodeAddressFields
+          defaults={{
+            pincode: c?.pincode ?? "",
+            area: c?.area ?? "",
+            city: c?.city ?? "",
+            state: c?.state ?? "Tamil Nadu",
+          }}
+          errors={fields}
         />
         <Text name="phone" label="Clinic phone" defaultValue={c?.phone ?? ""} error={fields.phone} />
         <Text

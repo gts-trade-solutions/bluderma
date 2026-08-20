@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { applicationGaps } from "@/lib/actions/doctorOnboarding";
+import { blockingGaps, getApplicationGaps } from "@/lib/doctor/gaps";
 import SubmitApplication from "./SubmitApplication";
 
 /**
@@ -14,11 +14,16 @@ import SubmitApplication from "./SubmitApplication";
 export default async function ReviewStep({
   doctorId,
   status,
+  backHref = "/doctor/join?step=5",
+  stepHref = (n: number) => `/doctor/join?step=${n}`,
 }: {
   doctorId: string;
   status: string;
+  /** Overridden when the step is hosted inside the portal. */
+  backHref?: string;
+  stepHref?: (step: number) => string;
 }) {
-  const gaps = await applicationGaps(doctorId);
+  const gaps = blockingGaps(await getApplicationGaps(doctorId));
 
   if (status === "PENDING") {
     return (
@@ -48,8 +53,11 @@ export default async function ReviewStep({
           </p>
           <ul className="mt-2 space-y-1">
             {gaps.map((g) => (
-              <li key={g} className="text-sm text-amber-800">
-                · {g}
+              <li key={g.key} className="text-sm text-amber-800">
+                ·{" "}
+                <Link href={stepHref(g.step)} className="underline hover:no-underline">
+                  {g.label}
+                </Link>
               </li>
             ))}
           </ul>
@@ -85,7 +93,7 @@ export default async function ReviewStep({
 
       <div className="flex items-center gap-3 border-t border-slate-100 pt-5">
         <SubmitApplication disabled={gaps.length > 0} />
-        <Link href="/doctor/join?step=5" className="btn-ghost">
+        <Link href={backHref} className="btn-ghost">
           Back
         </Link>
       </div>

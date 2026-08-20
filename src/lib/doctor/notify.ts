@@ -164,6 +164,15 @@ export async function notifyDoctorOfBooking(p: {
   where: string;
   needsApproval: boolean;
   appointmentId: string;
+  /**
+   * The booking intake, already formatted. A doctor deciding whether to accept
+   * a request needs to know what it is for — "someone booked 3pm" is not a
+   * decision they can make.
+   */
+  intake?: string | null;
+  urgent?: boolean;
+  /** Short reason for the subject line, e.g. "Acne or breakouts". */
+  reasonLine?: string | null;
 }) {
   if (!p.to) return;
   const body = wrap([
@@ -172,6 +181,9 @@ export async function notifyDoctorOfBooking(p: {
       ? `${p.patientName} has requested <strong>${when(p.at)}</strong>. The slot is held until you accept or decline it.`
       : `${p.patientName} has booked <strong>${when(p.at)}</strong>.`,
     `Where: ${p.where}`,
+    ...(p.intake
+      ? [`<strong>What it is for</strong><br/>${p.intake.split("\n").join("<br/>")}`]
+      : []),
     p.needsApproval
       ? "Open your calendar to confirm it."
       : "It is on your calendar.",
@@ -180,9 +192,15 @@ export async function notifyDoctorOfBooking(p: {
     to: p.to,
     template: "booking-confirmation",
     relatedId: p.appointmentId,
+    // The subject carries the reason too — a doctor triaging a full inbox
+    // should not have to open each one to find the urgent case.
     subject: p.needsApproval
-      ? `New appointment request from ${p.patientName}`
-      : `New booking: ${p.patientName}`,
+      ? `${p.urgent ? "[Urgent] " : ""}Appointment request from ${p.patientName}${
+          p.reasonLine ? ` — ${p.reasonLine}` : ""
+        }`
+      : `${p.urgent ? "[Urgent] " : ""}New booking: ${p.patientName}${
+          p.reasonLine ? ` — ${p.reasonLine}` : ""
+        }`,
     ...body,
   }).catch((e) => console.error("doctor booking notice failed", e));
 }

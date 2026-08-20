@@ -204,6 +204,23 @@ export async function getAppointmentDetail(doctorId: string, appointmentId: stri
       isPriority: true,
       meetingUrl: true,
       notes: true,
+
+      // The booking intake. This is the whole point of asking for it — the
+      // doctor sees why the patient is coming before the patient arrives.
+      reason: true,
+      reasonDetail: true,
+      symptomDuration: true,
+      severity: true,
+      isFirstVisit: true,
+      priorTreatment: true,
+      medications: true,
+      allergies: true,
+      photoConsent: true,
+      patientAge: true,
+      patientGender: true,
+      skinAnalysisId: true,
+      skinScanId: true,
+
       feeAtBooking: true,
       visitFee: true,
       discountInr: true,
@@ -217,6 +234,10 @@ export async function getAppointmentDetail(doctorId: string, appointmentId: stri
       createdAt: true,
       clinic: {
         select: { id: true, name: true, area: true, city: true, addressLine1: true, phone: true },
+      },
+      photos: {
+        orderBy: { sortOrder: "asc" },
+        select: { id: true, url: true },
       },
     },
   });

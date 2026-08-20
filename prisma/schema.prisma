@@ -414,6 +414,39 @@ enum DoctorStatus {
   SUSPENDED
 }
 
+/// A day's worth of practice suggestions for one doctor.
+///
+/// Cached because it is the only paid call in the product: the metrics are
+/// recomputed on every dashboard load, but the sentence written *about* them
+/// is generated once a day. The unique key makes two concurrent first-renders
+/// idempotent rather than racing to insert twice.
+///
+/// `source` is stored so the UI can label a deterministic strip honestly
+/// instead of implying a model wrote it.
+model DoctorDailyInsight {
+  id          String   @id @default(cuid())
+  doctorId    String
+  /// Clinic wall-clock day, "2026-08-19". NOT the UTC day — 19:00Z is already
+  /// tomorrow in clinic terms, and a UTC key would roll the cache at 05:30.
+  dateKey     String
+  /// Fingerprint of the figures it was written from. Observability, not
+  /// invalidation — a doctor's numbers move all day and regenerating on every
+  /// change would defeat the point of caching.
+  metricsHash String
+  /// [{ title, body }] — three or four items.
+  items       Json
+  /// "ai" | "template"
+  source      String
+  model       String?
+  createdAt   DateTime @default(now())
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@unique([doctorId, dateKey])
+  @@index([doctorId, createdAt])
+  @@map("doctor_daily_insights")
+}
+
 model Doctor {
   id              String  @id @default(cuid())
   /// Stable public handle, e.g. "aarti-menon". Was Doctor.id in the seed data.
@@ -433,6 +466,13 @@ model Doctor {
   phone           String?
   email           String?
   website         String?
+  /// Social profiles the practitioner chooses to publish. Stored as full URLs
+  /// after normalisation (a handle typed as "@name" is expanded on save), so
+  /// every consumer can link them without re-deriving the platform.
+  instagram       String?
+  facebook        String?
+  linkedin        String?
+  youtube         String?
   /// Consultation fee in whole INR.
   fee             Int     @default(0)
   about           String  @db.Text
@@ -485,7 +525,8 @@ model Doctor {
 
   prescriptions Prescription[]
 
-  reviewList Review[]
+  reviewList    Review[]
+  dailyInsights DoctorDailyInsight[]
 
   @@index([isActive, sortOrder])
   @@index([location])
@@ -623,8 +664,9 @@ model SkinAnalysis {
   seed         String?
   createdAt    DateTime @default(now())
 
-  user   User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  scores SkinAnalysisScore[]
+  user         User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scores       SkinAnalysisScore[]
+  appointments Appointment[]
 
   @@index([userId, createdAt])
   @@map("skin_analyses")
@@ -670,8 +712,9 @@ model SkinScan {
   completedAt        DateTime?
   createdAt          DateTime  @default(now())
 
-  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  issues SkinScanIssue[]
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issues       SkinScanIssue[]
+  appointments Appointment[]
 
   @@index([userId, createdAt])
   @@map("skin_scans")
@@ -768,6 +811,61 @@ enum ActorKind {
   SYSTEM
 }
 
+/// What the visit is actually for.
+///
+/// A booking used to reach the doctor as a time, a name and an optional free
+/// text note that was almost always empty — so the first thing they learned
+/// about a patient was whatever the patient chose to volunteer, if anything.
+/// This is the structured half: enough to triage, prepare, and allocate the
+/// right slot length before the patient walks in.
+enum VisitReason {
+  ACNE
+  PIGMENTATION
+  HAIR_LOSS
+  ANTI_AGEING
+  SCARS
+  ROSACEA_REDNESS
+  ECZEMA_PSORIASIS
+  FUNGAL_INFECTION
+  MOLE_CHECK
+  COSMETIC_PROCEDURE
+  FOLLOW_UP
+  OTHER
+}
+
+/// How long the patient has had the concern. Dermatology triage leans on this
+/// heavily — a rash of three days and a rash of three years are different
+/// consultations.
+enum SymptomDuration {
+  UNDER_WEEK
+  WEEKS_1_4
+  MONTHS_1_6
+  MONTHS_6_12
+  OVER_YEAR
+}
+
+/// A photograph the patient attached when booking.
+///
+/// Dermatology is a visual speciality and a described rash is a poor substitute
+/// for a seen one — but these are clinical images of a named person, so they
+/// live in a PRIVATE bucket prefix and are reached only through a signed URL.
+/// See PRIVATE_PREFIXES in prisma/setup-s3.ts and /api/uploads/view.
+model AppointmentPhoto {
+  id            String   @id @default(cuid())
+  appointmentId String
+  /// Full stored URL. Not publicly readable — signing is what serves it.
+  url           String   @db.Text
+  /// The object key, so access control can reason about the prefix.
+  storageKey    String   @db.Text
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([appointmentId, sortOrder])
+  @@map("appointment_photos")
+}
+
 model Appointment {
   id            String            @id @default(cuid())
   /// Null for guest bookings taken over the phone by an admin.
@@ -790,6 +888,38 @@ model Appointment {
   patientPhone String?
   patientEmail String?
   notes        String? @db.Text
+
+  // ── Why they are coming ──────────────────────────────────────────────
+  // Captured at booking and shown to the doctor before the consultation.
+  // Nullable because rows predating this, and admin-entered phone bookings,
+  // have none — the booking form itself requires them.
+  /// The presenting concern, from a fixed list so it can be triaged.
+  reason          VisitReason?
+  /// The patient's own description. Required by the form; the fixed list
+  /// alone cannot carry "it flares when I use retinol".
+  reasonDetail    String?          @db.Text
+  symptomDuration SymptomDuration?
+  /// Self-rated 1 (mild) to 5 (severe). Not a clinical score — a triage hint.
+  severity        Int?
+  /// What they have already tried, so the doctor does not re-prescribe it.
+  priorTreatment  String?          @db.Text
+  /// Current medication and known allergies. Blank is meaningful here, so the
+  /// form asks explicitly rather than leaving the field empty by default.
+  medications     String?          @db.Text
+  allergies       String?          @db.Text
+  isFirstVisit    Boolean          @default(true)
+  /// Snapshotted from the profile at booking, because dermatology reads
+  /// differently by age and sex and a profile can change afterwards.
+  patientAge      Int?
+  patientGender   Gender?
+  /// Consent to clinical photography, asked once and recorded.
+  photoConsent    Boolean          @default(false)
+  /// The skin report the patient chose to attach, if any. There are two
+  /// analysis systems — the older simulator (SkinAnalysis) and the camera
+  /// analyzer (SkinScan) — and the patient's latest may be either, so both
+  /// are referenced rather than collapsing them into one untyped id.
+  skinAnalysisId  String?
+  skinScanId      String?
 
   // ── Doctor confirmation ──────────────────────────────────────────────
   approvalState ApprovalState @default(AUTO)
@@ -831,11 +961,16 @@ model Appointment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  review   Review?
-  patient  User?     @relation("PatientAppointments", fields: [patientUserId], references: [id], onDelete: SetNull)
-  doctor   Doctor    @relation(fields: [doctorId], references: [id])
-  clinic   Clinic?   @relation(fields: [clinicId], references: [id], onDelete: SetNull)
-  payments Payment[]
+  review       Review?
+  patient      User?              @relation("PatientAppointments", fields: [patientUserId], references: [id], onDelete: SetNull)
+  doctor       Doctor             @relation(fields: [doctorId], references: [id])
+  clinic       Clinic?            @relation(fields: [clinicId], references: [id], onDelete: SetNull)
+  payments     Payment[]
+  /// SetNull rather than Cascade: losing a scan must never delete the
+  /// appointment that referenced it.
+  skinAnalysis SkinAnalysis?      @relation(fields: [skinAnalysisId], references: [id], onDelete: SetNull)
+  skinScan     SkinScan?          @relation(fields: [skinScanId], references: [id], onDelete: SetNull)
+  photos       AppointmentPhoto[]
 
   @@index([doctorId, scheduledAt])
   @@index([patientUserId, scheduledAt])

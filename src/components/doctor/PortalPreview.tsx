@@ -25,12 +25,12 @@ const WEEK = [
 
 export default function PortalPreview() {
   return (
-    <section className="scroll-mt-24 bg-slate-50 py-20" id="portal">
+    <section className="scroll-mt-24 py-20" id="portal">
       <div className="container-page">
         <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
             <p className="section-eyebrow">Your portal</p>
-            <h2 className="mt-2 text-3xl font-bold text-ink sm:text-4xl">
+            <h2 className="display mt-2 text-3xl text-ink sm:text-4xl">
               One week. Every clinic. One place to act on it.
             </h2>
             <p className="mt-4 text-lg leading-relaxed text-ink-soft">
@@ -58,9 +58,16 @@ export default function PortalPreview() {
 
           {/* ── The sketch ─────────────────────────────────────────── */}
           <figure>
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+            {/* The mock stays white because the portal it depicts is white.
+                Recolouring it dark to match this page would be a lie about the
+                product. The frame and the shadow are what make it read as a
+                screenshot of something else rather than a panel of this page —
+                and every colour inside it is a literal slate value, because
+                `text-ink` here would resolve to the DARK theme's near-white. */}
+            <div className="overflow-hidden rounded-2xl bg-white p-1 shadow-[0_30px_70px_-24px_rgba(2,10,28,0.85)] ring-1 ring-white/15">
+            <div className="overflow-hidden rounded-[0.85rem] border border-slate-200 bg-white">
               <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 px-4 py-3">
-                <span className="rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">
+                <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
                   All locations
                 </span>
                 {CLINICS.map((c) => (
@@ -74,7 +81,10 @@ export default function PortalPreview() {
                 ))}
               </div>
 
-              <div className="grid grid-cols-5 divide-x divide-slate-100">
+              {/* Five day-columns cannot fit a phone at a readable width, so
+                  the week scrolls inside its own box rather than squeezing. */}
+              <div className="-mx-px overflow-x-auto">
+              <div className="grid min-w-[520px] grid-cols-5 divide-x divide-slate-100">
                 {WEEK.map((d) => (
                   <div key={d.day} className="min-h-[168px] p-2">
                     <p className="mb-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-400">
@@ -94,6 +104,7 @@ export default function PortalPreview() {
                   </div>
                 ))}
               </div>
+              </div>
 
               <div className="flex items-center gap-2 border-t border-amber-200 bg-amber-50 px-4 py-2.5">
                 <span className="grid h-5 w-5 place-items-center rounded-full bg-amber-500 text-[11px] font-bold text-white">
@@ -104,6 +115,7 @@ export default function PortalPreview() {
                   until you do.
                 </p>
               </div>
+            </div>
             </div>
             <figcaption className="mt-3 text-center text-xs text-ink-muted">
               An illustration of the calendar layout. Names and times are made up.
@@ -118,7 +130,7 @@ export default function PortalPreview() {
 function Feature({ title, body }: { title: string; body: string }) {
   return (
     <li className="flex gap-3">
-      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-600" />
+      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-300" />
       <div>
         <h3 className="font-bold text-ink">{title}</h3>
         <p className="mt-0.5 text-sm leading-relaxed text-ink-soft">{body}</p>

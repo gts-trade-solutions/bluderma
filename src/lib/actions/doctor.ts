@@ -10,6 +10,7 @@ import { authOptions } from "@/lib/auth";
 import { audit } from "@/lib/admin/audit";
 import { AdminResult, runAction } from "@/lib/admin/form";
 import { fieldErrors } from "@/lib/validation";
+import { normaliseSocials } from "@/lib/social";
 
 /**
  * Resolves the Doctor record owned by the signed-in user. Returns null when
@@ -30,6 +31,10 @@ async function requireOwnDoctor() {
 }
 
 const profileSchema = z.object({
+  // Optional here, not in the form: an APPROVED doctor's form does not render
+  // the field at all, and a missing value must mean "leave it alone" rather
+  // than "clear it".
+  name: z.string().trim().min(2, "Enter your name.").max(120).optional(),
   title: z.string().trim().min(1).max(160),
   specialty: z.string().trim().min(1).max(160),
   clinic: z.string().trim().min(1).max(160),
@@ -40,16 +45,38 @@ const profileSchema = z.object({
     .string()
     .default("")
     .transform((v) => v.split("\n").map((s) => s.trim()).filter(Boolean)),
+  // Either shape: the chip picker submits repeated inputs (collapsed to an
+  // array by formToObject), the old textarea submits one newline-joined
+  // string. Deduped case-insensitively so "Botox" and "botox" are one entry.
   services: z
-    .string()
+    .union([z.string(), z.array(z.string())])
     .default("")
-    .transform((v) => v.split("\n").map((s) => s.trim()).filter(Boolean)),
+    .transform((v) => {
+      const raw = Array.isArray(v) ? v : v.split("\n");
+      const out: string[] = [];
+      const seen = new Set<string>();
+      for (const item of raw) {
+        const t = item.trim();
+        if (!t || seen.has(t.toLowerCase())) continue;
+        seen.add(t.toLowerCase());
+        out.push(t);
+      }
+      return out;
+    }),
+  // Accepted loosely and normalised on save — a doctor typing "@drmenon" is
+  // giving a perfectly valid answer, and rejecting it teaches them nothing.
+  instagram: z.string().trim().max(300).optional().default(""),
+  facebook: z.string().trim().max(300).optional().default(""),
+  linkedin: z.string().trim().max(300).optional().default(""),
+  youtube: z.string().trim().max(300).optional().default(""),
+  website: z.string().trim().max(300).optional().default(""),
 });
 
 /**
- * A doctor edits their own presentation fields — name, fee, verification and
- * ratings stay admin-controlled so a practitioner can't inflate their own
- * standing or undercut clinic pricing.
+ * A doctor edits their own presentation fields, including their name. Fee,
+ * verification, ratings, status and the registration details stay
+ * admin-controlled — those are what actually carry standing, and a
+ * practitioner must not be able to set them.
  */
 export async function updateOwnProfile(
   formData: FormData
@@ -69,16 +96,40 @@ export async function updateOwnProfile(
     }
     const d = parsed.data;
 
+    // A doctor may correct their own name.
+    //
+    // It used to be admin-only, on the reasoning that a practitioner should not
+    // be able to inflate their own standing. But the name is not what carries
+    // standing here — `verified`, `rating`, `reviews`, `fee`, `status` and the
+    // registration fields are, and all of those remain admin-only. Meanwhile
+    // the same doctor could already rewrite their photograph, headline,
+    // specialty and biography, so locking the one remaining field prevented no
+    // impersonation while guaranteeing that anyone whose account was opened
+    // under a company name or with a typo could never fix it. The rename is
+    // recorded below with both values so it stays reviewable.
+    const current = await prisma.doctor.findUniqueOrThrow({
+      where: { id: owner.doctorId },
+      select: { name: true },
+    });
+
     await prisma.$transaction(async (tx) => {
       await tx.doctor.update({
         where: { id: owner.doctorId },
         data: {
+          ...(d.name ? { name: d.name } : {}),
           title: d.title,
           specialty: d.specialty,
           clinic: d.clinic,
           location: d.location,
           about: d.about,
           image: d.image,
+          ...normaliseSocials({
+            instagram: d.instagram,
+            facebook: d.facebook,
+            linkedin: d.linkedin,
+            youtube: d.youtube,
+            website: d.website,
+          }),
         },
       });
       await tx.doctorLanguage.deleteMany({ where: { doctorId: owner.doctorId } });
@@ -108,7 +159,12 @@ export async function updateOwnProfile(
       action: "update",
       entity: "Doctor",
       entityId: owner.doctorId,
-      after: { self_edit: true },
+      after: {
+        self_edit: true,
+        ...(d.name && d.name !== current.name
+          ? { renamed_from: current.name, renamed_to: d.name }
+          : {}),
+      },
     });
 
     revalidatePath("/doctor/portal/profile");

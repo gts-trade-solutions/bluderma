@@ -27,6 +27,10 @@ export interface RequestRow {
   mode: string;
   patientName: string;
   notes: string | null;
+  /** One-line intake summary, and the patient's own description. */
+  reasonSummary: string | null;
+  reasonDetail: string | null;
+  urgent: boolean;
   isPriority: boolean;
   isMember: boolean;
   feeInr: number;
@@ -137,9 +141,22 @@ function RequestCard({ r, onOpen }: { r: RequestRow; onOpen: () => void }) {
             <span className="text-slate-400">asked {waitingFor(r.requestedAt)}</span>
           </p>
 
-          {r.notes && (
-            <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
-              {r.notes}
+          {/* Accepting or declining a request without knowing what it is for
+              is not a decision anyone can make, so the reason renders here
+              rather than only behind the drawer. */}
+          {r.reasonSummary && (
+            <p
+              className={`mt-2 text-xs font-bold ${
+                r.urgent ? "text-rose-600" : "text-slate-700"
+              }`}
+            >
+              {r.urgent && "● "}
+              {r.reasonSummary}
+            </p>
+          )}
+          {(r.reasonDetail || r.notes) && (
+            <p className="mt-1.5 whitespace-pre-line rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
+              {r.reasonDetail || r.notes}
             </p>
           )}
         </div>

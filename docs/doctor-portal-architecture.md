@@ -684,3 +684,1051 @@ WHAT A NEW PRACTICE LOOKS LIKE
   status DRAFT, isActive false, and every display field EMPTY rather than
   invented — the wizard fills them in. A half-finished application must never
   read as a real listing.
+
+===============================================================================
+APPENDIX F  -  PORTAL SHELL, AND WHAT IS STILL PENDING
+===============================================================================
+
+THE SHELL
+  The portal was assembled from the ADMIN component set — PageHeader, Table,
+  EmptyState — on a grey page behind a row of underlined tabs. That is a
+  back-office look, and it is why the portal read as an internal tool beside
+  the client experience.
+
+  It now has a dark navy rail carrying the brand, navigation, the practice's
+  live/draft status and the Requests count, with the working canvas staying
+  LIGHT. Deliberately not the client side's dark theme: this is read across a
+  whole clinic day, and the calendar's per-clinic colour swatches need a
+  high-contrast ground. Dark chrome, light canvas — the pattern pro tools use.
+
+  components/doctor/portalUi.tsx is the portal's own primitive set, kept
+  separate from admin/ui.tsx rather than shared. The two surfaces have
+  different jobs and will keep diverging; one shared set means every change to
+  either has to be checked against both.
+
+  Removed: DoctorPortalNav (the tab strip the rail replaces).
+
+===============================================================================
+PENDING  -  verified against the codebase, 19 Aug 2026
+===============================================================================
+
+BLOCKED ON THE OWNER — nothing works until these arrive
+  1. RAZORPAY_KEY_ID / KEY_SECRET / WEBHOOK_SECRET absent from .env.
+     Every payment path degrades silently: appointments confirm without
+     charging, the membership cannot be bought, the webhook returns 503.
+  2. CRON_SECRET absent. /api/cron/reminders refuses to run, so no appointment
+     reminder has ever been sent.
+  3. Images: 1.1 GB under public/, not in git, and 588 database rows point at
+     local /images/... paths (384 hub treatments, 145 media assets, 30
+     categories, 18 clinic photos, 7 doctors, 4 banners). They must be rehosted
+     to S3/CloudFront before any deploy or every one of them 404s.
+     S3_BUCKET and CDN_BASE_URL are already configured; prisma/rehost-images.ts
+     exists for exactly this.
+  4. No deploy target in the repo — no vercel.json, CI workflow, Dockerfile or
+     Procfile, and no deploy CLI installed.
+
+ADMIN CRUD NOT BUILT
+  5. Clinic. Clinics can only be created through doctor onboarding. An admin
+     cannot add, edit, merge or deactivate one.
+  6. SubscriptionPlan. Seeded by script; price, perks and benefits are only
+     editable by a developer.
+
+SUBSCRIPTION
+  7. Renewal reminders. Subscription.renewalNoticeSentAt exists and is reset on
+     settle, but nothing sends the notice. Needs a cron route beside
+     api/cron/reminders.
+  8. Auto-debit. One-time orders per term by design (DEC-3). Real recurring
+     billing needs the Razorpay Subscriptions API and dashboard Plans.
+
+DATA GAPS
+  9. Geocoding. Clinic.lat/lng exist and the demo data is populated, but no
+     address is geocoded on save, so "clinics near me" cannot sort by distance
+     for a real clinic.
+  10. Anonymous intake responses are stored with userId null and are never
+      linked if that person later registers — so the doctor's pre-read never
+      finds them.
+  11. Appointment.confirmationSentAt is declared and written nowhere.
+  12. Prescription.fileUrl is writable from admin but not from the doctor's
+      prescribe form — a doctor cannot attach a PDF.
+
+SCALE / ROBUSTNESS
+  13. No pagination anywhere in the portal or admin — three hard take:200 caps.
+      A busy practice silently loses rows past 200.
+  14. Rate limiting is in-memory per process (lib/rateLimit.ts). It stops
+      working the moment the app runs on more than one instance.
+  15. No in-app notifications. Everything is email.
+
+BRIEF SECTIONS NOT STARTED  (docs/requirements-brief.txt)
+  16. Sec 4 — CME Corner: Be Our Speaker, Learn Forever, exhibitions,
+      the ~USD 10 study-material subscription. Nothing exists.
+  17. Sec 5 — Inventory Corner: doctors ordering supplies, vendor onboarding.
+  18. Sec 6 — Setup Clinic: franchise enquiry, equipment leasing.
+  19. G-4 — the hair analyzer. Blocked on Q-8 (who supplies it).
+  20. A-1/A-2 — AI-search optimisation. Zero schema.org/JSON-LD in the app and
+      no llms.txt. This one is cheap and was the stated reason the entry UX
+      avoids a modal gate.
+
+---
+
+## Appendix G — "can't access the portal"
+
+Reported as *"still in white theme design is not changed in doctor portal and
+can't able to access portal and calender also etc for doctor"*. The redesign
+was in fact live; the report was about not being able to reach it. Three
+separate defects sat between the reader and the page.
+
+**1. The nav pointed at a brochure.** `buildDoctorMenu()` gave every reader
+`{ label: "Your portal", href: "/doctor#portal" }` — an anchor scrolling to the
+marketing *section about* the portal. A signed-in practitioner clicking "Your
+portal" therefore landed on a white marketing page, which is exactly what the
+report describes. The menu now takes `{ hasPortal }`: a listed practitioner
+gets `/doctor/portal`, a stranger keeps the anchor, relabelled "The portal" so
+it stops claiming ownership.
+
+**2. The refusal page was a dead end.** The reader was signed in as a PATIENT
+(`karan`), so middleware correctly bounced them — to a page reading *"your
+account doesn't have the right permissions… contact your administrator"*. On a
+consumer platform there is no administrator to contact, and the reader is
+rarely a stranger; they are usually one person holding both a client and a
+practitioner login, signed in with the wrong one. The page now names the
+refused account, says what the destination needs, and offers the switch. A
+client refused at the portal is also offered `/doctor` — some of them are
+practitioners who never registered as one. Middleware and `requireRole()` both
+forward the attempted path as `?from=` so the page can say any of this.
+
+**3. An open redirect, found on the way.** `postLoginPath()` sanitised its
+`callbackUrl` with `startsWith("/")` alone. `//evil.com` and `/\evil.com` both
+pass that test and both are read by browsers as protocol-relative URLs pointing
+at another host, so `/login?callbackUrl=//evil.com` sent the user off-site after
+a successful sign-in — a phishing link genuinely hosted on our own domain. One
+`internalPath()` helper in `lib/roles.ts` now guards both `postLoginPath()` and
+the new `?from=`, so the two cannot drift apart.
+
+Verified end to end against a running server with minted session cookies, since
+none of this is reachable without one:
+
+| Account | `/doctor/portal` |
+| --- | --- |
+| `dr.test@bluderma.local` (APPROVED) | 200, dark rail |
+| `velu3prabhakaran@gmail.com` (DRAFT) | 200, dark rail + "not submitted yet" |
+| `karanneeraj253@gmail.com` (PATIENT) | 307 → `/forbidden?from=/doctor/portal` |
+
+All five portal routes return 200 for both doctor accounts. `prisma/verify-portal-access.ts`
+(29 checks) covers the menu, the path hand-off, the refusal copy, and the
+sanitizer.
+
+---
+
+## Appendix H — uploads, and moving the imagery to S3
+
+Reported as *"image is not able to upload"* on the onboarding photo field, with
+the field showing "Upload failed. Please try again or paste a URL."
+
+### Why it failed
+
+Nothing was wrong with the credentials, the presign endpoint, or the bucket
+permissions to write. `HeadBucket`, `GetBucketLocation` and a server-side
+`PutObject` all succeeded on first try. **The bucket had no CORS configuration
+at all.**
+
+Uploads go straight from the browser to S3 via a presigned PUT, so the browser
+sends a cross-origin preflight first. A bucket with no CORS rules refuses that
+preflight, which makes `fetch` *throw* rather than return a failed response —
+so the code fell through to the outer `catch`, whose message was the generic
+"Upload failed. Please try again or paste a URL." The far more useful branch
+("rejected by storage. Check bucket CORS") sat on `!put.ok` and could never run,
+because the request never completed.
+
+### A second failure hiding behind the first
+
+Fixing CORS made the PUT succeed — and the uploaded image then returned **403
+on read**. The bucket policy granted public read to `bluderma/*`, but
+`buildKey()` writes to top-level prefixes (`doctors/`, `clinics/`, …). Nothing
+the app had ever uploaded was covered by it. Both halves are now applied by one
+idempotent script, `prisma/setup-s3.ts`.
+
+Public read is an **allow-list**, not a wildcard, because two prefixes must
+never be readable without a signature:
+
+| Prefix | Why |
+| --- | --- |
+| `credentials/` | Medical registration certificates. The onboarding form tells the doctor it "goes to our review team and nowhere else". |
+| `prescriptions/` | Patient medical documents. |
+
+Those are reached through `/api/uploads/view`, which authorises **per object,
+not per role**: an admin may open any of them; a doctor may open their own
+certificate; a patient or a doctor may open a prescription that is theirs;
+everyone else gets 403. Uploading an object also counts as owning it, which is
+the only proof available between the upload finishing and the form being saved
+— the window in which the doctor is looking at a preview of their own
+certificate.
+
+Verified live, against the running app with minted sessions:
+
+| | result |
+| --- | --- |
+| preflight from `localhost:3000` / `127.0.0.1:3000` | 200 |
+| preflight from another port / `evil.example` | 403 |
+| presigned PUT | 200 |
+| public read of the uploaded portrait | 200 |
+| doctor presigning into `treatments/` | 403 |
+| certificate read anonymously from S3 | 403 |
+| certificate via `/api/uploads/view` — owner / admin | 307 |
+| certificate via `/api/uploads/view` — other user / signed out | 403 |
+
+### Moving the existing imagery
+
+The app served ~1.1GB of imagery out of `public/`, which works on one machine
+and stops working the moment it runs anywhere that does not carry that folder.
+`prisma/rehost-local-images.ts` uploads it and rewrites the rows. It is
+idempotent and resumable — a URL already on our base is skipped, an object
+already in the bucket is not re-uploaded, and the key is derived from the path
+so a re-run produces the same key.
+
+Result: **1,716 files uploaded (870MB), 2,164 column values rewritten across 15
+columns in 12 tables, 0 rows still pointing at `public/`.**
+
+Eight further paths are written into source rather than stored in a row (a hero
+background and the fallback avatar pool). They are uploaded too and resolved at
+render time by `src/lib/assetUrl.ts`, which returns the path untouched when
+`NEXT_PUBLIC_ASSET_BASE_URL` is unset — so a missing variable degrades to
+serving from `public/` rather than to a broken image.
+
+`public/images` itself is left in place. Nothing in the database or the source
+depends on it any more, so it can be deleted once a deploy has been seen
+working, but that is a decision to make deliberately rather than a side effect
+of this change.
+
+### Before going live
+
+`S3_CORS_ORIGINS` must gain the production domain and `prisma/setup-s3.ts` must
+be re-run, or uploads will fail in production exactly as they did locally. The
+upload origin list is deliberately explicit — `PUT` is never open to `*`.
+
+`prisma/verify-uploads.ts` (34 checks) covers key building, the public/private
+split, URL round-tripping, the view route's authorisation, the client's error
+branches, and the live bucket CORS and policy.
+
+---
+
+## Appendix I — the visit intake, doctor links, and the report chain
+
+### The problem
+
+A booking reached the doctor as a name, a time, and an optional free-text note
+that patients almost never filled in. The portal could truthfully say only that
+*"the appointment was scheduled"*. Every consultation therefore started with the
+doctor asking questions the patient had already had a form open to answer.
+
+### What the patient now answers
+
+Five required questions on their own step, between choosing a mode and giving
+contact details. All five are one tap except the description:
+
+| Field | Why it is required |
+| --- | --- |
+| `reason` (12 fixed options) | Triage. A fixed list can be sorted, counted and coloured; free text cannot. |
+| `reasonDetail` (min 10 chars) | The list cannot carry "it flares when I use retinol". |
+| `symptomDuration` | A rash of three days and a rash of three years are different consultations. |
+| `severity` 1–5 | Worded as impact on daily life, not as a clinical grade — a patient cannot grade their own acne, but they know if it stops them going out. |
+| `isFirstVisit` | Decides slot length and whether notes exist to read. |
+
+Optional history follows on the details step: what they have already tried,
+current medication, allergies, and anything else. `allergies` renders on the
+doctor's side even when blank — as *"None reported"* — because an empty row
+reads as "not asked", and it always is asked.
+
+Two additions the brief did not ask for but that dermatology needs:
+
+- **Photo consent**, asked once and recorded on the booking. Clinical
+  photography is routine and consent for it is not something to assume. The
+  drawer says *"Not given — ask before photographing"* rather than staying
+  silent.
+- **Age and sex, snapshotted** onto the appointment from the profile rather
+  than joined. Both change how a presentation reads, and a profile edited next
+  year must not change what the doctor was told at the time.
+
+### Where it surfaces
+
+Today's list and the requests queue carry a one-line summary under the patient's
+name, so a doctor never has to open a row to find out what it is for. Severity
+4–5 renders in rose and prefixes the doctor's email subject with `[Urgent]`.
+The drawer gets a full **"Why they are coming"** section placed *above* money
+and logistics. The patient sees their own answers read back on
+`/patient/appointments` — someone who cannot see what the clinic was told has no
+way to notice it is wrong.
+
+### The skin report
+
+The attach control used to sit behind a button and only reveal what it knew
+once pressed, so a patient with no scan pressed it and got what looked like
+nothing. `SkinReportAttach` asks on mount and states the answer: here is your
+report, or you have none and here is a free scan.
+
+One bug found while wiring it: `/api/skin/my-latest` returns the newest of two
+different systems — the legacy `SkinAnalysis` simulator and the camera
+`SkinScan` — as a bare `id`. A single foreign key would have silently dropped
+every camera scan. The API now says which system the id belongs to and the
+appointment carries `skinAnalysisId` **and** `skinScanId`. Ownership is
+re-checked server-side either way; a scan belonging to somebody else is dropped
+rather than failing the booking.
+
+### Doctor links
+
+`Doctor` gains `instagram`, `facebook`, `linkedin`, `youtube` beside the
+existing `website`. People type these three ways — `@drmenon`, `drmenon`, or the
+full URL — so `lib/social.ts` normalises all three to a full https URL on save.
+A LinkedIn URL pasted into the Instagram field is dropped rather than saved,
+because the icon would otherwise lie about where the link goes.
+
+The portal profile also gained **"How your listing reads"** — the listing
+rendered exactly as a client sees it, plus a list of what is missing from it. A
+practitioner asking why nobody books them was usually looking at a listing with
+no photo, no languages and no links, and had nowhere that said so.
+
+### Mobile
+
+Two real defects fixed: the reschedule slot picker ran four columns on a 360px
+screen (now three, four from `sm`), and the marketing week preview squeezed five
+168px-tall day columns onto a phone (now scrolls inside its own container). The
+admin table and the month calendar were already handling narrow screens
+correctly and were left alone. All new controls are full-width stacked cards on
+mobile and only go two-up from `sm`.
+
+### Verified
+
+`prisma/verify-visit-intake.ts` — 66 checks covering required-field enforcement,
+the enum vocabulary being complete, triage thresholds, the email block, social
+normalisation including hostile hosts and credentialed URLs, and that each
+surface is actually wired. Proved live against a running server: a seeded
+booking rendered as *"Hair loss or thinning · More than a year · 4/5 · Marked ·
+First visit"* on Today, in the requests queue, and through the drawer's API.
+
+### Known gap
+
+The doctor's social links are editable and visible in the portal but are not yet
+rendered on the public booking page — that surface takes a cast DTO which would
+need widening. Deliberately left rather than half-wired.
+
+---
+
+## Appendix J — the nativeEnum crash, and patient photographs
+
+### "Cannot convert undefined or null to object"
+
+`/doctor/portal/requests` threw at `validation.ts:104`, inside
+`z.nativeEnum(VisitReason, …)`. The enum was `undefined` at that moment.
+
+The cause was not the code — the same page returned 200 on a server started
+after the migration. It was a **dev server started before `prisma generate`**:
+Node had already cached the old generated client, so `VisitReason` did not
+exist on it, and `z.nativeEnum(undefined)` threw while rendering a page that
+had nothing to do with validation. A restart fixes the symptom.
+
+Reading a generated enum as a *runtime value* is the underlying fragility,
+though: it couples every schema to whether `node_modules` happens to be current,
+and drags `@prisma/client` into any bundle that validates input. The schema now
+takes its permitted values from `VISIT_REASON_VALUES` / `SYMPTOM_DURATION_VALUES`
+in `lib/booking/visitIntake.ts` — plain string literals — and imports the Prisma
+enums as **types only**. The suite compares those arrays against the real enum,
+so they cannot silently drift.
+
+### Patient photographs
+
+`AppointmentPhoto` (up to four per booking), attached on the details step and
+shown in the doctor's drawer.
+
+These are clinical images of a named person, so `patients/` is a **private**
+bucket prefix — added to `PRIVATE_PREFIXES` in both `prisma/setup-s3.ts` (which
+enforces it) and `lib/storage.ts` (which knows to sign). Nothing here is
+publicly readable, and the drawer renders each thumbnail through
+`/api/uploads/view` rather than at the stored URL.
+
+Authorisation is per-object:
+
+| Who | Result |
+| --- | --- |
+| The patient who attached it | 307 — signed link |
+| The doctor whose appointment it is | 307 — signed link |
+| **A different doctor** | **403** |
+| Signed out | 403 |
+| Anonymous, direct from S3 | 403 |
+
+Uploads are scoped the same way: a PATIENT may presign into `patients/` and
+nowhere else — `doctors/`, `treatments/` and `credentials/` all return 403.
+Keys are re-checked server-side against `MediaAsset.uploadedById` before being
+attached, so a key belonging to somebody else cannot be bolted onto a booking
+and then read back through the signed route.
+
+`capture` is deliberately not set on the file input. Most of these are taken on
+a phone, but forcing the camera would block the common case of choosing a photo
+taken last week when the flare was at its worst.
+
+### Verified
+
+`prisma/verify-visit-intake.ts` grew to 87 checks, including that the public
+prefix list never contains `patients`, `credentials` or `prescriptions` —
+scoped to that array specifically, because a loose match runs on into the
+private list and passes for the wrong reason. Proved live: upload, scoping
+refusals, and the full four-way access matrix above. Probe appointment, photo
+and bucket object all deleted afterwards.
+
+---
+
+## Appendix K — invisible text on /patient/appointments
+
+The site is dark by default: `text-ink` is near-white, and the standard raised
+surface is a wash of translucent white over navy. `.theme-light` is the escape
+hatch that flips both.
+
+`/patient/appointments` set a light **background** (`bg-[#f7fafc]`) and never
+added the **class**. So near-white ink was drawn on a near-white page, over
+cards whose 4% white wash over `#f7fafc` is just `#f7fafc`. The doctor's name,
+the date, "In clinic", "Reschedule" and "Cancel" were all technically rendered
+and all invisible. The one readable element was the Confirmed pill, because
+that single entry in `STATUS_STYLE` had already been corrected to a dark green
+while its four siblings still used dark-theme colours.
+
+An audit of every `page.tsx` and `layout.tsx` found this was the **only** page
+with a light background and no `theme-light` — admin, doctor/join and the
+doctor portal all had it.
+
+Three fixes, in increasing order of reach:
+
+1. **The page** now declares `theme-light`.
+2. **`STATUS_STYLE`** uses dark ink on a tinted ground for all five states.
+   `text-rose-300` / `text-brand-200` / `text-teal-300` in the two components
+   that render only on this page were darkened to their 700 steps. `text-white`
+   was left alone where it sits on a saturated fill — the gradient hero and the
+   coloured buttons — which is the only place white reads.
+3. **The escape hatch itself** was incomplete. It flipped ink, borders and
+   `.card`, but not the `bg-white/[0.0x]` raised-surface idiom that appears 120
+   times across the app, nor `ring-white/*`. Those now resolve to real white and
+   slate surfaces inside `.theme-light`, so the next light page works without
+   anyone rediscovering this.
+
+### A test that did not test anything
+
+`prisma/verify-theme.ts` sweeps every page for a light background without the
+class. Its first pattern ended in `` — and a word boundary after `]` never
+matches, so it skipped `bg-[#f7fafc]`: the exact class that caused the bug. It
+reported 0 offenders on the unfixed code.
+
+Caught by running the detector against known inputs rather than trusting a
+green result. Each alternative now carries its own right-hand guard, and the
+detector is checked against nine cases including `bg-slate-500` and
+`bg-white/[0.04]`, which must NOT flag. 25 checks total.
+
+---
+
+## Appendix L — the migration/dev-server trap
+
+Three separate reports in one session — `Cannot convert undefined or null to
+object`, then `Invalid prisma.appointment.findMany()` on `/doctor/portal/requests`,
+then the same on `/doctor/portal` — all had one cause, and none of them were
+in the code.
+
+`next dev` loads `@prisma/client` into memory once at boot and caches it for the
+life of the process. It also holds `query_engine-windows.dll.node` open, so
+`prisma generate` cannot replace the engine and reports `EPERM` — harmless in
+itself, because the engine binary is versioned with the Prisma package rather
+than with the schema. What matters is that the **generated JavaScript** is
+rewritten, and a server started before that happened keeps answering from a
+client that has never heard of the new columns.
+
+The evidence was unambiguous once looked for:
+
+```
+prisma client written : 13:23:20
+dev server started    : 12:16:51   ← 66 minutes earlier
+```
+
+and the exact failing query ran clean in a fresh process. Nothing in the
+codebase can repair a module already cached in another process.
+
+**`npm run db:apply`** (`prisma/apply-migrations.ts`) now applies migrations,
+regenerates, checks whether the client JS was actually rewritten, distinguishes
+the harmless engine-lock EPERM from a real failure, and prints an unmissable
+restart notice when one is needed.
+
+One genuine code fix came out of this: `validation.ts` had read `VisitReason`
+as a runtime *value* from the generated client, so a stale client made
+`z.nativeEnum(undefined)` throw during render — a crash in input validation
+caused by an unrelated `node_modules` state. It now uses literal string values
+and imports the Prisma enums as types only. That removed the first of the three
+symptoms permanently; the other two were always going to need a restart.
+
+---
+
+## Appendix M — white cards on a dark page, ₹0, and the locked name
+
+### The inverse theming bug, and this one was mine
+
+Appendix K fixed a light page rendering dark-theme text. This is the mirror
+image: `PhotoAttach` and `SkinReportAttach` — both written earlier in this
+session — used solid `bg-white` cards with `text-ink` headings. `text-ink` is
+near-white in the dark theme, and the booking wizard is dark, so "Photos of the
+area" and "Your skin report" were white text on white cards. The only visible
+thing in either was the one button with a saturated fill.
+
+Both now use the wizard's own idiom — `bg-white/[0.04]` with `ring-white/10` —
+and their accents moved to the 300 steps. That markup is also correct on a
+light page, because `.theme-light` maps it; a hardcoded `bg-white` can only
+ever be right on one of the two.
+
+`verify-theme.ts` gained a guard over `src/components/booking`: no solid light
+surface, and no dark-step accent that is not sitting on a saturated fill. It
+was checked against the exact string that shipped
+(`border border-slate-200 bg-white p-4` → flags) and against six things that
+must not flag, including `bg-white/10` and `bg-brand-500/[12%]`.
+
+### ₹0
+
+Not a bug in the data — `0` is the documented way to say "on enquiry", and the
+onboarding field says so. The profile header just rendered it literally as
+`· ₹0 · 0★ (0)`, which reads as broken. It now says **"Fee on enquiry"** and
+**"No reviews yet"**, and points at *My practice*, where fees actually live
+(they are per-clinic since the multi-clinic work — `Doctor.fee` is only the
+legacy headline, synced from the primary).
+
+### The name
+
+`updateOwnProfile` deliberately excluded `name`, on the reasoning that a
+practitioner should not be able to inflate their own standing.
+
+That reasoning does not survive contact with the rest of the form. The same
+doctor could already rewrite their photograph, headline, specialty and
+biography — the whole of how they present. Meanwhile `verified`, `rating`,
+`reviews`, `fee`, `status`, `regCouncil` and `regNumber` are all admin-only,
+and those are what actually carry standing. Locking the one remaining field
+prevented no impersonation, and guaranteed that anyone whose account was opened
+under a company name or with a typo could never fix it — which is exactly what
+had happened: a practice listed as "Race Auto India" with no way to correct it.
+
+The name is now editable, and a change is recorded in the audit trail with both
+the old and new value so it stays reviewable.
+
+An intermediate design — editable until approved, admin-only afterwards — was
+built first and then removed. It read as a reasonable compromise but did not
+help the actual case: the profile had already been approved, so it would have
+left the same dead end while adding a rule to explain.
+
+---
+
+## Appendix N — the onboarding-first portal, AI assist, and the dashboard
+
+Four phases, built against docs/plan `glowing-hugging-falcon`.
+
+### 1. The portal is the application
+
+A practitioner used to sign up and land on a marketing page asking them to list
+their practice — having just done exactly that — then be walked through a
+wizard on a separate route while the portal sat behind it showing three empty
+tiles. Signup now lands in `/doctor/portal`, and until the listing is approved
+that page **is** the application.
+
+The step components were not forked: they take `redirectTo`/`nextHref`/
+`backHref` as props defaulting to today's literals, so `/doctor/portal/practice`
+(which already hosted two of them in `mode="manage"`) is untouched.
+`/doctor/join` stays public for step 0 and redirects signed-in doctors
+**preserving `?step=`**, so every link ever emailed still lands correctly.
+
+Two defects fixed on the way:
+
+- **`applicationGaps` was an exported server action taking a `doctorId`** — a
+  public endpoint that would tell any caller which fields any practitioner was
+  missing. It is now a plain module, `lib/doctor/gaps.ts`.
+- **Two disagreeing "what's missing" lists** (8 blocking items in the wizard, 6
+  different advisory ones on the profile) are one list with a `blocking` flag.
+
+A live check caught the progress counter reading **"-2 of 6 done"** — it
+subtracted *gaps* from *steps*, and step 1 alone holds four gaps.
+
+### 2. AI assist that works without a key
+
+Every field is usable unconfigured, which is how it shipped and how it was
+tested: specialty is a curated combobox, treatments search the real 384-name
+catalogue, the address comes from India Post, and the About box is a plain
+textarea. Only *drafting* and *long-tail matching* need the key.
+
+**The anti-hallucination guarantee is structural, not a prompt.** The model is
+handed the catalogue and told to choose from it — and the answer is then
+intersected with that catalogue regardless. `["Botox", "Quantum Skin Reversal"]`
+returns `["Botox"]`. An invented treatment cannot reach a profile even if the
+instruction is ignored entirely.
+
+**Addresses are never generated.** `api.postalpincode.in` is free, keyless and
+real; a PIN code is the one field a doctor cannot sanity-check by reading it
+back, so no model is asked to produce one. Every failure mode leaves the form
+manual.
+
+A live test caught the model writing **"he"** about a practitioner whose gender
+was never supplied — inferred from the name. The prompt now forbids gendered
+pronouns outright, and the templates never used them.
+
+### 3. The dashboard
+
+Revenue is **appointment-derived**: `Payment` has no `doctorId` and no rows.
+Because `COMPLETED` is set by hand, a single total keyed on it would quietly
+under-report every untidy diary — so there are four tiers, including an
+**`unresolved`** bucket for visits that happened and were never closed. That is
+a nudge, not a hidden fudge, and the UI explains it.
+
+Projections are arithmetic and say so. Capacity reproduces the inclusive
+`t <= end` slot endpoint from `availability.ts` — 09:00–10:00 at 30 minutes is
+**three** slots — or the dashboard would disagree with the booking grid the same
+doctor can see. Every rate carries its sample and prints "—" below five.
+
+### 4. Insights, cached once a day
+
+`DoctorDailyInsight` is keyed on the **clinic wall-clock day** — 19:00Z is
+already tomorrow in Chennai, and a UTC key would roll the cache at 05:30,
+mid-clinic. The unique key makes concurrent first-renders idempotent.
+
+The model receives computed metrics and is told to quote them verbatim; it is
+never asked to calculate. **Every number in the generated prose is then checked
+against the metrics it was given, and one unsupported figure discards the whole
+response.** Blunt on purpose: a doctor reading an invented "₹48,000" is worse
+than a plainer sentence that is true. The strip labels itself "AI suggestions"
+or "Practice pointers" so a deterministic set is never passed off as more.
+
+### Verified
+
+14 suites, 500+ checks. New: `verify-onboarding-portal` (57),
+`verify-ai-assist` (77), `verify-doctor-metrics` (54, every rupee asserted
+against a seeded fixture), `verify-ai-insights` (36). Live: all six portal
+routes at DRAFT and APPROVED, real India Post lookups, real OpenAI drafts and
+treatment matching, and the insight strip generating and caching.
+
+Three test-only bugs were caught rather than shipped: a stale regex after a
+module split, a comment matching its own "never use nativeEnum" assertion, and
+an environment assumption (`no key is configured`) that failed the moment a key
+was added.
+
+---
+
+## Appendix O — the dark-inside-light regression
+
+The portal rail rendered as a **white box with white text in it**, the active
+nav item vanished, and the dashboard's sparkline area was a blank white panel.
+
+The cause was Appendix K's own fix. `.theme-light` was taught to repaint the
+dark theme's translucent-white "raise" surfaces solid, so cards would read on a
+light canvas. But the portal's navigation rail (`#0b1220`) and the dashboard's
+revenue band are deliberately dark **and live inside that same `theme-light`
+wrapper** — so every `bg-white/[0.05]`, `bg-white/[0.09]` and `ring-white/10`
+painted on them turned opaque white, taking their white text with it.
+
+The fix is an explicit opt-out, `.on-dark`, applied to the outermost element of
+each dark region. It restores the washes, the hairlines and the inverted ink
+tokens, and carries one more class than the rule it undoes (0,3,0 over 0,2,0)
+so it wins without `!important`.
+
+Marked: `PortalRail` (desktop rail, mobile bar, drawer), the dashboard hero
+band, and `JoinHero` — which uses `border-white/20` on a dark hero sitting on
+the light `/doctor` page and was being remapped the same way.
+
+`verify-theme.ts` now checks that the escape exists, that it restores ink as
+well as surfaces, and that any component painting a `#0xxxxx` background while
+also using translucent whites marks it. 40 checks.
+
+### And the polish
+
+The same pass addressed "not attractive enough": the rail identity gained a
+gradient monogram and a real card, the active nav item a directional gradient
+with an inset highlight, and the revenue band two soft colour blooms behind the
+figure. The sparkline's empty state stopped being a white panel with a sentence
+in it and became a flat ghost of the chart that will be there — nothing is
+claimed, every bar is level. When a month has no bookings at all the hero says
+so in a sentence instead of printing a row of ₹0 chips.
+
+---
+
+## Appendix P — the calendar on a phone, and a chart-led dashboard
+
+### The calendar was unusable on mobile
+
+The week view laid out `56px + repeat(7, 1fr)`. On a 360px screen that is about
+**43 pixels per day** — narrower than the time labels inside it. Month cells
+were the same width and held text chips.
+
+- **Week** now scrolls sideways with a 116px floor per day column. Compressing
+  was the wrong trade: a doctor would rather swipe than squint.
+- **Month** shows coloured dots below `sm` and the whole cell opens the day;
+  full chips return at `sm` and up. Cells shrank to 64px since they only carry
+  dots.
+- **Toolbar** stacks: heading and arrows on one row, then a full-width
+  three-way segmented control. Previously the heading, two arrows, "Today" and
+  three view buttons shared one 360px line.
+- **Clinic filter** became one scrolling row — five locations used to wrap into
+  a block that pushed the calendar off the first screen.
+
+### The dashboard was text where it should have been shape
+
+Four AI cards were four paragraphs, and the analytics were mostly sentences.
+Replaced with infographics:
+
+| Was | Now |
+|---|---|
+| Four ₹ figures in a list | **Donut** of booked value by state, total in the hole |
+| Seven text rows of "booked/capacity" | **Stacked bars** — every bar full height, so the eye compares the *filled* portion, which is the actual question |
+| Five labelled rates | **Four radial gauges** + two compact figures |
+| — | **New**: bookings by start hour |
+| Paragraph cards | **Icon + metric + ≤12 words** |
+
+The insight contract changed with it: `metric` (one figure copied from the
+JSON) and `kind` (an icon) joined `title` and `body`, and the prompt caps the
+title at four words and the body at twelve. Titles must be human phrases, not
+JSON field names — the first run produced *"48 Weekly Capacity"*, which is a
+field name with a number in front of it.
+
+The fabrication tripwire now covers `metric` too, and hard length caps discard
+any card the model writes long anyway.
+
+Gauges below their sample threshold draw an empty ring and say "Needs 5" rather
+than showing a confident arc built from three appointments — the same rule the
+figures already followed.
+
+### Verified
+
+14 suites. Three assertions had to be rewritten because they tested copy rather
+than behaviour — "Nothing needs your attention", "2 booking" in a title, and a
+sentence that moved. They now assert the shape (`metric` + `title` + `body`
+together, icon in the known set, lengths within the card's caps), which is what
+actually has to hold.
+
+Every portal route re-checked at 200 under an iPhone user agent, with the week
+scroll, month dots and segmented toggle confirmed in the served markup.
+
+---
+
+## Appendix Q — charts above the fold, and real density
+
+The previous pass added charts but left them all *below* four text cards and
+four stat tiles, so the first screen was a headline figure, four paragraphs and
+four numbers — no chart at all. Three things changed.
+
+**Order.** The donut and the week chart now sit directly under the hero, ahead
+of the AI strip. A dashboard's first screen should show a shape.
+
+**The hero carries the practice, not one number.** It gained a
+month-on-month delta chip and four inline figures — clients, upcoming, week
+filled, rating — inside the dark band. The four standalone `StatTile`s below it
+were **deleted rather than kept**: they printed the same values a second time,
+which is padding, not density.
+
+**More that is actually new**, rather than more of the same:
+
+| Panel | Answers |
+| --- | --- |
+| Request → Accepted → Seen | Where bookings fall out of the pipe, with the drop between each stage |
+| Across your locations | Which clinic the work happens at, by count and value |
+| Month-on-month delta | Direction, not just position |
+
+`prevMonthBooked` uses the same exclusion rule as the current month — an
+unaccepted request is not money — and `monthDelta` is **null** rather than
++100% when there is no prior month, because a first month is not infinite
+growth.
+
+One small thing that mattered more than it should: the fallback insight glyph
+was a sunburst, which at 18px reads as a loading spinner. Four cards each
+appeared to be still loading. It is a bolt now.
+
+`verify-doctor-metrics` grew to 63 checks, including that a chart precedes the
+AI strip in the source, that the funnel never grows downstream, and that the
+delta is null with no prior month.
+
+---
+
+## Appendix R — the calendar click that did nothing
+
+Clicking an appointment opened no drawer. The instinct is to blame the click
+handler; the handler was fine.
+
+Evidence gathered before changing anything:
+
+- the `onOpen` chain from `TimeBlock` → `TimeGrid` → `setOpenId` → the drawer
+  was intact;
+- `GET /api/doctor/appointments/{id}` returned **200** with every field the
+  drawer reads (`photos`, `reason`, `member`, `scans`, `history`, `profile`,
+  `intake` all present).
+
+So the data path worked. The dev server log had the answer:
+
+```
+Error: Cannot find module './vendor-chunks/next.js'
+Error: Syntax Error
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed …
+```
+
+A corrupted `.next` dev build. React never hydrated, so **no click handler on
+any page was attached** — the calendar was simply the first place that made it
+obvious, because everything else on the portal is a link and links work without
+JavaScript.
+
+Fix: stop the server, delete `.next`, restart. Verified afterwards by counting
+the client chunks the page ships (8) and confirming the log is clean.
+
+Worth remembering: "the button does nothing" on a Next dev server is more often
+a broken bundle than a broken handler, and the dev log says so plainly.
+
+### Calendar polish
+
+While in there: today's column gets a tinted ground and a shadowed pill on the
+date; appointment blocks became rounded with a hover lift and a left accent;
+and a **live now-line** was added to today's column — mount-gated and ticking
+each minute, because rendering a position from `Date.now()` during SSR is a
+hydration mismatch, which is precisely the class of bug that caused the
+original complaint.
+
+The hour rules also gained `pointer-events-none`. They are zero-height and sat
+under the blocks, so they were not the cause here — but a full-width absolute
+element layered over a calendar is exactly the thing that steals a click later.
+
+---
+
+## Appendix S — the drawer that opened and closed itself
+
+Reported as *"sudden modal appears and gets closed"*. Different bug from
+Appendix R, and a genuine one in our own code.
+
+`reactStrictMode` is on, and in development React deliberately runs every
+effect twice: mount, tear down, mount again. `useBackGuard` therefore
+
+1. armed — pushed its sentinel,
+2. tore down — saw the sentinel was still its own and called `history.back()`,
+3. re-armed — re-attached its popstate listener.
+
+**popstate is asynchronous.** The pop from step 2 landed after step 3 had put
+the listener back, so the guard caught its own teardown, read it as the user
+pressing Back, and closed the overlay in the same tick it opened.
+
+The fix is a `selfPop` ref: set before any `history.back()` we initiate, and
+checked in the listener, which swallows exactly one pop. A ref survives the
+StrictMode cycle because the component instance is reused — only the effects
+are replayed. It is also correct in production: a back() we caused ourselves
+should never be read as navigation the user asked for.
+
+This affects **every overlay on the site**, not just the calendar —
+`AppointmentDrawer`, `EnquiryModal`, `DoctorDirectory` and `IntakeFlow` all use
+this guard.
+
+### Why the suite missed it
+
+`FakeHistory.back()` invoked its listeners **synchronously**. Under that model
+the teardown removes the listener before back() fires, so nothing catches the
+pop and the bug is invisible. The model now queues pops and delivers them via
+`flush()`, which is what a browser does, and the four existing scenarios were
+updated to flush after each simulated Back press.
+
+Scenario 5 exercises the exact sequence — render, teardown, render, flush — and
+asserts the overlay survives, one sentinel remains, and a *real* Back still
+closes it afterwards. Confirmed non-vacuous by removing the `selfPop` check and
+watching it fail.
+
+---
+
+## Appendix T — a period to compare against, and five things the dashboard could not answer
+
+An audit of the finished dashboard turned up one genuine defect and a set of
+questions a practitioner would ask that the screen had no answer for. The
+defect first, because it is the one that was actively misleading.
+
+### The hours chart was not in clock order
+
+`busiestHours` was built as `[...hourMap.entries()].sort((a, b) => b.count -
+a.count).slice(0, 4)` — the four busiest hours, **ranked by volume**, handed to
+a chart titled *"When your day fills"* and plotted on a time-labelled X axis. A
+doctor could be shown `11:00, 09:00, 16:00, 10:00` left to right and read a
+curve that was not in their diary.
+
+It now returns every hour between the first and the last the practice sees
+work, in clock order, quiet ones included. The gap matters more than the peak:
+the demo practice draws `10 11 12 13 [14 15 16 = 0] 17 18 19`, and that trough
+is the lunch break — the single most actionable bar on the chart, and the one
+the old version deleted.
+
+The guard in `verify-doctor-metrics.ts` is deliberately built so a volume sort
+cannot pass it: the fixture books three appointments at 09:00 and the heaviest
+hour at 10:00, so *the first bar must not be the busiest one*. Confirmed
+non-vacuous — restoring the old two lines fails four checks.
+
+### The period control
+
+The dashboard was hard-wired to the calendar month, so "what did I book last
+month" had no answer at all. `DashboardPeriod` is now `this-month`,
+`last-month`, `last-3`, `last-6`, `this-year`, read from `?period=` through
+`parsePeriod()` (which never throws — an unknown value falls back to the month
+rather than 500-ing a doctor's home screen).
+
+Three decisions worth recording:
+
+- **Every window starts on the first of a month**, and is compared against the
+  same number of months before it. "Last 3 months" against the 3 months before
+  those, not against a rolling 90 days that overlaps them.
+- **Only the money figures follow it.** The rates, the demand mix and the busy
+  hours stay on their rolling 90 days and say so, because they answer *how does
+  my practice behave*, not *how did that month go*.
+- **A closed period does not forecast.** `last-month` sets `isComplete`, which
+  drops the "on track for" line and the three uplift cards — `uplift` computes
+  to zero for a finished window, and three cards reading "+0" look like a
+  broken dashboard rather than a question that does not apply.
+
+The month-named fields were renamed rather than quietly redefined:
+`monthBooked` to `periodBooked`, `prevMonthBooked` to `prevPeriodBooked`,
+`monthDelta` to `periodDelta`, `projectedMonth` to `projected`, `daysInMonth`
+to `daysInPeriod`, `monthLabel` to `periodLabel`. A field called `monthBooked`
+holding six months of takings is the kind of name that costs somebody an
+afternoon later.
+
+The sparkline follows the window too, and buckets by **week** past ten weeks —
+180 daily slivers on a phone is noise. `seriesGrain` is returned alongside the
+data and the tooltip says "Week of 3 Jun", because a chart that silently
+changes what a point means is a chart that lies quietly.
+
+**The insight cache had to move with it.** `DoctorDailyInsight` is keyed on
+`(doctorId, dateKey)`, and the strip quotes rupee figures that are checked
+against the metrics they were generated from. Serving August's set on a page
+showing July would put numbers on screen the tripwire never approved for that
+window, so `dateKeyNow(period)` appends the period — `2026-08-20:last-month`.
+`this-month` keeps the bare date, so rows written before the control still
+resolve.
+
+### The five gaps
+
+All five had their data in the schema already; none needed a migration.
+
+| Added | Why | Column that was going unread |
+|---|---|---|
+| **Next appointment today** | The first question a doctor opening this between two patients has, and the answer lived on another page | — |
+| **Who cancelled** | A cancel *rate* is not actionable. The clinic cancelling on clients and clients cancelling on the clinic are opposite problems with opposite fixes | `Appointment.cancelledBy` |
+| **Reviews awaiting moderation** | A client leaves a review and the doctor sees *nothing* until it clears — which reads as the review never arriving | `Review.status = PENDING` |
+| **Listing gaps once live** | The "no photo, no languages, no links" checklist ran all through onboarding and then never again — yet that is exactly what costs an approved doctor bookings | `advisoryGaps()` |
+| **Upcoming time off** | Booked leave was invisible on the screen that shows the diary | `DoctorTimeOff` |
+
+Plus the **booking link**, with copy and WhatsApp. A practitioner whose month
+reads zero is not helped by being told so twice; the useful thing the page can
+hand them is the address that turns a message into a booking. The origin is
+read in the browser rather than baked server-side — this runs on localhost, on
+staging and on the live domain, and a card that confidently shows a doctor a
+`localhost` address is worse than no card.
+
+The pending-review panel deliberately shows the **count and nothing else**. An
+unmoderated rating on a named clinician is precisely what moderation exists
+for; the doctor is told one is waiting, not what it says.
+
+`appointments.todayCount` was computed and never rendered. It was dropped
+rather than carried, because under a non-current period it would also have
+been wrong.
+
+---
+
+## Appendix U — the demo practice, and the difference between a mock-up and a lie
+
+Every screen in the portal is driven by real rows. That is correct, and it also
+means an empty database renders a correct, empty dashboard — you cannot tell a
+working chart from a broken one.
+
+`prisma/seed-demo-doctor.ts` builds one practitioner with six months behind
+them: three clinics, eleven working windows, roughly 1,100 appointments across
+every status, sixteen published reviews and three unmoderated ones, members,
+cancellations attributed to both sides, and leave booked ahead. It also builds
+a client account with scans, prescriptions, orders, discounts and a membership,
+so both sides of the product can be walked through.
+
+Three rules it works under:
+
+1. **Deterministic.** One seeded mulberry32, no `Math.random`. Two runs produce
+   the same practice, so "the chart changed after a re-seed" is not
+   indistinguishable from a bug in the chart.
+2. **Labelled.** The name, the registration number (`TNMC-DEMO-88417`) and
+   every account domain say *demo*. This codebase has deleted invented data
+   before; the way to keep demo data safe is to make it obvious.
+3. **Reversible.** `--purge` removes exactly what it wrote and nothing else,
+   and the seed purges before it seeds. `Appointment.doctorId` has no cascade —
+   deliberately, so a practice cannot be deleted out from under its own history
+   — so the teardown runs in dependency order rather than trusting the database
+   to follow, and appointments belonging to *other* practitioners have their
+   `patientUserId` nulled rather than being deleted.
+
+It reuses the existing seeded Chennai clinics rather than inventing a second
+set, so the calendar's colour key and the clinic photographs are the real ones.
+Cancelled rows release their `slotLock`, exactly as the booking action does —
+otherwise every cancelled slot would be permanently unbookable.
+
+### The client profile, and the `Sample` badge
+
+`/patient/profile` was ten sections down one scroll. It now has an index: a
+sticky rail on a desktop, a sticky strip of pills on a phone. Anchors, not
+routes — every section is already rendered in one server pass, so `#wallet`
+costs nothing and Back does the obvious thing. Turning them into ten routes
+would mean ten round trips to read your own file. The highlight is driven by
+`IntersectionObserver` rather than scroll arithmetic, because the sections are
+wildly different heights and any offset-based guess picks the wrong one on the
+short ones.
+
+Three of the ten sections describe products that do not exist yet: there is no
+`Wallet` table, no credit provider, and no address book. They are shown so the
+finished shape can be reviewed, and **every panel they feed carries a `Sample`
+badge**. That badge is the whole reason the sections are allowed to exist: a
+wallet balance a client cannot distinguish from their own money is not a
+mock-up, it is a lie. When the tables land, the import swaps and the badge
+comes off; nothing else about the page changes.
+
+`My conditions` is new and is **not** a diagnosis, which the section says out
+loud. It carries two sources — the client's own last scan, and the reason they
+picked from a fixed list at booking — kept as separate labelled rows rather
+than merged into one unattributed claim.
+
+The derivation lives in `profileCore.ts` rather than `profileData.ts` for the
+familiar reason: `profileData` wraps its query in React's `cache()`, which
+throws the moment a `tsx` script imports it. Same split as `aiAssistCore` and
+`insightsCore`.
+
+**A bug the split immediately caught.** Bar widths scaled against
+`Math.max(...allReasons)` — *including* the "no reason recorded" bucket, which
+is filtered out of the rendered list. A client with nine unlabelled old visits
+and four for acne would have seen acne drawn at 44% of a bar whose full width
+belonged to a row that was not on the page. The unnamed bucket is now dropped
+before the scale is taken.
+
+The location section lists clinics by **area, and says why**: `Clinic.lat` and
+`Clinic.lng` exist and nothing populates them, so no distance is printed
+anywhere — the same refusal `/api/clinics` already makes.
+
+---
+
+## Appendix V — the front door stops being white
+
+`/doctor` was the one page on the site that greeted a visitor with a white
+screen, sitting between a dark home page and a dark navbar; arriving felt like
+landing on a different product. The `.theme-light` wrapper is gone and the
+sections now sit on `var(--surface)` with the rest of the client side.
+
+The **portal** stays light. A working tool wants a light canvas; the marketing
+page in front of it does not.
+
+The one thing still white is `PortalPreview`'s calendar sketch, which depicts
+the portal — recolouring it dark to match the page would be a lie about the
+product. It is framed as a screenshot instead. The trap there is that `text-ink`
+resolves to a near-**white** outside `.theme-light`, so every colour inside that
+frame is a literal slate value and `bg-ink` became `bg-slate-900`. `verify-theme`
+now asserts that nothing inside the frame uses an ink token — the failure mode
+is white type on white, which is invisible rather than merely ugly.
+
+### While we were in there
+
+Two client-side complaints with the same root cause, both fixed alongside:
+
+- The **skin analyzer card** on `/patient/explore` was `#070d1c` — byte for
+  byte the page background — so the one section that has to be noticed had no
+  edge at all and read as loose text on a phone. It now carries the brand
+  gradient the home banner uses.
+- The **category icon chips** were eighteen translucent `/20` gradients over a
+  dark canvas, which on screen collapsed to the same near-grey every time; the
+  icons carried no information. Every tint is now full-strength in the hue it
+  already had, in `src/data/hub.ts` and in the `hub_categories` rows
+  (`prisma/recolor-hub-categories.ts`, idempotent). The explorer's unselected
+  tile keeps its own colour and simply steps back, rather than being flattened
+  to grey — seventeen of eighteen icons were previously colourless at any given
+  moment.

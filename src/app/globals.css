@@ -130,6 +130,71 @@ body {
   --tw-ring-color: rgb(226 232 240);
 }
 
+/* The dark theme's "raised surface" is a wash of translucent white over navy.
+   Over a light page that wash is invisible — a 4% white tint on #f7fafc is
+   #f7fafc — so a card, a note block and the page itself all render as one
+   undifferentiated sheet, and any text drawn in a soft ink on top of it
+   disappears. Inside .theme-light they become a real white surface instead.
+
+   Listed individually rather than with an attribute selector because the
+   escaped Tailwind class names are what actually appear in the markup, and
+   because each step of the scale should stay visually distinct. */
+.theme-light .bg-white\/\[0\.02\],
+.theme-light .bg-white\/\[0\.04\],
+.theme-light .bg-white\/\[0\.05\] {
+  background-color: #ffffff;
+}
+.theme-light .bg-white\/\[0\.06\],
+.theme-light .bg-white\/\[0\.07\],
+.theme-light .bg-white\/\[0\.08\],
+.theme-light .bg-white\/\[0\.09\] {
+  background-color: rgb(248 250 252);
+}
+/* The hover states that go with them, which would otherwise flash invisible. */
+.theme-light .hover\:bg-white\/\[0\.04\]:hover,
+.theme-light .hover\:bg-white\/\[0\.06\]:hover,
+.theme-light .hover\:bg-white\/10:hover {
+  background-color: rgb(241 245 249);
+}
+/* bg-white/10 is the same idiom at a coarser step — pills, avatars, dividers. */
+.theme-light .bg-white\/10,
+.theme-light .bg-white\/5 {
+  background-color: rgb(241 245 249);
+}
+
+/* ── The exception to the exception ──────────────────────────────────────
+   Some surfaces INSIDE a light-themed page are deliberately dark: the portal's
+   navigation rail and the dashboard's revenue band. The rules above would
+   repaint their translucent whites solid — a white card on navy with white
+   text on it, which is exactly the bug this block exists to undo.
+
+   `.on-dark` marks those regions and restores the wash. It carries one more
+   class than the rules above (0,3,0 over 0,2,0), so it wins wherever it is
+   applied without needing !important. Anything painted on a dark ground gets
+   this class on its outermost element. */
+.theme-light .on-dark .bg-white\/\[0\.02\] { background-color: rgba(255, 255, 255, 0.02); }
+.theme-light .on-dark .bg-white\/\[0\.04\] { background-color: rgba(255, 255, 255, 0.04); }
+.theme-light .on-dark .bg-white\/\[0\.05\] { background-color: rgba(255, 255, 255, 0.05); }
+.theme-light .on-dark .bg-white\/\[0\.06\] { background-color: rgba(255, 255, 255, 0.06); }
+.theme-light .on-dark .bg-white\/\[0\.07\] { background-color: rgba(255, 255, 255, 0.07); }
+.theme-light .on-dark .bg-white\/\[0\.08\] { background-color: rgba(255, 255, 255, 0.08); }
+.theme-light .on-dark .bg-white\/\[0\.09\] { background-color: rgba(255, 255, 255, 0.09); }
+.theme-light .on-dark .bg-white\/5 { background-color: rgba(255, 255, 255, 0.05); }
+.theme-light .on-dark .bg-white\/10 { background-color: rgba(255, 255, 255, 0.10); }
+.theme-light .on-dark .hover\:bg-white\/\[0\.04\]:hover { background-color: rgba(255, 255, 255, 0.04); }
+.theme-light .on-dark .hover\:bg-white\/\[0\.06\]:hover { background-color: rgba(255, 255, 255, 0.06); }
+.theme-light .on-dark .hover\:bg-white\/10:hover { background-color: rgba(255, 255, 255, 0.10); }
+.theme-light .on-dark .border-white\/10 { border-color: rgba(255, 255, 255, 0.10); }
+.theme-light .on-dark .border-white\/15 { border-color: rgba(255, 255, 255, 0.15); }
+.theme-light .on-dark .border-white\/20 { border-color: rgba(255, 255, 255, 0.20); }
+.theme-light .on-dark .ring-white\/10 { --tw-ring-color: rgba(255, 255, 255, 0.10); }
+.theme-light .on-dark .ring-white\/15 { --tw-ring-color: rgba(255, 255, 255, 0.15); }
+.theme-light .on-dark .divide-white\/10 > * + * { border-color: rgba(255, 255, 255, 0.10); }
+/* Ink tokens too: a dark region needs the light ink it was designed with. */
+.theme-light .on-dark .text-ink { color: #eef2f8; }
+.theme-light .on-dark .text-ink-soft { color: rgba(255, 255, 255, 0.72); }
+.theme-light .on-dark .text-ink-muted { color: rgba(255, 255, 255, 0.52); }
+
 /* Hairlines drawn in translucent white vanish on a white panel. Anything
    inside a light-themed surface gets a slate one instead. */
 .theme-light .border-white\/10,
@@ -139,6 +204,11 @@ body {
 }
 .theme-light .divide-white\/10 > * + * {
   border-color: rgb(226 232 240);
+}
+.theme-light .ring-white\/10,
+.theme-light .ring-white\/15,
+.theme-light .ring-white\/20 {
+  --tw-ring-color: rgb(226 232 240);
 }
 
 @layer components {

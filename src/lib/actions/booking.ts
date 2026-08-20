@@ -28,6 +28,11 @@ import { PUBLIC_DOCTOR_WHERE } from "@/lib/queries/doctorAccess";
 import { getMembership, benefitsOf } from "@/lib/subscription/membership";
 import { applyMemberDiscount } from "@/lib/subscription/plan";
 import { notifyDoctorOfBooking } from "@/lib/doctor/notify";
+import {
+  intakeEmailBlock,
+  isUrgent,
+  reasonLabel,
+} from "@/lib/booking/visitIntake";
 import { rateLimit } from "@/lib/rateLimit";
 import type { ActionResult } from "./enquiry";
 
@@ -148,6 +153,49 @@ export async function bookAppointment(input: unknown): Promise<BookingResult> {
   const benefits = benefitsOf(membership);
   const { payableInr, discountInr } = applyMemberDiscount(listFee, benefits);
 
+  // Age and sex go on the appointment as a snapshot — dermatology reads
+  // differently by both, and the doctor needs what was true at booking time.
+  const profile = await prisma.patientProfile.findUnique({
+    where: { userId: user.id },
+    select: { age: true, gender: true },
+  });
+
+  // An attached scan is only ever the patient's own. The id arrives from the
+  // browser, so it is re-checked here rather than trusted; a scan belonging to
+  // somebody else is dropped silently rather than failing the booking, because
+  // the booking is the thing the patient came to do.
+  let attachedAnalysisId: string | null = null;
+  let attachedScanId: string | null = null;
+  if (d.skinReportId) {
+    if (d.skinReportSource === "scan") {
+      const owned = await prisma.skinScan.findFirst({
+        where: { id: d.skinReportId, userId: user.id },
+        select: { id: true },
+      });
+      attachedScanId = owned?.id ?? null;
+    } else {
+      const owned = await prisma.skinAnalysis.findFirst({
+        where: { id: d.skinReportId, userId: user.id },
+        select: { id: true },
+      });
+      attachedAnalysisId = owned?.id ?? null;
+    }
+  }
+
+  // Photographs the patient attached. The keys come from the browser, so each
+  // is matched against the upload record that names who put it there — an
+  // attacker cannot bolt somebody else's clinical photograph onto a booking of
+  // their own and then read it back through the signed-view route.
+  const photoAssets = d.photoKeys?.length
+    ? await prisma.mediaAsset.findMany({
+        where: {
+          storageKey: { in: d.photoKeys },
+          uploadedById: user.id,
+        },
+        select: { storageKey: true, url: true },
+      })
+    : [];
+
   const scheduledAt = slotInstant(d.daySeed, d.time);
   if (Number.isNaN(scheduledAt.getTime())) {
     return { ok: false, error: "Pick a valid date and time." };
@@ -212,7 +260,35 @@ export async function bookAppointment(input: unknown): Promise<BookingResult> {
         patientPhone: d.patientPhone || null,
         patientEmail: user.email ?? null,
         notes: d.notes || null,
+
+        // What the appointment is actually for. See lib/booking/visitIntake.ts
+        // for the vocabulary these render through.
+        reason: d.reason,
+        reasonDetail: d.reasonDetail,
+        symptomDuration: d.symptomDuration,
+        severity: d.severity,
+        isFirstVisit: d.isFirstVisit,
+        priorTreatment: d.priorTreatment || null,
+        medications: d.medications || null,
+        allergies: d.allergies || null,
+        photoConsent: d.photoConsent,
+        // Snapshotted, not joined: a profile edited next year must not change
+        // what the doctor was told at the time of this consultation.
+        patientAge: profile?.age ?? null,
+        patientGender: profile?.gender ?? null,
+        skinAnalysisId: attachedAnalysisId,
+        skinScanId: attachedScanId,
+
         slotLock: slotLockFor(doctor.id, scheduledAt),
+        photos: photoAssets.length
+          ? {
+              create: photoAssets.map((p, sortOrder) => ({
+                url: p.url,
+                storageKey: p.storageKey,
+                sortOrder,
+              })),
+            }
+          : undefined,
       },
       select: { id: true },
     });
@@ -263,6 +339,20 @@ export async function bookAppointment(input: unknown): Promise<BookingResult> {
           : doctor.clinic,
       needsApproval: awaiting,
       appointmentId: appointment.id,
+      intake: intakeEmailBlock({
+        reason: d.reason,
+        reasonDetail: d.reasonDetail,
+        symptomDuration: d.symptomDuration,
+        severity: d.severity,
+        priorTreatment: d.priorTreatment || null,
+        medications: d.medications || null,
+        allergies: d.allergies || null,
+        isFirstVisit: d.isFirstVisit,
+        patientAge: profile?.age ?? null,
+        patientGender: profile?.gender ?? null,
+      }),
+      reasonLine: reasonLabel(d.reason),
+      urgent: isUrgent(d.severity),
     });
 
     revalidatePath("/patient/appointments");

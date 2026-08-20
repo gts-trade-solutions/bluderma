@@ -52,7 +52,7 @@ export default function AppointmentControls({
 
   if (canReview) {
     return reviewed ? (
-      <span className="text-xs font-semibold text-teal-300">
+      <span className="text-xs font-semibold text-teal-700">
         Thanks for your review
       </span>
     ) : panel === "review" ? (
@@ -64,7 +64,7 @@ export default function AppointmentControls({
     ) : (
       <button
         onClick={() => setPanel("review")}
-        className="text-sm font-semibold text-brand-200 hover:underline"
+        className="text-sm font-semibold text-brand-700 hover:underline"
       >
         Rate {doctorName.split(" ").slice(-1)}
       </button>
@@ -96,7 +96,7 @@ export default function AppointmentControls({
       {policy.reschedule.kind === "allowed" ? (
         <button
           onClick={() => setPanel("move")}
-          className="text-sm font-semibold text-brand-200 hover:underline"
+          className="text-sm font-semibold text-brand-700 hover:underline"
         >
           Reschedule
         </button>
@@ -111,7 +111,7 @@ export default function AppointmentControls({
       {policy.cancel.kind !== "not_applicable" && (
         <button
           onClick={() => setPanel("cancel")}
-          className="text-sm font-semibold text-rose-300 hover:underline"
+          className="text-sm font-semibold text-rose-700 hover:underline"
         >
           Cancel
         </button>
@@ -150,7 +150,7 @@ function CancelPanel({
             <>
               {" "}
               on{" "}
-              <a href={`tel:${policy.phone}`} className="font-semibold text-brand-200">
+              <a href={`tel:${policy.phone}`} className="font-semibold text-brand-700">
                 {policy.phone}
               </a>
             </>
@@ -182,7 +182,7 @@ function CancelPanel({
         className="mt-2 w-full rounded-lg bg-white/10 px-2.5 py-1.5 text-xs text-ink ring-1 ring-white/15"
         aria-label="Cancellation reason"
       />
-      {error && <p className="mt-2 text-xs font-medium text-rose-300">{error}</p>}
+      {error && <p className="mt-2 text-xs font-medium text-rose-700">{error}</p>}
       <div className="mt-2 flex gap-2">
         <button
           disabled={pending}
@@ -288,7 +288,7 @@ function ReschedulePanel({
             ))}
           </div>
 
-          <div className="mt-2 grid grid-cols-4 gap-1.5">
+          <div className="mt-2 grid grid-cols-3 gap-1.5 sm:grid-cols-4">
             {slots
               .filter((s) => s.available)
               .slice(0, 16)
@@ -314,7 +314,7 @@ function ReschedulePanel({
         </>
       )}
 
-      {error && <p className="mt-2 text-xs font-medium text-rose-300">{error}</p>}
+      {error && <p className="mt-2 text-xs font-medium text-rose-700">{error}</p>}
 
       <div className="mt-2 flex gap-2">
         <button
@@ -410,7 +410,7 @@ function ReviewPanel({
         className="mt-2 w-full rounded-lg bg-white/10 px-2.5 py-1.5 text-xs text-ink ring-1 ring-white/15"
       />
 
-      {error && <p className="mt-2 text-xs font-medium text-rose-300">{error}</p>}
+      {error && <p className="mt-2 text-xs font-medium text-rose-700">{error}</p>}
 
       <p className="mt-2 text-[11px] text-ink-muted">
         Reviews are checked before they appear publicly.

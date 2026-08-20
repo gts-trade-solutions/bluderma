@@ -1,4 +1,5 @@
 import EntityForm from "@/components/admin/EntityForm";
+import ChipMultiSelect from "@/components/doctor/fields/ChipMultiSelect";
 import { Card, CheckboxField, TextArea, TextField } from "@/components/admin/ui";
 import { saveConsultStep } from "@/lib/actions/doctorOnboarding";
 
@@ -12,6 +13,11 @@ import { saveConsultStep } from "@/lib/actions/doctorOnboarding";
 export default function ConsultStep({
   doctor,
   concerns,
+  redirectTo = "/doctor/join?step=6",
+  cancelHref = "/doctor/join?step=4",
+  aiEnabled = false,
+  treatmentSuggestions = [],
+  treatmentVocabulary = [],
 }: {
   doctor: {
     modes: { mode: string }[];
@@ -23,6 +29,13 @@ export default function ConsultStep({
     clinics: unknown[];
   };
   concerns: { key: string; label: string }[];
+  /** Overridden when this step is hosted inside the portal. */
+  redirectTo?: string;
+  cancelHref?: string;
+  aiEnabled?: boolean;
+  /** Real catalogue names, never invented. */
+  treatmentSuggestions?: string[];
+  treatmentVocabulary?: string[];
 }) {
   const has = (m: string) => doctor.modes.some((x) => x.mode === m);
   const chosen = new Set(doctor.focus.map((f) => f.concern.key));
@@ -32,9 +45,9 @@ export default function ConsultStep({
     <EntityForm
       action={saveConsultStep}
       submitLabel="Save and continue"
-      cancelHref="/doctor/join?step=4"
+      cancelHref={cancelHref}
       cancelLabel="Back"
-      redirectTo="/doctor/join?step=6"
+      redirectTo={redirectTo}
     >
       <Card
         title="How you see clients"
@@ -78,12 +91,14 @@ export default function ConsultStep({
       </Card>
 
       <Card title="Services and languages">
-        <TextArea
+        <ChipMultiSelect
           name="services"
-          label="Services you offer"
-          rows={4}
-          defaultValue={doctor.services.map((s) => s.name).join("\n")}
-          hint="One per line, or comma separated."
+          label="Treatments you offer"
+          hint="Tap what applies, search for more, or type your own. These are what clients search by."
+          defaultSelected={doctor.services.map((s) => s.name)}
+          suggestions={treatmentSuggestions}
+          vocabulary={treatmentVocabulary}
+          aiEnabled={aiEnabled}
         />
         <TextArea
           name="languages"

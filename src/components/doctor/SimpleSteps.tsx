@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { doctorCta } from "@/lib/doctor/viewer";
+
 /**
  * Requirement D-6 — the practo-style "simple steps" explainer.
  *
@@ -36,13 +38,13 @@ export default function SimpleSteps({
   /** See JoinHero — the same reasoning, and this was the CTA that missed it. */
   viewer?: "guest" | "client" | "doctor-pending" | "doctor-live" | "admin";
 }) {
-  const live = viewer === "doctor-live" || viewer === "admin";
+  const cta = doctorCta(viewer);
   return (
-    <section className="scroll-mt-24 bg-slate-50 py-20" id="how-it-works">
+    <section className="scroll-mt-24 border-y border-white/10 bg-white/[0.02] py-20" id="how-it-works">
       <div className="container-page">
         <div className="max-w-2xl">
           <p className="section-eyebrow">Getting listed</p>
-          <h2 className="mt-2 text-3xl font-bold text-ink sm:text-4xl">
+          <h2 className="display mt-2 text-3xl text-ink sm:text-4xl">
             Four steps, about ten minutes
           </h2>
           <p className="mt-4 text-lg leading-relaxed text-ink-soft">
@@ -54,9 +56,9 @@ export default function SimpleSteps({
           {STEPS.map((s) => (
             <li
               key={s.n}
-              className="relative rounded-2xl bg-white p-6 ring-1 ring-slate-200"
+              className="relative rounded-2xl bg-white/[0.04] p-6 ring-1 ring-white/10"
             >
-              <span className="text-sm font-bold tracking-widest text-brand-600">
+              <span className="text-sm font-bold tracking-widest text-teal-300">
                 {s.n}
               </span>
               <h3 className="mt-3 text-lg font-bold text-ink">{s.title}</h3>
@@ -67,14 +69,10 @@ export default function SimpleSteps({
 
         <div className="mt-10">
           <Link
-            href={live ? "/doctor/portal" : "/doctor/join"}
+            href={cta.href}
             className="btn-primary"
           >
-            {live
-              ? "Open your portal"
-              : viewer === "doctor-pending"
-              ? "Finish your listing"
-              : "Start your listing"}
+            {cta.label}
           </Link>
         </div>
       </div>

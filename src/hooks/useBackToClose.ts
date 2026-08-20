@@ -48,6 +48,21 @@ export function useBackGuard(active: boolean, onBack: () => void) {
   /** Our sentinel's id while it is the top of the stack; null when it is not. */
   const token = useRef<string | null>(null);
 
+  /**
+   * True while a `history.back()` WE called is still travelling.
+   *
+   * popstate is asynchronous, so a back() fired from the disarm cleanup lands
+   * after the listener has been re-attached. In development React's
+   * StrictMode deliberately runs every effect twice — mount, tear down, mount
+   * again — which means the guard arms, disarms (calling back()), and re-arms
+   * within a tick. Without this flag the resulting popstate is read as the
+   * user pressing Back, and the overlay closes the instant it opens.
+   *
+   * A ref survives that cycle because StrictMode reuses the same component
+   * instance; only the effects are replayed.
+   */
+  const selfPop = useRef(false);
+
   /** Is our exact entry still on top? */
   const ours = () => {
     try {
@@ -67,6 +82,11 @@ export function useBackGuard(active: boolean, onBack: () => void) {
     if (!active || typeof window === "undefined") return;
 
     const onPop = () => {
+      // Our own teardown, not the user. Swallow it — see selfPop above.
+      if (selfPop.current) {
+        selfPop.current = false;
+        return;
+      }
       // The user's Back consumed our sentinel. Record that before handing
       // over, so a handler that keeps the overlay open re-arms rather than
       // double-popping.
@@ -108,6 +128,9 @@ export function useBackGuard(active: boolean, onBack: () => void) {
       // the entry on top is provably still ours.
       if (ours()) {
         token.current = null;
+        // Mark before travelling: the popstate this triggers must never be
+        // mistaken for a Back press.
+        selfPop.current = true;
         window.history.back();
       } else {
         token.current = null;

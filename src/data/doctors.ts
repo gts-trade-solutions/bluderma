@@ -1,4 +1,5 @@
 import { MetricKey, seedFromString } from "./skin";
+import { assetUrl } from "@/lib/assetUrl";
 
 export type ConsultMode = "clinic" | "video";
 
@@ -36,14 +37,16 @@ export interface Doctor {
   clinics?: DoctorClinic[];
 }
 
+// Resolved through assetUrl so these follow the rest of the imagery to S3;
+// with no asset base configured they stay exactly as they were.
 const DOCTOR_IMAGE = {
-  female1: "/images/korean/doctor-female-1-v2.png",
-  female2: "/images/korean/doctor-female-2-v2.png",
-  female3: "/images/korean/doctor-female-3-v2.png",
-  female4: "/images/korean/doctor-female-4-v2.png",
-  male1: "/images/korean/doctor-male-1-v2.png",
-  male2: "/images/korean/doctor-male-2-v2.png",
-  male3: "/images/korean/doctor-male-3-v2.png",
+  female1: assetUrl("/images/korean/doctor-female-1-v2.png"),
+  female2: assetUrl("/images/korean/doctor-female-2-v2.png"),
+  female3: assetUrl("/images/korean/doctor-female-3-v2.png"),
+  female4: assetUrl("/images/korean/doctor-female-4-v2.png"),
+  male1: assetUrl("/images/korean/doctor-male-1-v2.png"),
+  male2: assetUrl("/images/korean/doctor-male-2-v2.png"),
+  male3: assetUrl("/images/korean/doctor-male-3-v2.png"),
 } as const;
 
 export const doctors: Doctor[] = [

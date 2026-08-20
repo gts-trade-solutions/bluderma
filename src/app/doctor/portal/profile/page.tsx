@@ -14,10 +14,31 @@ import ImageField from "@/components/admin/ImageField";
 import { DeleteButton } from "@/components/admin/RowActions";
 import {
   Card,
-  EmptyState,
   TextArea,
   TextField,
 } from "@/components/admin/ui";
+import {
+  Empty,
+  Panel,
+  Tag,
+  portalBtnPrimary,
+  portalBtnQuiet,
+} from "@/components/doctor/portalUi";
+import { SOCIALS, socialLinks } from "@/lib/social";
+import Combobox from "@/components/doctor/fields/Combobox";
+import AssistTextArea from "@/components/doctor/fields/AssistTextArea";
+import ChipMultiSelect from "@/components/doctor/fields/ChipMultiSelect";
+import { DOCTOR_SPECIALTIES } from "@/data/specialties";
+import { aiEnabled } from "@/lib/integrations/aiAssist";
+import {
+  getSuggestedTreatments,
+  getTreatmentVocabulary,
+} from "@/lib/queries/treatmentVocabulary";
+import {
+  advisoryGaps,
+  getApplicationGaps,
+  type ApplicationGap,
+} from "@/lib/doctor/gaps";
 
 const DATE_FMT = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -46,18 +67,18 @@ export default async function DoctorProfilePage() {
 
   if (!doctor) {
     return (
-      <EmptyState
+      <Empty
         title="No doctor profile linked"
-        description="Your account isn't connected to a doctor record yet."
+        body="Your account isn't connected to a doctor record yet."
         action={
           user.role === "ADMIN" ? (
-            <Link href="/admin/doctors" className="btn-primary">
+            <Link href="/admin/doctors" className={portalBtnPrimary}>
               Link this account
             </Link>
           ) : (
             // A doctor used to get no action here at all, while all four
             // sibling pages offered "Complete onboarding". Same offer.
-            <Link href="/doctor/join" className="btn-primary">
+            <Link href="/doctor/join" className={portalBtnPrimary}>
               Complete onboarding
             </Link>
           )
@@ -68,6 +89,14 @@ export default async function DoctorProfilePage() {
 
   const workDays = new Set(doctor.availability.map((a) => a.dayOfWeek));
   const first = doctor.availability[0];
+
+  // Same list the wizard checks, filtered to the non-blocking half.
+  const advisory = advisoryGaps(await getApplicationGaps(doctor.id));
+  const ai = aiEnabled();
+  const [treatmentSuggestions, treatmentVocabulary] = await Promise.all([
+    getSuggestedTreatments(),
+    getTreatmentVocabulary(),
+  ]);
 
   const timeOff = await prisma.doctorTimeOff.findMany({
     where: { doctorId: doctor.id, endsAt: { gte: new Date() } },
@@ -104,12 +133,28 @@ export default async function DoctorProfilePage() {
           submitLabel="Save profile"
         >
           <Card title="About you">
-            {/* Name is intentionally read-only — admin-controlled. */}
-            <div className="mb-5 rounded-xl bg-slate-50 px-4 py-3 text-sm">
-              <span className="font-semibold text-ink">{doctor.name}</span>
-              <span className="ml-2 text-ink-muted">
-                · ₹{doctor.fee} · {Number(doctor.rating)}★ ({doctor.reviews})
-              </span>
+            {/* The name is editable. Verification, rating, fee and status are
+                not — those are the fields that carry standing, and they stay
+                with the admin. See updateOwnProfile for the full reasoning. */}
+            <div className="mb-5">
+              <TextField
+                label="Your name"
+                name="name"
+                required
+                defaultValue={doctor.name}
+                hint="As it should appear to clients, and matching your medical registration."
+              />
+              <p className="mt-2 text-xs text-ink-muted">
+                {doctor.fee > 0 ? `₹${doctor.fee} consultation` : "Fee on enquiry"}
+                {doctor.reviews > 0
+                  ? ` · ${Number(doctor.rating)}★ from ${doctor.reviews} reviews`
+                  : " · No reviews yet"}
+                {" — "}fees are set per location under{" "}
+                <Link href="/doctor/portal/practice" className="font-semibold underline">
+                  My practice
+                </Link>
+                . Your rating and verified badge are set by our team.
+              </p>
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
@@ -120,11 +165,13 @@ export default async function DoctorProfilePage() {
                 defaultValue={doctor.title}
                 placeholder="MD, Dermatology"
               />
-              <TextField
+              <Combobox
                 label="Specialty"
                 name="specialty"
                 required
                 defaultValue={doctor.specialty}
+                options={DOCTOR_SPECIALTIES}
+                hint="Pick one or type your own."
               />
               <TextField
                 label="Clinic"
@@ -148,11 +195,13 @@ export default async function DoctorProfilePage() {
                 required
                 defaultValue={doctor.image}
               />
-              <TextArea
+              <AssistTextArea
                 label="About"
                 name="about"
                 required
                 defaultValue={doctor.about}
+                aiEnabled={ai}
+                draftTask="draft-about"
               />
               <div className="grid gap-5 sm:grid-cols-2">
                 <TextArea
@@ -162,17 +211,48 @@ export default async function DoctorProfilePage() {
                   hint="One per line."
                   defaultValue={doctor.languages.map((l) => l.name).join("\n")}
                 />
-                <TextArea
-                  label="Services"
+                <ChipMultiSelect
+                  label="Treatments you offer"
                   name="services"
-                  rows={4}
-                  hint="One per line."
-                  defaultValue={doctor.services.map((s) => s.name).join("\n")}
+                  hint="What clients search by."
+                  defaultSelected={doctor.services.map((s) => s.name)}
+                  suggestions={treatmentSuggestions}
+                  vocabulary={treatmentVocabulary}
+                  aiEnabled={ai}
                 />
               </div>
             </div>
           </Card>
+
+          <Card
+            title="Your links"
+            description="Shown on your public listing. Clients look you up before they book, and a profile they can check is a profile they trust."
+          >
+            <div className="grid gap-5 sm:grid-cols-2">
+              {SOCIALS.map((sdef) => (
+                <TextField
+                  key={sdef.key}
+                  label={sdef.label}
+                  name={sdef.key}
+                  placeholder={sdef.placeholder}
+                  defaultValue={doctor[sdef.key] ?? ""}
+                  hint={
+                    sdef.handleBase
+                      ? "A handle or the full link — either works."
+                      : undefined
+                  }
+                />
+              ))}
+            </div>
+            <p className="mt-4 text-xs text-ink-muted">
+              Leave a field blank to remove that link. Anything that is not a
+              real {SOCIALS.map((x) => x.label).slice(0, 2).join(" or ")} address
+              is dropped rather than saved, so a mistyped link never goes live.
+            </p>
+          </Card>
         </EntityForm>
+
+        <ListingPreview doctor={doctor} gaps={advisory} />
 
         <EntityForm
           action={availabilityAction}
@@ -287,5 +367,194 @@ export default async function DoctorProfilePage() {
         </Card>
       </div>
     </>
+  );
+}
+
+
+/**
+ * Everything a client sees, as they see it.
+ *
+ * The edit form is a set of inputs; it does not answer "what does my listing
+ * actually look like now, and what is missing from it". A practitioner asking
+ * why nobody books them is usually looking at a listing with no photo, no
+ * languages and no links, and had no single place that said so.
+ */
+function ListingPreview({
+  doctor,
+  gaps,
+}: {
+  /** Advisory gaps from lib/doctor/gaps.ts — the same list the wizard uses. */
+  gaps: ApplicationGap[];
+  doctor: {
+    slug: string;
+    name: string;
+    title: string;
+    specialty: string;
+    image: string;
+    about: string;
+    clinic: string;
+    location: string;
+    fee: number;
+    experienceYears: number;
+    verified: boolean;
+    status: string;
+    rating: unknown;
+    reviews: number;
+    languages: { name: string }[];
+    services: { name: string }[];
+    focus: { concern: { label: string } }[];
+    modes: { mode: string }[];
+    regCouncil: string | null;
+    regNumber: string | null;
+    regYear: number | null;
+    instagram: string | null;
+    facebook: string | null;
+    linkedin: string | null;
+    youtube: string | null;
+    website: string | null;
+  };
+}) {
+  const links = socialLinks(doctor);
+
+
+  return (
+    <Panel>
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="font-display text-lg font-bold text-slate-900">
+            How your listing reads
+          </h2>
+          <p className="mt-0.5 text-sm text-slate-500">
+            Exactly what a client sees before they decide to book you.
+          </p>
+        </div>
+        <Link href={`/patient/book/${doctor.slug}`} className={portalBtnQuiet}>
+          Open it
+        </Link>
+      </div>
+
+      <div className="flex flex-wrap items-start gap-5">
+        {doctor.image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={doctor.image}
+            alt=""
+            className="h-24 w-24 shrink-0 rounded-2xl object-cover ring-1 ring-slate-200"
+          />
+        ) : (
+          <div className="grid h-24 w-24 shrink-0 place-items-center rounded-2xl bg-slate-100 text-center text-[11px] font-semibold text-slate-400 ring-1 ring-slate-200">
+            No photo
+          </div>
+        )}
+
+        <div className="min-w-0 flex-1">
+          <p className="font-display text-xl font-bold text-slate-900">
+            {doctor.name}
+          </p>
+          <p className="text-sm text-slate-600">
+            {[doctor.title, doctor.specialty].filter(Boolean).join(" · ")}
+          </p>
+          <p className="mt-1 text-sm text-slate-500">
+            {[doctor.clinic, doctor.location].filter(Boolean).join(", ")}
+          </p>
+
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {doctor.verified && <Tag tone="teal">Verified</Tag>}
+            {doctor.experienceYears > 0 && (
+              <Tag>{doctor.experienceYears} yrs experience</Tag>
+            )}
+            {doctor.fee > 0 && <Tag>₹{doctor.fee} consultation</Tag>}
+            {doctor.reviews > 0 && (
+              <Tag>
+                {String(doctor.rating)} from {doctor.reviews} reviews
+              </Tag>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {doctor.about && (
+        <p className="mt-5 whitespace-pre-line text-sm leading-relaxed text-slate-700">
+          {doctor.about}
+        </p>
+      )}
+
+      <div className="mt-5 grid gap-5 sm:grid-cols-2">
+        <Detail label="Treats" items={doctor.focus.map((f) => f.concern.label)} />
+        <Detail label="Services" items={doctor.services.map((x) => x.name)} />
+        <Detail label="Languages" items={doctor.languages.map((x) => x.name)} />
+        <Detail
+          label="Consults by"
+          items={doctor.modes.map((m) =>
+            m.mode === "clinic" ? "In clinic" : m.mode === "video" ? "Video" : "Home visit"
+          )}
+        />
+      </div>
+
+      {/* Registration is never published — it is shown here so the doctor can
+          confirm we hold the right details. */}
+      {(doctor.regCouncil || doctor.regNumber) && (
+        <p className="mt-5 rounded-xl bg-slate-50 px-4 py-3 text-xs text-slate-500">
+          <strong className="font-semibold text-slate-700">
+            Registration on file
+          </strong>{" "}
+          — {[doctor.regCouncil, doctor.regNumber, doctor.regYear].filter(Boolean).join(" · ")}.
+          Checked by our team and never shown to clients.
+        </p>
+      )}
+
+      <div className="mt-5">
+        <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+          Your links
+        </p>
+        {links.length ? (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {links.map((l) => (
+              <a
+                key={l.key}
+                href={l.url}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+              >
+                {l.label} · {l.handle}
+              </a>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-1.5 text-sm text-slate-400">
+            None yet. Add them above.
+          </p>
+        )}
+      </div>
+
+      {gaps.length > 0 && (
+        <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-bold text-amber-900">
+            Your listing is missing {gaps.length === 1 ? "one thing" : `${gaps.length} things`}
+          </p>
+          <ul className="mt-1.5 list-inside list-disc text-sm text-amber-900/90">
+            {gaps.map((g) => (
+              <li key={g.key}>{g.label}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+function Detail({ label, items }: { label: string; items: string[] }) {
+  return (
+    <div>
+      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+        {label}
+      </p>
+      {items.length ? (
+        <p className="mt-1 text-sm text-slate-700">{items.join(", ")}</p>
+      ) : (
+        <p className="mt-1 text-sm text-slate-400">Not set</p>
+      )}
+    </div>
   );
 }

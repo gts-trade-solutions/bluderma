@@ -1,6 +1,10 @@
 import Link from "next/link";
 
-import { EmptyState, PageHeader } from "@/components/admin/ui";
+import {
+  Empty,
+  PageHead,
+  portalBtnPrimary,
+} from "@/components/doctor/portalUi";
 import ClinicsStep from "@/components/doctor/join/ClinicsStep";
 import HoursStep from "@/components/doctor/join/HoursStep";
 import PracticeSettings from "@/components/doctor/PracticeSettings";
@@ -21,11 +25,11 @@ export default async function PracticePage() {
   const owner = await getOwnDoctor();
   if (!owner) {
     return (
-      <EmptyState
+      <Empty
         title="No doctor profile linked"
-        description="Your account is not connected to a practice yet."
+        body="Your account is not connected to a practice yet."
         action={
-          <Link href="/doctor/join" className="btn-primary">
+          <Link href="/doctor/join" className={portalBtnPrimary}>
             Complete onboarding
           </Link>
         }
@@ -79,25 +83,25 @@ export default async function PracticePage() {
   return (
     <div className="space-y-10">
       <section>
-        <PageHeader
+        <PageHead
           title="Where you practise"
-          description="Every location you consult at. Clients search by area, so keep the addresses right."
+          sub="Every location you consult at. Clients search by area, so keep the addresses right."
         />
         <ClinicsStep doctor={doctor} mode="manage" />
       </section>
 
       <section>
-        <PageHeader
+        <PageHead
           title="Your hours"
-          description="Sessions per location. A booking at one clinic blocks the same time at every other — you can only be in one place."
+          sub="Sessions per location. A booking at one clinic blocks the same time at every other — you can only be in one place."
         />
         <HoursStep doctor={doctor} mode="manage" />
       </section>
 
       <section>
-        <PageHeader
+        <PageHead
           title="Diary settings"
-          description="How bookings reach you, and how much room you leave between locations."
+          sub="How bookings reach you, and how much room you leave between locations."
         />
         <PracticeSettings
           travelBufferMin={doctor.travelBufferMin}

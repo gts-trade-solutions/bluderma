@@ -12,7 +12,6 @@ import Navbar from "@/components/Navbar";
 import RoleChooser from "@/components/RoleChooser";
 import WhiteCollarBanner from "@/components/home/WhiteCollarBanner";
 import Footer from "@/components/Footer";
-import SmartImage from "@/components/SmartImage";
 import { buildPatientMenu } from "@/lib/queries/nav";
 import ComingSoonTicker from "@/components/hub/ComingSoonTicker";
 import HeroCarousel, {
@@ -21,7 +20,6 @@ import HeroCarousel, {
 import { getActiveBanners, getSettings } from "@/lib/queries/content";
 import TopTreatments from "@/components/home/TopTreatments";
 import OfferBanner, { OFFER_DEFAULTS } from "@/components/home/OfferBanner";
-import { IMG } from "@/data/hubImages";
 import { HUB_CATEGORIES, TOTAL_TREATMENTS } from "@/data/hub";
 
 export const metadata: Metadata = {
@@ -151,52 +149,6 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* ── How the pricing works ─────────────────────────────────── */}
-        <section className="container-page pt-16">
-          <div className="overflow-hidden rounded-[2rem] ring-1 ring-white/10">
-            <div className="grid lg:grid-cols-[1.15fr_0.85fr]">
-              <div className="p-8 sm:p-11">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
-                  Why there are no prices
-                </p>
-                <h2 className="display mt-2 text-3xl leading-tight text-white sm:text-4xl">
-                  Treatment cards carry a name and nothing else
-                </h2>
-                <p className="mt-4 max-w-lg text-base leading-relaxed text-white/60">
-                  Not an oversight — a rule. What a course costs depends on
-                  your skin, how many sessions it takes and what else is going
-                  on, none of which a card can know. So the cards stay quiet
-                  and the number comes from a doctor.
-                </p>
-
-                <dl className="mt-8 space-y-4">
-                  <Rule
-                    label="No price, clinic or branch"
-                    body="On any treatment or deal card, anywhere on the site."
-                  />
-                  <Rule
-                    label="Three places a price appears"
-                    body="The analyzers, the consultation fee, and the CME subscription. Nowhere else."
-                  />
-                  <Rule
-                    label="Enquiry first"
-                    body="You get the full plan and the final cost in consultation, before anything is booked."
-                  />
-                </dl>
-              </div>
-
-              <div className="relative min-h-[18rem] lg:min-h-0">
-                <SmartImage
-                  src={IMG.portraitCalm}
-                  alt=""
-                  sizes="(min-width: 1024px) 40vw, 100vw"
-                  className="object-top"
-                />
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* ── The catalogue, in one line ────────────────────────────── */}
         <section className="pt-16">
           <div className="relative">
@@ -220,17 +172,24 @@ export default async function Home() {
                 </Link>
               </div>
 
-              <div className="mt-7 flex flex-wrap gap-2">
+              {/* A grid, not a wrap. Eighteen names of wildly different
+                  lengths ("Acne & Scars" against "Body & Fat Reduction") left
+                  a ragged right edge and a last row of two, which read as a
+                  layout accident on every width. Equal cells make the block
+                  read as one object, and the label centres inside its cell
+                  rather than the cell shrinking to the label. */}
+              <ul className="mt-7 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
                 {HUB_CATEGORIES.map((c) => (
-                  <Link
-                    key={c.slug}
-                    href={`/patient/explore?c=${c.slug}`}
-                    className="rounded-full bg-white px-4 py-2 text-sm font-medium text-[#070d1c] transition hover:bg-teal-400/[12%] hover:text-brand-200"
-                  >
-                    {c.name}
-                  </Link>
+                  <li key={c.slug} className="min-w-0">
+                    <Link
+                      href={`/patient/explore?c=${c.slug}`}
+                      className="flex h-full min-h-[3.25rem] items-center justify-center text-balance rounded-2xl bg-white px-3 py-2.5 text-center text-[13px] font-semibold leading-tight text-[#070d1c] transition hover:bg-teal-400/[12%] hover:text-brand-200 sm:text-sm"
+                    >
+                      {c.name}
+                    </Link>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           </div>
         </section>
@@ -342,17 +301,5 @@ export default async function Home() {
 
       <Footer />
     </>
-  );
-}
-
-function Rule({ label, body }: { label: string; body: string }) {
-  return (
-    <div className="flex gap-3">
-      <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-teal-500" />
-      <div>
-        <dt className="text-sm font-bold text-white">{label}</dt>
-        <dd className="mt-0.5 text-sm leading-relaxed text-white/60">{body}</dd>
-      </div>
-    </div>
   );
 }

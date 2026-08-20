@@ -35,6 +35,13 @@ const schema = z.object({
 const DOCTOR_FOLDERS = new Set(["doctors", "clinics", "cases", "credentials"]);
 
 /**
+ * The only folder a patient may write to: photographs they attach to their own
+ * booking. It is a private prefix, so nothing uploaded here is readable without
+ * a signed URL — see /api/uploads/view.
+ */
+const PATIENT_FOLDERS = new Set(["patients"]);
+
+/**
  * Admins upload anywhere. Doctors upload to their own folders.
  *
  * Deliberately keyed on the ROLE rather than on having an approved Doctor row:
@@ -47,6 +54,11 @@ async function authorizeUpload(
   if (!user) return { ok: false, status: 403, error: "Not permitted." };
   if (user.role === "ADMIN") return { ok: true, userId: user.id };
   if (user.role === "DOCTOR" && DOCTOR_FOLDERS.has(folder)) {
+    return { ok: true, userId: user.id };
+  }
+  // Patients upload photographs of their own concern when booking. Scoped to
+  // one folder so a client can never write over catalogue or clinic imagery.
+  if (user.role === "PATIENT" && PATIENT_FOLDERS.has(folder)) {
     return { ok: true, userId: user.id };
   }
   return { ok: false, status: 403, error: "Not permitted." };

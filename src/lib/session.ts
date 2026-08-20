@@ -46,7 +46,13 @@ export async function requireRole(
   const allowed = Array.isArray(roles) ? roles : [roles];
   const user = await requireUser(callbackUrl);
   if (user.role !== Role.ADMIN && !allowed.includes(user.role)) {
-    redirect("/forbidden");
+    // Same hand-off middleware makes: the refusal page can only explain itself
+    // if it knows what was being asked for.
+    redirect(
+      callbackUrl
+        ? `/forbidden?from=${encodeURIComponent(callbackUrl)}`
+        : "/forbidden"
+    );
   }
   return user;
 }

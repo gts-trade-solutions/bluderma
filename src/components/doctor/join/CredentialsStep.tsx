@@ -14,6 +14,8 @@ import { saveCredentialsStep } from "@/lib/actions/doctorOnboarding";
  */
 export default function CredentialsStep({
   doctor,
+  redirectTo = "/doctor/join?step=3",
+  cancelHref = "/doctor/join?step=1",
 }: {
   doctor: {
     regCouncil: string | null;
@@ -21,6 +23,9 @@ export default function CredentialsStep({
     regYear: number | null;
     licenceDocUrl: string | null;
   };
+  /** Overridden when this step is hosted inside the portal. */
+  redirectTo?: string;
+  cancelHref?: string;
 }) {
   const known = doctor.regCouncil && MEDICAL_COUNCILS.includes(doctor.regCouncil);
 
@@ -28,9 +33,9 @@ export default function CredentialsStep({
     <EntityForm
       action={saveCredentialsStep}
       submitLabel="Save and continue"
-      cancelHref="/doctor/join?step=1"
+      cancelHref={cancelHref}
       cancelLabel="Back"
-      redirectTo="/doctor/join?step=3"
+      redirectTo={redirectTo}
     >
       <Card
         title="Council registration"

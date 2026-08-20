@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ArrowRight, Check, LogIn } from "lucide-react";
 
 import SmartImage from "@/components/SmartImage";
+import { assetUrl } from "@/lib/assetUrl";
+import { doctorCta } from "@/lib/doctor/viewer";
 
 /** The practitioner recruitment banner used only on /doctor. */
 export default function JoinHero({
@@ -20,12 +22,13 @@ export default function JoinHero({
   viewer: "guest" | "client" | "doctor-pending" | "doctor-live" | "admin";
 }) {
   const live = viewer === "doctor-live" || viewer === "admin";
+  const cta = doctorCta(viewer);
 
   return (
-    <section className="relative isolate flex min-h-[610px] overflow-hidden bg-[#06152a] sm:min-h-[640px]">
+    <section className="on-dark relative isolate flex min-h-[610px] overflow-hidden bg-[#06152a] sm:min-h-[640px]">
       <div className="absolute inset-0">
         <SmartImage
-          src="/images/doctor/doctor-practice-hero-v1.png"
+          src={assetUrl("/images/doctor/doctor-practice-hero-v1.png")}
           alt="Dermatologist standing in a modern skin clinic"
           mode="fill"
           className="object-cover object-[55%_center] sm:object-center"
@@ -57,14 +60,10 @@ export default function JoinHero({
 
           <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link
-              href={live ? "/doctor/portal" : "/doctor/join"}
+              href={cta.href}
               className="inline-flex min-h-12 w-full max-w-full items-center justify-center gap-2 rounded-md bg-teal-400 px-6 py-3 text-sm font-bold text-[#06152a] shadow-[0_14px_38px_rgba(20,184,166,0.22)] transition hover:bg-teal-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:w-auto"
             >
-              {live
-                ? "Open your portal"
-                : viewer === "doctor-pending"
-                ? "Finish your listing"
-                : "List your practice"}
+              {cta.label}
               <ArrowRight aria-hidden className="h-4 w-4" />
             </Link>
 

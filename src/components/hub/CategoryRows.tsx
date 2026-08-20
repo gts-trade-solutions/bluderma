@@ -25,7 +25,7 @@ export default function CategoryRows({ limit = 8 }: { limit?: number }) {
             <div className="mb-3.5 flex items-end justify-between gap-4">
               <div className="flex items-center gap-3">
                 <span
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${category.tint}`}
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br shadow-[0_6px_16px_-6px_rgba(0,0,0,0.6)] ring-1 ring-inset ring-white/25 ${category.tint}`}
                 >
                   <Icon className="h-5 w-5" strokeWidth={1.9} />
                 </span>

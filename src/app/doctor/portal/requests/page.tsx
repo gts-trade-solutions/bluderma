@@ -1,12 +1,17 @@
 import Link from "next/link";
 import { AppointmentStatus, ApprovalState } from "@prisma/client";
 
-import { EmptyState, PageHeader } from "@/components/admin/ui";
+import {
+  Empty,
+  PageHead,
+  portalBtnPrimary,
+} from "@/components/doctor/portalUi";
 import RequestList from "@/components/doctor/RequestList";
 import { getOwnDoctor } from "@/lib/doctor/guard";
 import { prisma } from "@/lib/prisma";
 import { membersAmong } from "@/lib/subscription/membership";
 import { swatchFor } from "@/components/doctor/clinicColors";
+import { intakeSummary, isUrgent } from "@/lib/booking/visitIntake";
 
 export const metadata = { title: "Requests" };
 export const dynamic = "force-dynamic";
@@ -22,11 +27,11 @@ export default async function RequestsPage() {
   const owner = await getOwnDoctor();
   if (!owner) {
     return (
-      <EmptyState
+      <Empty
         title="No doctor profile linked"
-        description="Your account is not connected to a practice yet."
+        body="Your account is not connected to a practice yet."
         action={
-          <Link href="/doctor/join" className="btn-primary">
+          <Link href="/doctor/join" className={portalBtnPrimary}>
             Complete onboarding
           </Link>
         }
@@ -51,6 +56,11 @@ export default async function RequestsPage() {
       patientUserId: true,
       notes: true,
       isPriority: true,
+      reason: true,
+      reasonDetail: true,
+      symptomDuration: true,
+      severity: true,
+      isFirstVisit: true,
       feeAtBooking: true,
       visitFee: true,
       createdAt: true,
@@ -63,19 +73,19 @@ export default async function RequestsPage() {
   if (rows.length === 0) {
     return (
       <>
-        <PageHeader
+        <PageHead
           title="Requests"
-          description="Bookings waiting for you to accept or decline."
+          sub="Bookings waiting for you to accept or decline."
         />
-        <EmptyState
+        <Empty
           title="Nothing waiting"
-          description={
+          body={
             owner.requiresApproval
               ? "Every request has been dealt with. New ones appear here and hold their slot until you decide."
               : "You accept bookings automatically, so nothing needs reviewing. Turn manual confirmation on under My practice if you would rather vet each one."
           }
           action={
-            <Link href="/doctor/portal/calendar" className="btn-primary">
+            <Link href="/doctor/portal/calendar" className={portalBtnPrimary}>
               Open calendar
             </Link>
           }
@@ -86,9 +96,9 @@ export default async function RequestsPage() {
 
   return (
     <>
-      <PageHeader
+      <PageHead
         title="Requests"
-        description={`${rows.length} ${
+        sub={`${rows.length} ${
           rows.length === 1 ? "booking is" : "bookings are"
         } holding a slot until you decide. Soonest first.`}
       />
@@ -108,6 +118,16 @@ export default async function RequestsPage() {
           clinicName: r.clinic?.name ?? null,
           clinicArea: r.clinic?.area ?? null,
           clinicDot: swatchFor(r.clinic?.colorKey).dot,
+          reasonSummary: r.reason
+            ? intakeSummary({
+                reason: r.reason,
+                symptomDuration: r.symptomDuration,
+                severity: r.severity,
+                isFirstVisit: r.isFirstVisit,
+              })
+            : null,
+          reasonDetail: r.reasonDetail,
+          urgent: isUrgent(r.severity),
         }))}
       />
     </>

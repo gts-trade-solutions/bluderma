@@ -2,6 +2,7 @@ import { AppointmentStatus } from "@prisma/client";
 import { cache } from "react";
 
 import { prisma } from "@/lib/prisma";
+import { intakeSummary } from "@/lib/booking/visitIntake";
 
 export interface AppointmentDTO {
   id: string;
@@ -29,6 +30,10 @@ export interface AppointmentDTO {
   hasReview: boolean;
   /** Charged when it was cancelled late. */
   cancellationFeeInr: number;
+  /** What the patient told the clinic at booking. Null for older bookings. */
+  reasonSummary: string | null;
+  reasonDetail: string | null;
+  reportAttached: boolean;
 }
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -97,6 +102,18 @@ export const getMyAppointments = cache(
       rescheduleCount: r.rescheduleCount,
       hasReview: !!r.review,
       cancellationFeeInr: r.cancellationFeeInr,
+      // Shown back to the patient so they can see what the doctor was told —
+      // and correct it by calling if it is wrong.
+      reasonSummary: r.reason
+        ? intakeSummary({
+            reason: r.reason,
+            symptomDuration: r.symptomDuration,
+            severity: r.severity,
+            isFirstVisit: r.isFirstVisit,
+          })
+        : null,
+      reasonDetail: r.reasonDetail,
+      reportAttached: Boolean(r.skinAnalysisId || r.skinScanId),
     }));
   }
 );

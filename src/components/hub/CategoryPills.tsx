@@ -34,7 +34,7 @@ export default function CategoryPills({
             }`}
           >
             <span
-              className={`flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br ${c.tint}`}
+              className={`flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br shadow-[0_4px_12px_-4px_rgba(0,0,0,0.55)] ring-1 ring-inset ring-white/25 ${c.tint}`}
             >
               <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
             </span>

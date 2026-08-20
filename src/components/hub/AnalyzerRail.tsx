@@ -24,25 +24,37 @@ export default function AnalyzerRail() {
   return (
     <div className="space-y-3">
       {/* ── Skin analyzer ─────────────────────────────────────────── */}
-      <div className="overflow-hidden rounded-3xl bg-[#070d1c] p-5 text-white">
-        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 text-teal-300">
+      {/* The card used to be #070d1c — byte for byte the page background —
+          so the one section that has to be noticed had no edge at all and
+          read as loose text on a phone. It now carries the brand gradient
+          the home banner uses, which is the only other place on the client
+          side that colour appears: it marks "this is the thing to do first"
+          without inventing a new colour for it. */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-800 via-brand-900 to-teal-800 p-5 text-white shadow-[0_18px_44px_-18px_rgba(15,88,173,0.75)] ring-1 ring-inset ring-white/15">
+        {/* A single bloom so the gradient has depth rather than looking flat. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-teal-400/20 blur-3xl"
+        />
+        <div className="relative">
+        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/15 text-teal-200 ring-1 ring-inset ring-white/20">
           <ScanFace className="h-5 w-5" strokeWidth={1.8} />
         </span>
 
         <h2 className="display-sm mt-3.5 text-lg leading-snug">
           Analyse your skin first
         </h2>
-        <p className="mt-1.5 text-[13px] leading-relaxed text-white/60">
+        <p className="mt-1.5 text-[13px] leading-relaxed text-white/75">
           One selfie, twelve-plus signals, about thirty seconds. It turns this
           whole catalogue into a shortlist of three.
         </p>
 
-        <div className="mt-4 flex items-center gap-3 rounded-2xl bg-white/[0.06] px-4 py-3">
+        <div className="mt-4 flex items-center gap-3 rounded-2xl bg-[#04101f]/45 px-4 py-3 ring-1 ring-inset ring-white/10">
           <div className="text-right">
-            <p className="text-[9px] font-medium uppercase tracking-wider text-white/40">
+            <p className="text-[9px] font-medium uppercase tracking-wider text-white/55">
               Usually
             </p>
-            <p className="relative text-base font-semibold text-white/35">
+            <p className="relative text-base font-semibold text-white/50">
               <span className="relative">
                 ₹99
                 <span className="absolute inset-x-[-2px] top-1/2 h-[2px] -rotate-6 rounded bg-rose-400" />
@@ -51,10 +63,10 @@ export default function AnalyzerRail() {
           </div>
           <span className="h-8 w-px bg-white/15" />
           <div>
-            <p className="text-[9px] font-medium uppercase tracking-wider text-teal-300/80">
+            <p className="text-[9px] font-medium uppercase tracking-wider text-teal-200">
               {firstScanFree ? "Your first scan" : "Additional scan"}
             </p>
-            <p className="display text-lg uppercase text-teal-300">
+            <p className="display text-lg uppercase text-teal-200">
               {firstScanFree ? "Free" : "₹99"}
             </p>
           </div>
@@ -70,14 +82,14 @@ export default function AnalyzerRail() {
           {!status ? (
             <button
               disabled
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white/90 px-4 py-3 text-sm font-bold text-[#070d1c]"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white/90 px-4 py-3 text-sm font-bold text-brand-900"
             >
               <LoaderCircle className="h-4 w-4 animate-spin" /> Loading…
             </button>
           ) : !status.authed ? (
             <Link
               href="/login?callbackUrl=/patient/skin-analyzer"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-bold text-[#070d1c] transition hover:bg-teal-100"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-bold text-brand-900 transition hover:bg-teal-100"
             >
               Sign in &amp; scan
               <ArrowRight className="h-4 w-4" />
@@ -86,7 +98,7 @@ export default function AnalyzerRail() {
             <button
               onClick={requestAccess}
               disabled={busy || status.pendingRequest}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-bold text-[#070d1c] transition hover:bg-teal-100 disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-bold text-brand-900 transition hover:bg-teal-100 disabled:opacity-60"
             >
               {status.pendingRequest ? "Request pending" : "Request another scan"}
             </button>
@@ -94,7 +106,7 @@ export default function AnalyzerRail() {
             <button
               onClick={start}
               disabled={busy}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-bold text-[#070d1c] transition hover:bg-teal-100 disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-bold text-brand-900 transition hover:bg-teal-100 disabled:opacity-60"
             >
               {busy ? (
                 <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -108,10 +120,11 @@ export default function AnalyzerRail() {
 
         <Link
           href="/patient/skin-analyzer"
-          className="mt-3 block text-center text-xs font-medium text-white/45 underline-offset-2 hover:text-white/80 hover:underline"
+          className="mt-3 block text-center text-xs font-medium text-white/60 underline-offset-2 hover:text-white hover:underline"
         >
           How the analysis works
         </Link>
+        </div>
       </div>
 
       {/* ── Hair analyzer ─────────────────────────────────────────── */}

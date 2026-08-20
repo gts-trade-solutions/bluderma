@@ -97,6 +97,9 @@ export async function GET() {
       authed: true,
       analysis: {
         id: scan.id,
+        // Which table the id belongs to. Without this the booking form cannot
+        // attach it — the two analysis systems have separate foreign keys.
+        source: "scan" as const,
         takenOn: scan.createdAt.toISOString().slice(0, 10),
         // The camera analyzer does not always return an overall score, so this
         // is null rather than 0 — a missing score must not read as a bad one.
@@ -121,6 +124,7 @@ export async function GET() {
     authed: true,
     analysis: {
       id: legacy.id,
+      source: "analysis" as const,
       takenOn: legacy.createdAt.slice(0, 10),
       overall: legacy.overall,
       skinType: legacy.skinType,

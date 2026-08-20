@@ -1,3 +1,23 @@
+/**
+ * The S3 bucket and CDN we serve our own imagery from, read from the same env
+ * vars lib/storage.ts uses so the two cannot disagree.
+ */
+function ownImageHosts() {
+  const hosts = [];
+  if (process.env.S3_BUCKET && process.env.AWS_REGION) {
+    hosts.push(`${process.env.S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com`);
+    hosts.push(`s3.${process.env.AWS_REGION}.amazonaws.com`);
+  }
+  if (process.env.CDN_BASE_URL) {
+    try {
+      hosts.push(new URL(process.env.CDN_BASE_URL).hostname);
+    } catch {
+      /* a malformed CDN_BASE_URL should not take the build down */
+    }
+  }
+  return hosts.map((hostname) => ({ protocol: "https", hostname }));
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -13,6 +33,10 @@ const nextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "plus.unsplash.com" },
       { protocol: "https", hostname: "images.pexels.com" },
+      // Our own storage. Listed even though `unoptimized` currently makes
+      // remotePatterns moot, because the day optimisation is turned on is
+      // exactly the day nobody will remember that every image now lives here.
+      ...ownImageHosts(),
     ],
   },
   async redirects() {

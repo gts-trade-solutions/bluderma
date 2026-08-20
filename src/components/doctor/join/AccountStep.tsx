@@ -47,10 +47,10 @@ export default function AccountStep() {
           if (signedIn?.error) {
             // The account exists either way, so send them to sign in rather
             // than making them register again.
-            router.push("/login?callbackUrl=/doctor/join");
+            router.push("/login?callbackUrl=/doctor/portal");
             return;
           }
-          router.push("/doctor/join?step=1");
+          router.push("/doctor/portal");
           router.refresh();
         });
       }}

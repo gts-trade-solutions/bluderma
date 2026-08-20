@@ -51,7 +51,7 @@ export default function AppointmentsView({
         {error && (
           <div
             role="alert"
-            className="mb-6 rounded-xl bg-rose-500/[12%] px-4 py-3 text-sm text-rose-300 ring-1 ring-inset ring-rose-100"
+            className="mb-6 rounded-xl bg-rose-500/[12%] px-4 py-3 text-sm text-rose-700 ring-1 ring-inset ring-rose-100"
           >
             {error}
           </div>
@@ -105,15 +105,23 @@ export default function AppointmentsView({
   );
 }
 
+/**
+ * Status pills, in dark ink on a tinted ground.
+ *
+ * These were written for the dark theme — amber-300, rose-300, white/60 — and
+ * this page is light. Only CONFIRMED had been corrected, which is why it was
+ * the one badge still readable while the rest of the card faded out. A pill
+ * has to hold its own contrast regardless of what the surface under it does.
+ */
 const STATUS_STYLE: Record<string, { label: string; className: string }> = {
   CONFIRMED: {
     label: "Confirmed",
-    className: "bg-emerald-400/[12%] text-emerald-700",
+    className: "bg-emerald-400/[15%] text-emerald-800",
   },
-  PENDING: { label: "Pending", className: "bg-amber-400/[12%] text-amber-300" },
-  CANCELLED: { label: "Cancelled", className: "bg-rose-500/[12%] text-rose-300" },
-  COMPLETED: { label: "Completed", className: "bg-white/10 text-white/60" },
-  NO_SHOW: { label: "Missed", className: "bg-white/10 text-white/60" },
+  PENDING: { label: "Pending", className: "bg-amber-400/[18%] text-amber-800" },
+  CANCELLED: { label: "Cancelled", className: "bg-rose-500/[12%] text-rose-800" },
+  COMPLETED: { label: "Completed", className: "bg-slate-200 text-slate-700" },
+  NO_SHOW: { label: "Missed", className: "bg-slate-200 text-slate-700" },
 };
 
 function ApptCard({
@@ -173,6 +181,25 @@ function ApptCard({
               : `${appt.clinic}, ${appt.location}`}
           </span>
         </div>
+
+        {/* What they told the clinic, read back to them. A patient who cannot
+            see what the doctor was told has no way to notice it is wrong. */}
+        {appt.reasonSummary && (
+          <div className="mt-2.5 rounded-xl bg-white/[0.05] px-3.5 py-2.5">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-ink-muted">
+              What you told the clinic
+            </p>
+            <p className="mt-0.5 text-xs font-semibold text-ink-soft">
+              {appt.reasonSummary}
+              {appt.reportAttached && " · skin report attached"}
+            </p>
+            {appt.reasonDetail && (
+              <p className="mt-1 line-clamp-3 text-xs text-ink-muted">
+                {appt.reasonDetail}
+              </p>
+            )}
+          </div>
+        )}
         <p className="mt-1 text-xs text-ink-muted">
           Booked for {appt.patientName} · ₹{appt.fee}
         </p>
@@ -191,7 +218,7 @@ function ApptCard({
             reviewed={appt.hasReview}
           />
           {appt.cancellationFeeInr > 0 && (
-            <p className="mt-1 text-right text-[11px] text-rose-300">
+            <p className="mt-1 text-right text-[11px] text-rose-700">
               Late-cancellation fee: ₹{appt.cancellationFeeInr}
             </p>
           )}

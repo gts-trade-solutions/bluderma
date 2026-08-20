@@ -4,7 +4,15 @@ import { useEffect, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 
+import type { VisitReason, SymptomDuration } from "@prisma/client";
+
 import { useBackToClose } from "@/hooks/useBackToClose";
+import {
+  durationLabel,
+  isUrgent,
+  reasonLabel,
+  severityLabel,
+} from "@/lib/booking/visitIntake";
 
 import {
   acceptAppointment,
@@ -43,6 +51,19 @@ interface Detail {
     isPriority: boolean;
     meetingUrl: string | null;
     notes: string | null;
+    reason: VisitReason | null;
+    reasonDetail: string | null;
+    symptomDuration: SymptomDuration | null;
+    severity: number | null;
+    isFirstVisit: boolean;
+    priorTreatment: string | null;
+    medications: string | null;
+    allergies: string | null;
+    photoConsent: boolean;
+    patientAge: number | null;
+    patientGender: string | null;
+    skinAnalysisId: string | null;
+    skinScanId: string | null;
     feeAtBooking: number;
     visitFee: number;
     discountInr: number;
@@ -62,6 +83,7 @@ interface Detail {
       addressLine1: string;
       phone: string | null;
     } | null;
+    photos: { id: string; url: string }[];
   };
   member: { currentPeriodEnd: string; plan: { name: string } } | null;
   scans: {
@@ -265,7 +287,118 @@ function Body({ detail, onDone }: { detail: Detail; onDone: () => void }) {
           )}
         </Row>
         <Row label="Booked">{fmtDate(a.createdAt)}</Row>
-        {a.notes && <Row label="Client note">{a.notes}</Row>}
+      </Section>
+
+      {/* ── Why they are coming ──────────────────────────────────────────
+          Deliberately above money and logistics: this is the part a doctor
+          reads before a consultation, and it used to not exist at all. */}
+      <Section title="Why they are coming">
+        {a.reason ? (
+          <>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="rounded-full bg-slate-900 px-2.5 py-1 text-xs font-bold text-white">
+                {reasonLabel(a.reason)}
+              </span>
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                {a.isFirstVisit ? "First visit" : "Follow-up"}
+              </span>
+              {a.symptomDuration && (
+                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                  {durationLabel(a.symptomDuration)}
+                </span>
+              )}
+              {a.severity != null && (
+                <span
+                  className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                    isUrgent(a.severity)
+                      ? "bg-rose-100 text-rose-800"
+                      : "bg-slate-100 text-slate-700"
+                  }`}
+                >
+                  {severityLabel(a.severity)}
+                </span>
+              )}
+              {(a.patientAge != null || a.patientGender) && (
+                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                  {[
+                    a.patientAge != null ? `${a.patientAge}y` : null,
+                    a.patientGender && a.patientGender !== "UNDISCLOSED"
+                      ? a.patientGender.toLowerCase()
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+              )}
+            </div>
+
+            {a.reasonDetail && (
+              <p className="mt-3 whitespace-pre-line rounded-xl bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-800">
+                {a.reasonDetail}
+              </p>
+            )}
+
+            <div className="mt-3 space-y-2">
+              {a.priorTreatment && (
+                <Row label="Already tried">{a.priorTreatment}</Row>
+              )}
+              {a.medications && <Row label="Medication">{a.medications}</Row>}
+              {/* Always rendered: a blank allergies row reads as "not asked",
+                  and it always is asked. */}
+              <Row label="Allergies">
+                {a.allergies || (
+                  <span className="text-slate-400">None reported</span>
+                )}
+              </Row>
+              {a.notes && <Row label="Also mentioned">{a.notes}</Row>}
+              {a.photos.length > 0 && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                    Photos from the client
+                  </p>
+                  {/* Served through the signed-view route: these sit in a
+                      private bucket prefix and 403 if linked directly. */}
+                  <div className="mt-1.5 grid grid-cols-3 gap-2 sm:grid-cols-4">
+                    {a.photos.map((ph) => (
+                      <a
+                        key={ph.id}
+                        href={`/api/uploads/view?url=${encodeURIComponent(ph.url)}`}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="aspect-square overflow-hidden rounded-xl ring-1 ring-slate-200 transition hover:ring-slate-400"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={`/api/uploads/view?url=${encodeURIComponent(ph.url)}`}
+                          alt="Photograph supplied by the client"
+                          className="h-full w-full object-cover"
+                        />
+                      </a>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-[11px] text-slate-400">
+                    Tap to open full size.
+                  </p>
+                </div>
+              )}
+              <Row label="Photo consent">
+                {a.photoConsent ? (
+                  <span className="font-semibold text-teal-700">Given</span>
+                ) : (
+                  <span className="font-semibold text-amber-700">
+                    Not given — ask before photographing
+                  </span>
+                )}
+              </Row>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-slate-400">
+            {a.notes
+              ? a.notes
+              : "Booked before we asked for a reason, or taken over the phone."}
+          </p>
+        )}
       </Section>
 
       {/* ── The client ───────────────────────────────────────────────── */}

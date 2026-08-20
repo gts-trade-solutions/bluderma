@@ -5,17 +5,10 @@ import { redirect } from "next/navigation";
 import BrandLogo from "@/components/BrandLogo";
 import AccountStep from "@/components/doctor/join/AccountStep";
 import SwitchToClinician from "@/components/auth/SwitchToClinician";
-import AboutStep from "@/components/doctor/join/AboutStep";
-import CredentialsStep from "@/components/doctor/join/CredentialsStep";
-import ClinicsStep from "@/components/doctor/join/ClinicsStep";
-import HoursStep from "@/components/doctor/join/HoursStep";
-import ConsultStep from "@/components/doctor/join/ConsultStep";
-import ReviewStep from "@/components/doctor/join/ReviewStep";
 import { JOIN_STEPS } from "@/data/doctorJoin";
 import { getCurrentUser } from "@/lib/session";
 import { getOwnDoctor } from "@/lib/doctor/guard";
 import { ensurePractice } from "@/lib/doctor/ensurePractice";
-import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Join BluDerma",
@@ -108,86 +101,15 @@ export default async function JoinPage({
     );
   }
 
-  if (owner.status === "APPROVED") redirect("/doctor/portal");
-
-  const doctor = await prisma.doctor.findUniqueOrThrow({
-    where: { id: owner.doctorId },
-    select: {
-      id: true,
-      name: true,
-      title: true,
-      specialty: true,
-      experienceYears: true,
-      image: true,
-      about: true,
-      regCouncil: true,
-      regNumber: true,
-      regYear: true,
-      licenceDocUrl: true,
-      status: true,
-      rejectionReason: true,
-      travelBufferMin: true,
-      requiresApproval: true,
-      modes: { select: { mode: true } },
-      languages: { orderBy: { sortOrder: "asc" }, select: { name: true } },
-      services: { orderBy: { sortOrder: "asc" }, select: { name: true } },
-      focus: { select: { concern: { select: { key: true } } } },
-      clinics: {
-        orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }],
-        select: {
-          feeInr: true,
-          isPrimary: true,
-          clinic: {
-            select: {
-              id: true,
-              name: true,
-              addressLine1: true,
-              addressLine2: true,
-              area: true,
-              city: true,
-              state: true,
-              pincode: true,
-              phone: true,
-              colorKey: true,
-              photos: { select: { kind: true, url: true } },
-              facilities: { orderBy: { sortOrder: "asc" }, select: { name: true } },
-            },
-          },
-        },
-      },
-      availability: {
-        orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
-        select: {
-          id: true,
-          clinicId: true,
-          dayOfWeek: true,
-          startTime: true,
-          endTime: true,
-          slotMinutes: true,
-        },
-      },
-    },
-  });
-
-  const requested = Number(searchParams?.step ?? "1");
-  const step = Number.isFinite(requested)
-    ? Math.min(Math.max(requested, 1), JOIN_STEPS.length - 1)
-    : 1;
-
-  const concerns = await prisma.skinConcern.findMany({
-    orderBy: { label: "asc" },
-    select: { key: true, label: true },
-  });
-
-  return (
-    <Shell step={step} rejection={doctor.status === "REJECTED" ? doctor.rejectionReason : null}>
-      {step === 1 && <AboutStep doctor={doctor} />}
-      {step === 2 && <CredentialsStep doctor={doctor} />}
-      {step === 3 && <ClinicsStep doctor={doctor} />}
-      {step === 4 && <HoursStep doctor={doctor} />}
-      {step === 5 && <ConsultStep doctor={doctor} concerns={concerns} />}
-      {step === 6 && <ReviewStep doctorId={doctor.id} status={doctor.status} />}
-    </Shell>
+  // Onboarding lives in the portal now. This page stays public so a stranger
+  // can still create an account at step 0, but a signed-in practitioner is
+  // sent where the steps actually render — carrying ?step= across, so every
+  // deep link we have ever emailed still lands on the right screen.
+  const requested = Number(searchParams?.step ?? NaN);
+  redirect(
+    Number.isFinite(requested)
+      ? `/doctor/portal?step=${Math.min(Math.max(requested, 1), 6)}`
+      : "/doctor/portal"
   );
 }
 

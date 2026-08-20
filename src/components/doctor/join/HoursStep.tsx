@@ -33,9 +33,14 @@ interface Window {
 export default function HoursStep({
   doctor,
   mode = "join",
+  nextHref = "/doctor/join?step=5",
+  backHref = "/doctor/join?step=3",
 }: {
   doctor: { clinics: ClinicView[]; availability: Window[] };
   mode?: "join" | "manage";
+  /** Overridden when this step is hosted inside the portal. */
+  nextHref?: string;
+  backHref?: string;
 }) {
   if (doctor.clinics.length === 0) {
     return (
@@ -44,7 +49,7 @@ export default function HoursStep({
         <p className="mt-1 text-sm text-amber-800">
           Hours belong to a clinic, so there is nothing to set them against yet.
         </p>
-        <Link href="/doctor/join?step=3" className="btn-primary mt-4 inline-flex">
+        <Link href={backHref} className="btn-primary mt-4 inline-flex">
           Back to locations
         </Link>
       </div>
@@ -64,14 +69,14 @@ export default function HoursStep({
       {mode === "join" && (
         <div className="flex items-center gap-3 border-t border-slate-100 pt-5">
           <Link
-            href="/doctor/join?step=5"
+            href={nextHref}
             className={`btn-primary ${
               doctor.availability.length === 0 ? "pointer-events-none opacity-50" : ""
             }`}
           >
             Save and continue
           </Link>
-          <Link href="/doctor/join?step=3" className="btn-ghost">
+          <Link href={backHref} className="btn-ghost">
             Back
           </Link>
           {doctor.availability.length === 0 && (

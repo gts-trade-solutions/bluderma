@@ -16,6 +16,7 @@ import { audit } from "@/lib/admin/audit";
 import { type AdminResult, parseForm, runAction } from "@/lib/admin/form";
 import { getCurrentUser } from "@/lib/session";
 import { getOwnDoctor } from "@/lib/doctor/guard";
+import { blockingGaps, getApplicationGaps } from "@/lib/doctor/gaps";
 import { rateLimit } from "@/lib/rateLimit";
 import { headers } from "next/headers";
 import { sendEmail, enquiryNotifyAddress } from "@/lib/email";
@@ -180,6 +181,7 @@ export async function saveAboutStep(formData: FormData): Promise<AdminResult> {
     });
 
     revalidatePath("/doctor/join");
+    revalidatePath("/doctor/portal");
     return { ok: true };
   });
 }
@@ -217,6 +219,7 @@ export async function saveCredentialsStep(
     });
 
     revalidatePath("/doctor/join");
+    revalidatePath("/doctor/portal");
     return { ok: true };
   });
 }
@@ -370,6 +373,7 @@ export async function saveClinicStep(formData: FormData): Promise<AdminResult> {
     });
 
     revalidatePath("/doctor/join");
+    revalidatePath("/doctor/portal");
     revalidatePath("/doctor/portal/practice");
     return { ok: true, id: clinicId };
   });
@@ -410,6 +414,7 @@ export async function removeClinic(clinicId: string): Promise<AdminResult> {
     ]);
 
     revalidatePath("/doctor/join");
+    revalidatePath("/doctor/portal");
     revalidatePath("/doctor/portal/practice");
     return { ok: true };
   });
@@ -483,6 +488,7 @@ export async function addHoursStep(formData: FormData): Promise<AdminResult> {
     }
 
     revalidatePath("/doctor/join");
+    revalidatePath("/doctor/portal");
     revalidatePath("/doctor/portal/practice");
     return { ok: true };
   });
@@ -499,6 +505,7 @@ export async function removeHours(availabilityId: string): Promise<AdminResult> 
     });
 
     revalidatePath("/doctor/join");
+    revalidatePath("/doctor/portal");
     revalidatePath("/doctor/portal/practice");
     return { ok: true };
   });
@@ -511,18 +518,34 @@ const consultSchema = z.object({
   offersVideo: z.string().optional(),
   offersHome: z.string().optional(),
   languages: z.string().trim().max(400).optional().or(z.literal("")),
-  services: z.string().trim().max(1500).optional().or(z.literal("")),
+  services: z.union([z.string(), z.array(z.string())]).optional(),
   concerns: z.union([z.string(), z.array(z.string())]).optional(),
   travelBufferMin: z.coerce.number().int().min(0).max(240).default(0),
   requiresApproval: z.string().optional(),
 });
 
-const lines = (v: string | undefined, cap: number) =>
-  (v || "")
-    .split(/[\n,]/)
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .slice(0, cap);
+/**
+ * Normalises a list field to trimmed, deduped names.
+ *
+ * Accepts either shape: the chip picker submits repeated inputs (which
+ * formToObject collapses into an array) while the textarea submits one string,
+ * and /doctor/portal/practice still renders the textarea version.
+ */
+const lines = (v: string | string[] | undefined, cap: number) => {
+  const raw = Array.isArray(v) ? v : (v || "").split(/[\n,]/);
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const item of raw) {
+    const t = item.trim();
+    if (!t) continue;
+    const key = t.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(t);
+    if (out.length >= cap) break;
+  }
+  return out;
+};
 
 export async function saveConsultStep(formData: FormData): Promise<AdminResult> {
   return runAction("saveConsultStep", async () => {
@@ -597,47 +620,12 @@ export async function saveConsultStep(formData: FormData): Promise<AdminResult> 
     });
 
     revalidatePath("/doctor/join");
+    revalidatePath("/doctor/portal");
     return { ok: true };
   });
 }
 
 /* ---------------------------- Submit for review ------------------------- */
-
-/**
- * What must be filled in before an application can be sent.
- *
- * Checked on the server rather than trusted from the wizard, because the
- * submit button is a public endpoint like any other. Returns the list of gaps
- * so the UI can name them instead of just refusing.
- */
-export async function applicationGaps(doctorId: string): Promise<string[]> {
-  const d = await prisma.doctor.findUnique({
-    where: { id: doctorId },
-    select: {
-      title: true,
-      specialty: true,
-      about: true,
-      image: true,
-      regCouncil: true,
-      regNumber: true,
-      _count: { select: { clinics: true, modes: true, availability: true } },
-    },
-  });
-  if (!d) return ["Your application could not be found."];
-
-  const gaps: string[] = [];
-  if (!d.title.trim()) gaps.push("Your qualifications");
-  if (!d.specialty.trim()) gaps.push("Your specialty");
-  if (d.about.trim().length < 40) gaps.push("A description clients can read");
-  if (!d.image.trim()) gaps.push("A photograph of you");
-  if (!d.regCouncil?.trim() || !d.regNumber?.trim()) {
-    gaps.push("Your medical registration details");
-  }
-  if (d._count.clinics === 0) gaps.push("At least one clinic");
-  if (d._count.availability === 0) gaps.push("Your working hours");
-  if (d._count.modes === 0) gaps.push("How you see clients");
-  return gaps;
-}
 
 export async function submitApplication(): Promise<AdminResult> {
   return runAction("submitApplication", async () => {
@@ -650,11 +638,14 @@ export async function submitApplication(): Promise<AdminResult> {
       return { ok: false, error: "Your profile is already live." };
     }
 
-    const gaps = await applicationGaps(owner.doctorId);
+    const gaps = blockingGaps(await getApplicationGaps(owner.doctorId));
     if (gaps.length) {
       return {
         ok: false,
-        error: `Still needed: ${gaps.join(", ").toLowerCase()}.`,
+        error: `Still needed: ${gaps
+          .map((g) => g.label)
+          .join(", ")
+          .toLowerCase()}.`,
       };
     }
 
@@ -687,6 +678,7 @@ export async function submitApplication(): Promise<AdminResult> {
     }).catch((e) => console.error("application notice failed", e));
 
     revalidatePath("/doctor/join");
+    revalidatePath("/doctor/portal");
     revalidatePath("/doctor/portal");
     revalidatePath("/admin/doctor-applications");
     return { ok: true };

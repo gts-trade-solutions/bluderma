@@ -11,8 +11,11 @@
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
+    "db:apply": "tsx prisma/apply-migrations.ts",
     "db:seed": "prisma db seed",
     "db:seed:catalog": "tsx prisma/seed-catalog.ts",
+    "db:seed:demo": "tsx prisma/seed-demo-doctor.ts",
+    "db:seed:demo:purge": "tsx prisma/seed-demo-doctor.ts --purge",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset"
   },

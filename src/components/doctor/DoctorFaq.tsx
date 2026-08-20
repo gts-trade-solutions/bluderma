@@ -44,23 +44,23 @@ const FAQS = [
 
 export default function DoctorFaq() {
   return (
-    <section className="scroll-mt-24 bg-white py-20" id="faq">
+    <section className="scroll-mt-24 py-20" id="faq">
       <div className="container-page">
         <div className="max-w-2xl">
           <p className="section-eyebrow">Before you start</p>
-          <h2 className="mt-2 text-3xl font-bold text-ink sm:text-4xl">
+          <h2 className="display mt-2 text-3xl text-ink sm:text-4xl">
             The questions worth asking first
           </h2>
         </div>
 
-        <div className="mt-10 max-w-3xl divide-y divide-slate-200 border-y border-slate-200">
+        <div className="mt-10 max-w-3xl divide-y divide-white/10 overflow-hidden rounded-3xl bg-white/[0.03] px-6 ring-1 ring-white/10">
           {FAQS.map((f) => (
             <details key={f.q} className="group py-5">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
-                <h3 className="font-bold text-ink">{f.q}</h3>
+                <h3 className="font-bold text-ink transition group-hover:text-teal-200">{f.q}</h3>
                 <span
                   aria-hidden
-                  className="shrink-0 text-xl leading-none text-slate-400 transition group-open:rotate-45"
+                  className="shrink-0 text-xl leading-none text-ink-muted transition group-open:rotate-45"
                 >
                   +
                 </span>

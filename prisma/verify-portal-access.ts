@@ -1,0 +1,84 @@
+/**
+ * Access + wayfinding for the doctor portal.
+ *
+ * Covers the dead end a client hits when they click a practitioner link with
+ * the wrong account signed in: they used to be bounced to a bare "no
+ * permission — contact your administrator" with no way forward, which is how
+ * "can't access the portal" ends up looking like a broken portal.
+ */
+import { readFileSync } from "node:fs";
+import { buildDoctorMenu } from "../src/lib/queries/nav";
+import { internalPath, postLoginPath } from "../src/lib/roles";
+
+let pass = 0;
+const fails: string[] = [];
+function check(name: string, ok: boolean) {
+  if (ok) pass++;
+  else fails.push(name);
+}
+const read = (p: string) => readFileSync(p, "utf8");
+
+// ── The nav entry that started this ────────────────────────────────────────
+const guest = buildDoctorMenu();
+const doc = buildDoctorMenu({ hasPortal: true });
+const entry = (m: ReturnType<typeof buildDoctorMenu>) =>
+  m.find((i) => /portal/i.test(i.label))!;
+
+check("guest gets the marketing anchor", entry(guest).href === "/doctor#portal");
+check("guest label does not imply ownership", entry(guest).label === "The portal");
+check("doctor gets the real portal", entry(doc).href === "/doctor/portal");
+check("doctor label implies ownership", entry(doc).label === "Your portal");
+check("menus are otherwise identical", guest.length === doc.length);
+
+// ── The attempted path survives the bounce ─────────────────────────────────
+const mw = read("src/middleware.ts");
+check("middleware forwards the path", /searchParams\.set\("from", pathname\)/.test(mw));
+const sess = read("src/lib/session.ts");
+check("requireRole forwards it too", /forbidden\?from=\$\{encodeURIComponent/.test(sess));
+
+// ── The refusal page ───────────────────────────────────────────────────────
+const fb = read("src/app/forbidden/page.tsx");
+check("names the refused account", /You are signed in as/.test(fb));
+check("names what the area needs", /needs \$\{area\.needs\}|area\.needs/.test(fb));
+check("offers an account switch", /SwitchAccount/.test(fb));
+// Comments stripped first — the doc block explains the line that was removed,
+// and matching that would make this assertion pass for the wrong reason.
+const fbCode = fb.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+check("drops the administrator line", !/contact your administrator/i.test(fbCode));
+check("offers listing to a refused client", /List your practice/.test(fb));
+check("reuses the shared sanitizer", /internalPath/.test(fb));
+
+// The sanitizer is the security-relevant part, and it is now the SAME function
+// the login flow uses — a callbackUrl open redirect and a ?from= open redirect
+// are the same bug, so they get one implementation and one test.
+for (const bad of [
+  "//evil.com",
+  "/\\evil.com",
+  "/\\\\evil.com",
+  "https://evil.com",
+  "evil",
+  "",
+  null,
+  undefined,
+]) {
+  check(`rejects ${JSON.stringify(bad)}`, internalPath(bad) === null);
+}
+check("postLoginPath drops //evil.com", !postLoginPath("//evil.com", "PATIENT").startsWith("//"));
+check("postLoginPath still honours a real path",
+  postLoginPath("/patient/appointments", "PATIENT") === "/patient/appointments");
+check("accepts a real path", internalPath("/doctor/portal") === "/doctor/portal");
+
+// ── The shell the user reported as unchanged ───────────────────────────────
+const layout = read("src/app/doctor/portal/layout.tsx");
+const rail = read("src/components/doctor/PortalRail.tsx");
+check("portal renders the rail", /<PortalRail/.test(layout));
+check("canvas clears the rail", /lg:pl-64/.test(layout));
+check("rail is the dark surface", /bg-\[#0b1220\]/.test(rail));
+check("no admin console chrome left", !/@\/components\/admin\/ui/.test(layout));
+check("unapproved doctors still get in", /pending &&/.test(layout));
+
+console.log(`\n${pass} passed, ${fails.length} failed`);
+if (fails.length) {
+  fails.forEach((f) => console.log(`  FAIL  ${f}`));
+  process.exit(1);
+}

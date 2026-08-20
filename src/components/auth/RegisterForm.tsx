@@ -42,7 +42,7 @@ export default function RegisterForm() {
    */
   const isDoctor = params.get("as") === "doctor";
   const callbackUrl =
-    params.get("callbackUrl") || (isDoctor ? "/doctor/join" : "/patient/explore");
+    params.get("callbackUrl") || (isDoctor ? "/doctor/portal" : "/patient/explore");
 
   const [form, setForm] = useState<FormState>(EMPTY);
   const [fields, setFields] = useState<Record<string, string>>({});

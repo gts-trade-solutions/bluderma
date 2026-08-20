@@ -39,7 +39,12 @@ export async function middleware(req: NextRequest) {
   }
 
   if (!rule.roles.includes(token.role as string)) {
-    return NextResponse.redirect(new URL("/forbidden", req.url));
+    // Carry where they were headed. Without it the refusal page can only say
+    // "no access", which is exactly the dead end a client hits after clicking
+    // a practitioner link with the wrong account signed in.
+    const denied = new URL("/forbidden", req.url);
+    denied.searchParams.set("from", pathname);
+    return NextResponse.redirect(denied);
   }
 
   return NextResponse.next();

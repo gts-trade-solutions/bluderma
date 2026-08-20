@@ -67,6 +67,30 @@ const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov
 const WEEKDAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
 /** "2026-08-03" + "10:30" -> the UTC instant that slot is stored at. */
+/** The clinic's wall clock as a Date, for reading day/hour off with getUTC*. */
+export function clinicWallClock(): Date {
+  return new Date(clinicNow());
+}
+
+/**
+ * Today, in clinic wall-clock terms.
+ *
+ * Lived as a private copy inside the portal's Today page, next to a second
+ * hardcoded 330. It belongs here with the offset it depends on — two copies of
+ * a timezone rule is one copy too many.
+ */
+export function clinicTodayBounds(): { from: Date; to: Date; seed: string } {
+  const now = clinicWallClock();
+  const from = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+  return {
+    from,
+    to: new Date(from.getTime() + 86_400_000),
+    seed: from.toISOString().slice(0, 10),
+  };
+}
+
 export function slotInstant(daySeed: string, time: string): Date {
   return new Date(`${daySeed}T${time}:00.000Z`);
 }

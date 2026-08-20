@@ -42,7 +42,16 @@ export interface HubCategory {
   /** Longer intro shown on the category page. */
   intro: string;
   image: string;
-  /** Tailwind gradient classes for the icon chip. */
+  /**
+   * Tailwind gradient classes for the icon chip — a full-strength two-stop
+   * gradient and a white glyph. These were translucent (`/20` over the dark
+   * canvas) and every one of the eighteen came out the same near-grey, so
+   * the catalogue read as a list of identical tiles. At full saturation the
+   * hue is what tells the categories apart at a glance.
+   *
+   * Also reused as the wash behind TreatmentLabel's type, which is why the
+   * string carries no shadow or ring: those belong to the chip, not here.
+   */
   tint: string;
   treatments: HubTreatment[];
 }
@@ -109,7 +118,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     intro:
       "The hydration-first route to that lit-from-within finish — injectable boosters, medical facials and barrier repair, layered over weeks rather than forced in one sitting.",
     image: IMG.portraitGlow,
-    tint: "from-sky-400/20 to-cyan-400/20 text-sky-200",
+    tint: "from-sky-500 to-cyan-400 text-white",
     treatments: [
       {
         slug: "skin-boosters",
@@ -163,7 +172,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     intro:
       "Non-surgical lift — energy devices and absorbable threads that tighten laxity along the jawline, cheeks and neck without a scalpel.",
     image: IMG.portraitStudio,
-    tint: "from-violet-400/20 to-fuchsia-400/20 text-violet-200",
+    tint: "from-violet-500 to-fuchsia-400 text-white",
     treatments: [
       {
         slug: "thread-lift",
@@ -217,7 +226,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     intro:
       "Botulinum toxin, dosed conservatively. Softens expression lines while keeping movement — and treats sweating, jaw clenching and a heavy masseter too.",
     image: IMG.procInject,
-    tint: "from-blue-400/20 to-indigo-400/20 text-blue-200",
+    tint: "from-blue-600 to-indigo-500 text-white",
     treatments: [
       {
         slug: "botox",
@@ -271,7 +280,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     intro:
       "Hyaluronic acid placed to restore what time removed — never to add what was never there. Every filler used here is reversible.",
     image: IMG.procFiller,
-    tint: "from-rose-400/20 to-pink-400/20 text-rose-300",
+    tint: "from-rose-500 to-pink-400 text-white",
     treatments: [
       {
         slug: "dermal-fillers",
@@ -325,7 +334,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     intro:
       "Wavelength chosen for your concern and your skin tone. Indian and South-Asian skin needs conservative settings — that is the default here, not an option.",
     image: IMG.procLaserFace,
-    tint: "from-amber-400/20 to-orange-400/20 text-amber-300",
+    tint: "from-amber-500 to-orange-400 text-white",
     treatments: [
       {
         slug: "laser-toning",
@@ -379,7 +388,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     intro:
       "Diode and Nd:YAG platforms selected by skin type, with cooling throughout. Course-based — hair only responds in its growth phase.",
     image: IMG.lhr1,
-    tint: "from-teal-400/20 to-emerald-400/20 text-teal-200",
+    tint: "from-teal-500 to-emerald-400 text-white",
     treatments: [
       {
         slug: "lhr-full-face",
@@ -433,7 +442,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     intro:
       "Hair loss is diagnosed before it is treated — bloodwork and trichoscopy first, then the regenerative or surgical route that actually fits the pattern.",
     image: IMG.hair1,
-    tint: "from-lime-400/20 to-green-400/20 text-green-200",
+    tint: "from-lime-500 to-green-400 text-white",
     treatments: [
       {
         slug: "prp-hair",
@@ -487,7 +496,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     intro:
       "Active acne is calmed first, then the marks it left are resurfaced. Reversing that order is the single most common reason scar treatment fails.",
     image: IMG.acne1,
-    tint: "from-orange-400/20 to-red-400/20 text-orange-200",
+    tint: "from-orange-500 to-red-400 text-white",
     treatments: [
       {
         slug: "acne-treatment",
@@ -541,7 +550,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     intro:
       "Pigment is stubborn and it recurs. The plan here is always three-part: reduce, protect and maintain — with sun protection treated as part of the treatment.",
     image: IMG.pairPigmentA,
-    tint: "from-yellow-400/20 to-amber-400/20 text-amber-300",
+    tint: "from-yellow-500 to-amber-400 text-white",
     treatments: [
       {
         slug: "melasma-treatment",
@@ -595,7 +604,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     intro:
       "The eye area ages first and shows every late night. Non-surgical options now cover most of what used to need a blepharoplasty.",
     image: IMG.eye1,
-    tint: "from-indigo-400/20 to-blue-400/20 text-indigo-200",
+    tint: "from-indigo-500 to-blue-400 text-white",
     treatments: [
       {
         slug: "tear-trough-correction",
@@ -649,7 +658,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     intro:
       "Non-surgical nose work — camouflage of a dorsal hump, tip support and bridge definition using filler and threads. Reversible, and done in under an hour.",
     image: IMG.portraitSerum,
-    tint: "from-slate-400/20 to-zinc-400/20 text-white/75",
+    tint: "from-slate-500 to-zinc-400 text-white",
     treatments: [
       {
         slug: "liquid-rhinoplasty",
@@ -703,7 +712,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     intro:
       "Shaping the lower face — slimming what is heavy, supporting what has dropped and defining the border between face and neck.",
     image: IMG.pairLiftA,
-    tint: "from-purple-400/20 to-violet-400/20 text-purple-200",
+    tint: "from-purple-500 to-violet-400 text-white",
     treatments: [
       {
         slug: "v-line-contouring",
@@ -757,7 +766,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     intro:
       "For stubborn pockets that diet and training do not reach. Body work is an adjunct to a healthy weight, never a substitute for one.",
     image: IMG.body1,
-    tint: "from-cyan-400/20 to-sky-400/20 text-cyan-200",
+    tint: "from-cyan-500 to-sky-400 text-white",
     treatments: [
       {
         slug: "fat-dissolving",
@@ -811,7 +820,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     intro:
       "Skin reflects what is happening internally. Deficiency screening first, then targeted repletion — oral where it works, intravenous where it does not.",
     image: IMG.iv2,
-    tint: "from-emerald-400/20 to-teal-400/20 text-emerald-200",
+    tint: "from-emerald-500 to-teal-400 text-white",
     treatments: [
       {
         slug: "iv-wellness-drips",
@@ -865,7 +874,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     intro:
       "Everything reverse-engineered from your date. Nothing new is started inside the final fortnight — that rule is what keeps the day itself uneventful.",
     image: IMG.bridal1,
-    tint: "from-pink-400/20 to-rose-400/20 text-pink-200",
+    tint: "from-pink-500 to-rose-400 text-white",
     treatments: [
       {
         slug: "bridal-6-month",
@@ -919,7 +928,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     intro:
       "Male skin is thicker, oilier and more vascular. Same devices, different settings — and a plan that survives a shave every morning.",
     image: IMG.men1,
-    tint: "from-zinc-400/20 to-slate-400/20 text-zinc-200",
+    tint: "from-zinc-600 to-slate-500 text-white",
     treatments: [
       {
         slug: "mens-hair-loss",
@@ -973,7 +982,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     intro:
       "The lower third of the face is judged as one unit. Smile work is coordinated with lip and chin planning rather than treated in isolation.",
     image: IMG.smile1,
-    tint: "from-sky-400/20 to-blue-400/20 text-sky-200",
+    tint: "from-sky-600 to-blue-500 text-white",
     treatments: [
       {
         slug: "teeth-whitening",
@@ -1027,7 +1036,7 @@ export const HUB_CATEGORIES: HubCategory[] = [
     intro:
       "The medical half of the clinic. Conditions that need a diagnosis and a prescription before anything cosmetic is even discussed.",
     image: IMG.portraitCalm,
-    tint: "from-red-400/20 to-rose-400/20 text-red-200",
+    tint: "from-red-500 to-rose-400 text-white",
     treatments: [
       {
         slug: "rosacea-treatment",

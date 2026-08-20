@@ -87,7 +87,7 @@ export default async function CategoryPage({ params }: Params) {
 
             <div className="mt-5 flex items-start gap-4">
               <span
-                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${category.tint}`}
+                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br shadow-[0_10px_24px_-10px_rgba(0,0,0,0.7)] ring-1 ring-inset ring-white/25 ${category.tint}`}
               >
                 <Icon className="h-7 w-7" strokeWidth={1.7} />
               </span>

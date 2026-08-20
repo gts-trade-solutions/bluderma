@@ -91,7 +91,24 @@ export function canRoleOpen(path: string, role: Role): boolean {
  * their own landing page, which is never a bounce.
  */
 export function postLoginPath(callbackUrl: string, role: Role): string {
-  const target = callbackUrl?.startsWith("/") ? callbackUrl : "/";
+  const target = internalPath(callbackUrl) ?? "/";
   if (target === "/") return landingPathForRole(role);
   return canRoleOpen(target, role) ? target : landingPathForRole(role);
+}
+
+/**
+ * A path we are willing to send a browser to, or null.
+ *
+ * Testing `startsWith("/")` alone is not enough, and that is what this used to
+ * do: "//evil.com" and "/\evil.com" both begin with a slash and both are read
+ * by browsers as protocol-relative URLs pointing at another host. That turned
+ * any ?callbackUrl= into an open redirect — a phishing link that genuinely
+ * lives on our own domain right up until the moment it lands somewhere else.
+ */
+export function internalPath(raw: string | null | undefined): string | null {
+  if (!raw || !raw.startsWith("/")) return null;
+  // Browsers normalise backslashes to forward slashes, so "/\host" is read as
+  // "//host" and has to be rejected alongside it.
+  if (/^\/[/\\]/.test(raw)) return null;
+  return raw;
 }

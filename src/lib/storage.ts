@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
@@ -110,4 +110,66 @@ export async function createPresignedUpload(input: {
   const uploadUrl = await getSignedUrl(s3(), command, { expiresIn: 300 });
 
   return { uploadUrl, publicUrl: publicUrlFor(input.key), key: input.key };
+}
+
+/**
+ * Prefixes that are NOT publicly readable, and must be reached with a signed
+ * URL. Mirrors PRIVATE_PREFIXES in prisma/setup-s3.ts — the bucket policy is
+ * the thing that actually enforces it; this is how the app knows to sign.
+ */
+export const PRIVATE_PREFIXES = ["credentials", "prescriptions", "patients"];
+
+export function isPrivateKey(key: string): boolean {
+  return PRIVATE_PREFIXES.includes(key.split("/")[0] ?? "");
+}
+
+/**
+ * Recovers the object key from a stored URL.
+ *
+ * Certificates are saved as full URLs, so the only way to sign one on demand
+ * is to work backwards to the key. Returns null for anything that is not ours,
+ * which is what stops this being used to sign arbitrary buckets.
+ */
+export function keyFromUrl(url: string): string | null {
+  let path: string;
+  try {
+    path = new URL(url).pathname.replace(/^\//, "");
+  } catch {
+    return null;
+  }
+
+  const cdn = process.env.CDN_BASE_URL?.replace(/\/$/, "");
+  if (cdn && url.startsWith(`${cdn}/`)) return decodeURIComponent(path);
+
+  const bucket = process.env.S3_BUCKET;
+  const region = process.env.AWS_REGION;
+  if (!bucket || !region) return null;
+
+  // Virtual-hosted style: bucket.s3.region.amazonaws.com/key
+  if (url.startsWith(`https://${bucket}.s3.${region}.amazonaws.com/`)) {
+    return decodeURIComponent(path);
+  }
+  // Path style: s3.region.amazonaws.com/bucket/key
+  if (url.startsWith(`https://s3.${region}.amazonaws.com/${bucket}/`)) {
+    return decodeURIComponent(path.slice(bucket.length + 1));
+  }
+  return null;
+}
+
+/**
+ * A short-lived signed URL for reading a private object.
+ *
+ * Five minutes: long enough to open a certificate in a new tab, short enough
+ * that a URL copied out of the address bar and pasted somewhere is useless by
+ * the time anyone else follows it.
+ */
+export async function createPresignedView(
+  key: string,
+  expiresIn = 300
+): Promise<string> {
+  return getSignedUrl(
+    s3(),
+    new GetObjectCommand({ Bucket: process.env.S3_BUCKET!, Key: key }),
+    { expiresIn }
+  );
 }

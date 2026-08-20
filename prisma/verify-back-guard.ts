@@ -38,11 +38,29 @@ class FakeHistory {
     this.index += 1;
   }
 
+  /**
+   * Travels back and QUEUES the pop.
+   *
+   * The browser fires popstate asynchronously. Modelling it synchronously hid
+   * a real bug: a back() called from a cleanup landed before the listener was
+   * re-attached in this model, but after it in a browser — so React's
+   * StrictMode remount caught the overlay's own teardown and closed it.
+   */
   back() {
     if (this.index === 0) throw new Error("left the site");
     this.index -= 1;
-    for (const l of [...this.listeners]) l();
+    this.pending += 1;
   }
+
+  /** Deliver any queued pops, as the event loop would. */
+  flush() {
+    while (this.pending > 0) {
+      this.pending -= 1;
+      for (const l of [...this.listeners]) l();
+    }
+  }
+
+  private pending = 0;
 
   onPop(fn: () => void) {
     this.listeners.push(fn);
@@ -64,6 +82,8 @@ class Guard {
   private token: string | null = null;
   private off: (() => void) | null = null;
   private seq = 0;
+  /** Set while a back() this guard called is still in flight. */
+  private selfPop = false;
 
   constructor(
     private history: FakeHistory,
@@ -80,6 +100,11 @@ class Guard {
   render() {
     if (this.active() && !this.off) {
       this.off = this.history.onPop(() => {
+        // A pop we caused ourselves is not the user pressing Back.
+        if (this.selfPop) {
+          this.selfPop = false;
+          return;
+        }
         this.token = null;
         this.onBack();
       });
@@ -98,6 +123,7 @@ class Guard {
     this.off = null;
     if (this.ours()) {
       this.token = null;
+      this.selfPop = true;
       this.history.back();
     } else {
       this.token = null;
@@ -165,19 +191,23 @@ console.log("\n2. Back steps back, and only closes at the first step");
   g.render();
 
   h.back();
+  h.flush(); // the browser delivers popstate
   g.render();
   check("back from 3 lands on 2", st.step === 2, `step ${st.step}`);
   check("still open", st.open);
   check("stack has not grown", h.depth === 1, `depth ${h.depth}`);
 
   h.back();
+  h.flush(); // the browser delivers popstate
   g.render();
   h.back();
+  h.flush(); // the browser delivers popstate
   g.render();
   check("back twice more lands on 0", st.step === 0, `step ${st.step}`);
   check("still open at step 0", st.open);
 
   h.back();
+  h.flush(); // the browser delivers popstate
   g.render();
   check("back at step 0 closes", !st.open);
   check(
@@ -236,6 +266,43 @@ console.log("\n4. Close and reopen");
     h.depth === 0,
     `depth ${h.depth}`
   );
+}
+
+/* ------------------------------------------------------------------------
+   5. React StrictMode: effects run twice in development
+   ---------------------------------------------------------------------- */
+// The bug this covers: opening an appointment made the drawer flash and close
+// instantly. StrictMode mounts, tears down and re-mounts every effect, so the
+// guard armed, disarmed (calling back()) and re-armed within a tick. popstate
+// is asynchronous, so that self-inflicted pop landed AFTER the listener was
+// back in place, and was read as the user pressing Back.
+console.log("\n5. StrictMode double-invokes the effects");
+{
+  const h = new FakeHistory();
+  let open = true;
+  const g = new Guard(
+    h,
+    () => {
+      open = false;
+    },
+    () => open,
+    "strict"
+  );
+
+  // Mount, tear down, mount again: exactly what StrictMode does.
+  g.render();
+  g.teardown();
+  g.render();
+  h.flush(); // the queued pop from the teardown finally lands
+
+  check("the overlay survives the double-invoke", open);
+  check("exactly one sentinel remains", h.depth === 1, `depth ${h.depth}`);
+
+  // And a genuine Back still closes it afterwards.
+  h.back();
+  h.flush();
+  check("a real Back still closes it", !open);
+  check("and the user is left on the page", h.depth === 0, `depth ${h.depth}`);
 }
 
 if (fails.length) {

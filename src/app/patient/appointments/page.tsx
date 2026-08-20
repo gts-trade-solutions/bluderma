@@ -58,7 +58,11 @@ export default async function AppointmentsPage() {
   return (
     <>
       <Navbar role="patient" menu={buildPatientMenu()} />
-      <main className="min-h-screen bg-[#f7fafc]">
+      {/* theme-light, not just a light background: the ink tokens and the
+          translucent "raise" surfaces both default to the dark theme, so a
+          light page without this class renders near-white text on near-white
+          cards. */}
+      <main className="theme-light min-h-screen bg-[#f7fafc]">
         <AppointmentsView appointments={appointments} policies={policies} />
       </main>
       <Footer />

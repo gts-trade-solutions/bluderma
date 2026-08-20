@@ -82,11 +82,29 @@ export function buildPatientMenu(): NavNode[] {
  * looking up a protocol. The catalogue lives on the client side, where the
  * people browsing it actually are.
  */
-export function buildDoctorMenu(): NavNode[] {
+export function buildDoctorMenu(
+  /**
+   * True when a listed practitioner is reading. It changes one entry from an
+   * anchor into a real link — "Your portal" used to scroll to a MARKETING
+   * SECTION about the portal, which is a reasonable thing to show a stranger
+   * and an absurd thing to show somebody who has one.
+   */
+  opts: { hasPortal?: boolean } = {}
+): NavNode[] {
   return [
     { label: "For clinicians", href: "/doctor", tagline: "List your practice on BluDerma" },
     { label: "How it works", href: "/doctor#how-it-works", tagline: "Four steps, about ten minutes" },
-    { label: "Your portal", href: "/doctor#portal", tagline: "One calendar across every clinic you run" },
+    opts.hasPortal
+      ? {
+          label: "Your portal",
+          href: "/doctor/portal",
+          tagline: "Your calendar, requests and practice",
+        }
+      : {
+          label: "The portal",
+          href: "/doctor#portal",
+          tagline: "One calendar across every clinic you run",
+        },
     { label: "Questions", href: "/doctor#faq", tagline: "Fees, verification, and what we do not do" },
   ];
 }

@@ -7,6 +7,21 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Doctor } from "@/data/doctors";
 import type { DayOption, Slot } from "@/lib/queries/availability";
 import { bookAppointment } from "@/lib/actions/booking";
+import type { VisitReason, SymptomDuration } from "@prisma/client";
+import {
+  SEVERITIES,
+  SYMPTOM_DURATIONS,
+  VISIT_REASONS,
+  durationLabel,
+  reasonLabel,
+  severityLabel,
+} from "@/lib/booking/visitIntake";
+import SkinReportAttach, {
+  type AttachedReport,
+} from "@/components/booking/SkinReportAttach";
+import PhotoAttach, {
+  type AttachedPhoto,
+} from "@/components/booking/PhotoAttach";
 import { useRazorpayCheckout } from "@/hooks/useRazorpayCheckout";
 import { applyMemberDiscount } from "@/lib/subscription/plan";
 
@@ -24,7 +39,7 @@ import { applyMemberDiscount } from "@/lib/subscription/plan";
  * component state — those are personal and have no business in a URL.
  */
 
-type StepId = "clinic" | "when" | "how" | "you" | "confirm";
+type StepId = "clinic" | "when" | "how" | "reason" | "you" | "confirm";
 
 interface Props {
   doctor: Doctor;
@@ -66,8 +81,8 @@ export default function BookingWizard({
   const steps = useMemo<StepId[]>(
     () =>
       practices.length > 1
-        ? ["clinic", "when", "how", "you", "confirm"]
-        : ["when", "how", "you", "confirm"],
+        ? ["clinic", "when", "how", "reason", "you", "confirm"]
+        : ["when", "how", "reason", "you", "confirm"],
     [practices.length]
   );
 
@@ -149,6 +164,28 @@ export default function BookingWizard({
   const [name, setName] = useState(patientName);
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
+
+  // ── Why they are coming ───────────────────────────────────────────────
+  // Required. The doctor used to open their day and see a name and a time,
+  // which is not enough to prepare for anybody.
+  const [reason, setReason] = useState<VisitReason | "">("");
+  const [reasonDetail, setReasonDetail] = useState("");
+  const [symptomDuration, setSymptomDuration] = useState<SymptomDuration | "">("");
+  const [severity, setSeverity] = useState<number>(0);
+  const [isFirstVisit, setIsFirstVisit] = useState<boolean | null>(null);
+  const [priorTreatment, setPriorTreatment] = useState("");
+  const [medications, setMedications] = useState("");
+  const [allergies, setAllergies] = useState("");
+  const [photoConsent, setPhotoConsent] = useState(false);
+  const [report, setReport] = useState<AttachedReport | null>(null);
+  const [photos, setPhotos] = useState<AttachedPhoto[]>([]);
+
+  const reasonDone =
+    reason !== "" &&
+    reasonDetail.trim().length >= 10 &&
+    symptomDuration !== "" &&
+    severity > 0 &&
+    isFirstVisit !== null;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ awaiting: boolean; paid: boolean } | null>(null);
@@ -180,6 +217,18 @@ export default function BookingWizard({
       patientName: name.trim() || "Client",
       patientPhone: phone.trim(),
       notes: notes.trim() || undefined,
+      reason,
+      reasonDetail: reasonDetail.trim(),
+      symptomDuration,
+      severity,
+      isFirstVisit: isFirstVisit ?? true,
+      priorTreatment: priorTreatment.trim() || undefined,
+      medications: medications.trim() || undefined,
+      allergies: allergies.trim() || undefined,
+      photoConsent,
+      skinReportId: report?.id,
+      skinReportSource: report?.source,
+      photoKeys: photos.map((p) => p.key),
     });
 
     if (!res.ok || !res.appointmentId) {
@@ -378,6 +427,142 @@ export default function BookingWizard({
           </Screen>
         )}
 
+        {stepId === "reason" && (
+          <Screen
+            title="What is the appointment for?"
+            sub="Your doctor reads this before you arrive, so the consultation starts with them already knowing why you came."
+          >
+            <div className="space-y-7">
+              <fieldset>
+                <legend className="text-sm font-semibold text-ink">
+                  The main thing you want looked at
+                </legend>
+                <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
+                  {VISIT_REASONS.map((r) => (
+                    <button
+                      key={r.value}
+                      type="button"
+                      onClick={() => setReason(r.value)}
+                      aria-pressed={reason === r.value}
+                      className={`rounded-2xl px-4 py-3 text-left ring-1 transition ${
+                        reason === r.value
+                          ? "bg-brand-500/20 ring-brand-400"
+                          : "ring-white/10 hover:bg-white/[0.04]"
+                      }`}
+                    >
+                      <span className="block text-sm font-bold text-ink">
+                        {r.label}
+                      </span>
+                      {r.hint && (
+                        <span className="mt-0.5 block text-xs text-ink-muted">
+                          {r.hint}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+
+              <div>
+                <label
+                  htmlFor="reasonDetail"
+                  className="block text-sm font-semibold text-ink"
+                >
+                  Describe it in your own words
+                </label>
+                <p className="mt-0.5 text-xs text-ink-muted">
+                  Where it is, when it started, what makes it better or worse.
+                </p>
+                <textarea
+                  id="reasonDetail"
+                  rows={4}
+                  value={reasonDetail}
+                  onChange={(e) => setReasonDetail(e.target.value)}
+                  placeholder="e.g. Breakouts along my jaw for the last few months. Worse the week before my period. Cetaphil and benzoyl peroxide have not helped."
+                  className="mt-2 w-full rounded-xl border border-white/15 bg-white/[0.04] px-3.5 py-2.5 text-ink outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-500/15"
+                />
+                <p className="mt-1 text-xs text-ink-muted">
+                  {reasonDetail.trim().length < 10
+                    ? `${10 - reasonDetail.trim().length} more characters`
+                    : "Thank you — that is genuinely useful."}
+                </p>
+              </div>
+
+              <fieldset>
+                <legend className="text-sm font-semibold text-ink">
+                  How long have you had it?
+                </legend>
+                <div className="mt-2.5 flex flex-wrap gap-2">
+                  {SYMPTOM_DURATIONS.map((d) => (
+                    <Chip
+                      key={d.value}
+                      on={symptomDuration === d.value}
+                      onClick={() => setSymptomDuration(d.value)}
+                    >
+                      {d.label}
+                    </Chip>
+                  ))}
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend className="text-sm font-semibold text-ink">
+                  How much is it affecting you?
+                </legend>
+                <div className="mt-2.5 grid gap-2">
+                  {SEVERITIES.map((sv) => (
+                    <button
+                      key={sv.value}
+                      type="button"
+                      onClick={() => setSeverity(sv.value)}
+                      aria-pressed={severity === sv.value}
+                      className={`flex items-center gap-3 rounded-xl px-4 py-2.5 text-left ring-1 transition ${
+                        severity === sv.value
+                          ? "bg-brand-500/20 ring-brand-400"
+                          : "ring-white/10 hover:bg-white/[0.04]"
+                      }`}
+                    >
+                      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white/10 text-xs font-bold text-ink">
+                        {sv.value}
+                      </span>
+                      <span className="text-sm text-ink">{sv.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend className="text-sm font-semibold text-ink">
+                  Have you seen this doctor for it before?
+                </legend>
+                <div className="mt-2.5 flex flex-wrap gap-2">
+                  <Chip on={isFirstVisit === false} onClick={() => setIsFirstVisit(false)}>
+                    Yes — this is a follow-up
+                  </Chip>
+                  <Chip on={isFirstVisit === true} onClick={() => setIsFirstVisit(true)}>
+                    No — first visit
+                  </Chip>
+                </div>
+              </fieldset>
+            </div>
+
+            <button
+              onClick={() => go({ step: "you" })}
+              disabled={!reasonDone}
+              className="btn-primary mt-8 disabled:opacity-40"
+            >
+              Continue
+            </button>
+            {!reasonDone && (
+              <p className="mt-2 text-xs text-ink-muted">
+                Answer the five questions above to continue. They take about
+                twenty seconds and save the doctor asking them at the start of
+                your appointment.
+              </p>
+            )}
+          </Screen>
+        )}
+
         {stepId === "you" && (
           <Screen
             title="Who is the appointment for?"
@@ -393,19 +578,69 @@ export default function BookingWizard({
                 autoComplete="tel"
                 hint="Used only for this appointment."
               />
-              <div>
-                <label className="block text-sm font-semibold text-ink">
-                  Anything the doctor should know?
-                </label>
-                <textarea
-                  rows={3}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Optional — what is bothering you, what you have already tried."
-                  className="mt-1.5 w-full rounded-xl border border-white/15 bg-white/[0.04] px-3.5 py-2.5 text-ink outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-500/15"
-                />
-              </div>
             </div>
+
+            {/* Medical history. Optional, but asked explicitly — a blank
+                allergies box that was never shown to the patient is not the
+                same as a patient who answered "none". */}
+            <div className="mt-8 space-y-5 border-t border-white/10 pt-7">
+              <p className="text-sm font-bold text-ink">
+                A little history{" "}
+                <span className="font-normal text-ink-muted">— optional</span>
+              </p>
+
+              <Note
+                label="What have you already tried?"
+                hint="Creams, tablets, treatments — so the doctor does not prescribe the same thing again."
+                value={priorTreatment}
+                onChange={setPriorTreatment}
+                placeholder="e.g. Benzoyl peroxide for 3 months, one course of antibiotics."
+              />
+              <Note
+                label="Medication you take regularly"
+                hint="Including anything not for your skin."
+                value={medications}
+                onChange={setMedications}
+                placeholder="e.g. Thyroxine 50mcg daily."
+              />
+              <Note
+                label="Allergies"
+                hint="Medicines, foods, anything you react to. Say so if you have none."
+                value={allergies}
+                onChange={setAllergies}
+                placeholder="e.g. Penicillin — rash. Otherwise none."
+              />
+              <Note
+                label="Anything else the doctor should know?"
+                value={notes}
+                onChange={setNotes}
+                placeholder="Optional."
+              />
+            </div>
+
+            <div className="mt-7 space-y-4">
+              <PhotoAttach photos={photos} onChange={setPhotos} />
+              <SkinReportAttach value={report} onChange={setReport} />
+            </div>
+
+            {/* Photographs are routine in dermatology and consent for them is
+                not something to assume. Asked once, recorded on the booking. */}
+            <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl bg-white/[0.04] px-4 py-3.5 ring-1 ring-white/10">
+              <input
+                type="checkbox"
+                checked={photoConsent}
+                onChange={(e) => setPhotoConsent(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-brand-500"
+              />
+              <span className="text-sm text-ink-soft">
+                The doctor may take clinical photographs of the affected area
+                during my consultation, and keep them in my medical record.
+                <span className="mt-0.5 block text-xs text-ink-muted">
+                  You can decline and still be seen — say no here and the doctor
+                  will ask you again in person if they need to.
+                </span>
+              </span>
+            </label>
 
             <button
               onClick={() => go({ step: "confirm" })}
@@ -440,6 +675,27 @@ export default function BookingWizard({
               />
               <Row k="Name" v={name || "—"} onEdit={() => go({ step: "you" })} />
               {phone && <Row k="Mobile" v={phone} />}
+              <Row
+                k="Reason"
+                v={reasonLabel(reason || null) ?? "—"}
+                onEdit={() => go({ step: "reason" })}
+              />
+              <Row
+                k="How long"
+                v={durationLabel(symptomDuration || null) ?? "—"}
+                onEdit={() => go({ step: "reason" })}
+              />
+              <Row k="Severity" v={severityLabel(severity || null) ?? "—"} />
+              <Row k="Visit" v={isFirstVisit === false ? "Follow-up" : "First visit"} />
+              {report && <Row k="Skin report" v={`Attached · ${report.takenOn}`} tone="teal" />}
+              {photos.length > 0 && (
+                <Row
+                  k="Photos"
+                  v={`${photos.length} attached`}
+                  tone="teal"
+                  onEdit={() => go({ step: "you" })}
+                />
+              )}
               <Row k="Consultation" v={`₹${listFee.toLocaleString("en-IN")}`} />
               {discountInr > 0 && (
                 <Row
@@ -714,5 +970,61 @@ function Confirmed({
         </Link>
       </div>
     </main>
+  );
+}
+
+
+/** A selectable pill. Used wherever the answer is one of a short list. */
+function Chip({
+  on,
+  onClick,
+  children,
+}: {
+  on: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={on}
+      className={`rounded-full px-4 py-2 text-sm font-semibold ring-1 transition ${
+        on
+          ? "bg-brand-500/20 text-ink ring-brand-400"
+          : "text-ink-soft ring-white/10 hover:bg-white/[0.04]"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** A labelled optional free-text box. */
+function Note({
+  label,
+  hint,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  hint?: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-semibold text-ink">{label}</label>
+      {hint && <p className="mt-0.5 text-xs text-ink-muted">{hint}</p>}
+      <textarea
+        rows={2}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="mt-1.5 w-full rounded-xl border border-white/15 bg-white/[0.04] px-3.5 py-2.5 text-ink outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-500/15"
+      />
+    </div>
   );
 }

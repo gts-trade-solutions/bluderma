@@ -193,7 +193,12 @@ export default async function DoctorApplicationsPage({
                         </span>
                         {d.licenceDocUrl ? (
                           <a
-                            href={d.licenceDocUrl}
+                            /* Certificates sit in a private bucket prefix, so
+                               this goes through the signed-view route rather
+                               than at the stored URL, which would 403. */
+                            href={`/api/uploads/view?url=${encodeURIComponent(
+                              d.licenceDocUrl
+                            )}`}
                             target="_blank"
                             rel="noreferrer"
                             className="mt-0.5 inline-block text-xs font-semibold text-brand-700 hover:underline"

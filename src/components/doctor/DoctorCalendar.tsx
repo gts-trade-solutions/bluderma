@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import type {
@@ -32,11 +32,15 @@ const MONTHS = [
 ];
 
 /** The window the day and week grids draw. Outside it, nobody consults. */
+/** The clinic wall clock runs +5:30 of UTC — see queries/availability.ts. */
+const CLINIC_OFFSET_MS = 330 * 60_000;
 const DAY_START_HOUR = 7;
 const DAY_END_HOUR = 21;
 const MINUTES_SHOWN = (DAY_END_HOUR - DAY_START_HOUR) * 60;
 /** Pixels per minute — 1.1 gives a 30-minute booking a comfortable 33px. */
 const PX_PER_MIN = 1.1;
+/** Width of the time rail. Narrower on a phone, where every pixel counts. */
+const GUTTER = 52;
 
 interface Props {
   view: CalendarView;
@@ -151,40 +155,52 @@ export default function DoctorCalendar({
         </button>
       )}
 
-      {/* ── Toolbar ────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => step(-1)}
-            aria-label="Previous"
-            className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
-          >
-            ‹
-          </button>
-          <button
-            onClick={() => step(1)}
-            aria-label="Next"
-            className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
-          >
-            ›
-          </button>
-          <button
-            onClick={() => go({ date: today })}
-            className="ml-1 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-          >
-            Today
-          </button>
+      {/* ── Toolbar ─────────────────────────────────────────────────────
+          Stacked on a phone. Cramming the heading, the arrows and a
+          three-way toggle onto one 360px row leaves every target too small
+          to hit and the date truncated to nothing. */}
+      <div className="rounded-2xl bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/80 sm:p-3.5">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="min-w-0 truncate font-display text-base font-bold tracking-[-0.01em] text-slate-900 sm:text-lg">
+            {heading}
+          </h2>
+
+          <div className="flex shrink-0 items-center gap-1.5">
+            <button
+              onClick={() => step(-1)}
+              aria-label="Previous"
+              className="grid h-10 w-10 place-items-center rounded-xl text-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              ‹
+            </button>
+            <button
+              onClick={() => go({ date: today })}
+              className="rounded-xl px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-100"
+            >
+              Today
+            </button>
+            <button
+              onClick={() => step(1)}
+              aria-label="Next"
+              className="grid h-10 w-10 place-items-center rounded-xl text-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              ›
+            </button>
+          </div>
         </div>
 
-        <h2 className="text-lg font-bold text-slate-900">{heading}</h2>
-
-        <div className="ml-auto flex rounded-full border border-slate-200 bg-white p-0.5">
+        {/* Full-width segmented control on mobile — three equal targets that
+            are actually thumb-sized. */}
+        <div className="mt-3 grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1 sm:mt-3 sm:inline-grid sm:w-auto">
           {(["month", "week", "day"] as CalendarView[]).map((v) => (
             <button
               key={v}
               onClick={() => go({ view: v })}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold capitalize transition ${
-                view === v ? "bg-brand-600 text-white" : "text-slate-600 hover:bg-slate-50"
+              aria-pressed={view === v}
+              className={`rounded-lg px-4 py-2 text-sm font-bold capitalize transition ${
+                view === v
+                  ? "bg-white text-slate-900 shadow-[0_1px_3px_rgba(15,23,42,0.12)]"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
             >
               {v}
@@ -195,10 +211,12 @@ export default function DoctorCalendar({
 
       {/* ── Clinic filter ──────────────────────────────────────────────── */}
       {clinics.length > 1 && (
-        <div className="flex flex-wrap items-center gap-2">
+        // One scrolling row rather than a wrapping block: a doctor with five
+        // locations was pushing the calendar itself off the first screen.
+        <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 no-scrollbar">
           <button
             onClick={() => go({ clinic: null })}
-            className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+            className={`shrink-0 rounded-full border px-3 py-2 text-xs font-semibold transition ${
               !activeClinicId
                 ? "border-slate-900 bg-slate-900 text-white"
                 : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
@@ -213,7 +231,7 @@ export default function DoctorCalendar({
               <button
                 key={c.id}
                 onClick={() => go({ clinic: c.id })}
-                className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-semibold transition ${
                   on
                     ? "border-slate-900 bg-slate-900 text-white"
                     : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
@@ -276,8 +294,8 @@ function MonthGrid({
   const month = anchor.getUTCMonth();
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-      <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50">
+    <div className="overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/80">
+      <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50/80">
         {WEEKDAYS.map((d) => (
           <div key={d} className="px-2 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
             <span className="hidden sm:inline">{d}</span>
@@ -294,7 +312,7 @@ function MonthGrid({
           return (
             <div
               key={seed}
-              className={`min-h-[92px] border-b border-r border-slate-100 p-1.5 sm:min-h-[116px] ${
+              className={`min-h-[64px] border-b border-r border-slate-100 p-1.5 sm:min-h-[116px] ${
                 outside ? "bg-slate-50/60" : "bg-white"
               } ${i % 7 === 6 ? "border-r-0" : ""}`}
             >
@@ -310,7 +328,34 @@ function MonthGrid({
               >
                 {d.getUTCDate()}
               </button>
-              <div className="space-y-1">
+              {/* A month cell on a phone is about 46px wide — too narrow for a
+                  time and a name, so it shows coloured dots and the whole cell
+                  opens the day. Full chips return from `sm` upward. */}
+              {list.length > 0 && (
+                <button
+                  onClick={() => onDay(seed)}
+                  aria-label={`${list.length} booking${list.length === 1 ? "" : "s"} on ${seed}`}
+                  className="flex w-full flex-wrap items-center gap-1 px-0.5 py-1 sm:hidden"
+                >
+                  {list.slice(0, 4).map((a) => (
+                    <span
+                      key={a.id}
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        a.status === "CANCELLED"
+                          ? CANCELLED_SWATCH.dot
+                          : swatchFor(a.clinicColor).dot
+                      }`}
+                    />
+                  ))}
+                  {list.length > 4 && (
+                    <span className="text-[10px] font-bold text-slate-400">
+                      +{list.length - 4}
+                    </span>
+                  )}
+                </button>
+              )}
+
+              <div className="hidden space-y-1 sm:block">
                 {list.slice(0, 3).map((a) => (
                   <MonthChip key={a.id} a={a} onOpen={onOpen} />
                 ))}
@@ -366,12 +411,21 @@ function TimeGrid({
     (_, i) => DAY_START_HOUR + i
   );
 
+  // A day column narrower than this cannot hold a name and a time, and seven
+  // of them on a phone gives about 43px each. So the week scrolls sideways
+  // instead of compressing — the day view stays full-width because one column
+  // always fits.
+  const minColumn = days.length > 1 ? 116 : 0;
+  const bodyMinWidth = minColumn ? GUTTER + days.length * minColumn : 0;
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+    <div className="overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/80">
+      <div className="overflow-x-auto">
+      <div style={bodyMinWidth ? { minWidth: bodyMinWidth } : undefined}>
       {/* Day headings */}
       <div
-        className="grid border-b border-slate-200 bg-slate-50"
-        style={{ gridTemplateColumns: `56px repeat(${days.length}, minmax(0,1fr))` }}
+        className="grid border-b border-slate-200 bg-slate-50/80"
+        style={{ gridTemplateColumns: `${GUTTER}px repeat(${days.length}, minmax(0,1fr))` }}
       >
         <div />
         {days.map((d) => {
@@ -379,22 +433,33 @@ function TimeGrid({
           const isToday = seed === today;
           const n = (byDay.get(seed) ?? []).length;
           return (
-            <div key={seed} className="px-2 py-2 text-center">
-              <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+            <div
+              key={seed}
+              className={`px-2 py-2.5 text-center ${isToday ? "bg-brand-50/60" : ""}`}
+            >
+              <div
+                className={`text-[10px] font-bold uppercase tracking-[0.12em] ${
+                  isToday ? "text-brand-700" : "text-slate-400"
+                }`}
+              >
                 {WEEKDAYS[d.getUTCDay()]}
               </div>
               <div
-                className={`mx-auto mt-0.5 grid h-7 w-7 place-items-center rounded-full text-sm font-bold ${
-                  isToday ? "bg-brand-600 text-white" : "text-slate-800"
+                className={`mx-auto mt-1 grid h-8 w-8 place-items-center rounded-xl font-display text-sm font-bold tabular-nums ${
+                  isToday
+                    ? "bg-brand-600 text-white shadow-[0_4px_12px_-4px_rgba(31,111,214,0.6)]"
+                    : "text-slate-800"
                 }`}
               >
                 {d.getUTCDate()}
               </div>
-              {n > 0 && (
-                <div className="mt-0.5 text-[10px] font-semibold text-slate-400">
-                  {n} booked
-                </div>
-              )}
+              <div className="mt-1 h-3">
+                {n > 0 && (
+                  <span className="text-[10px] font-bold text-slate-400">
+                    {n} booked
+                  </span>
+                )}
+              </div>
             </div>
           );
         })}
@@ -405,7 +470,7 @@ function TimeGrid({
         <div
           className="relative grid"
           style={{
-            gridTemplateColumns: `56px repeat(${days.length}, minmax(0,1fr))`,
+            gridTemplateColumns: `${GUTTER}px repeat(${days.length}, minmax(0,1fr))`,
             height: MINUTES_SHOWN * PX_PER_MIN,
           }}
         >
@@ -426,14 +491,22 @@ function TimeGrid({
             const seed = toSeed(d);
             const list = byDay.get(seed) ?? [];
             return (
-              <div key={seed} className="relative border-r border-slate-100 last:border-r-0">
+              <div
+                key={seed}
+                className={`relative border-r border-slate-100 last:border-r-0 ${
+                  seed === today ? "bg-brand-50/30" : ""
+                }`}
+              >
                 {hours.map((h) => (
                   <div
                     key={h}
-                    className="absolute inset-x-0 border-t border-slate-100"
+                    // The hour rule is 0px tall and sits under the blocks, so
+                    // it can never intercept a click meant for a booking.
+                    className="pointer-events-none absolute inset-x-0 border-t border-slate-100"
                     style={{ top: (h * 60 - DAY_START_HOUR * 60) * PX_PER_MIN }}
                   />
                 ))}
+                <NowLine seed={seed} today={today} />
                 {layOut(list).map(({ a, lane, lanes }) => (
                   <TimeBlock
                     key={a.id}
@@ -447,6 +520,8 @@ function TimeGrid({
             );
           })}
         </div>
+      </div>
+      </div>
       </div>
     </div>
   );
@@ -499,7 +574,7 @@ function TimeBlock({
   return (
     <button
       onClick={() => onOpen(a.id)}
-      className={`absolute overflow-hidden rounded-md border border-l-[3px] px-1.5 py-0.5 text-left transition ${sw.block} ${sw.edge}`}
+      className={`absolute overflow-hidden rounded-lg border border-l-[3px] px-2 py-1 text-left shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition hover:z-10 hover:shadow-[0_6px_16px_-6px_rgba(15,23,42,0.35)] ${sw.block} ${sw.edge}`}
       style={{
         top,
         height,
@@ -519,5 +594,43 @@ function TimeBlock({
         </div>
       )}
     </button>
+  );
+}
+
+/**
+ * A live marker for the current time, on today's column only.
+ *
+ * Mount-gated: the server has no idea what time it is on the client, and
+ * rendering a position from Date.now() during SSR is a hydration mismatch.
+ * Ticks each minute so it does not drift over a long clinic session.
+ */
+function NowLine({ seed, today }: { seed: string; today: string }) {
+  const [minute, setMinute] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (seed !== today) return;
+    const read = () => {
+      const now = new Date(Date.now() + CLINIC_OFFSET_MS);
+      setMinute(now.getUTCHours() * 60 + now.getUTCMinutes());
+    };
+    read();
+    const id = setInterval(read, 60_000);
+    return () => clearInterval(id);
+  }, [seed, today]);
+
+  if (seed !== today || minute === null) return null;
+
+  const top = (minute - DAY_START_HOUR * 60) * PX_PER_MIN;
+  if (top < 0 || top > MINUTES_SHOWN * PX_PER_MIN) return null;
+
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-x-0 z-20 flex items-center"
+      style={{ top }}
+    >
+      <span className="-ml-1 h-2 w-2 shrink-0 rounded-full bg-rose-500" />
+      <span className="h-px flex-1 bg-rose-500" />
+    </div>
   );
 }

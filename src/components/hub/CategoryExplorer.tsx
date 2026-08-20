@@ -126,15 +126,22 @@ export default function CategoryExplorer({
                       setTreatmentSlug(null);
                     }}
                     aria-pressed={on}
-                    className={`flex shrink-0 snap-start flex-col items-center gap-1.5 border-b-2 px-3.5 pb-2.5 pt-1 transition ${
+                    className={`group flex shrink-0 snap-start flex-col items-center gap-1.5 border-b-2 px-3.5 pb-2.5 pt-1 transition ${
                       on
                         ? "border-ink text-ink"
                         : "border-transparent text-ink-muted hover:text-brand-200"
                     }`}
                   >
+                    {/* The unselected tile used to be flattened to a grey
+                        wash, which meant seventeen of the eighteen icons
+                        carried no colour at any moment. It keeps its own hue
+                        and simply steps back — dimmed and desaturated — so the
+                        row reads as a palette and the selection still shows. */}
                     <span
-                      className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br transition ${
-                        on ? c.tint : "from-white/10 to-white/10 text-white/50"
+                      className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br shadow-[0_6px_16px_-6px_rgba(0,0,0,0.6)] ring-1 ring-inset transition duration-200 ${c.tint} ${
+                        on
+                          ? "scale-105 ring-white/40"
+                          : "opacity-55 saturate-[0.7] ring-white/15 group-hover:opacity-100"
                       }`}
                     >
                       <Icon className="h-5 w-5" strokeWidth={1.9} />

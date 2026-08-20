@@ -12,6 +12,7 @@ import type {
   SkinReport,
 } from "@/data/profile";
 import { getMyAnalyses, getMyAppointments } from "./patient";
+import { buildConditions, perksOf } from "./profileCore";
 
 /**
  * The My Profile page's seven sections, from the database, in the exact
@@ -62,11 +63,56 @@ export interface ProfilePageData {
     discountPercent: number;
     daysLeft: number;
   } | null;
+
+  /**
+   * What this client is actually being treated for.
+   *
+   * Not a diagnosis and never presented as one — it is the two things the
+   * client themselves told us: what their last scan scored worst, and what
+   * they picked as the reason on each booking. Both are their own words in a
+   * fixed vocabulary, which is exactly why they can be shown back to them.
+   */
+  conditions: {
+    key: string;
+    label: string;
+    /** "Skin analysis" or "You told us at booking". */
+    source: string;
+    /** Bookings that named it, or the analysis score out of 100. */
+    detail: string;
+    /** 0-100, for the bar. */
+    weight: number;
+  }[];
+
+  /** Every White Collar tier, so the member page can be read in full here. */
+  plans: {
+    slug: string;
+    name: string;
+    interval: string;
+    priceInr: number;
+    compareAtInr: number | null;
+    discountPercent: number;
+    scanCredits: number;
+    priorityBooking: boolean;
+    waiveCancellationFee: boolean;
+    perks: string[];
+  }[];
+
+  /** Listed locations in the client's own city, nearest-city first. */
+  clinics: {
+    id: string;
+    name: string;
+    area: string;
+    city: string;
+    addressLine1: string;
+    pincode: string;
+    phone: string | null;
+  }[];
 }
 
 export const getProfilePageData = cache(
   async (userId: string): Promise<ProfilePageData> => {
-    const [user, analyses, appts, rx, buys, grants, membership] = await Promise.all([
+    const [user, analyses, appts, rx, buys, grants, membership, plans, reasonMix] =
+      await Promise.all([
       prisma.user.findUniqueOrThrow({
         where: { id: userId },
         select: {
@@ -103,6 +149,28 @@ export const getProfilePageData = cache(
           currentPeriodEnd: true,
           plan: { select: { name: true, discountPercent: true } },
         },
+      }),
+      prisma.subscriptionPlan.findMany({
+        where: { isActive: true },
+        orderBy: { sortOrder: "asc" },
+        select: {
+          slug: true,
+          name: true,
+          interval: true,
+          priceInr: true,
+          compareAtInr: true,
+          discountPercent: true,
+          scanCredits: true,
+          priorityBooking: true,
+          waiveCancellationFee: true,
+          perks: true,
+        },
+      }),
+      // What they came in for, in their own words from the booking form.
+      prisma.appointment.groupBy({
+        by: ["reason"],
+        where: { patientUserId: userId, status: { not: AppointmentStatus.CANCELLED } },
+        _count: { _all: true },
       }),
     ]);
 
@@ -199,6 +267,41 @@ export const getProfilePageData = cache(
         : "—",
     }));
 
+    // ── What they are being treated for ─────────────────────────────────
+    // Derived in profileCore so it can be proved by a tsx script — this
+    // module's `cache()` wrapper makes it unimportable from one. The rule it
+    // enforces: every entry names the client's own source, and none of it is
+    // presented as a diagnosis.
+    const conditions = buildConditions(
+      analyses[0]
+        ? { createdAt: analyses[0].createdAt, topConcerns: analyses[0].topConcerns }
+        : null,
+      reasonMix.map((r) => ({ reason: r.reason, count: r._count._all })),
+      fmt
+    );
+
+    // Listed locations in their city. A directory, not a distance — nothing
+    // populates Clinic.lat/lng yet and printing a "2.3 km" we cannot compute
+    // is exactly the kind of invention this codebase keeps deleting.
+    const city = user.patientProfile?.city ?? "";
+    const clinics = await prisma.clinic.findMany({
+      where: {
+        isActive: true,
+        ...(city ? { city: { equals: city } } : {}),
+      },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      take: 6,
+      select: {
+        id: true,
+        name: true,
+        area: true,
+        city: true,
+        addressLine1: true,
+        pincode: true,
+        phone: true,
+      },
+    });
+
     return {
       client: {
         name: user.patientProfile?.fullName ?? user.name ?? "Client",
@@ -234,6 +337,10 @@ export const getProfilePageData = cache(
             ),
           }
         : null,
+
+      conditions,
+      plans: plans.map((p) => ({ ...p, perks: perksOf(p.perks) })),
+      clinics,
     };
   }
 );

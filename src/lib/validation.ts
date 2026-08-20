@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  SYMPTOM_DURATION_VALUES,
+  VISIT_REASON_VALUES,
+} from "@/lib/booking/visitIntake";
 
 /**
  * Shared input schemas. Every route handler and server action validates with
@@ -94,6 +98,47 @@ export const bookingSchema = z.object({
   patientName: z.string().trim().min(2, "Enter your name.").max(120),
   patientPhone: z.string().trim().max(20).optional().or(z.literal("")),
   notes: z.string().trim().max(1000).optional().or(z.literal("")),
+
+  // ── Why they are coming ────────────────────────────────────────────────
+  // Required, unlike the old optional `notes`. A doctor opening their day
+  // used to see a name and a time and nothing else, so they walked into every
+  // consultation cold. These four are the minimum that changes that, and they
+  // are all one tap in the form.
+  reason: z.enum(VISIT_REASON_VALUES, {
+    message: "Pick what the appointment is for.",
+  }),
+  reasonDetail: z
+    .string()
+    .trim()
+    .min(10, "Please describe it in a sentence or two.")
+    .max(1500),
+  symptomDuration: z.enum(SYMPTOM_DURATION_VALUES, {
+    message: "Tell us how long you have had this.",
+  }),
+  severity: z.coerce
+    .number()
+    .int()
+    .min(1, "Pick how much it affects you.")
+    .max(5),
+  isFirstVisit: z.coerce.boolean().default(true),
+
+  // Optional history. Blank is a legitimate answer to all three.
+  priorTreatment: z.string().trim().max(1000).optional().or(z.literal("")),
+  medications: z.string().trim().max(1000).optional().or(z.literal("")),
+  allergies: z.string().trim().max(1000).optional().or(z.literal("")),
+
+  /// Consent to clinical photography. Never defaulted true.
+  photoConsent: z.coerce.boolean().default(false),
+
+  /// A skin report of their own they chose to attach, and which of the two
+  /// analysis systems it came from. Ownership is re-checked server-side — this
+  /// id is not trusted.
+  skinReportId: z.string().trim().max(40).optional().or(z.literal("")),
+  skinReportSource: z.enum(["analysis", "scan"]).optional(),
+
+  /// Photographs of the concern. Each is re-checked server-side against the
+  /// uploader, so a key belonging to somebody else cannot be attached here.
+  photoKeys: z.array(z.string().trim().min(1).max(500)).max(4).optional(),
 });
 
 export const analysisSchema = z.object({

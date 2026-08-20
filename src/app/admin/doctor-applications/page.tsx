@@ -136,7 +136,7 @@ export default async function DoctorApplicationsPage({
       {rows.length === 0 ? (
         <EmptyState
           title="Nothing to review"
-          description="New practitioner applications land here as soon as they are submitted."
+          description="New doctor applications land here as soon as they are submitted."
         />
       ) : (
         <ul className="space-y-4">

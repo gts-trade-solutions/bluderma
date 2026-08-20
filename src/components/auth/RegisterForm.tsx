@@ -110,7 +110,7 @@ export default function RegisterForm() {
       </h1>
       <p className="mt-2 text-sm text-ink-muted">
         {isDoctor
-          ? "This is a practitioner account — separate from a client account. You will list your practice next."
+          ? "This is a doctor account — separate from a client account. You will list your practice next."
           : "Save your skin analyses, book appointments and track your progress over time."}
       </p>
 

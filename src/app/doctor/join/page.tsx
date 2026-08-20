@@ -90,7 +90,7 @@ export default async function JoinPage({
               Try again
             </Link>
             <a
-              href="mailto:info@bluderma.kr?subject=Cannot%20start%20my%20practitioner%20application"
+              href="mailto:info@bluderma.kr?subject=Cannot%20start%20my%20doctor%20application"
               className="btn-ghost"
             >
               Email us

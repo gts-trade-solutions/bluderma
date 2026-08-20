@@ -24,12 +24,12 @@ export const metadata: Metadata = {
 
 const AREAS: { prefix: string; name: string; needs: string }[] = [
   { prefix: "/admin", name: "the admin console", needs: "an administrator account" },
-  { prefix: "/doctor/portal", name: "the doctor portal", needs: "a practitioner account" },
+  { prefix: "/doctor/portal", name: "the doctor portal", needs: "a doctor account" },
 ];
 
 const ROLE_WORD: Record<string, string> = {
   PATIENT: "a client account",
-  DOCTOR: "a practitioner account",
+  DOCTOR: "a doctor account",
   ADMIN: "an administrator account",
 };
 
@@ -115,7 +115,7 @@ export default async function ForbiddenPage({
             registered as one yet. Give them that door rather than nothing. */}
         {user?.role === "PATIENT" && area?.prefix === "/doctor/portal" && (
           <p className="mt-6 text-xs text-ink-muted">
-            Are you a practitioner?{" "}
+            Are you a doctor?{" "}
             <Link href="/doctor" className="font-semibold text-ink underline">
               List your practice on BluDerma
             </Link>

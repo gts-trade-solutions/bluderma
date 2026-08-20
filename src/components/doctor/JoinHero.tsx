@@ -7,11 +7,11 @@ import { doctorCta } from "@/lib/doctor/viewer";
 
 /** The practitioner recruitment banner used only on /doctor. */
 export default function JoinHero({
-  clinicianCount,
+  doctorCount,
   clinicCount,
   viewer,
 }: {
-  clinicianCount: number;
+  doctorCount: number;
   clinicCount: number;
   /**
    * Who is reading this. Offering "Doctor sign in" to somebody already signed
@@ -93,14 +93,14 @@ export default function JoinHero({
             <Proof>Verified profiles</Proof>
           </div>
 
-          {clinicianCount > 0 && (
+          {doctorCount > 0 && (
             <dl className="mt-8 hidden flex-wrap gap-x-9 gap-y-3 border-t border-white/20 pt-5 sm:flex">
               <Stat
-                value={clinicianCount}
+                value={doctorCount}
                 label={
-                  clinicianCount === 1
-                    ? "practitioner listed"
-                    : "practitioners listed"
+                  doctorCount === 1
+                    ? "doctor listed"
+                    : "doctors listed"
                 }
               />
               {clinicCount > 0 && (

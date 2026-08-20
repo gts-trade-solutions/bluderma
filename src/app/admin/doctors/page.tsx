@@ -22,7 +22,7 @@ export default async function DoctorsPage() {
     <>
       <PageHeader
         title="Doctors"
-        description="The practitioner directory clients book against."
+        description="The doctor directory clients book against."
         action={
           <Link href="/admin/doctors/new" className="btn-primary">
             New doctor
@@ -33,7 +33,7 @@ export default async function DoctorsPage() {
       {doctors.length === 0 ? (
         <EmptyState
           title="No doctors yet"
-          description="Add practitioners so clients have someone to book with."
+          description="Add doctors so clients have someone to book with."
           action={
             <Link href="/admin/doctors/new" className="btn-primary">
               New doctor

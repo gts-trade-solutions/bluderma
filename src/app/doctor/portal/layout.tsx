@@ -153,7 +153,7 @@ function PendingNotice({ status }: { status: string }) {
     },
     PENDING: {
       title: "Your profile is with our team",
-      body: "We check registration details before a practitioner goes live — usually within two working days. You will get an email either way.",
+      body: "We check registration details before a doctor goes live — usually within two working days. You will get an email either way.",
       tone: "info",
     },
     REJECTED: {

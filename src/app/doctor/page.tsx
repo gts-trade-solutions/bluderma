@@ -37,7 +37,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function DoctorHome() {
   // Only used to decide whether the hero can honestly claim a network.
-  const [clinicianCount, clinicCount, user] = await Promise.all([
+  const [doctorCount, clinicCount, user] = await Promise.all([
     prisma.doctor.count({ where: PUBLIC_DOCTOR_WHERE }),
     prisma.clinic.count({ where: { isActive: true } }),
     getCurrentUser(),
@@ -82,7 +82,7 @@ export default async function DoctorHome() {
 
       <main>
         <JoinHero
-          clinicianCount={clinicianCount}
+          doctorCount={doctorCount}
           clinicCount={clinicCount}
           viewer={viewer}
         />

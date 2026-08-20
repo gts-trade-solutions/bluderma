@@ -256,6 +256,75 @@ if (sketchStart > -1 && sketchEnd > sketchStart) {
   );
 }
 
+/* ------------------------------------------------------------------------
+   One word for one person
+   --------------------------------------------------------------------- */
+// The site used to call the same human a "clinician" in the navbar and footer,
+// a "practitioner" on /forbidden and the register form, and a "doctor" in
+// every route, CTA and role label. Two of those shipped together and read as
+// two different products.
+//
+// This walks every quoted string and JSX text node under src/ and fails on the
+// retired word. Comments and identifiers are exempt: `isClinician()`
+// deliberately keeps its name — it returns true for admins as well, so
+// renaming it would be a lie about what it does — and the legal pages keep
+// "qualified, licensed practitioner", a term of art covering more than doctors
+// that must not be narrowed by a copy sweep.
+const RETIRED = /\b(clinician|clinicians)\b/i;
+const LEGAL_EXEMPT = /src[\/]app[\/]\(legal\)[\/]/;
+
+/** Strips comments, so a note explaining the rename is not itself a failure. */
+function codeOnly(src: string): string {
+  return src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+}
+
+/**
+ * Every source file, not only the components.
+ *
+ * The shared `walk()` above collects `.tsx` alone, which is right for the
+ * theme checks — but the label that started all this lives in
+ * lib/queries/nav.ts, and a sweep that cannot see a `.ts` file would have
+ * reported the site clean while the navbar still said the wrong thing.
+ */
+function walkSrc(dir: string, out: string[] = []): string[] {
+  for (const entry of readdirSync(dir)) {
+    const p = join(dir, entry);
+    if (statSync(p).isDirectory()) walkSrc(p, out);
+    else if (/\.tsx?$/.test(p)) out.push(p);
+  }
+  return out;
+}
+
+const wordOffenders: string[] = [];
+for (const f of walkSrc("src")) {
+  if (LEGAL_EXEMPT.test(f)) continue;
+
+  const body = codeOnly(read(f));
+  // The JSX branch must span newlines. It did not, first time round, and the
+  // guard passed with "For clinicians" put back into Footer.tsx — because
+  // that label sits on its own line between a `>` and a `</Link>`, so
+  // requiring both brackets on one line matched nothing at all. Non-greedy
+  // and bounded by the next bracket, so it cannot run away across a file.
+  for (const m of body.matchAll(/"([^"\n]{2,})"|'([^'\n]{2,})'|>([^<>{}]{2,}?)</g)) {
+    const text = m[1] ?? m[2] ?? m[3] ?? "";
+    if (/^[.@][\w./@-]*$/.test(text)) continue; // an import path, not copy
+    if (RETIRED.test(text)) {
+      wordOffenders.push(`${f.replace(/\\/g, "/")} — ${text.trim().slice(0, 70)}`);
+    }
+  }
+}
+check(
+  `no visible copy still says "clinician" (${wordOffenders.length} found)`,
+  wordOffenders.length === 0
+);
+wordOffenders.forEach((o) => fails.push(`  retired word: ${o}`));
+
+// Non-vacuous: the detector has to fire on the exact label that shipped, and
+// must not fire on "clinical", which is a different word we still use.
+check("the detector catches the label that shipped", RETIRED.test("For clinicians"));
+check("and is not tripped by 'Clinical note'", !RETIRED.test("Clinical note"));
+
+
 console.log(`\n${pass} passed, ${fails.length} failed`);
 if (fails.length) {
   fails.forEach((f) => console.log(`  FAIL  ${f}`));

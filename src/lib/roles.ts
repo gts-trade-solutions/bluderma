@@ -47,11 +47,22 @@ export function isExperience(value: unknown): value is Experience {
   return value === "doctor" || value === "patient";
 }
 
-/** Where to send a user after signing in, when no callbackUrl was given. */
+/**
+ * Where to send a user after signing in, when no callbackUrl was given.
+ *
+ * A client lands on the home page. It used to be /patient/skin-analyzer,
+ * which put a sales page for one feature in front of somebody who had just
+ * proved they are already a customer — and hid the appointments, reports and
+ * profile they most likely signed in to reach. The analyzer is still the
+ * loudest thing on the home page; it is now a choice rather than a wall.
+ *
+ * The two staff roles keep their own screens: an admin and a doctor sign in
+ * to work, and the home page is marketing to both of them.
+ */
 export function landingPathForRole(role: Role): string {
   if (role === "ADMIN") return "/admin";
   if (role === "DOCTOR") return "/doctor/portal";
-  return "/patient/skin-analyzer";
+  return "/";
 }
 
 /**

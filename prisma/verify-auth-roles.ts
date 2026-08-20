@@ -97,6 +97,32 @@ async function main() {
     );
   }
 
+  // ── Where each role actually lands ──────────────────────────────────────
+  // Asserted by value, not against landingPathForRole — every check above
+  // compares the two functions to each other, which stays green no matter
+  // what the destination is changed to. These are the destinations.
+  check(
+    "a client lands on the home page",
+    landingPathForRole(Role.PATIENT) === "/",
+    landingPathForRole(Role.PATIENT)
+  );
+  // It used to be /patient/skin-analyzer: a sales page for one feature, put
+  // in front of somebody who had just proved they are already a customer,
+  // hiding the appointments and reports they signed in to reach.
+  check(
+    "and not at a feature's landing page",
+    landingPathForRole(Role.PATIENT) !== "/patient/skin-analyzer"
+  );
+  check("a doctor lands in the portal", landingPathForRole(Role.DOCTOR) === "/doctor/portal");
+  check("an admin lands in admin", landingPathForRole(Role.ADMIN) === "/admin");
+
+  // An explicit ask still wins: clicking "Sign in & scan" must still end at
+  // the analyzer, or the home-page default would have broken that button.
+  check(
+    "an explicit callback still beats the default",
+    postLoginPath("/patient/skin-analyzer", Role.PATIENT) === "/patient/skin-analyzer"
+  );
+
   // An off-site callbackUrl must never be followed.
   check(
     "an absolute URL is refused as a callback",

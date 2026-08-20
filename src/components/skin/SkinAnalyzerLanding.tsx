@@ -18,7 +18,6 @@ import {
 
 import ConsultationStep from "@/components/skin/ConsultationStep";
 import PublishedReviewsSection from "@/components/PublishedReviewsSection";
-import SmartImage from "@/components/SmartImage";
 import { useSkinAccess } from "@/hooks/useSkinAccess";
 import { useRazorpayCheckout } from "@/hooks/useRazorpayCheckout";
 import { IMG } from "@/data/hubImages";
@@ -177,11 +176,16 @@ export default function SkinAnalyzerLanding() {
                 Start your skin consultation
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
+              {/* Was #how, which went with the section it pointed at. It
+                  aims at the launcher now rather than being deleted: the
+                  secondary link is what a reader uses when they are not ready
+                  to commit to the primary one, and having none puts the whole
+                  weight of the hero on a single button. */}
               <a
-                href="#how"
+                href="#start"
                 className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/60 underline-offset-4 transition hover:text-white hover:underline"
               >
-                How it works
+                See what it reads
                 <ChevronDown className="h-4 w-4" />
               </a>
             </div>
@@ -297,127 +301,6 @@ export default function SkinAnalyzerLanding() {
               </li>
             ))}
           </ul>
-        </div>
-      </section>
-
-      {/* ── How it works ──────────────────────────────────────────────── */}
-      <section
-        id="how"
-        className="scroll-mt-24 bg-[var(--surface)] py-16 sm:py-20"
-      >
-        <div className="container-page">
-          <p className="section-eyebrow">How it works</p>
-          <h2 className="display mt-2 text-3xl text-ink sm:text-4xl">
-            Three steps, one selfie
-          </h2>
-
-          <ol className="mt-9 grid gap-4 lg:grid-cols-3">
-            {[
-              {
-                n: "01",
-                t: "Take the photo",
-                b: "Front camera, even light, no makeup if you can manage it. The photo is analysed and never stored.",
-                img: IMG.portraitClean,
-              },
-              {
-                n: "02",
-                t: "Read the score",
-                b: "Twelve-plus signals, each scored, with the three that need attention first pulled to the top.",
-                img: IMG.portraitMacro,
-              },
-              {
-                n: "03",
-                t: "Take it to a doctor",
-                b: "Your report attaches to the questionnaire, so the dermatologist has read it before you meet.",
-                img: IMG.procFacial,
-              },
-            ].map((s) => (
-              <li
-                key={s.n}
-                className="overflow-hidden rounded-3xl bg-white/[0.04] ring-1 ring-white/10"
-              >
-                <div className="relative h-44">
-                  <SmartImage
-                    src={s.img}
-                    alt=""
-                    sizes="(min-width: 1024px) 33vw, 100vw"
-                    className="object-top"
-                  />
-                </div>
-                <div className="p-6">
-                  <span className="display text-xl text-brand-300">{s.n}</span>
-                  <p className="display-sm mt-1.5 text-lg text-ink">{s.t}</p>
-                  <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-                    {s.b}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* ── K-beauty standard ─────────────────────────────────────────── */}
-      <section className="bg-white/[0.04] py-16 sm:py-20">
-        <div className="container-page">
-          <div className="overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-700 via-brand-600 to-teal-600">
-            <div className="grid gap-0 lg:grid-cols-[1fr_1.1fr]">
-              <div className="p-8 sm:p-11">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-200">
-                  The K-beauty standard
-                </p>
-                <h2 className="display mt-3 text-3xl leading-tight text-white sm:text-4xl">
-                  Graded against the world&apos;s most demanding skin market
-                </h2>
-                <p className="mt-4 max-w-md text-base leading-relaxed text-white/75">
-                  Korean dermatology judges skin on barrier health, tone
-                  evenness and texture long before it looks at wrinkles. Our
-                  scoring follows the same order — which is why the plan you get
-                  starts with repair, not resurfacing.
-                </p>
-
-                <ul className="mt-7 space-y-3">
-                  {[
-                    "Barrier and hydration weighted first",
-                    "Tone evenness scored across four zones",
-                    "Texture read at pore level, not as a single number",
-                    "Written for pigmented skin, where most tools are not",
-                  ].map((line) => (
-                    <li
-                      key={line}
-                      className="flex items-start gap-2.5 text-sm text-white/80"
-                    >
-                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-300" />
-                      {line}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="grid grid-cols-2 gap-1 p-1 sm:gap-2 sm:p-2">
-                {[
-                  IMG.portraitHero,
-                  IMG.portraitGlow,
-                  IMG.prod1,
-                  IMG.facial1,
-                ].map((src, i) => (
-                  <div
-                    key={src}
-                    className={`relative overflow-hidden rounded-2xl ${
-                      i === 0 ? "row-span-2 min-h-[18rem]" : "min-h-[8.5rem]"
-                    }`}
-                  >
-                    <SmartImage
-                      src={src}
-                      alt=""
-                      sizes="(min-width: 1024px) 25vw, 50vw"
-                      className="object-top"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 

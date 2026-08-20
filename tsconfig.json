@@ -38,7 +38,8 @@
     ".next-verify/types/**/*.ts",
     ".next-smoke/types/**/*.ts",
     ".next-prodtest/types/**/*.ts",
-    ".next-prod/types/**/*.ts"
+    ".next-prod/types/**/*.ts",
+    ".next-vp/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

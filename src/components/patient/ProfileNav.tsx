@@ -14,25 +14,40 @@ export interface ProfileSection {
 /**
  * The profile's own navigation.
  *
- * My Profile had grown to nine sections down one long scroll, which on a phone
+ * My Profile had grown to ten sections down one long scroll, which on a phone
  * is a thousand pixels of thumb between "my reports" and "my prescriptions".
- * This is the index: a sticky rail on a desktop, and a sticky strip of pills
- * on a phone, where a horizontal swipe is cheaper than a vertical hunt.
+ * This is the index: a sticky rail on a desktop, a sticky strip of pills on a
+ * phone.
  *
  * Anchors, not routes. Every section is already rendered by the server in one
  * pass, so linking to `#wallet` costs nothing, keeps the whole record
- * printable, and means Back does the obvious thing. Turning them into nine
- * routes would mean nine round trips to read your own file.
+ * printable, and means Back does the obvious thing. Ten routes would be ten
+ * round trips to read your own file.
  *
- * The highlight is driven by IntersectionObserver rather than by scroll
- * arithmetic — sections here are wildly different heights, and any
- * offset-based guess picks the wrong one on the short ones.
+ * ── Why these are two components ─────────────────────────────────────────
+ * They were one, rendered inside the page's `container-page grid`. That made
+ * the strip a GRID ITEM, and a grid item's `min-width` is `auto`, so the track
+ * was sized to the pill row's intrinsic width. Ten `shrink-0` pills come to
+ * roughly 1,365px, and `overflow-x-auto` did not save it: the track grew, the
+ * container grew with it, and the whole page scrolled sideways.
+ *
+ * Measured rather than guessed. /patient/profile at a 390px viewport had a
+ * scrollWidth of 1,442px, and this nav was the outermost element responsible.
+ *
+ * So the strip now lives OUTSIDE the grid, in normal flow, where its width is
+ * the viewport and its scroll container behaves. The rail stays inside, where
+ * it belongs. Both read the active section from one hook rather than running
+ * two observers over the same page.
  */
-export default function ProfileNav({
-  sections,
-}: {
-  sections: ProfileSection[];
-}) {
+
+/**
+ * Which section is on screen.
+ *
+ * IntersectionObserver rather than scroll arithmetic: the sections here are
+ * wildly different heights and any offset-based guess picks the wrong one on
+ * the short ones.
+ */
+function useActiveSection(sections: ProfileSection[]): string {
   const [active, setActive] = useState(sections[0]?.id ?? "");
 
   useEffect(() => {
@@ -70,10 +85,22 @@ export default function ProfileNav({
     return () => observer.disconnect();
   }, [sections]);
 
-  // Keep the active pill visible on a phone. Without this the highlight moves
-  // to something off-screen as you scroll, which is the same as having no
-  // highlight at all. `nearest` so it only scrolls when it has to, and
-  // `block: "nearest"` so it never drags the PAGE around.
+  return active;
+}
+
+/**
+ * The phone strip. Rendered OUTSIDE the page grid — see above.
+ *
+ * Full-bleed by construction rather than by negative margin: it is a normal
+ * block in the page, so the gutter is applied to the pill row as padding
+ * instead of being cancelled with `-mx-5`. One less thing that can end up
+ * wider than the screen.
+ */
+export function ProfileStrip({ sections }: { sections: ProfileSection[] }) {
+  const active = useActiveSection(sections);
+
+  // Keep the active pill visible. Without this the highlight moves to
+  // something off-screen as you scroll, which is the same as no highlight.
   useEffect(() => {
     if (!active) return;
     const pill = document.querySelector<HTMLElement>(
@@ -83,90 +110,89 @@ export default function ProfileNav({
   }, [active]);
 
   return (
-    <>
-      {/* ── Phone: a sticky strip ──────────────────────────────────────── */}
-      <nav
-        aria-label="Profile sections"
-        // top-20 is the navbar's own h-20, and z-30 keeps this under it.
-        // The negative margins match container-page's px-5 sm:px-8 exactly, so
-        // the strip bleeds edge to edge instead of sitting in a gutter.
-        className="sticky top-20 z-30 -mx-5 border-b border-white/10 bg-[#070d1c]/95 px-5 py-2.5 backdrop-blur sm:-mx-8 sm:px-8 lg:hidden"
-      >
-        {/* Ten pills never fit a phone, and the scrollbar is hidden — so the
-            row is faded at the right edge to say "there is more this way".
-            Without it the strip reads as a complete list of four. The mask is
-            in the same direction as the scroll, and it is decoration only:
-            the pills themselves stay fully reachable. */}
-        <ul className="flex snap-x gap-2 overflow-x-auto pr-6 [-ms-overflow-style:none] [mask-image:linear-gradient(to_right,black_calc(100%-2.5rem),transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {sections.map((s) => (
-            <li key={s.id} className="shrink-0 snap-start">
-              <a
-                href={`#${s.id}`}
-                data-pill={s.id}
-                aria-current={active === s.id ? "true" : undefined}
-                className={`inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-semibold transition ${
+    <nav
+      aria-label="Profile sections"
+      // top-20 is the navbar's own h-20; z-30 keeps this under it.
+      className="sticky top-20 z-30 border-b border-white/10 bg-[#070d1c]/95 py-2.5 backdrop-blur lg:hidden"
+    >
+      {/* Ten pills never fit a phone and the scrollbar is hidden, so the row
+          fades at its right edge to say there is more this way. Without it the
+          strip reads as a complete list of the four that happen to show. */}
+      <ul className="flex snap-x gap-2 overflow-x-auto px-5 pr-10 [-ms-overflow-style:none] [mask-image:linear-gradient(to_right,black_calc(100%-2.5rem),transparent)] [scrollbar-width:none] sm:px-8 [&::-webkit-scrollbar]:hidden">
+        {sections.map((s) => (
+          <li key={s.id} className="shrink-0 snap-start">
+            <a
+              href={`#${s.id}`}
+              data-pill={s.id}
+              aria-current={active === s.id ? "true" : undefined}
+              className={`inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-semibold transition ${
+                active === s.id
+                  ? "bg-white text-[#070d1c]"
+                  : "bg-white/[0.06] text-ink-soft ring-1 ring-inset ring-white/10"
+              }`}
+            >
+              <Glyph name={s.icon} />
+              {s.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+/** The desktop rail. Lives inside the page grid, in its own column. */
+export function ProfileRail({ sections }: { sections: ProfileSection[] }) {
+  const active = useActiveSection(sections);
+
+  return (
+    <nav
+      aria-label="Profile sections"
+      className="hidden min-w-0 lg:sticky lg:top-24 lg:block lg:self-start"
+    >
+      <ul className="space-y-1">
+        {sections.map((s) => (
+          <li key={s.id}>
+            <a
+              href={`#${s.id}`}
+              aria-current={active === s.id ? "true" : undefined}
+              className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
+                active === s.id
+                  ? "bg-white/[0.09] font-bold text-ink ring-1 ring-inset ring-white/15"
+                  : "font-semibold text-ink-muted hover:bg-white/[0.05] hover:text-ink"
+              }`}
+            >
+              <span
+                className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg transition ${
                   active === s.id
-                    ? "bg-white text-[#070d1c]"
-                    : "bg-white/[0.06] text-ink-soft ring-1 ring-inset ring-white/10"
+                    ? "bg-gradient-to-br from-brand-500 to-teal-500 text-white"
+                    : "bg-white/[0.06] text-ink-muted group-hover:text-teal-300"
                 }`}
               >
                 <Glyph name={s.icon} />
-                {s.label}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      {/* ── Desktop: the rail ──────────────────────────────────────────── */}
-      <nav
-        aria-label="Profile sections"
-        className="hidden lg:sticky lg:top-24 lg:block lg:self-start"
-      >
-        <ul className="space-y-1">
-          {sections.map((s) => (
-            <li key={s.id}>
-              <a
-                href={`#${s.id}`}
-                aria-current={active === s.id ? "true" : undefined}
-                className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
-                  active === s.id
-                    ? "bg-white/[0.09] font-bold text-ink ring-1 ring-inset ring-white/15"
-                    : "font-semibold text-ink-muted hover:bg-white/[0.05] hover:text-ink"
-                }`}
-              >
+              </span>
+              <span className="min-w-0 flex-1 truncate">{s.label}</span>
+              {s.badge && (
                 <span
-                  className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg transition ${
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums ${
                     active === s.id
-                      ? "bg-gradient-to-br from-brand-500 to-teal-500 text-white"
-                      : "bg-white/[0.06] text-ink-muted group-hover:text-teal-300"
+                      ? "bg-white/15 text-ink"
+                      : "bg-white/[0.07] text-ink-muted"
                   }`}
                 >
-                  <Glyph name={s.icon} />
+                  {s.badge}
                 </span>
-                <span className="min-w-0 flex-1 truncate">{s.label}</span>
-                {s.badge && (
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums ${
-                      active === s.id
-                        ? "bg-white/15 text-ink"
-                        : "bg-white/[0.07] text-ink-muted"
-                    }`}
-                  >
-                    {s.badge}
-                  </span>
-                )}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </nav>
-    </>
+              )}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }
 
 /**
- * Hand-rolled so the rail carries no icon library weight for nine glyphs, and
+ * Hand-rolled so the rail carries no icon library weight for ten glyphs, and
  * so each one is a single stroked path that inherits colour from its tile.
  */
 const PATHS: Record<string, string> = {

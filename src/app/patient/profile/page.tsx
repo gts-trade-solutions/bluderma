@@ -15,7 +15,11 @@ import {
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { buildPatientMenu } from "@/lib/queries/nav";
-import ProfileNav, { type ProfileSection } from "@/components/patient/ProfileNav";
+import {
+  ProfileRail,
+  ProfileStrip,
+  type ProfileSection,
+} from "@/components/patient/ProfileNav";
 import { requireUser } from "@/lib/session";
 import { getProfilePageData } from "@/lib/queries/profileData";
 import {
@@ -148,9 +152,17 @@ export default async function ProfilePage() {
           </div>
         </section>
 
+        {/* The phone strip sits OUTSIDE the grid below, in normal flow. As a
+            grid item its min-width was `auto`, so the column was sized to the
+            intrinsic width of ten no-wrap pills (~1,365px) and `overflow-x-auto`
+            could not contain it — the page itself scrolled sideways (measured:
+            1,442px of scrollWidth at a 390px viewport), which is what made the
+            whole profile render zoomed-out and unreadable on a phone. */}
+        <ProfileStrip sections={sections} />
+
         {/* ── Rail + record ─────────────────────────────────────────── */}
         <div className="container-page grid gap-8 pt-6 lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-10 lg:pt-10">
-          <ProfileNav sections={sections} />
+          <ProfileRail sections={sections} />
 
           <div className="min-w-0 space-y-14">
             {/* ── 1. Reports ──────────────────────────────────────── */}

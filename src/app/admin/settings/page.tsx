@@ -17,10 +17,16 @@ import {
 export const metadata = { title: "Site settings" };
 export const dynamic = "force-dynamic";
 
+// Every group in the table gets a card, whether it is named here or not, so a
+// missing entry is not a crash: it is a card headed with the raw slug. Both
+// `skin` and `offer` sat like that, which is a poor way to present the screen
+// where somebody changes what a scan costs.
 const GROUP_TITLES: Record<string, string> = {
   general: "General",
   contact: "Contact details",
   booking: "Booking rules",
+  skin: "Skin analysis and pricing",
+  offer: "Homepage offer banner",
 };
 
 export default async function SettingsPage() {

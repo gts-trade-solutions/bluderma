@@ -355,23 +355,37 @@ async function main() {
 
   // ── Wiring ──────────────────────────────────────────────────────────────
   const dash = read("src/components/doctor/dashboard/DashboardHome.tsx");
-  check("the dashboard says booked, not collected", /"Booked in" : "Booked"/.test(dash));
+  // Every one of these guards named a component or a literal string that the
+  // rebuild renamed. They were not protecting anything any more, and a suite
+  // that fails for stale reasons trains people to ignore it. Each now points
+  // at what the screen actually does, which is the same INTENT as before.
+  //
+  // The headline still must carry a noun: the screen this replaced showed
+  // "₹2,91,570" under the bare word "Booked", and a practitioner could not
+  // tell whether that was money received, owed, or hoped for.
+  check("the dashboard says booked value, not collected", /"Booked value"/.test(dash));
+  check("and never claims the money is in hand", !/label="Collected"/.test(dash));
   check("it explains the unresolved bucket", /never marked complete/.test(dash));
   // The projection must be shown as derived from the doctor's own average,
   // not presented as a forecast the system is confident about.
   check(
     "the projection names what it is derived from",
-    /at your \{money\(m\.averageValue\)\}/.test(dash)
+    /money\(m\.averageValue\)\} average booking/.test(dash),
+    "a projection with no stated basis reads as a promise"
   );
-  check("the dashboard is chart-led", /RevenueDonut|UtilisationChart|HoursChart|Gauge/.test(dash));
+  check(
+    "the dashboard is chart-led",
+    /BookingsChart|RevenueDonut|UtilisationChart|HoursChart|Gauge/.test(dash)
+  );
   // The first viewport must carry a chart, not just a headline figure — the
   // charts were originally all below the fold behind four text cards.
-  const donutAt = dash.indexOf("RevenueDonut");
+  const chartAt = dash.indexOf("<BookingsChart");
   const stripAt = dash.indexOf("<InsightStrip");
-  check("a chart precedes the AI strip", donutAt > -1 && donutAt < stripAt);
-  check("the hero carries inline figures", /HeroStat/.test(dash));
+  check("a chart precedes the AI strip", chartAt > -1 && chartAt < stripAt);
+  check("the top of the page carries figures, not just a title", /<Kpi/.test(dash));
   check("month-on-month direction is shown", /periodDelta/.test(dash));
-  check("the funnel is rendered", /From request to seen/.test(dash));
+  check("the funnel is rendered", /m\.funnel\.map/.test(dash));
+  check("its steps are labelled in words", /FUNNEL_LABELS/.test(dash));
   check("the location split is rendered", /clinicSplit/.test(dash));
 
   // …and the figures behind them hold up.
@@ -384,12 +398,20 @@ async function main() {
   check("the hero states its own text colour", /text-white/.test(dash));
   check("no hardcoded clinic offset", !/330/.test(dash));
 
+  // RevenueSpark and DemandChart were deleted by the rebuild, so this loop was
+  // throwing ENOENT and taking the rest of the suite with it. The rule it
+  // encodes still matters: recharts measures the DOM, so a chart rendered on
+  // the server hydrates against a mismatch unless it waits for mount.
   for (const f of [
-    "src/components/doctor/dashboard/RevenueSpark.tsx",
-    "src/components/doctor/dashboard/DemandChart.tsx",
+    "src/components/doctor/dashboard/BookingsChart.tsx",
+    "src/components/doctor/dashboard/Charts.tsx",
   ]) {
     const src = read(f);
-    check(`${f.split("/").pop()} gates on mount`, /useEffect\(\(\) => setMounted\(true\), \[\]\)/.test(src));
+    check(
+      `${f.split("/").pop()} gates on mount`,
+      /setMounted\(true\)/.test(src),
+      "recharts measures the DOM; rendering it on the server mismatches"
+    );
     check(`${f.split("/").pop()} shows a skeleton first`, /animate-pulse/.test(src));
   }
 

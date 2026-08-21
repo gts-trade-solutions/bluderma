@@ -74,7 +74,22 @@ const MEASURE = `(() => {
   }
   // The outermost offenders explain the inner ones.
   out.sort((a, b) => b.over - a.over);
+  const bg = getComputedStyle(document.body).backgroundColor;
+  const canvas = document.querySelector(".portal-canvas");
+  const canvasBg = canvas ? getComputedStyle(canvas).backgroundColor : "n/a";
+  // Sample what the page actually paints, so "it is dark now" is measured
+  // rather than believed.
+  const samples = [];
+  for (const sel of ["h1", "main p", ".portal-enter", "text", "tspan"]) {
+    const el = document.querySelector(sel);
+    if (!el) continue;
+    const cs = getComputedStyle(el);
+    samples.push({ sel, color: cs.color, bg: cs.backgroundColor });
+  }
   return JSON.stringify({
+    bodyBg: bg,
+    canvasBg,
+    samples,
     viewport: vw,
     scrollWidth: de.scrollWidth,
     overflow: de.scrollWidth - vw,
@@ -87,7 +102,7 @@ async function main() {
 
   const prisma = new PrismaClient({ log: ["error"] });
   const user = await prisma.user.findUniqueOrThrow({
-    where: { email: "demo.client@bluderma.local" },
+    where: { email: process.env.AS_EMAIL ?? "demo.client@bluderma.local" },
     select: { id: true, email: true, name: true, role: true },
   });
   await prisma.$disconnect();
@@ -167,6 +182,12 @@ async function main() {
     console.log(
       `  overflow     ${data.overflow}px  ${data.overflow > 0 ? "<<< PAGE SCROLLS SIDEWAYS" : "(none)"}\n`
     );
+    console.log(`  body bg      ${data.bodyBg}`);
+    console.log(`  canvas bg    ${data.canvasBg}`);
+    for (const s2 of data.samples ?? []) {
+      console.log(`  ${String(s2.sel).padEnd(14)} colour ${s2.color}   on ${s2.bg}`);
+    }
+    console.log("");
     for (const o of data.offenders ?? []) {
       console.log(`  +${String(o.over).padStart(4)}px  <${o.tag}>  [${o.left}..${o.right}]`);
       console.log(`           ${o.cls}`);

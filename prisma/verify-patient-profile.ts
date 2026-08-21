@@ -34,11 +34,33 @@ function check(name: string, ok: boolean, detail?: string) {
   if (ok) pass++;
   else fails.push(detail ? `${name} (${detail})` : name);
 }
-const read = (p: string) => readFileSync(p, "utf8");
+/**
+ * Source with its comments blanked, and it is the DEFAULT here rather than an
+ * opt-in.
+ *
+ * Five guards across this repo have now failed on the note explaining a fix
+ * instead of on the code: `theme-light`, the city list, `text-ink`, the
+ * client-facing description, and `-mx-5` right below. The pattern is always
+ * the same. Someone fixes a thing, writes down why, and the sentence naming
+ * the old approach trips the guard that was watching for it.
+ *
+ * A comment cannot change behaviour, so nothing is lost by never reading one,
+ * and a guard that reads a note about a fix as the fix being absent is worse
+ * than no guard at all. Both JSX `{/* … *\/}` blocks and `//` lines go.
+ */
+const read = (p: string) =>
+  readFileSync(p, "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/^\s*\/\/.*$/gm, " ");
+
+/** The raw file, for the rare check that genuinely wants the prose. */
+const readRaw = (p: string) => readFileSync(p, "utf8");
 
 const page = read("src/app/patient/profile/page.tsx");
 const nav = read("src/components/patient/ProfileNav.tsx");
-const demo = read("src/data/patientDemo.ts");
+// Read raw: these two checks are about the header comment itself, which is
+// the one legitimate reason to want the prose back.
+const demo = readRaw("src/data/patientDemo.ts");
 
 /* ── The menu the client asked for ───────────────────────────────────── */
 
@@ -68,9 +90,29 @@ check(
   "and a sticky strip on a phone",
   /sticky top-20[\s\S]*lg:hidden/.test(nav)
 );
+// This guard used to require `-mx-5 ... sm:-mx-8`, which is to say it required
+// the bug. The strip lived INSIDE the page's `container-page grid` and cancelled
+// the gutter with negative margins; being a grid item, its `min-width: auto`
+// sized the track to the pill row's intrinsic width, and /patient/profile
+// measured 1,442px wide in a 390px viewport.
+//
+// It is full-bleed by construction now: a normal block outside the grid, with
+// the gutter applied to the pill row as padding. So the check is the opposite
+// one, and there is a second half that the first cannot imply on its own.
 check(
-  "the strip bleeds to the container's own padding",
-  /-mx-5[\s\S]*sm:-mx-8/.test(nav)
+  "the strip is full-bleed without negative margins",
+  !/-mx-5/.test(nav),
+  "a negative margin means it is back inside the grid"
+);
+check(
+  "it gutters the pill row with padding instead",
+  /overflow-x-auto[^"]*px-5/.test(nav)
+);
+check(
+  "and it is rendered outside the page grid",
+  page.indexOf("<ProfileStrip") > -1 &&
+    page.indexOf("<ProfileStrip") < page.indexOf("container-page grid"),
+  "inside the grid its intrinsic width sets the column"
 );
 check(
   "anchors clear the sticky chrome",
@@ -146,13 +188,16 @@ for (const [file, src] of [
 ] as const) {
   check(`${file} uses no viewport-width unit`, !/w-screen|100vw/.test(src));
 }
-// The one negative margin is deliberate: it matches container-page's own
-// px-5 sm:px-8 so the strip bleeds edge to edge without overflowing.
+// The negative-margin bleed is gone entirely, so there is no width left to
+// reconcile against container-page's padding. What replaced this check is the
+// pair above: no -mx at all, and the strip rendered outside the grid. Any
+// negative margin ANYWHERE in the nav is now the regression, not a mismatched
+// one, so it is asserted on the whole file rather than on the numbers.
 const bleeds = [...nav.matchAll(/-mx-(\d+)/g)].map((m) => m[1]);
 check(
-  "the strip's bleed matches the container's padding",
-  bleeds.length > 0 && bleeds.every((n) => n === "5" || n === "8"),
-  bleeds.join(",") || "none"
+  "the nav takes no negative horizontal margin",
+  bleeds.length === 0,
+  bleeds.join(",")
 );
 
 /* ── Sample panels are marked as such ────────────────────────────────── */
@@ -201,7 +246,7 @@ check(
   /no backend yet|does not exist|not built/i.test(demo)
 );
 check(
-  "and warns that every panel it feeds is labelled",
+  "and warns that the panels it feeds are labelled",
   /Sample/.test(demo)
 );
 

@@ -72,7 +72,21 @@ check("accepts a real path", internalPath("/doctor/portal") === "/doctor/portal"
 const layout = read("src/app/doctor/portal/layout.tsx");
 const rail = read("src/components/doctor/PortalRail.tsx");
 check("portal renders the rail", /<PortalRail/.test(layout));
-check("canvas clears the rail", /lg:pl-64/.test(layout));
+// The rail is fixed, so the content beside it needs a matching inset or it
+// sits underneath. That inset used to be `lg:pl-64` on the wrapper and is now
+// `.portal-shell`, which does the same 16rem and animates it when the rail
+// collapses. Checking the CSS as well as the class means a shell that exists
+// in name only still fails.
+check("canvas clears the rail", /portal-shell/.test(layout));
+const shellCss = read("src/app/globals.css");
+check(
+  "the shell actually insets by the rail's width",
+  /\.portal-shell\s*\{[^}]*padding-left:\s*16rem/s.test(shellCss)
+);
+check(
+  "and follows the rail when it collapses",
+  /\[data-rail="collapsed"\]\s*\.portal-shell\s*\{[^}]*padding-left:\s*4\.5rem/s.test(shellCss)
+);
 check("rail is the dark surface", /bg-\[#0b1220\]/.test(rail));
 check("no admin console chrome left", !/@\/components\/admin\/ui/.test(layout));
 check("unapproved doctors still get in", /pending &&/.test(layout));

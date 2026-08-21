@@ -10,6 +10,7 @@ import {
   Sparkles,
   Stethoscope,
   Syringe,
+  Wallet,
 } from "lucide-react";
 
 import Navbar from "@/components/Navbar";
@@ -84,12 +85,16 @@ export default async function ProfilePage() {
   ];
 
   const sections: ProfileSection[] = [
+    // The wallet leads. It is the one thing on this page that is money the
+    // client can spend, and it sat sixth — below five clinical records, which
+    // on a phone is most of a screen's worth of scrolling before a balance
+    // they did not know they had.
+    { id: "wallet", label: "My wallet", icon: "wallet", badge: money(DEMO_WALLET.balanceInr) },
     { id: "reports", label: "My reports", icon: "report", badge: String(SKIN_REPORTS.length) },
     { id: "conditions", label: "My conditions", icon: "condition", badge: String(CONDITIONS.length) },
     { id: "appointments", label: "My appointments", icon: "calendar", badge: String(APPOINTMENTS.length) },
     { id: "prescriptions", label: "My prescriptions", icon: "rx", badge: String(PRESCRIPTIONS.length) },
     { id: "treatments", label: "My treatments", icon: "treatment", badge: String(PROCEDURES.length) },
-    { id: "wallet", label: "My wallet", icon: "wallet", badge: money(DEMO_WALLET.balanceInr) },
     { id: "pay-later", label: "Pay later", icon: "paylater" },
     { id: "locations", label: "Location", icon: "location" },
     { id: "orders", label: "My orders", icon: "order", badge: String(PURCHASES.length) },
@@ -139,8 +144,56 @@ export default async function ProfilePage() {
               ))}
             </dl>
 
+            {/* ── The wallet, before any scrolling ──────────────────────
+                The balance is the one number on this page a client can spend,
+                and it lived six sections down. It is a link, not a panel: the
+                whole record is still below, this just makes sure nobody has
+                to go looking for their own credit. The Sample tag travels
+                with it — see the note at the top of this file about why a
+                mock-up nobody can identify is worse than none. */}
+            <Link
+              href="#wallet"
+              className="group mt-6 flex flex-wrap items-center gap-x-6 gap-y-4 rounded-2xl bg-gradient-to-r from-brand-800/80 via-brand-900/70 to-teal-800/70 px-5 py-4 ring-1 ring-inset ring-teal-300/25 transition hover:ring-teal-300/50"
+            >
+              <span className="flex min-w-0 items-center gap-4">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-white/10 ring-1 ring-inset ring-white/15">
+                  <Wallet className="h-6 w-6 text-teal-200" strokeWidth={1.7} />
+                </span>
+                <span className="min-w-0">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-teal-200">
+                      Your wallet
+                    </span>
+                    <SampleTag />
+                  </span>
+                  <span className="display mt-0.5 block text-3xl text-white">
+                    {money(DEMO_WALLET.balanceInr)}
+                  </span>
+                </span>
+              </span>
+
+              {/* Full width on a phone. As a flex-1 sibling of the balance it
+                  shrank instead of wrapping, and set one word per line down a
+                  60px column. */}
+              <span className="w-full min-w-0 text-sm text-white/70 sm:w-auto sm:flex-1">
+                Spendable against consultations and orders, applied
+                automatically at checkout.
+                {DEMO_WALLET.expiringInr > 0 && (
+                  <span className="mt-0.5 block text-xs text-amber-200/90">
+                    {money(DEMO_WALLET.expiringInr)} of it expires on{" "}
+                    {DEMO_WALLET.expiringOn}.
+                  </span>
+                )}
+              </span>
+
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-white ring-1 ring-inset ring-white/15 transition group-hover:bg-white/[0.16]">
+                Open wallet
+                <ArrowRight className="h-4 w-4" />
+              </span>
+            </Link>
+
             {upcoming.length > 0 && (
-              <div className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl bg-teal-400/[12%] px-5 py-4 ring-1 ring-inset ring-teal-300/25">
+              <div className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl bg-teal-400/[12%] px-5 py-4 ring-1 ring-inset ring-teal-300/25">
                 <CalendarDays className="h-5 w-5 shrink-0 text-teal-200" />
                 <p className="text-sm text-ink-soft">
                   Next appointment:{" "}
@@ -165,7 +218,70 @@ export default async function ProfilePage() {
           <ProfileRail sections={sections} />
 
           <div className="min-w-0 space-y-14">
-            {/* ── 1. Reports ──────────────────────────────────────── */}
+            {/* ── 1. Wallet ───────────────────────────────────────── */}
+            <Section
+              id="wallet"
+              icon={Percent}
+              eyebrow="Your credit"
+              title="My wallet"
+              sub="Cashback, referral credit and refunds. Spendable against consultations and orders."
+              sample
+            >
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl bg-gradient-to-br from-brand-800 via-brand-900 to-teal-800 p-5 ring-1 ring-inset ring-white/15 sm:col-span-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-200">
+                    Balance
+                  </p>
+                  <p className="display mt-1.5 text-4xl text-white">
+                    {money(DEMO_WALLET.balanceInr)}
+                  </p>
+                  <p className="mt-2 text-sm text-white/70">
+                    {money(DEMO_WALLET.expiringInr)} of this expires on{" "}
+                    {DEMO_WALLET.expiringOn}.
+                  </p>
+                  <p className="mt-4 text-xs text-white/55">
+                    Applied automatically at checkout. It never expires except
+                    where a credit says so above.
+                  </p>
+                </div>
+                <div className="card-soft flex flex-col justify-center p-5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
+                    Earned with us
+                  </p>
+                  <p className="display-sm mt-1.5 text-2xl text-ink">
+                    {money(DEMO_WALLET.lifetimeCashbackInr)}
+                  </p>
+                  <p className="mt-1 text-xs text-ink-muted">
+                    Cashback and credit since you joined.
+                  </p>
+                </div>
+              </div>
+
+              <div className="card-soft mt-3 divide-y divide-white/10 overflow-hidden">
+                {DEMO_WALLET.movements.map((mv) => (
+                  <Row
+                    key={mv.id}
+                    title={mv.label}
+                    sub={mv.detail}
+                    meta={
+                      <>
+                        <span className="text-xs text-ink-muted">{mv.on}</span>
+                        <span
+                          className={`text-sm font-bold tabular-nums ${
+                            mv.amountInr >= 0 ? "text-teal-300" : "text-ink-soft"
+                          }`}
+                        >
+                          {mv.amountInr >= 0 ? "+" : "−"}
+                          {money(Math.abs(mv.amountInr))}
+                        </span>
+                      </>
+                    }
+                  />
+                ))}
+              </div>
+            </Section>
+
+            {/* ── 2. Reports ──────────────────────────────────────── */}
             <Section
               id="reports"
               icon={Sparkles}
@@ -222,7 +338,7 @@ export default async function ProfilePage() {
               )}
             </Section>
 
-            {/* ── 2. Conditions ───────────────────────────────────── */}
+            {/* ── 3. Conditions ───────────────────────────────────── */}
             <Section
               id="conditions"
               icon={Stethoscope}
@@ -267,7 +383,7 @@ export default async function ProfilePage() {
               )}
             </Section>
 
-            {/* ── 3. Appointments ─────────────────────────────────── */}
+            {/* ── 4. Appointments ─────────────────────────────────── */}
             <Section
               id="appointments"
               icon={CalendarDays}
@@ -332,7 +448,7 @@ export default async function ProfilePage() {
               )}
             </Section>
 
-            {/* ── 4. Prescriptions ────────────────────────────────── */}
+            {/* ── 5. Prescriptions ────────────────────────────────── */}
             <Section
               id="prescriptions"
               icon={FileText}
@@ -376,7 +492,7 @@ export default async function ProfilePage() {
               )}
             </Section>
 
-            {/* ── 5. Treatments ───────────────────────────────────── */}
+            {/* ── 6. Treatments ───────────────────────────────────── */}
             <Section
               id="treatments"
               icon={Syringe}
@@ -412,69 +528,6 @@ export default async function ProfilePage() {
                   cta={{ label: "Browse treatments", href: "/patient/explore" }}
                 />
               )}
-            </Section>
-
-            {/* ── 6. Wallet ───────────────────────────────────────── */}
-            <Section
-              id="wallet"
-              icon={Percent}
-              eyebrow="Your credit"
-              title="My wallet"
-              sub="Cashback, referral credit and refunds. Spendable against consultations and orders."
-              sample
-            >
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl bg-gradient-to-br from-brand-800 via-brand-900 to-teal-800 p-5 ring-1 ring-inset ring-white/15 sm:col-span-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-200">
-                    Balance
-                  </p>
-                  <p className="display mt-1.5 text-4xl text-white">
-                    {money(DEMO_WALLET.balanceInr)}
-                  </p>
-                  <p className="mt-2 text-sm text-white/70">
-                    {money(DEMO_WALLET.expiringInr)} of this expires on{" "}
-                    {DEMO_WALLET.expiringOn}.
-                  </p>
-                  <p className="mt-4 text-xs text-white/55">
-                    Applied automatically at checkout. It never expires except
-                    where a credit says so above.
-                  </p>
-                </div>
-                <div className="card-soft flex flex-col justify-center p-5">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
-                    Earned with us
-                  </p>
-                  <p className="display-sm mt-1.5 text-2xl text-ink">
-                    {money(DEMO_WALLET.lifetimeCashbackInr)}
-                  </p>
-                  <p className="mt-1 text-xs text-ink-muted">
-                    Cashback and credit since you joined.
-                  </p>
-                </div>
-              </div>
-
-              <div className="card-soft mt-3 divide-y divide-white/10 overflow-hidden">
-                {DEMO_WALLET.movements.map((mv) => (
-                  <Row
-                    key={mv.id}
-                    title={mv.label}
-                    sub={mv.detail}
-                    meta={
-                      <>
-                        <span className="text-xs text-ink-muted">{mv.on}</span>
-                        <span
-                          className={`text-sm font-bold tabular-nums ${
-                            mv.amountInr >= 0 ? "text-teal-300" : "text-ink-soft"
-                          }`}
-                        >
-                          {mv.amountInr >= 0 ? "+" : "−"}
-                          {money(Math.abs(mv.amountInr))}
-                        </span>
-                      </>
-                    }
-                  />
-                ))}
-              </div>
             </Section>
 
             {/* ── 7. Pay later ────────────────────────────────────── */}

@@ -158,8 +158,32 @@ check(
 /* ── Sample panels are marked as such ────────────────────────────────── */
 
 check("the page defines a Sample badge", /function SampleTag/.test(page));
-for (const section of ["wallet", "pay-later"]) {
-  // Both are fed entirely from patientDemo and must declare it on the heading.
+
+// The wallet USED to be on this list. Its badge was removed by request, so it
+// now renders DEMO_WALLET as though it were a live balance. That is a product
+// decision and not this suite's to overturn, but it does move the risk: the
+// figure a client is most likely to act on is the one they can no longer tell
+// is illustrative. So the check inverts rather than disappearing. The badge is
+// asserted GONE, and the source of the number asserted still to be the mock,
+// so whoever wires a real wallet up is told by a failing test to come here.
+{
+  const at = page.indexOf('id="wallet"');
+  const next = page.indexOf('id="', at + 10);
+  const block = page.slice(at, next > -1 ? next : undefined);
+  check(
+    "the wallet is deliberately unbadged",
+    !/\bsample\b/.test(block),
+    "re-badging it is fine, but then put it back on the list below"
+  );
+  check(
+    "and its figures still come from patientDemo",
+    /DEMO_WALLET/.test(block),
+    "if the wallet is real now, patientDemo's header exception must go too"
+  );
+}
+
+for (const section of ["pay-later"]) {
+  // Fed entirely from patientDemo and must declare it on the heading.
   const at = page.indexOf(`id="${section}"`);
   const next = page.indexOf('id="', at + 10);
   const block = page.slice(at, next > -1 ? next : undefined);

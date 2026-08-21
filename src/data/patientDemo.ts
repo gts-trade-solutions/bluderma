@@ -7,11 +7,17 @@
  * them so the shape of the finished profile can be reviewed.
  *
  * The rule this file works under, and the reason it is a separate file at all:
- * **every panel it feeds is labelled `Sample` in the interface.** This codebase
- * has deleted invented figures before, and the difference between a mock-up
- * and a lie is whether the reader can tell which one they are looking at. When
- * the real tables arrive, the section swaps its import and the badge comes off
- * — nothing else about the page changes.
+ * the panels it feeds are labelled `Sample` in the interface. This codebase has
+ * deleted invented figures before, and the difference between a mock-up and a
+ * lie is whether the reader can tell which one they are looking at. When the
+ * real tables arrive, the section swaps its import and the badge comes off,
+ * and nothing else about the page changes.
+ *
+ * ONE EXCEPTION, and it is deliberate: the wallet's badge was removed by
+ * request, so `DEMO_WALLET` now renders as though it were a live balance.
+ * That makes it the entry here with the shortest fuse. A client who reads
+ * a spendable figure and cannot spend it has been misled, so this is the
+ * first thing to put behind a real table.
  *
  * Nothing here is per-user. It is the same illustration for everyone, which is
  * also a hint that it is not their data.

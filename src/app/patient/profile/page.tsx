@@ -53,10 +53,14 @@ const money = (n: number) => `₹${n.toLocaleString("en-IN")}`;
  * Reports, conditions, prescriptions, treatments, appointments, orders,
  * discounts and membership all come out of the database. The wallet, pay-later
  * and the saved addresses have no tables behind them yet and are drawn from
- * `@/data/patientDemo` — every one of those panels carries a `Sample` badge,
- * because a mock-up a reader cannot distinguish from their own money is not a
- * mock-up, it is a lie. When the tables land, the import changes and the badge
- * comes off.
+ * `@/data/patientDemo`.
+ *
+ * Pay-later and the saved addresses carry a `Sample` badge, because a mock-up
+ * a reader cannot distinguish from the real thing is not a mock-up. The wallet
+ * does NOT, by request: it reads as a live balance. The figures behind it are
+ * still `DEMO_WALLET`, so it is the panel to wire up first, and the one to
+ * check before this page goes anywhere a real client can spend against it.
+ * When the tables land, the import changes and the badges come off.
  */
 export default async function ProfilePage() {
   const user = await requireUser("/patient/profile");
@@ -148,9 +152,7 @@ export default async function ProfilePage() {
                 The balance is the one number on this page a client can spend,
                 and it lived six sections down. It is a link, not a panel: the
                 whole record is still below, this just makes sure nobody has
-                to go looking for their own credit. The Sample tag travels
-                with it — see the note at the top of this file about why a
-                mock-up nobody can identify is worse than none. */}
+                to go looking for their own credit. */}
             <Link
               href="#wallet"
               className="group mt-6 flex flex-wrap items-center gap-x-6 gap-y-4 rounded-2xl bg-gradient-to-r from-brand-800/80 via-brand-900/70 to-teal-800/70 px-5 py-4 ring-1 ring-inset ring-teal-300/25 transition hover:ring-teal-300/50"
@@ -160,11 +162,8 @@ export default async function ProfilePage() {
                   <Wallet className="h-6 w-6 text-teal-200" strokeWidth={1.7} />
                 </span>
                 <span className="min-w-0">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-teal-200">
-                      Your wallet
-                    </span>
-                    <SampleTag />
+                  <span className="block text-[11px] font-bold uppercase tracking-[0.16em] text-teal-200">
+                    Your wallet
                   </span>
                   <span className="display mt-0.5 block text-3xl text-white">
                     {money(DEMO_WALLET.balanceInr)}
@@ -225,7 +224,6 @@ export default async function ProfilePage() {
               eyebrow="Your credit"
               title="My wallet"
               sub="Cashback, referral credit and refunds. Spendable against consultations and orders."
-              sample
             >
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl bg-gradient-to-br from-brand-800 via-brand-900 to-teal-800 p-5 ring-1 ring-inset ring-white/15 sm:col-span-2">

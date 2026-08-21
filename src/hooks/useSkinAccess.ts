@@ -20,6 +20,7 @@ export type SkinStatus =
       offer?: {
         free: boolean;
         priceInr: number;
+        listPriceInr: number;
         creditsAvailable: number;
         scansUsed: number;
         allowRequests: boolean;
@@ -134,6 +135,16 @@ export function useSkinAccess() {
     firstScanFree,
     /** What another analysis costs, from settings. Never hardcoded in a card. */
     priceInr: status?.authed ? status.offer?.priceInr ?? null : null,
+    /**
+     * The "usually" anchor. Null where there is no offer running, which is
+     * how a card knows not to draw a strike-through: the server has already
+     * collapsed an anchor that is not above the charged price.
+     */
+    listPriceInr: status?.authed
+      ? status.offer && status.offer.listPriceInr > status.offer.priceInr
+        ? status.offer.listPriceInr
+        : null
+      : null,
     /** Whether asking staff is still offered when payment is unavailable. */
     allowRequests: status?.authed ? status.offer?.allowRequests ?? false : false,
     /** Whether a card can be charged here at all. */

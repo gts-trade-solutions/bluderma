@@ -17,21 +17,38 @@ import { prisma } from "@/lib/prisma";
 export interface ScanPricing {
   /** Whether a client's first analysis is free. */
   firstScanFree: boolean;
-  /** What each subsequent analysis costs, in whole rupees. */
+  /** What each subsequent analysis costs, in whole rupees. This is the figure
+   *  that is CHARGED, so it is the only one a card may quote next to a
+   *  buy button. */
   priceInr: number;
+  /**
+   * The undiscounted figure, shown struck through as the "usually" anchor.
+   *
+   * This exists because the cards were drawing a strike-through against
+   * `priceInr` itself: the same number twice, one of them crossed out, which
+   * is a saving of nothing. Worse, two of the three cards had 99 typed into
+   * them as a literal while this setting said 499, so the site advertised one
+   * price and the checkout charged another.
+   *
+   * A discount needs two numbers. This is the second one, and where it is not
+   * above `priceInr` the strike-through is not drawn at all.
+   */
+  listPriceInr: number;
   /** Whether clients may ask staff for a free scan. */
   allowRequests: boolean;
 }
 
 const DEFAULTS: ScanPricing = {
   firstScanFree: true,
-  priceInr: 499,
+  priceInr: 99,
+  listPriceInr: 499,
   allowRequests: true,
 };
 
 const KEYS = {
   firstScanFree: "skin.first_scan_free",
   priceInr: "skin.scan_price_inr",
+  listPriceInr: "skin.scan_list_price_inr",
   allowRequests: "skin.allow_access_requests",
 } as const;
 
@@ -42,11 +59,21 @@ export const getScanPricing = cache(async (): Promise<ScanPricing> => {
   });
   const map = new Map(rows.map((r) => [r.key, (r.value ?? "").trim()]));
 
-  const price = Number(map.get(KEYS.priceInr));
+  const num = (key: string, fallback: number) => {
+    const n = Number(map.get(key));
+    return Number.isFinite(n) && n >= 0 ? Math.round(n) : fallback;
+  };
+
+  const priceInr = num(KEYS.priceInr, DEFAULTS.priceInr);
+  const listPriceInr = num(KEYS.listPriceInr, DEFAULTS.listPriceInr);
 
   return {
     firstScanFree: map.get(KEYS.firstScanFree) !== "false",
-    priceInr: Number.isFinite(price) && price >= 0 ? Math.round(price) : DEFAULTS.priceInr,
+    priceInr,
+    // An anchor at or below the charged price is not an anchor. Collapsing it
+    // to the price here means every card can render the strike-through on one
+    // rule (`listPriceInr > priceInr`) rather than each inventing its own.
+    listPriceInr: Math.max(listPriceInr, priceInr),
     allowRequests: map.get(KEYS.allowRequests) !== "false",
   };
 });
@@ -56,6 +83,8 @@ export interface ScanOffer {
   free: boolean;
   /** What they would pay, if they are not entitled to a free one. */
   priceInr: number;
+  /** The "usually" anchor. Equal to priceInr when there is no offer running. */
+  listPriceInr: number;
   /** Credits they already hold and have not spent. */
   creditsAvailable: number;
   /** Analyses they have already run — what makes the first one "first". */
@@ -88,6 +117,7 @@ export async function getScanOffer(userId: string): Promise<ScanOffer> {
       creditsAvailable > 0 ||
       (pricing.firstScanFree && scansUsed === 0 && creditsAvailable === 0),
     priceInr: pricing.priceInr,
+    listPriceInr: pricing.listPriceInr,
     creditsAvailable,
     scansUsed,
     allowRequests: pricing.allowRequests,

@@ -31,6 +31,7 @@ export default function AnalyzerRail() {
     requestAccess,
     firstScanFree,
     priceInr,
+    listPriceInr,
     allowRequests,
     payable,
   } = useSkinAccess();
@@ -38,10 +39,12 @@ export default function AnalyzerRail() {
   const used =
     !!status && status.authed && status.state.status === "none";
 
-  // The advertised figure comes from settings. It was written into this card
-  // as a literal 99 while skin.scan_price_inr said 499, so the card was
-  // quoting a price the checkout would not have charged.
-  const price = priceInr ?? 99;
+  // Both figures come from settings. This card used to draw the strike-through
+  // against `price` itself, so it showed the same number twice with one of
+  // them crossed out: a saving of nothing. `listPriceInr` is null unless there
+  // is a real offer running, which is what decides whether it is drawn.
+  const price = priceInr;
+  const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
   // A purchase is only offered where it can actually complete: the server
   // reports whether Razorpay is configured on this deployment. Where it is
   // not, asking staff is the honest fallback rather than a button that fails
@@ -75,28 +78,34 @@ export default function AnalyzerRail() {
           whole catalogue into a shortlist of three.
         </p>
 
-        <div className="mt-4 flex items-center gap-3 rounded-2xl bg-[#04101f]/45 px-4 py-3 ring-1 ring-inset ring-white/10">
-          <div className="text-right">
-            <p className="text-[9px] font-medium uppercase tracking-wider text-white/55">
-              Usually
-            </p>
-            <p className="relative text-base font-semibold text-white/50">
-              <span className="relative">
-                ₹{price}
-                <span className="absolute inset-x-[-2px] top-1/2 h-[2px] -rotate-6 rounded bg-rose-400" />
-              </span>
-            </p>
+        {price !== null && (
+          <div className="mt-4 flex items-center gap-3 rounded-2xl bg-[#04101f]/45 px-4 py-3 ring-1 ring-inset ring-white/10">
+            {listPriceInr !== null && (
+              <>
+                <div className="text-right">
+                  <p className="text-[9px] font-medium uppercase tracking-wider text-white/55">
+                    Usually
+                  </p>
+                  <p className="relative text-base font-semibold text-white/50">
+                    <span className="relative">
+                      {inr(listPriceInr)}
+                      <span className="absolute inset-x-[-2px] top-1/2 h-[2px] -rotate-6 rounded bg-rose-400" />
+                    </span>
+                  </p>
+                </div>
+                <span className="h-8 w-px bg-white/15" />
+              </>
+            )}
+            <div>
+              <p className="text-[9px] font-medium uppercase tracking-wider text-teal-200">
+                {firstScanFree ? "Your first scan" : "Additional scan"}
+              </p>
+              <p className="display text-lg uppercase text-teal-200">
+                {firstScanFree ? "Free" : inr(price)}
+              </p>
+            </div>
           </div>
-          <span className="h-8 w-px bg-white/15" />
-          <div>
-            <p className="text-[9px] font-medium uppercase tracking-wider text-teal-200">
-              {firstScanFree ? "Your first scan" : "Additional scan"}
-            </p>
-            <p className="display text-lg uppercase text-teal-200">
-              {firstScanFree ? "Free" : `₹${price}`}
-            </p>
-          </div>
-        </div>
+        )}
 
         {error && (
           <p className="mt-3 rounded-xl border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-xs text-rose-100">
@@ -139,8 +148,8 @@ export default function AnalyzerRail() {
               {busy ? (
                 <LoaderCircle className="h-4 w-4 animate-spin" />
               ) : null}
-              {payable
-                ? `Buy another scan for ₹${price}`
+              {payable && price !== null
+                ? `Buy another scan for ${inr(price)}`
                 : !allowRequests
                   ? "Ask the clinic for another scan"
                   : status.pendingRequest
@@ -200,19 +209,11 @@ export default function AnalyzerRail() {
             Density, shedding pattern and scalp condition, scored the same way.
           </p>
 
+          {/* No struck-through anchor here. This one quoted "usually ₹50",
+              which is a saving on something nobody can buy yet, backed by no
+              setting and inconsistent with the skin scan's own pricing. Free
+              at launch is the claim that is actually true. */}
           <div className="mt-4 flex items-center gap-3 rounded-2xl bg-[#100420]/45 px-4 py-3 ring-1 ring-inset ring-white/10">
-            <div className="text-right">
-              <p className="text-[9px] font-medium uppercase tracking-wider text-white/55">
-                Usually
-              </p>
-              <p className="relative text-base font-semibold text-white/50">
-                <span className="relative">
-                  ₹50
-                  <span className="absolute inset-x-[-2px] top-1/2 h-[2px] -rotate-6 rounded bg-rose-400" />
-                </span>
-              </p>
-            </div>
-            <span className="h-8 w-px bg-white/15" />
             <div>
               <p className="text-[9px] font-medium uppercase tracking-wider text-fuchsia-200">
                 At launch

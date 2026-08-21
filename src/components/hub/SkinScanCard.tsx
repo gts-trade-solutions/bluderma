@@ -26,12 +26,35 @@ const SIGNALS = [
  * The "analyse your skin" band on the client hub.
  *
  * Pricing here is the one deliberate exception to the site's no-prices rule:
- * the strike-through *is* the offer. The first scan is complimentary; once it
- * has been used the card falls back to ₹99 and the request-access flow.
+ * the strike-through *is* the offer. The first scan is complimentary, and
+ * every scan after it is charged.
+ *
+ * Both figures come from settings. They were typed into this file as a literal
+ * 99 while `skin.scan_price_inr` said 499, so this card advertised a price the
+ * checkout would not have charged, and it drew the strike-through against that
+ * same 99: a saving of nothing.
+ *
+ * It also offered ONLY "request another scan", so somebody holding a card was
+ * sent to wait for an admin. Where the gateway is configured the button now
+ * charges; asking staff survives as the fallback for a deployment without
+ * keys, which is a deployment state rather than a product decision.
  */
 export default function SkinScanCard() {
-  const { status, busy, error, start, requestAccess, firstScanFree } =
-    useSkinAccess();
+  const {
+    status,
+    busy,
+    error,
+    start,
+    purchase,
+    requestAccess,
+    firstScanFree,
+    priceInr,
+    listPriceInr,
+    allowRequests,
+    payable,
+  } = useSkinAccess();
+
+  const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 
   const used = status?.authed === true && status.state.status === "none";
 
@@ -76,37 +99,43 @@ export default function SkinScanCard() {
           </p>
 
           {/* ── The offer ─────────────────────────────────────────── */}
-          <div className="mt-8 inline-flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-3.5 backdrop-blur">
-            <div className="text-right">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-white/40">
-                Usually
-              </p>
-              <p className="relative text-xl font-semibold text-white/35">
-                <span className="relative">
-                  ₹99
-                  <span className="absolute inset-x-[-2px] top-1/2 h-[2px] -rotate-6 rounded bg-rose-400" />
-                </span>
-              </p>
+          {priceInr !== null && (
+            <div className="mt-8 inline-flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-3.5 backdrop-blur">
+              {listPriceInr !== null && (
+                <>
+                  <div className="text-right">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-white/40">
+                      Usually
+                    </p>
+                    <p className="relative text-xl font-semibold text-white/35">
+                      <span className="relative">
+                        {inr(listPriceInr)}
+                        <span className="absolute inset-x-[-2px] top-1/2 h-[2px] -rotate-6 rounded bg-rose-400" />
+                      </span>
+                    </p>
+                  </div>
+
+                  <span className="h-9 w-px bg-white/15" />
+                </>
+              )}
+
+              {firstScanFree ? (
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-teal-300/80">
+                    Your first scan
+                  </p>
+                  <p className="display text-2xl uppercase text-teal-300">Free</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-white/40">
+                    Additional scan
+                  </p>
+                  <p className="text-xl font-bold text-white">{inr(priceInr)}</p>
+                </div>
+              )}
             </div>
-
-            <span className="h-9 w-px bg-white/15" />
-
-            {firstScanFree ? (
-              <div>
-                <p className="text-[10px] font-medium uppercase tracking-wider text-teal-300/80">
-                  Your first scan
-                </p>
-                <p className="display text-2xl uppercase text-teal-300">Free</p>
-              </div>
-            ) : (
-              <div>
-                <p className="text-[10px] font-medium uppercase tracking-wider text-white/40">
-                  Additional scan
-                </p>
-                <p className="text-xl font-bold text-white">₹99</p>
-              </div>
-            )}
-          </div>
+          )}
 
           {error && (
             <p className="mt-5 max-w-md rounded-xl border border-rose-400/25 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
@@ -120,7 +149,11 @@ export default function SkinScanCard() {
               busy={busy}
               used={used}
               onStart={start}
+              onBuy={purchase}
               onRequest={requestAccess}
+              payable={payable}
+              allowRequests={allowRequests}
+              priceLabel={priceInr === null ? null : inr(priceInr)}
             />
           </div>
 
@@ -194,13 +227,21 @@ function Cta({
   busy,
   used,
   onStart,
+  onBuy,
   onRequest,
+  payable,
+  allowRequests,
+  priceLabel,
 }: {
   status: ReturnType<typeof useSkinAccess>["status"];
   busy: boolean;
   used: boolean;
   onStart: () => void;
+  onBuy: () => void;
   onRequest: () => void;
+  payable: boolean;
+  allowRequests: boolean;
+  priceLabel: string | null;
 }) {
   const base =
     "group inline-flex w-full items-center justify-center gap-2 rounded-full px-7 py-4 text-sm font-bold transition-all active:scale-[0.98] disabled:opacity-70";
@@ -244,17 +285,27 @@ function Cta({
   ) : null;
 
   if (used) {
+    // The card quotes a figure, so the button charges it. Waiting on an admin
+    // is not a checkout, and "Request pending" is a dead end for somebody who
+    // came here ready to pay.
+    const canPay = payable && priceLabel !== null;
     return (
       <div className="space-y-3">
         <button
-          onClick={onRequest}
-          disabled={busy || status.pendingRequest}
+          onClick={canPay ? onBuy : onRequest}
+          disabled={
+            busy || (!canPay && (status.pendingRequest || !allowRequests))
+          }
           className={solid}
         >
           {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-          {status.pendingRequest
-            ? "Request pending review"
-            : "Request another scan"}
+          {canPay
+            ? `Buy another scan for ${priceLabel}`
+            : !allowRequests
+              ? "Ask the clinic for another scan"
+              : status.pendingRequest
+                ? "Request pending review"
+                : "Request another scan"}
         </button>
         {past}
       </div>

@@ -18,7 +18,8 @@ const ROWS = [
   { key: "booking.reception_phone", value: "", group: "booking", label: "Reception number shown in cancellation messages" },
   // Skin analysis
   { key: "skin.first_scan_free", value: "true", group: "skin", label: "First analysis is free" },
-  { key: "skin.scan_price_inr", value: "499", group: "skin", label: "Price per analysis after the first (INR)" },
+  { key: "skin.scan_price_inr", value: "99", group: "skin", label: "Price charged per analysis after the first (INR)" },
+  { key: "skin.scan_list_price_inr", value: "499", group: "skin", label: "Usual price, shown struck through (INR). Ignored when at or below the charged price." },
   { key: "skin.allow_access_requests", value: "true", group: "skin", label: "Clients may request a free analysis" },
 ];
 

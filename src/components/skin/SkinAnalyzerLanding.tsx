@@ -57,7 +57,17 @@ export default function SkinAnalyzerLanding() {
     requestAccess,
     purchase,
     reload,
+    priceInr,
+    listPriceInr,
   } = useSkinAccess();
+
+  // The hero and the FAQ both had 99 typed into them while the setting said
+  // 499, so this page quoted one figure and its own buy button charged
+  // another. Both now read the same source as the button.
+  const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+  // The anchor is what gets struck through. It is null unless a real offer is
+  // running, so the "100% off" flash is only claimed where it is true.
+  const anchor = listPriceInr ?? priceInr;
 
   // purchase moved into useSkinAccess so the hub card and this page cannot
   // drift apart. `purchase` below is the same function.
@@ -108,18 +118,20 @@ export default function SkinAnalyzerLanding() {
                 to be stat tiles. */}
             <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-4">
               <div className="flex items-center gap-4">
-                <div>
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/35">
-                    Every scan
-                  </p>
-                  <p className="relative mt-0.5 inline-block text-3xl font-extrabold tracking-tight text-white/60">
-                    ₹99
-                    <span
-                      aria-hidden
-                      className="absolute inset-x-[-7px] top-1/2 h-[4px] -translate-y-1/2 -rotate-[8deg] rounded-full bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.9)]"
-                    />
-                  </p>
-                </div>
+                {anchor !== null && (
+                  <div>
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/35">
+                      Every scan
+                    </p>
+                    <p className="relative mt-0.5 inline-block text-3xl font-extrabold tracking-tight text-white/60">
+                      {inr(anchor)}
+                      <span
+                        aria-hidden
+                        className="absolute inset-x-[-7px] top-1/2 h-[4px] -translate-y-1/2 -rotate-[8deg] rounded-full bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.9)]"
+                      />
+                    </p>
+                  </div>
+                )}
 
                 <ArrowRight className="h-6 w-6 shrink-0 text-teal-300/70" />
 
@@ -268,7 +280,11 @@ export default function SkinAnalyzerLanding() {
               },
               {
                 q: "Why is the first one free?",
-                a: "Because the report is only useful if you actually run it. It is normally ₹99; the first scan on an account is free, no card involved.",
+                a: `Because the report is only useful if you actually run it.${
+                  anchor === null
+                    ? " The"
+                    : ` It is normally ${inr(anchor)}, and the`
+                } first scan on an account is free, no card involved.`,
               },
               {
                 q: "Can I take the result to my own doctor?",

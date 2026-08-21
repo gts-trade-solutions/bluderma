@@ -163,6 +163,51 @@ export default function Navbar({
                 {showLocation && <LocationButton variant="block" />}
               </div>
             )}
+            {/* ── Your account, at the top ───────────────────────────
+                It used to sit under every nav item, in smaller and lighter
+                type with no taglines, so the two things a signed-in person
+                opens this menu for most were the last they reached and the
+                hardest to see.
+
+                They lead now, and they are DrawerRows like everything else,
+                which is what actually makes them match: one component and one
+                set of classes, rather than two lists of utilities that agree
+                only until somebody edits one of them. */}
+            {status === "authenticated" && session?.user ? (
+              <div className="border-b border-white/10 pb-1">
+                <div className="flex items-center gap-3 pb-1 pt-1">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-500 to-teal-500 text-sm font-bold text-white">
+                    {initialsOf(session.user.name, session.user.email)}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-base font-bold text-ink">
+                      {session.user.name ?? "Your account"}
+                    </span>
+                    <span className="block truncate text-xs text-ink-muted">
+                      {session.user.email}
+                    </span>
+                  </span>
+                </div>
+                {linksFor(session.user.role).map((l) => (
+                  <DrawerRow
+                    key={l.href}
+                    href={l.href}
+                    label={l.label}
+                    tagline={l.tagline}
+                    onNavigate={() => setMobileOpen(false)}
+                  />
+                ))}
+              </div>
+            ) : status === "unauthenticated" ? (
+              <Link
+                href={`/login?callbackUrl=${encodeURIComponent(pathname ?? "/")}`}
+                onClick={() => setMobileOpen(false)}
+                className="btn-primary mb-3 w-full"
+              >
+                Sign in
+              </Link>
+            ) : null}
+
             {menu.map((node) => (
               <div key={node.label} className="border-b border-white/10">
                 {node.children ? (
@@ -209,72 +254,78 @@ export default function Navbar({
                     )}
                   </>
                 ) : (
-                  <Link
+                  <DrawerRow
                     href={node.href ?? "#"}
-                    onClick={() => setMobileOpen(false)}
-                    className="block py-3.5"
-                  >
-                    <span className="block text-base font-bold text-ink">
-                      {node.label}
-                    </span>
-                    {node.tagline && (
-                      <span className="mt-0.5 block text-xs leading-snug text-ink-muted">
-                        {node.tagline}
-                      </span>
-                    )}
-                  </Link>
+                    label={node.label}
+                    tagline={node.tagline}
+                    onNavigate={() => setMobileOpen(false)}
+                  />
                 )}
               </div>
             ))}
 
-            {/* Account actions — the avatar dropdown is easy to miss on mobile,
-                so sign in / sign out lives here in the drawer too. */}
-            <div className="mt-4 pt-2">
-              {status === "authenticated" && session?.user ? (
-                <>
-                  <div className="px-1 pb-1">
-                    <p className="truncate text-sm font-semibold text-ink">
-                      {session.user.name ?? "Your account"}
-                    </p>
-                    <p className="truncate text-xs text-ink-muted">
-                      {session.user.email}
-                    </p>
-                  </div>
-                  {linksFor(session.user.role).map((l) => (
-                    <Link
-                      key={l.href}
-                      href={l.href}
-                      onClick={() => setMobileOpen(false)}
-                      className="block rounded-lg px-1 py-2.5 text-sm font-medium text-ink-soft hover:text-brand-200"
-                    >
-                      {l.label}
-                    </Link>
-                  ))}
-                  <button
-                    onClick={() => {
-                      setMobileOpen(false);
-                      signOut({ callbackUrl: "/" });
-                    }}
-                    className="mt-1 block w-full rounded-lg px-1 py-2.5 text-left text-sm font-semibold text-rose-600"
-                  >
-                    Sign out
-                  </button>
-                </>
-              ) : status === "unauthenticated" ? (
-                <Link
-                  href={`/login?callbackUrl=${encodeURIComponent(pathname ?? "/")}`}
-                  onClick={() => setMobileOpen(false)}
-                  className="btn-primary w-full"
-                >
-                  Sign in
-                </Link>
-              ) : null}
-            </div>
+            {/* Sign out closes the drawer, so it stays at the end where a
+                destructive action belongs. Everything else about the account
+                has moved to the top. */}
+            {status === "authenticated" && session?.user && (
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  signOut({ callbackUrl: "/" });
+                }}
+                className="mt-5 block w-full rounded-xl px-3 py-3 text-left text-base font-bold text-rose-300 ring-1 ring-inset ring-rose-400/25 transition hover:bg-rose-500/10"
+              >
+                Sign out
+              </button>
+            )}
           </div>
         )}
       </header>
     </>
   );
+}
+
+/**
+ * One row of the mobile drawer.
+ *
+ * Both the account links and the nav items render through this, which is the
+ * whole point: "the same size as the other menus" is a promise two separate
+ * lists of Tailwind classes cannot keep for long. One component keeps it by
+ * construction.
+ *
+ * py-3.5 either side of a 16px bold label clears 44px of tap target even on
+ * the rows that carry no tagline.
+ */
+function DrawerRow({
+  href,
+  label,
+  tagline,
+  onNavigate,
+}: {
+  href: string;
+  label: string;
+  tagline?: string;
+  onNavigate: () => void;
+}) {
+  return (
+    <Link href={href} onClick={onNavigate} className="block py-3.5">
+      <span className="block text-base font-bold text-ink">{label}</span>
+      {tagline && (
+        <span className="mt-0.5 block text-xs leading-snug text-ink-muted">
+          {tagline}
+        </span>
+      )}
+    </Link>
+  );
+}
+
+/** "AP" from a name, falling back to the email when there is no name set. */
+function initialsOf(name?: string | null, email?: string | null): string {
+  const source = (name ?? email ?? "").trim();
+  if (!source) return "?";
+  const parts = source.split(/[\s@._-]+/).filter(Boolean);
+  const letters = parts.slice(0, 2).map((w) => w[0]);
+  return letters.join("").toUpperCase() || source[0].toUpperCase();
 }
 
 function DesktopNavItem({

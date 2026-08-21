@@ -12,27 +12,41 @@ const ROLE_LABEL: Record<string, string> = {
 };
 
 /** Links offered per role, beyond the shared ones. */
-export function linksFor(role: string): { label: string; href: string }[] {
+export interface AccountLink {
+  label: string;
+  href: string;
+  /**
+   * One line saying where the link goes.
+   *
+   * Every other item in the mobile drawer carries one, and the account rows
+   * did not, which is part of why they read as an afterthought stapled to the
+   * bottom of the menu. The desktop dropdown deliberately ignores these: it is
+   * a small popover where two-line rows would double its height for no gain.
+   */
+  tagline?: string;
+}
+
+export function linksFor(role: string): AccountLink[] {
   if (role ==="ADMIN") {
     return [
-      { label:"Admin dashboard", href:"/admin" },
-      { label:"Enquiries", href:"/admin/enquiries" },
-      { label:"Appointments", href:"/admin/appointments" },
+      { label:"Admin dashboard", href:"/admin", tagline:"The platform at a glance" },
+      { label:"Enquiries", href:"/admin/enquiries", tagline:"Messages sent from the site" },
+      { label:"Appointments", href:"/admin/appointments", tagline:"Every booking, across all doctors" },
     ];
   }
   if (role ==="DOCTOR") {
     // "Doctor portal" and "My appointments" both pointed at /doctor/portal —
     // two rows, one destination. These are the portal's actual sections.
     return [
-      { label:"Today", href:"/doctor/portal" },
-      { label:"Calendar", href:"/doctor/portal/calendar" },
-      { label:"My practice", href:"/doctor/portal/practice" },
-      { label:"My profile", href:"/doctor/portal/profile" },
+      { label:"Today", href:"/doctor/portal", tagline:"Your day, visit by visit" },
+      { label:"Calendar", href:"/doctor/portal/calendar", tagline:"Your diary across every clinic" },
+      { label:"My practice", href:"/doctor/portal/practice", tagline:"Clinics, hours and fees" },
+      { label:"My profile", href:"/doctor/portal/profile", tagline:"How clients see you" },
     ];
   }
   return [
-    { label:"My appointments", href:"/patient/appointments" },
-    { label:"My profile", href:"/patient/profile" },
+    { label:"My appointments", href:"/patient/appointments", tagline:"Upcoming visits and everything past" },
+    { label:"My profile", href:"/patient/profile", tagline:"Reports, wallet, prescriptions and treatments" },
   ];
 }
 

@@ -275,7 +275,7 @@ export function ChartPanel({
       style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
     >
       <div
-        className={`flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] bg-gradient-to-r to-white px-3.5 py-2.5 sm:px-5 sm:py-3 ${skin.strip}`}
+        className={`flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] bg-gradient-to-r to-transparent px-3.5 py-2.5 sm:px-5 sm:py-3 ${skin.strip}`}
       >
         <div className="flex min-w-0 items-center gap-3">
           <span

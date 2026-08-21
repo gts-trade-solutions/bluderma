@@ -128,7 +128,10 @@ export default async function DashboardHome({
     getApplicationGaps(doctorId),
   ]);
   const listingGaps = advisoryGaps(gaps);
-  const first = doctorName.replace(/^Dr\.?\s+/i, "").split(" ")[0];
+  // "Dr. Nithya": a practitioner is addressed by title, and the greeting read
+  // as first-name familiarity without it. Any existing "Dr." is stripped first
+  // so it can never double up.
+  const salutation = `Dr. ${doctorName.replace(/^Dr[. ]+/i, "").split(" ")[0]}`;
   const todayIso = clinicWallClock().toISOString().slice(0, 10);
   const since = comparisonLabel(m.period);
 
@@ -161,7 +164,7 @@ export default async function DashboardHome({
             {m.periodLabel}
           </p>
           <h1 className="mt-1.5 font-display text-[22px] font-extrabold leading-tight tracking-[-0.035em] text-ink sm:text-[28px]">
-            {greeting()}, {first}
+            {greeting()}, {salutation}
           </h1>
         </div>
 
@@ -169,7 +172,7 @@ export default async function DashboardHome({
           {m.appointments.awaiting > 0 && (
             <Link
               href="/doctor/portal/requests"
-              className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-500/15 py-1.5 pl-1.5 pr-3.5 text-xs font-bold text-amber-900 transition hover:bg-amber-100"
+              className="inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-amber-500/15 py-1.5 pl-1.5 pr-3.5 text-xs font-bold text-amber-100 transition hover:bg-amber-500/25"
             >
               <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-amber-500 text-[11px] font-bold text-white">
                 {m.appointments.awaiting}
@@ -183,7 +186,7 @@ export default async function DashboardHome({
           {m.nextToday && (
             <Link
               href="/doctor/portal/today"
-              className="inline-flex min-w-0 items-center gap-2 rounded-full border border-teal-200 bg-teal-500/15 py-1.5 pl-3 pr-3.5 text-xs font-bold text-teal-900 transition hover:bg-teal-100"
+              className="inline-flex min-w-0 items-center gap-2 rounded-full border border-teal-300/40 bg-teal-500/15 py-1.5 pl-3 pr-3.5 text-xs font-bold text-teal-100 transition hover:bg-teal-500/25"
             >
               <span className="tabular-nums">{m.nextToday.at}</span>
               <span className="h-3 w-px bg-teal-300" aria-hidden />

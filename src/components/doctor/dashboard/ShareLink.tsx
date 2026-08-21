@@ -60,7 +60,7 @@ export default function ShareLink({ slug, name }: { slug: string; name: string }
         <button
           type="button"
           onClick={whatsapp}
-          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white px-4 py-2 text-xs font-bold text-ink-soft transition hover:bg-white/[0.04]"
+          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-xs font-bold text-ink-soft transition hover:bg-white/[0.12]"
         >
           Share on WhatsApp
         </button>

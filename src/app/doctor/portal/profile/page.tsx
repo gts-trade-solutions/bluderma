@@ -529,11 +529,11 @@ function ListingPreview({
       </div>
 
       {gaps.length > 0 && (
-        <div className="mt-6 rounded-xl border border-amber-200 bg-amber-500/15 px-4 py-3">
-          <p className="text-sm font-bold text-amber-900">
+        <div className="mt-6 rounded-xl border border-amber-300/40 bg-amber-500/15 px-4 py-3">
+          <p className="text-sm font-bold text-amber-100">
             Your listing is missing {gaps.length === 1 ? "one thing" : `${gaps.length} things`}
           </p>
-          <ul className="mt-1.5 list-inside list-disc text-sm text-amber-900/90">
+          <ul className="mt-1.5 list-inside list-disc text-sm text-amber-100/90">
             {gaps.map((g) => (
               <li key={g.key}>{g.label}</li>
             ))}

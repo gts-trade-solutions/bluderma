@@ -130,7 +130,7 @@ export default async function DoctorTodayPage() {
     <>
       <PageHead
         eyebrow={longDate(from)}
-        title={`${greeting()}, ${owner.name.replace(/^Dr\.?\s+/i, "").split(" ")[0]}`}
+        title={`${greeting()}, Dr. ${owner.name.replace(/^Dr\.?\s+/i, "").split(" ")[0]}`}
         sub={
           live.length === 0
             ? "Nothing booked today. Your calendar is open."

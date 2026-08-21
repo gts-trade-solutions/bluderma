@@ -40,7 +40,7 @@ export default function PeriodPicker({ value }: { value: DashboardPeriod }) {
         value={value}
         onChange={(e) => choose(e.target.value)}
         disabled={pending}
-        className="appearance-none rounded-full border border-white/10 bg-white py-2 pl-4 pr-9 text-sm font-bold text-ink-soft transition hover:bg-white/[0.04] focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-60"
+        className="appearance-none rounded-full border border-white/10 bg-white/[0.06] py-2 pl-4 pr-9 text-sm font-bold text-ink-soft transition hover:bg-white/[0.12] focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-60"
       >
         {PERIOD_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>

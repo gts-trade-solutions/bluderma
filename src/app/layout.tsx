@@ -1,23 +1,46 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Figtree, Sora } from "next/font/google";
+import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
 import AuthProvider from "@/components/AuthProvider";
 import { baseOpenGraph, siteUrl } from "@/lib/seo";
 import "./globals.css";
 
-// The pairing the clinical-startup sites run (Curology, Hims, Ro): a warm
-// geometric grotesque for reading, a firmer geometric for headlines. Figtree
-// carries the body — open apertures, friendly but precise; Sora carries the
-// display type, where its engineered caps give headings the clinical-premium
-// voice the single-family setup never had.
-const sans = Figtree({
-  subsets: ["latin"],
+/**
+ * The type pairing: a crafted display grotesque over a precise UI sans.
+ *
+ * Bricolage Grotesque carries every heading and every headline figure. It is
+ * the one face tried here that could not be mistaken for a default — the
+ * letterforms are drawn rather than derived, which is the whole of the brief:
+ * the client's note was that the site "feels boring", and a neutral geometric
+ * sans is exactly what neutral looks like. It holds the confidence of the
+ * Curology reference (heavy, tight, set large) without borrowing its face.
+ *
+ * Plus Jakarta Sans carries body copy and the portal's small print. A display
+ * grotesque at 10–12px, which is most of the doctor dashboard, closes up and
+ * stops being readable; this stays open and even down there.
+ *
+ * Two earlier attempts are recorded because both were reasonable and both
+ * were wrong: an editorial serif (Fraunces) read expensive but quiet, against
+ * a brief that asked for catchy; and Figtree, which matched the reference's
+ * letterforms most closely, was the font the site already had — putting it
+ * back would have read as no change at all.
+ *
+ * ── latin-ext is not optional here ──────────────────────────────────────
+ * Google's `latin` subset stops at U+20AC (€). The rupee sign, U+20B9, lives
+ * in `latin-ext` (U+20AD–20C0). With `latin` alone every ₹ on the site — the
+ * prices, the whole doctor dashboard — fell through to a system font, so the
+ * most prominent character on the money screen rendered in Arial next to the
+ * brand face. Verified with CSS.getPlatformFontsForNode, which reported the
+ * ₹ as one Arial glyph beside eight of ours.
+ */
+const sans = Plus_Jakarta_Sans({
+  subsets: ["latin", "latin-ext"],
   display: "swap",
   variable: "--font-sans",
 });
 
-const displayFont = Sora({
-  subsets: ["latin"],
+const displayFont = Bricolage_Grotesque({
+  subsets: ["latin", "latin-ext"],
   display: "swap",
   variable: "--font-display",
 });
@@ -79,7 +102,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en-IN" className={`${sans.variable} ${displayFont.variable}`}>
+    <html
+      lang="en-IN"
+      className={`${sans.variable} ${displayFont.variable}`}
+      // The doctor portal writes `data-rail` here from a blocking inline
+      // script, before React hydrates, so the collapsed rail is already
+      // correct at first paint. React then finds an attribute the server
+      // never sent and warns about it on every portal page load. Scoped to
+      // this one element, which is the only place anything does that.
+      suppressHydrationWarning
+    >
       <body>
         <AuthProvider>{children}</AuthProvider>
         {/* Razorpay checkout. lazyOnload keeps it off the critical path —

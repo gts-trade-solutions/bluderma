@@ -3,10 +3,17 @@
 @tailwind utilities;
 
 :root {
-  /* next/font sets --font-sans on <html>; this is the fallback stack for the
-     brief moment before it lands (and if the font ever fails to load). */
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-    Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  /* --font-sans is deliberately NOT declared here.
+     next/font sets it on <html> through a generated class, and a class and
+     :root have identical specificity (0,1,0) — so whichever stylesheet lands
+     later wins, and this one does. The result was that the fallback stack
+     below beat the real font for the life of the project: Plus Jakarta Sans
+     (Figtree before it) downloaded on every page load and painted nothing,
+     while the entire site rendered in the OS default. Confirmed with
+     CSS.getPlatformFontsForNode reporting Segoe UI on body copy.
+     The fallback now lives where it cannot collide: the end of the font
+     stack in tailwind.config.ts, plus the metric-matched fallback face
+     next/font generates automatically. */
   /* The ground the whole client site sits on. Navy, not neutral: a flat
      grey is what makes a dark theme look like a default rather than a
      decision. `--raise` is the one step up from it that cards use. */
@@ -258,14 +265,17 @@ body {
 
   /* Display type. Large sizes need negative tracking to stop the face looking
      loose; this keeps every hero on the site consistent. */
-  /* Headings switch family to Sora. Its caps are wider than Jakarta's were,
-     so the negative tracking relaxes a step — the old values crushed it. */
+  /* Display type is the same family as body copy; what separates it is weight
+     and tracking, which is the whole of the reference look. 800 rather than
+     700, and the tracking pulled to -0.035em — at hero sizes a geometric sans
+     set at default tracking reads loose and corporate, and closing it up is
+     what makes a headline look drawn rather than typed. */
   .display {
-    @apply font-display font-bold tracking-[-0.02em];
+    @apply font-display font-extrabold tracking-[-0.035em];
   }
 
   .display-sm {
-    @apply font-display font-semibold tracking-[-0.01em];
+    @apply font-display font-bold tracking-[-0.025em];
   }
 
   /* The hub's default card. On the navy ground a hairline ring reads as an
@@ -314,6 +324,64 @@ body {
     radial-gradient(58rem 32rem at 8% -12%, rgba(50, 143, 240, 0.10), transparent 60%),
     radial-gradient(46rem 28rem at 100% 0%, rgba(15, 160, 142, 0.09), transparent 62%);
   background-attachment: fixed;
+}
+
+/* ── The collapsing rail ───────────────────────────────────────────────
+   Driven by a data attribute on <html> rather than by React state, for one
+   reason: the rail is a client component and the shell around it is a server
+   component, so sharing a boolean between them would mean making the whole
+   portal layout client-rendered. A CSS switch keeps the markup identical
+   between the server render and the first client render — nothing to
+   mismatch, nothing to hydrate — and the attribute is written by a blocking
+   inline script before first paint, so a doctor who collapsed the rail
+   yesterday never sees it snap shut after the page has drawn.
+
+   Below `lg` none of this applies: the rail is a drawer there and the shell
+   has no padding to take back. */
+@media (min-width: 1024px) {
+  .portal-rail {
+    width: 16rem;
+    transition: width 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .portal-shell {
+    padding-left: 16rem;
+    transition: padding-left 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  [data-rail="collapsed"] .portal-rail {
+    width: 4.5rem;
+  }
+  [data-rail="collapsed"] .portal-shell {
+    padding-left: 4.5rem;
+  }
+
+  /* Everything that is words rather than a glyph. Hidden with display so it
+     surrenders its width instead of merely going transparent. */
+  [data-rail="collapsed"] .rail-label {
+    display: none;
+  }
+  [data-rail="collapsed"] .rail-wide {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  /* A count nobody can read is a dot that says "something is waiting". */
+  [data-rail="collapsed"] .rail-badge {
+    position: absolute;
+    top: 0.3rem;
+    right: 0.7rem;
+    min-width: 0.5rem;
+    height: 0.5rem;
+    padding: 0;
+    font-size: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-rail,
+  .portal-shell {
+    transition: none;
+  }
 }
 
 /* Panels and stat tiles arrive rather than appear. The delay is set inline

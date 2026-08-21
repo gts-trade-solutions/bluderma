@@ -153,6 +153,53 @@ export function templateInsights(m: InsightMetrics): InsightItem[] {
 }
 
 /**
+ * The exact strings the big figure on a card is allowed to be.
+ *
+ * The numeric tripwire below checks that a figure is REAL. It cannot check
+ * that it is being read as the right kind of thing, and that gap put this on
+ * a doctor's dashboard:
+ *
+ *     291570
+ *     Total appointments booked
+ *
+ * 291570 is a real figure — it is the month's booked value in rupees — so
+ * every existing check passed. Rendered bare under that title it says the
+ * practice took two hundred and ninety-one thousand appointments.
+ *
+ * So the metric is no longer free text that merely has to contain a true
+ * number: it has to BE one of these, character for character, with the unit
+ * already attached. A model that cannot copy one exactly gets no big figure
+ * and its sentence stands on its own.
+ */
+export function allowedMetrics(m: InsightMetrics): string[] {
+  const out: string[] = [];
+  const push = (v: string) => {
+    if (v && !out.includes(v)) out.push(v);
+  };
+
+  // Money, always with the rupee mark and Indian grouping.
+  for (const n of [m.periodBooked, m.projected, m.averageValue, m.realised, m.unresolved]) {
+    if (Number.isFinite(n) && n > 0) push(money(n));
+  }
+  if (m.uplift1 > 0) push(`+${money(m.uplift1)}`);
+
+  // Counts, always bare.
+  for (const n of [m.awaiting, m.lostCount, m.topReasonCount, m.reviewCount, m.daysLeft]) {
+    if (Number.isFinite(n) && n > 0) push(String(Math.round(n)));
+  }
+  if (m.weeklyCapacity > 0) push(`${m.weeklyCapacity} slots`);
+  if (m.emptiestFree > 0) push(`${m.emptiestFree} free`);
+
+  // Rates, always with the per-cent sign, and only where the sample carries it.
+  if (m.noShowSample >= 5) push(pct(m.noShowRate));
+  if (m.returningSample >= 5) push(pct(m.returningRate));
+  push(pct(m.memberShare));
+  if (m.reviewCount > 0) push(m.rating.toFixed(1));
+
+  return out;
+}
+
+/**
  * Every number that may legitimately appear in generated prose.
  *
  * Used to verify AI output: a figure the model produced that is not in here

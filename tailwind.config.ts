@@ -53,8 +53,33 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
-        display: ["var(--font-display)", "var(--font-sans)", "sans-serif"],
+        // The tail of these stacks is the ONLY fallback now — globals.css no
+        // longer declares --font-sans, because a :root declaration there beat
+        // next/font's class and silently disabled the body font entirely.
+        sans: [
+          "var(--font-sans)",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "Helvetica",
+          "Arial",
+          "sans-serif",
+        ],
+        // Bricolage Grotesque. Falls through to the body face if the display
+        // font ever fails to load, so a heading degrades to the wrong family
+        // rather than to Times.
+        display: [
+          "var(--font-display)",
+          "var(--font-sans)",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "Helvetica",
+          "Arial",
+          "sans-serif",
+        ],
       },
       boxShadow: {
         card: "0 10px 30px -12px rgba(16, 42, 71, 0.18)",

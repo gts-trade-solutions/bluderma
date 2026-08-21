@@ -5,6 +5,7 @@ import {
   type InsightItem,
   type InsightMetrics,
   figuresAreSupported,
+  allowedMetrics,
   templateInsights,
 } from "./insightsCore";
 
@@ -62,7 +63,10 @@ Write 3 or 4 suggestions. These are read at a glance on a dashboard, so they
 must be very short. The number does the work, not the sentence.
 
 Rules:
-- "metric": ONE figure copied exactly from the JSON (e.g. "12%", "2", "Rs 2,500"). Omit if no figure fits.
+- "metric": copied CHARACTER FOR CHARACTER from the "Figures you may quote"
+  list below, including its currency mark or per-cent sign. Never retype a
+  rupee figure without its symbol, and never put a money figure under a title
+  that reads like a count. Omit "metric" entirely if none of them fits.
 - "title": at most 4 words, written as a human phrase, never the JSON field name. "Thursday is quietest", not "Emptiest Free".
 - "body": at most 12 words. One clause naming the action. No preamble like "Consider" or "You should".
 - Vary "kind" to match the subject: calendar for scheduling, money for revenue, people for patients, star for reviews, clock for things waiting on you.
@@ -75,7 +79,10 @@ Rules:
 Return ONLY a JSON array like:
 [{"kind":"clock","metric":"2","title":"Waiting on you","body":"Holding slots nobody else can take."}]
 
-Figures:
+Figures you may quote as "metric" (exactly as written):
+${allowedMetrics(m).map((v) => `  ${v}`).join("\n")}
+
+Full figures for context:
 ${JSON.stringify(m, null, 2)}`,
           },
         ],
@@ -98,6 +105,7 @@ ${JSON.stringify(m, null, 2)}`,
     }
     if (!Array.isArray(parsed) || parsed.length === 0) return fallback();
 
+    const permitted = new Set(allowedMetrics(m));
     const items: InsightItem[] = [];
     for (const entry of parsed.slice(0, 4)) {
       if (!entry || typeof entry !== "object") continue;
@@ -109,7 +117,12 @@ ${JSON.stringify(m, null, 2)}`,
       // will still occasionally write a paragraph.
       if (title.length > 40 || body.length > 90) continue;
 
-      const metric = e.metric ? String(e.metric).trim().slice(0, 14) : undefined;
+      // A metric that is not one of the pre-rendered strings is dropped
+      // rather than printed. The card keeps its sentence; it just loses the
+      // big number, which is the correct trade when the alternative is a
+      // rupee total displayed as though it were a count of appointments.
+      const claimed = e.metric ? String(e.metric).trim().slice(0, 16) : undefined;
+      const metric = claimed && permitted.has(claimed) ? claimed : undefined;
       const kind =
         e.kind && (INSIGHT_ICONS as readonly string[]).includes(String(e.kind))
           ? String(e.kind)

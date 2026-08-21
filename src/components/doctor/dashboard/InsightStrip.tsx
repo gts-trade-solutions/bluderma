@@ -22,9 +22,9 @@ export default async function InsightStrip({
   if (!items.length) return null;
 
   return (
-    <section className="mb-7">
-      <div className="mb-3 flex items-center gap-2">
-        <h2 className="font-display text-base font-bold text-slate-900">
+    <section className="mb-5">
+      <div className="mb-2.5 flex items-center gap-2">
+        <h2 className="font-display text-[15px] font-bold text-slate-900 sm:text-base">
           Worth a look
         </h2>
         <Tag tone={source === "ai" ? "teal" : "slate"}>
@@ -32,34 +32,42 @@ export default async function InsightStrip({
         </Tag>
       </div>
 
-      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {items.map((item) => (
-          <li
-            key={item.title}
-            className="flex items-start gap-3 rounded-2xl bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/80"
-          >
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700">
-              <InsightGlyph kind={item.kind} />
-            </span>
-            <div className="min-w-0 flex-1">
-              {item.metric && (
-                <p className="font-display text-xl font-bold leading-none tabular-nums text-slate-900">
-                  {item.metric}
-                </p>
-              )}
-              <p
-                className={`text-sm font-bold leading-snug text-slate-900 ${
-                  item.metric ? "mt-1" : ""
-                }`}
+      <ul className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
+        {items.map((item) => {
+          // Colour by subject rather than one blue for everything: the strip
+          // sits under four coloured KPI tiles and read as a grey afterthought
+          // beside them.
+          const skin = INSIGHT_SKINS[item.kind ?? "spark"] ?? INSIGHT_SKINS.spark;
+          return (
+            <li
+              key={item.title}
+              className="portal-enter flex items-start gap-2.5 rounded-2xl bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_12px_32px_-24px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/80 sm:gap-3 sm:p-4"
+            >
+              <span
+                className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg sm:h-9 sm:w-9 ${skin}`}
               >
-                {item.title}
-              </p>
-              <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                {item.body}
-              </p>
-            </div>
-          </li>
-        ))}
+                <InsightGlyph kind={item.kind} />
+              </span>
+              <div className="min-w-0 flex-1">
+                {item.metric && (
+                  <p className="font-display text-lg font-bold leading-none tabular-nums text-slate-900 sm:text-xl">
+                    {item.metric}
+                  </p>
+                )}
+                <p
+                  className={`text-[13px] font-bold leading-snug text-slate-900 sm:text-sm ${
+                    item.metric ? "mt-1" : ""
+                  }`}
+                >
+                  {item.title}
+                </p>
+                <p className="mt-1 text-[11px] leading-relaxed text-slate-500 sm:text-xs">
+                  {item.body}
+                </p>
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
@@ -70,7 +78,7 @@ export function InsightStripSkeleton() {
   return (
     <section className="mb-7">
       <div className="mb-3 h-5 w-32 animate-pulse rounded bg-slate-200" />
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
           <li key={i} className="h-24 animate-pulse rounded-2xl bg-slate-100" />
         ))}
@@ -78,6 +86,16 @@ export function InsightStripSkeleton() {
     </section>
   );
 }
+
+/** Full class strings — Tailwind never sees an interpolated one. */
+const INSIGHT_SKINS: Record<string, string> = {
+  calendar: "bg-brand-50 text-brand-700",
+  money: "bg-teal-50 text-teal-700",
+  people: "bg-violet-50 text-violet-700",
+  star: "bg-amber-50 text-amber-700",
+  clock: "bg-rose-50 text-rose-700",
+  spark: "bg-slate-100 text-slate-600",
+};
 
 /** Small hand-rolled glyphs — the portal does not use lucide. */
 function InsightGlyph({ kind }: { kind?: string }) {

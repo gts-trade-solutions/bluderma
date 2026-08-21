@@ -102,6 +102,31 @@ export function swatchFor(colorKey: string | null | undefined): ClinicSwatch {
 }
 
 /**
+ * The same hue as a hex literal, for charts.
+ *
+ * Recharts fills are SVG attributes, not classes — it cannot take `bg-teal-500`
+ * and Tailwind cannot resolve a class it never sees in source. Keeping the two
+ * side by side means a clinic is the same colour in its calendar block and in
+ * the dashboard bar for it, which is the entire point of giving it one.
+ */
+const HEXES: Record<string, string> = {
+  blue: "#3b82f6",
+  teal: "#0fa08e",
+  violet: "#8b5cf6",
+  emerald: "#10b981",
+  amber: "#f59e0b",
+  rose: "#f43f5e",
+  indigo: "#6366f1",
+  orange: "#f97316",
+  sky: "#0ea5e9",
+  slate: "#94a3b8",
+};
+
+export function hexFor(colorKey: string | null | undefined): string {
+  return HEXES[colorKey ?? "slate"] ?? HEXES.slate;
+}
+
+/**
  * A cancelled booking keeps its place on the calendar — the doctor needs to
  * see that the slot came back — but stops competing for attention.
  */

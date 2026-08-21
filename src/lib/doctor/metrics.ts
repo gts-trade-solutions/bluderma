@@ -141,6 +141,49 @@ export interface RevenueTiers {
   discountGiven: number;
 }
 
+/**
+ * The seats in the week ahead, and what the empty ones are worth.
+ *
+ * A doctor reading "60% filled" cannot do anything with it. "23 seats still
+ * open, worth about ₹41,000" is the same fact with the consequence attached,
+ * and the consequence is the only part that changes a decision.
+ *
+ * Forward-looking on purpose. Utilisation over the last four weeks says how
+ * the practice has been running; it cannot be acted on. These seven days can.
+ */
+export interface SeatOutlook {
+  /** Today and the six days after it. */
+  days: {
+    /** ISO date, for React keys. */
+    date: string;
+    /** "Thu 21 Aug". */
+    label: string;
+    /** "Thu", for the chart axis. */
+    short: string;
+    isToday: boolean;
+    seats: number;
+    booked: number;
+    empty: number;
+  }[];
+  totalSeats: number;
+  bookedSeats: number;
+  emptySeats: number;
+  /** What one seat is worth: the average value of a booking. */
+  perSeat: number;
+  /**
+   * Where `perSeat` came from — an average of real bookings, or the doctor's
+   * own listed fee when there are not enough bookings to average.
+   */
+  perSeatBasis: "bookings" | "list-fee";
+  /** perSeat × bookedSeats, and perSeat × emptySeats. */
+  bookedValue: number;
+  emptyValue: number;
+  /** 0–1. Zero seats means zero, never a divide by nothing. */
+  fillRate: number;
+  /** The day ahead with the most room, for the one-line prompt. */
+  emptiestDay: { label: string; empty: number } | null;
+}
+
 export interface DashboardMetrics {
   /** Which window was asked for. Echoed so the control can show its state. */
   period: DashboardPeriod;
@@ -164,11 +207,23 @@ export interface DashboardMetrics {
   /** "One more patient a week is worth about X by the end." */
   uplift: { perWeek: number; amount: number }[];
 
-  patients: { thisMonth: number; guests: number; returning: Measured<number> };
+  patients: {
+    thisMonth: number;
+    guests: number;
+    returning: Measured<number>;
+    /** Seen before this period, and never seen before. They sum to thisMonth. */
+    returningCount: number;
+    newCount: number;
+  };
   appointments: {
     upcoming: number;
     awaiting: number;
     completedAllTime: number;
+    /** Live bookings in the period, and in the window before it. */
+    bookedCount: number;
+    prevBookedCount: number;
+    /** Change on the previous window, -1..n. Null when there is nothing to compare. */
+    countDelta: number | null;
   };
 
   demand: { key: string; label: string; count: number }[];
@@ -181,6 +236,8 @@ export interface DashboardMetrics {
     weeklyCapacity: number;
     emptiest: { label: string; free: number } | null;
   };
+  /** Seats open in the next seven days, and what they are worth. */
+  seats: SeatOutlook;
   /**
    * Bookings by start hour, in CLOCK order across the whole working span.
    *
@@ -262,6 +319,15 @@ export interface DashboardMetrics {
 const WEEKDAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 /**
+ * Bookings needed before a seat is priced from history rather than list fee.
+ *
+ * Below this an average is one or two consults wide, and a single ₹9,000
+ * procedure would price every empty slot in the week as if it were another
+ * one.
+ */
+const MIN_SEAT_SAMPLE = 5;
+
+/**
  * Slots in one availability window.
  *
  * The `+ 1` is not a rounding choice — it reproduces the `t <= end` loop in
@@ -284,6 +350,53 @@ export function slotsInWindow(
   if (!Number.isFinite(start) || !Number.isFinite(end)) return 0;
   if (end <= start || slotMinutes <= 0) return 0;
   return Math.floor((end - start) / slotMinutes) + 1;
+}
+
+/** "09:30" → 570. NaN-safe: an unparseable time contributes no slots. */
+function toMinutes(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+}
+
+/**
+ * The bookable seats on one date, counting only ones that can still be sold.
+ *
+ * Three subtractions the naive version gets wrong, and each of them would
+ * overstate the money sitting in an empty diary:
+ *
+ *  - Slots earlier today are gone. 09:00 is not an opportunity at half past
+ *    three, and counting it inflates "worth ₹x" with time that has passed.
+ *  - Slots inside a booked leave block are not seats. Checked per slot rather
+ *    than per day, so blocking one afternoon does not wipe out the morning.
+ *  - The `t <= end` loop matches slotsInWindow and queries/availability.ts, so
+ *    this denominator agrees with the grid the client actually books from.
+ */
+function seatsOnDate(
+  seed: string,
+  dayOfWeek: number,
+  windows: { dayOfWeek: number; startTime: string; endTime: string; slotMinutes: number }[],
+  timeOff: { startsAt: Date; endsAt: Date }[],
+  notBeforeMs: number
+): number {
+  let seats = 0;
+  for (const w of windows) {
+    if (w.dayOfWeek !== dayOfWeek || w.slotMinutes <= 0) continue;
+    const start = toMinutes(w.startTime);
+    const end = toMinutes(w.endTime);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) continue;
+
+    for (let t = start; t <= end; t += w.slotMinutes) {
+      const at = Date.parse(
+        `${seed}T${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}:00.000Z`
+      );
+      if (!Number.isFinite(at) || at < notBeforeMs) continue;
+      if (timeOff.some((o) => at >= o.startsAt.getTime() && at < o.endsAt.getTime())) {
+        continue;
+      }
+      seats += 1;
+    }
+  }
+  return seats;
 }
 
 function median(values: number[]): number {
@@ -336,6 +449,15 @@ export async function getDashboardMetrics(
   const since90 = new Date(nowMs - 90 * DAY_MS);
   const since28 = new Date(nowMs - 28 * DAY_MS);
 
+  // The seat window: midnight today, clinic time, and the seven days from it.
+  // It starts at midnight rather than now so today's already-taken bookings
+  // still count as filled — a morning clinic should not read as an empty day
+  // by lunchtime.
+  const weekFrom = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+  const weekTo = new Date(weekFrom.getTime() + 7 * DAY_MS);
+
   const [
     monthRows,
     prevRows,
@@ -352,6 +474,8 @@ export async function getDashboardMetrics(
     cancelledRows,
     reviewsPending,
     timeOffAheadRows,
+    weekAheadRows,
+    weekAheadTimeOff,
   ] = await Promise.all([
       prisma.appointment.findMany({
         where: { doctorId, scheduledAt: { gte: monthStart, lt: monthEnd } },
@@ -413,7 +537,7 @@ export async function getDashboardMetrics(
       }),
       prisma.doctor.findUnique({
         where: { id: doctorId },
-        select: { rating: true, reviews: true, slug: true },
+        select: { rating: true, reviews: true, slug: true, fee: true },
       }),
       prisma.review.findMany({
         where: { doctorId, status: "PUBLISHED" },
@@ -486,6 +610,26 @@ export async function getDashboardMetrics(
         orderBy: { startsAt: "asc" },
         take: 3,
         select: { startsAt: true, endsAt: true, reason: true },
+      }),
+
+      // ── The week ahead, for the empty-seat figures ────────────────────
+      // Held requests count as taken: the slot is not on sale while the
+      // doctor decides, so calling it empty would invite double-booking.
+      prisma.appointment.findMany({
+        where: {
+          doctorId,
+          scheduledAt: { gte: weekFrom, lt: weekTo },
+          status: {
+            notIn: [AppointmentStatus.CANCELLED, AppointmentStatus.NO_SHOW],
+          },
+        },
+        select: { scheduledAt: true },
+      }),
+      prisma.doctorTimeOff.findMany({
+        // Any block that overlaps the window at all, including one that
+        // started last week and runs into it.
+        where: { doctorId, startsAt: { lt: weekTo }, endsAt: { gt: weekFrom } },
+        select: { startsAt: true, endsAt: true },
       }),
     ]);
 
@@ -616,6 +760,86 @@ export async function getDashboardMetrics(
       ? working.reduce((a, b) => (a.rate <= b.rate ? a : b))
       : null;
 
+  // ── Seats in the week ahead, and what the empty ones are worth ──────────
+  // What one seat is worth, taken from what bookings have actually been worth
+  // over 90 days rather than from the list price — a practice giving member
+  // discounts or running long consults does not earn its headline fee, and a
+  // per-seat figure that ignores that overstates every empty slot on screen.
+  const seatSample = recent.filter(
+    (a) =>
+      a.status !== AppointmentStatus.CANCELLED &&
+      a.status !== AppointmentStatus.NO_SHOW
+  );
+  const perSeat =
+    seatSample.length >= MIN_SEAT_SAMPLE
+      ? Math.round(
+          seatSample.reduce((s, a) => s + valueOf(a), 0) / seatSample.length
+        )
+      : (doctor?.fee ?? 0);
+  const perSeatBasis: "bookings" | "list-fee" =
+    seatSample.length >= MIN_SEAT_SAMPLE ? "bookings" : "list-fee";
+
+  const bookedAheadByDate = new Map<string, number>();
+  for (const a of weekAheadRows) {
+    const key = a.scheduledAt.toISOString().slice(0, 10);
+    bookedAheadByDate.set(key, (bookedAheadByDate.get(key) ?? 0) + 1);
+  }
+
+  const seatDays = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(weekFrom.getTime() + i * DAY_MS);
+    const seed = date.toISOString().slice(0, 10);
+    const booked = bookedAheadByDate.get(seed) ?? 0;
+    // Only today loses its past slots; every later day is bookable in full.
+    const seats = seatsOnDate(
+      seed,
+      date.getUTCDay(),
+      availability,
+      weekAheadTimeOff,
+      i === 0 ? nowMs : 0
+    );
+    return {
+      date: seed,
+      label: date.toLocaleDateString("en-IN", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        timeZone: "UTC",
+      }),
+      short: WEEKDAY[date.getUTCDay()].slice(0, 3),
+      isToday: i === 0,
+      // A day can hold more bookings than it has open seats — an overbooked
+      // or manually added visit. Clamping keeps "empty" at zero rather than
+      // letting it go negative and print a refund.
+      seats: Math.max(seats, booked),
+      booked,
+      empty: Math.max(seats - booked, 0),
+    };
+  });
+
+  const totalSeats = seatDays.reduce((s, d) => s + d.seats, 0);
+  const bookedSeats = seatDays.reduce((s, d) => s + d.booked, 0);
+  const emptySeats = seatDays.reduce((s, d) => s + d.empty, 0);
+  const workingAhead = seatDays.filter((d) => d.seats > 0);
+  const emptiestAhead = workingAhead.length
+    ? workingAhead.reduce((a, b) => (a.empty >= b.empty ? a : b))
+    : null;
+
+  const seats: SeatOutlook = {
+    days: seatDays,
+    totalSeats,
+    bookedSeats,
+    emptySeats,
+    perSeat,
+    perSeatBasis,
+    bookedValue: bookedSeats * perSeat,
+    emptyValue: emptySeats * perSeat,
+    fillRate: totalSeats > 0 ? bookedSeats / totalSeats : 0,
+    emptiestDay:
+      emptiestAhead && emptiestAhead.empty > 0
+        ? { label: emptiestAhead.label, empty: emptiestAhead.empty }
+        : null,
+  };
+
   // ── Busiest hours ───────────────────────────────────────────────────────
   const hourMap = new Map<number, number>();
   for (const a of recent) {
@@ -659,6 +883,7 @@ export async function getDashboardMetrics(
   // ── The window before, for a direction rather than a bare figure ────────
   // Same rule as the selected period: an unaccepted request is not money.
   let prevMonthBooked = 0;
+  let prevBookedCount = 0;
   for (const a of prevRows) {
     if (
       a.status === AppointmentStatus.CANCELLED ||
@@ -668,6 +893,7 @@ export async function getDashboardMetrics(
       continue;
     }
     prevMonthBooked += valueOf(a);
+    prevBookedCount += 1;
   }
   // Null rather than +100% when there is nothing to compare against — a first
   // month is not infinite growth.
@@ -776,11 +1002,20 @@ export async function getDashboardMetrics(
         value: thisMonthIds.size > 0 ? returningCount / thisMonthIds.size : 0,
         sampleSize: thisMonthIds.size,
       },
+      returningCount,
+      newCount: Math.max(thisMonthIds.size - returningCount, 0),
     },
     appointments: {
       upcoming,
       awaiting,
       completedAllTime,
+      bookedCount,
+      prevBookedCount,
+      // Null rather than +100%: a first month is not infinite growth.
+      countDelta:
+        prevBookedCount > 0
+          ? (bookedCount - prevBookedCount) / prevBookedCount
+          : null,
     },
 
     demand,
@@ -793,6 +1028,7 @@ export async function getDashboardMetrics(
         ? { label: emptiest.label, free: Math.max(emptiest.capacity - emptiest.booked, 0) }
         : null,
     },
+    seats,
     busiestHours,
     nextToday,
     cancellations,

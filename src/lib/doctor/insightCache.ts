@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { clinicWallClock } from "@/lib/queries/availability";
 import { generateInsights } from "@/lib/integrations/insights";
+import { INSIGHT_ICONS, allowedMetrics } from "@/lib/integrations/insightsCore";
 import type { InsightItem, InsightMetrics } from "@/lib/integrations/insightsCore";
 import type { DashboardMetrics, DashboardPeriod } from "./metrics";
 
@@ -93,7 +94,12 @@ export async function getDailyInsights(
     .catch(() => null);
 
   if (existing) {
-    const items = parseItems(existing.items);
+    // Stored rows are re-checked against today's whitelist rather than
+    // trusted on the strength of having passed once. A row written before the
+    // metric rules tightened can carry a bare "291570" titled "Total
+    // appointments booked", and waiting for the daily key to roll over would
+    // leave that on a doctor's screen until tomorrow morning.
+    const items = parseItems(existing.items, new Set(allowedMetrics(slim)));
     // A row written by an older shape degrades to regenerating rather than
     // rendering nothing.
     if (items.length) {
@@ -137,17 +143,38 @@ export async function getDailyInsights(
   return { items: generated.items, source: generated.source, dateKey };
 }
 
-/** Json from the database is unknown until proven otherwise. */
-function parseItems(raw: unknown): InsightItem[] {
+/**
+ * Json from the database is unknown until proven otherwise.
+ *
+ * `metric` and `kind` are read back, which they previously were not: the
+ * strip's whole design is that the figure does the work and the sentence is
+ * short, and dropping both on the way out of the cache meant the first load
+ * of the day showed four numbered cards and every load after it showed four
+ * sentences with the same default glyph. The figure still has to survive
+ * `permitted` — a stored one is no more trustworthy than a fresh one.
+ */
+function parseItems(raw: unknown, permitted: Set<string>): InsightItem[] {
   if (!Array.isArray(raw)) return [];
   const out: InsightItem[] = [];
   for (const entry of raw) {
     if (!entry || typeof entry !== "object") continue;
-    const title = (entry as InsightItem).title;
-    const body = (entry as InsightItem).body;
-    if (typeof title !== "string" || typeof body !== "string") continue;
-    if (!title.trim() || !body.trim()) continue;
-    out.push({ title: title.trim(), body: body.trim() });
+    const e = entry as InsightItem;
+    if (typeof e.title !== "string" || typeof e.body !== "string") continue;
+    const title = e.title.trim();
+    const body = e.body.trim();
+    if (!title || !body) continue;
+
+    const metric =
+      typeof e.metric === "string" && permitted.has(e.metric.trim())
+        ? e.metric.trim()
+        : undefined;
+    const kind =
+      typeof e.kind === "string" &&
+      (INSIGHT_ICONS as readonly string[]).includes(e.kind)
+        ? e.kind
+        : undefined;
+
+    out.push({ title, body, metric, kind });
   }
   return out.slice(0, 4);
 }

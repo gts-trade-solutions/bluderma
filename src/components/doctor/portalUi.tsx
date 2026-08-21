@@ -73,7 +73,7 @@ export function PageHead({
             {eyebrow}
           </p>
         )}
-        <h1 className="mt-2 font-display text-[26px] font-bold leading-tight tracking-[-0.03em] text-slate-900 sm:text-[32px]">
+        <h1 className="mt-2 font-display text-[26px] font-extrabold leading-tight tracking-[-0.035em] text-slate-900 sm:text-[32px]">
           {title}
         </h1>
         {sub && (

@@ -1,49 +1,76 @@
 import Link from "next/link";
 import { Suspense } from "react";
 
-import {
-  Empty,
-  PageHead,
-  Panel,
-  Tag,
-  portalBtnQuiet,
-} from "@/components/doctor/portalUi";
-import {
-  getDashboardMetrics,
-  type DashboardMetrics,
-  type DashboardPeriod,
-} from "@/lib/doctor/metrics";
+import { Empty, Tag, portalBtnQuiet } from "@/components/doctor/portalUi";
+import { getDashboardMetrics, type DashboardPeriod } from "@/lib/doctor/metrics";
 import { advisoryGaps, getApplicationGaps } from "@/lib/doctor/gaps";
 import { clinicWallClock } from "@/lib/queries/availability";
-import { swatchFor } from "@/components/doctor/clinicColors";
-import RevenueSpark from "./RevenueSpark";
+import { hexFor, swatchFor } from "@/components/doctor/clinicColors";
+import BookingsChart from "./BookingsChart";
 import ShareLink from "./ShareLink";
 import PeriodPicker from "./PeriodPicker";
-import DemandChart from "./DemandChart";
 import InsightStrip, { InsightStripSkeleton } from "./InsightStrip";
 import {
-  Gauge,
   HoursChart,
+  RankedBars,
   RevenueDonut,
+  SeatWeekChart,
+  UpliftChart,
   UtilisationChart,
 } from "./Charts";
+import {
+  ChartPanel,
+  Kpi,
+  MoneyCard,
+  RateRow,
+  SectionHead,
+  Summary,
+  money,
+  moneyShort,
+} from "./kit";
 
 /**
  * The practitioner's dashboard.
  *
- * The design brief was "premium, not a generic dashboard", and the thing that
- * makes a numbers screen feel expensive is restraint rather than decoration:
- * one dark band carrying the figure that matters, in the display face at a
- * size nothing else competes with, and everything else quiet around it. The
- * band is the rail's own navy, which ties the chrome to the canvas instead of
- * leaving a light page floating beside a dark sidebar.
+ * ── What the client asked for, and what changed ──────────────────────────
+ *
+ * The note back from the practice was blunt: a doctor opening this could not
+ * work out what most of it meant. Four things were wrong, and all four are
+ * about comprehension rather than data — every figure on the old screen was
+ * correct.
+ *
+ *  1. THE HEADLINE HAD NO NOUN. "₹2,91,570" sat under the word "Booked" with
+ *     four pills beneath it — Completed, Still to come, Awaiting outcome,
+ *     Lost. Nobody could say whether that was money received, money owed or
+ *     money hoped for. Each state now carries the sentence that defines it,
+ *     printed rather than hidden in a tooltip, because the reader who needs
+ *     the explanation is exactly the reader who will not hover for it.
+ *
+ *  2. TWO TOTALS FOR ONE MONTH. The hero read ₹2,91,570 and the donut beside
+ *     it read ₹3,09,730, because the ring counted cancelled visits and the
+ *     headline did not. Both were right; together they were unusable. The
+ *     ring now holds only what the total holds, and lost money is shown
+ *     beside it where it cannot change what the total means.
+ *
+ *  3. THE CHART WAS A SHAPE, NOT A READING. A smoothed area sparkline with no
+ *     axes at all, interpolating through days that had no bookings. Replaced
+ *     with dated bars — see BookingsChart.tsx.
+ *
+ *  4. NOTHING PRICED AN EMPTY SLOT. "60% of 77 slots" was the closest the
+ *     screen came, and a doctor cannot act on a percentage. The seats section
+ *     says how many are open in the week ahead, what one is worth and what
+ *     the gap adds up to.
+ *
+ * The layout follows the reference decks the client sent: a KPI row across
+ * the top, then titled panels each carrying one chart and one plain-English
+ * finding underneath, then a summary row closing the page. The dark hero band
+ * is gone — the references are light, and a navy slab was carrying one number
+ * that now sits in a tile with three others.
  *
  * Every figure here is computed in lib/doctor/metrics.ts. Nothing on this
  * screen is estimated by a model, including the projections — those are
  * arithmetic, and they say so.
  */
-
-const money = (n: number) => `₹${Math.round(n).toLocaleString("en-IN")}`;
 
 /** A rate is only printed once enough bookings exist to mean anything. */
 const MIN_SAMPLE = 5;
@@ -67,248 +94,376 @@ export default async function DashboardHome({
   ]);
   const listingGaps = advisoryGaps(gaps);
   const first = doctorName.replace(/^Dr\.?\s+/i, "").split(" ")[0];
-  const pct = (v: number) => `${Math.round(v * 100)}%`;
+  const todayIso = clinicWallClock().toISOString().slice(0, 10);
+  const since = comparisonLabel(m.period);
+
+  const share = (n: number) =>
+    m.periodBooked > 0 ? Math.round((n / m.periodBooked) * 100) : 0;
+
+  const best = m.series.reduce(
+    (top, d) => (d.value > top.value ? d : top),
+    { date: "", value: 0, count: 0 }
+  );
+  const topReason = m.demand.find((d) => d.key !== "__none") ?? null;
 
   return (
     <>
-      <PageHead
-        eyebrow={m.periodLabel}
-        title={`${greeting()}, ${first}`}
-        sub="Your practice at a glance. Every figure here comes from your own bookings."
-        action={
-          <div className="flex flex-wrap items-center gap-2">
-            <PeriodPicker value={m.period} />
-            <Link href="/doctor/portal/today" className={portalBtnQuiet}>
-              Today&apos;s list
+      {/* ── The header ─────────────────────────────────────────────────
+          One row, and everything that used to sit under it as a full-width
+          banner is now a chip inside it. Two stacked banners — held requests,
+          next patient — cost about 180px above the fold, which pushed every
+          chart on the page below it: a doctor opened their dashboard and the
+          first thing they could see was no data at all. Neither fact is
+          dropped; both are one tap away in the same colours, at a tenth of
+          the height. */}
+      <header className="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-brand-600">
+            <span
+              aria-hidden
+              className="h-[3px] w-6 rounded-full bg-gradient-to-r from-brand-500 to-teal-400"
+            />
+            {m.periodLabel}
+          </p>
+          <h1 className="mt-1.5 font-display text-[22px] font-extrabold leading-tight tracking-[-0.035em] text-slate-900 sm:text-[28px]">
+            {greeting()}, {first}
+          </h1>
+        </div>
+
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          {m.appointments.awaiting > 0 && (
+            <Link
+              href="/doctor/portal/requests"
+              className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 py-1.5 pl-1.5 pr-3.5 text-xs font-bold text-amber-900 transition hover:bg-amber-100"
+            >
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-amber-500 text-[11px] font-bold text-white">
+                {m.appointments.awaiting}
+              </span>
+              <span>
+                need{m.appointments.awaiting === 1 ? "s" : ""} your confirmation
+              </span>
             </Link>
-          </div>
-        }
-      />
+          )}
 
-      {m.appointments.awaiting > 0 && (
-        <Link
-          href="/doctor/portal/requests"
-          className="mb-6 flex items-center gap-4 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 transition hover:bg-amber-100"
-        >
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-amber-500 text-sm font-bold text-white">
-            {m.appointments.awaiting}
-          </span>
-          <span className="min-w-0 flex-1 text-sm text-amber-900">
-            <strong className="font-bold">
-              {m.appointments.awaiting === 1
-                ? "One booking needs"
-                : `${m.appointments.awaiting} bookings need`}{" "}
-              your confirmation.
-            </strong>{" "}
-            Their slots are held until you decide.
-          </span>
-          <span className="shrink-0 text-sm font-bold text-amber-800">Review →</span>
-        </Link>
-      )}
-
-      {/* ── Who is next ────────────────────────────────────────────────── */}
-      {/* Above the revenue band on purpose. A practitioner opening this
-          between two patients wants one thing, and it is not their monthly
-          run rate. It sits under the confirmation banner rather than over it,
-          because a held slot expires and this one does not. */}
-      {m.nextToday && (
-        <Link
-          href="/doctor/portal/today"
-          className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl border border-teal-200 bg-teal-50 px-5 py-4 transition hover:bg-teal-100/70"
-        >
-          <span className="flex shrink-0 flex-col items-center rounded-xl bg-white px-3 py-1.5 ring-1 ring-teal-200">
-            <span className="font-display text-lg font-bold leading-none tabular-nums text-teal-900">
-              {m.nextToday.at}
-            </span>
-            <span className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-700">
-              {countdown(m.nextToday.minutesAway)}
-            </span>
-          </span>
-
-          <span className="min-w-0 flex-1">
-            <span className="flex flex-wrap items-center gap-2">
-              <span className="truncate text-sm font-bold text-teal-950">
+          {m.nextToday && (
+            <Link
+              href="/doctor/portal/today"
+              className="inline-flex min-w-0 items-center gap-2 rounded-full border border-teal-200 bg-teal-50 py-1.5 pl-3 pr-3.5 text-xs font-bold text-teal-900 transition hover:bg-teal-100"
+            >
+              <span className="tabular-nums">{m.nextToday.at}</span>
+              <span className="h-3 w-px bg-teal-300" aria-hidden />
+              <span className="max-w-[9rem] truncate font-semibold">
                 {m.nextToday.patientName}
               </span>
-              {m.nextToday.isMember && <Tag tone="amber">White Collar</Tag>}
-            </span>
-            <span className="mt-0.5 block truncate text-xs text-teal-800">
-              {[
-                modeLabel(m.nextToday.mode),
-                m.nextToday.clinicName?.replace(/^BluDerma\s+/, ""),
-                m.nextToday.reason,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </span>
-          </span>
+              <span className="font-semibold text-teal-700">
+                {countdown(m.nextToday.minutesAway)}
+              </span>
+            </Link>
+          )}
 
-          <span className="shrink-0 text-sm font-bold text-teal-800">
-            Open the list →
-          </span>
-        </Link>
-      )}
-
-      {/* ── The hero band ──────────────────────────────────────────────── */}
-      <section className="on-dark relative mb-7 overflow-hidden rounded-3xl bg-[#0b1220] p-6 ring-1 ring-white/[0.06] sm:p-8">
-        {/* A single soft bloom behind the figure. Enough to give the band
-            depth; not enough to compete with the number sitting on it. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -left-24 -top-32 h-72 w-72 rounded-full bg-teal-400/10 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-40 right-0 h-72 w-72 rounded-full bg-brand-500/10 blur-3xl"
-        />
-        <div className="relative">
-        <div className="grid gap-7 lg:grid-cols-[1fr_1.1fr] lg:items-end">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-teal-300">
-              {m.isComplete ? "Booked in" : "Booked"} {m.periodLabel}
-            </p>
-            {/* Sora numerals at a size nothing else on the page reaches. */}
-            <div className="mt-2 flex flex-wrap items-baseline gap-3">
-              <p className="font-display text-4xl font-bold tracking-[-0.03em] text-white tabular-nums sm:text-5xl">
-                {money(m.periodBooked)}
-              </p>
-              {m.periodDelta !== null && (
-                <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${
-                    m.periodDelta >= 0
-                      ? "bg-teal-400/15 text-teal-300"
-                      : "bg-rose-400/15 text-rose-300"
-                  }`}
-                >
-                  {m.periodDelta >= 0 ? "▲" : "▼"}
-                  {Math.abs(Math.round(m.periodDelta * 100))}%
-                  <span className="font-semibold opacity-70">
-                    on the {m.period === "this-year" ? "year" : "period"} before
-                  </span>
-                </span>
-              )}
-            </div>
-
-            {m.periodBooked === 0 ? (
-              <p className="mt-3 max-w-md text-sm leading-relaxed text-white/55">
-                {m.isComplete
-                  ? "Nothing was booked in this period."
-                  : "Nothing booked yet."}{" "}
-                Your listing is live, so this fills in as clients find you,
-                and your booking link is at the bottom of this page.
-              </p>
-            ) : (
-            <div className="mt-4 flex flex-wrap gap-1.5">
-              <HeroChip label="Completed" value={money(m.revenue.realised)} tone="teal" />
-              <HeroChip label="Still to come" value={money(m.revenue.scheduled)} tone="plain" />
-              {m.revenue.unresolved > 0 && (
-                <HeroChip
-                  label="Awaiting outcome"
-                  value={money(m.revenue.unresolved)}
-                  tone="amber"
-                />
-              )}
-              {m.revenue.lost > 0 && (
-                <HeroChip label="Lost" value={money(m.revenue.lost)} tone="rose" />
-              )}
-            </div>
-            )}
-
-            {m.revenue.unresolved > 0 && (
-              <p className="mt-3 max-w-md text-xs leading-relaxed text-white/50">
-                Visits that have happened but were never marked complete. Closing
-                them off in your calendar is what moves them into completed.
-              </p>
-            )}
-          </div>
-
-          <div>
-            <div className="flex items-baseline justify-between gap-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">
-                {m.seriesGrain === "week" ? "By week" : "By day"}
-              </p>
-              {!m.isComplete && (
-                <p className="text-xs font-semibold text-white/50">
-                  On track for{" "}
-                  <span className="font-bold text-white/80 tabular-nums">
-                    {money(m.projected)}
-                  </span>
-                </p>
-              )}
-            </div>
-            <div className="mt-3">
-              <RevenueSpark data={m.series} grain={m.seriesGrain} />
-            </div>
-          </div>
+          <PeriodPicker value={m.period} />
         </div>
+      </header>
 
-        {/* Four figures inside the band, so the first thing on screen carries
-            the practice rather than one number and a lot of navy. */}
-        <dl className="relative mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-white/[0.08] sm:grid-cols-4">
-          <HeroStat
-            label="Clients"
-            value={String(m.patients.thisMonth)}
-            sub={m.isComplete ? "in this period" : "so far"}
-          />
-          <HeroStat label="Upcoming" value={String(m.appointments.upcoming)} sub="confirmed" />
-          <HeroStat
-            label="Week filled"
-            value={weekFill(m)}
-            sub={`of ${m.utilisation.weeklyCapacity} slots`}
-          />
-          <HeroStat
-            label="Rating"
-            value={m.reviews.count > 0 ? m.reviews.rating.toFixed(1) : "—"}
-            sub={m.reviews.count > 0 ? `${m.reviews.count} reviews` : "no reviews yet"}
-          />
-        </dl>
-        </div>
-      </section>
+      {/* ── The four headline figures ──────────────────────────────────── */}
+      {/* Two across on a phone rather than one: four full-width tiles is four
+          screens of scrolling before the first chart. */}
+      <div className="mb-5 grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
+        <Kpi
+          label="Booked value"
+          value={money(m.periodBooked)}
+          delta={m.periodDelta}
+          since={since}
+          tone="brand"
+          icon="rupee"
+          hint="Everything clients booked with you. Cancelled visits are not counted."
+        />
+        <Kpi
+          label="Visits booked"
+          value={String(m.appointments.bookedCount)}
+          delta={m.appointments.countDelta}
+          since={since}
+          tone="teal"
+          icon="calendar"
+          hint={
+            m.appointments.upcoming === 1
+              ? "You have 1 confirmed visit still ahead of you, on any date."
+              : `You have ${m.appointments.upcoming} confirmed visits still ahead of you, on any date.`
+          }
+        />
+        <Kpi
+          label="New clients"
+          value={String(m.patients.newCount)}
+          tone="violet"
+          icon="users"
+          hint="First time booking with you"
+          href="/doctor/portal/calendar"
+        />
+        <Kpi
+          label="Returning"
+          value={String(m.patients.returningCount)}
+          tone="amber"
+          icon="repeat"
+          hint={
+            m.patients.returning.sampleSize >= MIN_SAMPLE
+              ? `${Math.round(m.patients.returning.value * 100)}% of your clients this period had been before.`
+              : "People who had seen you before this period."
+          }
+        />
+      </div>
 
-      {/* ── Where the money sits, and where the week has room ────────── */}
-      <div className="mb-7 grid gap-5 lg:grid-cols-3">
-        <Panel
-          title={m.periodLabel}
-          sub="Booked value by state."
-          accent="brand"
-          icon="chart"
+      {/* ── The money: over time, and where it sits ────────────────────── */}
+      <SectionHead
+        title="Your money"
+        sub="What was booked, when it was booked, and which part of it you have actually earned."
+      />
+      <div className="mb-5 grid gap-3.5 lg:grid-cols-3">
+        <ChartPanel
+          className="lg:col-span-2"
           index={0}
+          tone="brand"
+          icon="trend"
+          title="Booked value over time"
+          sub={`${m.seriesGrain === "week" ? "Week by week" : "Day by day"} across ${m.periodLabel}`}
+          action={
+            !m.isComplete && m.projected > 0 ? (
+              <span className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-600 ring-1 ring-slate-200">
+                On track for{" "}
+                <span className="tabular-nums text-slate-900">
+                  {money(m.projected)}
+                </span>
+              </span>
+            ) : undefined
+          }
+          note={
+            best.value > 0 ? (
+              <>
+                <strong className="font-bold text-slate-900">
+                  Your best {m.seriesGrain === "week" ? "week" : "day"}
+                  {m.seriesGrain === "week" ? " started " : " was "}
+                  {prettyDay(best.date)}
+                </strong>{" "}
+                — {money(best.value)} from {best.count} booking
+                {best.count === 1 ? "" : "s"}. Each bar is one{" "}
+                {m.seriesGrain === "week" ? "week" : "day"} of bookings; the
+                green line is the running average, which is the part worth
+                watching.
+                {!m.isComplete && m.projected > 0 && (
+                  <>
+                    {" "}
+                    Carrying on at this rate, {m.periodLabel} finishes on about{" "}
+                    <strong className="font-bold text-slate-900">
+                      {money(m.projected)}
+                    </strong>
+                    .
+                  </>
+                )}
+              </>
+            ) : (
+              "Nothing booked in this period yet. Your booking link is at the bottom of this page."
+            )
+          }
+        >
+          <BookingsChart
+            data={m.series}
+            grain={m.seriesGrain}
+            todayIso={todayIso}
+          />
+        </ChartPanel>
+
+        <ChartPanel
+          index={1}
+          tone="teal"
+          icon="wallet"
+          title="Where your money is"
+          sub={
+            m.periodBooked > 0
+              ? `The ${money(m.periodBooked)} above, split three ways`
+              : "Nothing booked in this period yet"
+          }
+          note={
+            m.revenue.lost > 0
+              ? `Cancelled visits are worth ${money(m.revenue.lost)} and are not in this ring — that money was never earned.`
+              : "Nothing was cancelled in this period."
+          }
         >
           <RevenueDonut
             realised={m.revenue.realised}
             scheduled={m.revenue.scheduled}
             unresolved={m.revenue.unresolved}
-            lost={m.revenue.lost}
           />
+
           <ul className="mt-3 space-y-1.5">
-            <Legend colour="bg-teal-500" label="Completed" value={money(m.revenue.realised)} />
-            <Legend colour="bg-brand-600" label="Still to come" value={money(m.revenue.scheduled)} />
+            <DonutKey
+              dot="bg-teal-500"
+              label="Money earned"
+              amount={money(m.revenue.realised)}
+            />
+            <DonutKey
+              dot="bg-brand-600"
+              label="Money coming in"
+              amount={money(m.revenue.scheduled)}
+            />
             {m.revenue.unresolved > 0 && (
-              <Legend colour="bg-amber-500" label="Awaiting outcome" value={money(m.revenue.unresolved)} />
-            )}
-            {m.revenue.lost > 0 && (
-              <Legend colour="bg-rose-600" label="Lost" value={money(m.revenue.lost)} />
+              <DonutKey
+                dot="bg-amber-500"
+                label="Waiting on you"
+                amount={money(m.revenue.unresolved)}
+              />
             )}
           </ul>
-        </Panel>
+        </ChartPanel>
+      </div>
 
-        <Panel
-          className="lg:col-span-2"
-          accent="teal"
-          icon="calendar"
-          index={1}
-          title="Your week"
-          sub={`${m.utilisation.weeklyCapacity} slots a week. Filled portion is booked.`}
+      {/* ── What each of those four words means ────────────────────────── */}
+      {/* Their own row, four across. Stacked down the side of the donut they
+          made that panel 949px tall, which stretched the chart beside it to
+          match and left 600px of nothing beneath a 260px chart. */}
+      <div className="mb-5 grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
+        <MoneyCard
+          dot="bg-teal-500"
+          label="Money earned"
+          amount={money(m.revenue.realised)}
+          share={share(m.revenue.realised)}
+          body="Visits that have happened and that you marked complete in your calendar."
+        />
+        <MoneyCard
+          dot="bg-brand-600"
+          label="Money coming in"
+          amount={money(m.revenue.scheduled)}
+          share={share(m.revenue.scheduled)}
+          body="Visits that are booked and confirmed but have not happened yet."
+        />
+        <MoneyCard
+          dot="bg-amber-500"
+          label="Waiting on you"
+          amount={money(m.revenue.unresolved)}
+          share={share(m.revenue.unresolved)}
+          body="The visit date has passed but it was never marked complete. Close these off and the money moves into earned."
+          action={
+            m.revenue.unresolved > 0 ? (
+              <Link
+                href="/doctor/portal/calendar"
+                className="text-[11px] font-bold text-brand-600 hover:text-brand-700"
+              >
+                Tidy these up →
+              </Link>
+            ) : undefined
+          }
+        />
+        <MoneyCard
+          dot="bg-rose-600"
+          label="Money lost"
+          amount={money(m.revenue.lost)}
+          body="Cancelled, or the client did not turn up. This is not part of the total above."
+          action={
+            m.revenue.recovered > 0 ? (
+              <span className="text-[11px] font-semibold text-slate-500">
+                You kept {money(m.revenue.recovered)} in cancellation fees
+              </span>
+            ) : undefined
+          }
+        />
+      </div>
+
+      {/* ── Empty seats ────────────────────────────────────────────────── */}
+      <SectionHead
+        title="Your empty seats"
+        sub="One seat is one appointment slot in your working hours. This is the next seven days, so it is the part you can still do something about."
+      />
+      <div className="mb-5">
+        <ChartPanel
+          index={2}
+          tone="amber"
+          icon="seat"
+          title="Seats in the next 7 days"
+          sub={
+            m.seats.totalSeats > 0
+              ? `${m.seats.totalSeats} seats in total · ${Math.round(m.seats.fillRate * 100)}% already taken`
+              : "No working hours set for the week ahead"
+          }
+          note={
+            m.seats.emptiestDay ? (
+              <>
+                <strong className="font-bold text-slate-900">
+                  {m.seats.emptiestDay.label} has the most room
+                </strong>{" "}
+                — {m.seats.emptiestDay.empty} seat
+                {m.seats.emptiestDay.empty === 1 ? "" : "s"} nobody has taken,
+                worth about{" "}
+                <strong className="font-bold text-slate-900">
+                  {money(m.seats.emptiestDay.empty * m.seats.perSeat)}
+                </strong>
+                . The value of a seat is{" "}
+                {m.seats.perSeatBasis === "bookings"
+                  ? "your own average booking over the last 90 days"
+                  : "your listed fee, because there are not yet enough bookings to average"}
+                , so treat it as a guide rather than a promise.
+              </>
+            ) : m.seats.totalSeats > 0 ? (
+              "Every seat in the next seven days is taken. Nothing to fill."
+            ) : (
+              "Set your working hours under Practice and your seats will appear here."
+            )
+          }
         >
-          <UtilisationChart data={m.utilisation.byDay} />
-          {m.utilisation.emptiest && m.utilisation.emptiest.free > 0 && (
-            <p className="mt-3 rounded-xl bg-slate-50 px-4 py-2.5 text-sm text-slate-700">
-              <strong className="font-bold">{m.utilisation.emptiest.label}</strong> has
-              the most room, about {m.utilisation.emptiest.free} slots unbooked
-              over four weeks.
-            </p>
-          )}
-        </Panel>
+          <div className="mb-4 grid grid-cols-2 gap-2.5 xl:grid-cols-4">
+            <SeatStat
+              tone="rose"
+              label="Seats still open"
+              value={String(m.seats.emptySeats)}
+              money={money(m.seats.emptyValue)}
+              hint="What you would earn if every one of them was booked"
+            />
+            <SeatStat
+              tone="teal"
+              label="Seats already taken"
+              value={String(m.seats.bookedSeats)}
+              money={money(m.seats.bookedValue)}
+              hint="Clients are booked into these"
+            />
+            <SeatStat
+              tone="brand"
+              label="One seat is worth"
+              value={money(m.seats.perSeat)}
+              hint={
+                m.seats.perSeatBasis === "bookings"
+                  ? "Your average booking, last 90 days"
+                  : "Your listed fee — too few bookings to average yet"
+              }
+            />
+            <SeatStat
+              tone="violet"
+              label="Week filled"
+              value={
+                m.seats.totalSeats > 0
+                  ? `${Math.round(m.seats.fillRate * 100)}%`
+                  : "—"
+              }
+              hint={
+                m.seats.totalSeats > 0
+                  ? `${m.seats.bookedSeats} of ${m.seats.totalSeats} seats`
+                  : "No hours set"
+              }
+            />
+          </div>
+
+          <SeatWeekChart data={m.seats.days} perSeat={m.seats.perSeat} />
+
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-semibold text-slate-500">
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-sm bg-teal-500" />
+              Booked
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-sm bg-slate-200" />
+              Still open
+            </span>
+            <span className="text-slate-400">
+              The number above each bar is that day&apos;s total seats
+            </span>
+          </div>
+        </ChartPanel>
       </div>
 
       {/* Suspended so the dashboard paints before the first generation of the
@@ -323,92 +478,167 @@ export default async function DashboardHome({
           reading "+₹0" would read as a broken dashboard rather than as a
           question that does not apply. */}
       {m.averageValue > 0 && !m.isComplete && (
-        <div className="mb-7 grid gap-3 sm:grid-cols-3">
-          {m.uplift.map((u) => (
-            <div
-              key={u.perWeek}
-              className="rounded-2xl bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/80"
-            >
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
-                +{u.perWeek} client{u.perWeek === 1 ? "" : "s"} a week
-              </p>
-              <p className="mt-2 font-display text-2xl font-bold tabular-nums text-teal-700">
-                +{money(u.amount)}
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                by the end of {m.periodLabel}, at your {money(m.averageValue)}{" "}
-                average
-              </p>
-            </div>
-          ))}
+        <div className="mb-5">
+          <ChartPanel
+            index={3}
+            tone="teal"
+            icon="trend"
+            title="What a few more clients a week would be worth"
+            sub={`Your ${money(m.averageValue)} average booking × the weeks left in ${m.periodLabel}`}
+            note={
+              <>
+                {m.periodLabel} is on track for{" "}
+                <strong className="font-bold text-slate-900">
+                  {money(m.projected)}
+                </strong>{" "}
+                at your current rate. Each bar is what that figure would grow by
+                — seeing one more client a week for the{" "}
+                {Math.max(m.daysInPeriod - m.daysElapsed, 0)} days left is worth{" "}
+                <strong className="font-bold text-slate-900">
+                  {money(m.uplift[0]?.amount ?? 0)}
+                </strong>
+                . This is multiplication, not a forecast: it assumes those
+                clients book at your average and that nothing else changes.
+              </>
+            }
+          >
+            <UpliftChart projected={m.projected} uplift={m.uplift} />
+          </ChartPanel>
         </div>
       )}
 
-      <div className="mb-7 grid gap-5 lg:grid-cols-2">
-        {/* ── Demand ───────────────────────────────────────────────────── */}
-        <Panel
-          accent="violet"
-          icon="pulse"
-          index={2}
-          title="What clients come to you for"
-          sub="From what each of them chose when booking, over 90 days."
+      {/* ── The diary ──────────────────────────────────────────────────── */}
+      <SectionHead
+        title="Your diary"
+        sub="Which days and which hours actually fill. Both cover the pattern behind you, not the week ahead."
+      />
+      <div className="mb-5 grid gap-3.5 lg:grid-cols-2">
+        <ChartPanel
+          index={3}
+          tone="brand"
+          icon="calendar"
+          title="Which weekdays fill up"
+          sub={`Last 4 weeks · ${m.utilisation.weeklyCapacity} seats in a normal week`}
+          note={
+            m.utilisation.emptiest && m.utilisation.emptiest.free > 0 ? (
+              <>
+                <strong className="font-bold text-slate-900">
+                  {m.utilisation.emptiest.label}
+                </strong>{" "}
+                has been your quietest day — about {m.utilisation.emptiest.free}{" "}
+                seats went unbooked over four weeks. Each bar is one weekday:
+                the blue part was booked, the grey part nobody took.
+              </>
+            ) : (
+              "Each bar is one weekday. The blue part was booked, the grey part nobody took."
+            )
+          }
         >
-          {m.demand.length > 0 ? (
-            <DemandChart data={m.demand} />
-          ) : (
-            <Empty
-              title="Nothing booked yet"
-              body="Once clients start booking, this shows which concerns bring them to you."
-            />
-          )}
-        </Panel>
+          <UtilisationChart data={m.utilisation.byDay} />
+        </ChartPanel>
 
-        {/* ── Practice health, as gauges ───────────────────────────────── */}
-        <Panel
-          accent="teal"
+        <ChartPanel
+          index={4}
+          tone="violet"
+          icon="clock"
+          title="What time of day clients book"
+          sub="Every hour you see work, last 90 days"
+          note="One bar is one hour of the day, in clock order. A dip in the middle is your quiet hour — the one worth moving or trimming."
+        >
+          <HoursChart data={m.busiestHours} />
+        </ChartPanel>
+      </div>
+
+      {/* ── Clients ────────────────────────────────────────────────────── */}
+      <SectionHead
+        title="Your clients"
+        sub="What brings them in, and how reliably the bookings turn into visits."
+      />
+      <div className="mb-5 grid gap-3.5 lg:grid-cols-2">
+        <ChartPanel
+          index={5}
+          tone="violet"
+          icon="pulse"
+          title="What clients come to you for"
+          sub="From what each of them chose when booking, last 90 days"
+          note={
+            topReason
+              ? `Most common: ${topReason.label}, ${topReason.count} booking${topReason.count === 1 ? "" : "s"} in 90 days.`
+              : undefined
+          }
+        >
+          <RankedBars
+            data={m.demand.map((d) => ({
+              key: d.key,
+              label: d.label,
+              value: d.count,
+              muted: d.key === "__none",
+            }))}
+            emptyNote="Once clients start booking, this shows which concerns bring them to you."
+          />
+        </ChartPanel>
+
+        <ChartPanel
+          index={6}
+          tone="teal"
           icon="chart"
-          index={3} title="How your practice runs" sub="Last 90 days.">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <Gauge
+          title="How reliably bookings turn into visits"
+          sub="Last 90 days"
+          note="A rate needs at least five visits behind it before it means anything, so anything thinner is left blank rather than guessed."
+        >
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            <RateRow
               label="Cancelled"
               value={m.ops.cancelRate.value}
               sampleSize={m.ops.cancelRate.sampleSize}
               tone="amber"
-              invert
+              goodWhenUp={false}
+              sentence={(p) =>
+                `About ${p} in every 100 booked visits were cancelled.`
+              }
             />
-            <Gauge
-              label="No-shows"
+            <RateRow
+              label="Did not turn up"
               value={m.ops.noShowRate.value}
               sampleSize={m.ops.noShowRate.sampleSize}
               tone="rose"
-              invert
+              goodWhenUp={false}
+              sentence={(p) =>
+                `About ${p} in every 100 clients never arrived for their visit.`
+              }
             />
-            <Gauge
-              label="Returning"
+            <RateRow
+              label="Came back"
               value={m.patients.returning.value}
               sampleSize={m.patients.returning.sampleSize}
               tone="teal"
+              sentence={(p) =>
+                p >= 100
+                  ? "Every client you saw this period had been to you before."
+                  : `${p} of every 100 clients had seen you before.`
+              }
             />
-            <Gauge
-              label="Members"
+            <RateRow
+              label="White Collar members"
               value={m.ops.memberShare.value}
               sampleSize={m.ops.memberShare.sampleSize}
               tone="brand"
+              sentence={(p) => `${p} of every 100 bookings came from a member.`}
             />
           </div>
 
           <dl className="mt-4 grid gap-3 border-t border-slate-100 pt-4 sm:grid-cols-2">
             <MiniStat
-              label="Booked ahead"
+              label="Clients book ahead by"
               value={
                 m.ops.medianLeadDays.sampleSize >= MIN_SAMPLE
                   ? `${Math.round(m.ops.medianLeadDays.value)} days`
                   : "—"
               }
-              hint="Typical gap from booking to visit"
+              hint="The typical gap between someone booking and the visit itself"
             />
             <MiniStat
-              label="Your response time"
+              label="You reply in"
               value={
                 m.ops.medianResponseHours.sampleSize >= MIN_SAMPLE
                   ? m.ops.medianResponseHours.value < 1
@@ -416,7 +646,7 @@ export default async function DashboardHome({
                     : `${Math.round(m.ops.medianResponseHours.value)} hrs`
                   : "—"
               }
-              hint="How long a request waits for you"
+              hint="How long a booking request usually waits for your answer"
             />
           </dl>
 
@@ -427,7 +657,7 @@ export default async function DashboardHome({
           {m.cancellations.total > 0 && (
             <div className="mt-4 border-t border-slate-100 pt-4">
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Who called them off
+                Who called the cancellations off
               </p>
               <div className="mt-2.5 flex h-2.5 overflow-hidden rounded-full bg-slate-100">
                 <span
@@ -446,12 +676,12 @@ export default async function DashboardHome({
               <ul className="mt-2.5 flex flex-wrap gap-x-5 gap-y-1.5">
                 <CancelKey
                   dot="bg-slate-400"
-                  label="The client"
+                  label="The client cancelled"
                   count={m.cancellations.byPatient}
                 />
                 <CancelKey
                   dot="bg-rose-400"
-                  label="You or our team"
+                  label="You or our team cancelled"
                   count={m.cancellations.byClinic}
                 />
                 {m.cancellations.unattributed > 0 && (
@@ -471,19 +701,20 @@ export default async function DashboardHome({
               )}
             </div>
           )}
-        </Panel>
+        </ChartPanel>
       </div>
 
       {/* ── Pipeline and locations ─────────────────────────────────────── */}
-      <div className="mb-7 grid gap-5 lg:grid-cols-2">
-        <Panel
-          accent="brand"
+      <div className="mb-5 grid gap-3.5 lg:grid-cols-2">
+        <ChartPanel
+          index={7}
+          tone="brand"
           icon="inbox"
-          index={4}
-          title="From request to seen"
-          sub="Last 90 days. Where bookings drop out."
+          title="From request to completed visit"
+          sub="Last 90 days · where bookings drop out"
+          note="&ldquo;Visit completed&rdquo; counts only visits you marked complete, so it lags behind until your calendar is tidied."
         >
-          <ul className="space-y-3">
+          <ul className="space-y-3.5">
             {m.funnel.map((step, i) => {
               const top = m.funnel[0].count || 1;
               const width = Math.round((step.count / top) * 100);
@@ -492,18 +723,18 @@ export default async function DashboardHome({
                 <li key={step.label}>
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="text-sm font-semibold text-slate-700">
-                      {step.label}
+                      {FUNNEL_LABELS[i] ?? step.label}
                     </span>
                     <span className="font-display text-base font-bold tabular-nums text-slate-900">
                       {step.count}
                       {lost > 0 && (
                         <span className="ml-2 text-xs font-semibold text-rose-600">
-                          −{lost}
+                          −{lost} lost here
                         </span>
                       )}
                     </span>
                   </div>
-                  <div className="mt-1 h-2.5 overflow-hidden rounded-full bg-slate-100">
+                  <div className="mt-1.5 h-3 overflow-hidden rounded-full bg-slate-100">
                     <div
                       className={`h-full rounded-full ${
                         i === 0 ? "bg-brand-300" : i === 1 ? "bg-brand-500" : "bg-teal-500"
@@ -515,46 +746,56 @@ export default async function DashboardHome({
               );
             })}
           </ul>
-          <p className="mt-4 text-xs text-slate-500">
-            &ldquo;Seen&rdquo; counts visits you marked completed, so it lags
-            until your diary is tidied.
-          </p>
-        </Panel>
+        </ChartPanel>
 
-        <Panel
-          accent="amber"
+        <ChartPanel
+          index={8}
+          tone="amber"
           icon="clinic"
-          index={5}
           title={m.clinicSplit.length > 1 ? "Across your locations" : "Your location"}
-          sub="Bookings and booked value, last 90 days."
+          sub="Booked value by place, last 90 days"
+          note={
+            m.clinicSplit.length > 1
+              ? `${m.clinicSplit[0].name.replace(/^BluDerma\s+/, "")} brings you the most work — ${m.clinicSplit[0].count} bookings.`
+              : undefined
+          }
         >
           {m.clinicSplit.length > 0 ? (
-            <ul className="space-y-3">
-              {m.clinicSplit.map((c) => {
-                const top = m.clinicSplit[0].count || 1;
-                return (
-                  <li key={c.name}>
-                    <div className="flex items-baseline justify-between gap-3">
-                      <span className="flex min-w-0 items-center gap-2">
-                        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${swatchFor(c.colorKey).dot}`} />
-                        <span className="truncate text-sm font-semibold text-slate-700">
-                          {c.name.replace(/^BluDerma\s+/, "")}
-                        </span>
-                      </span>
-                      <span className="shrink-0 text-sm tabular-nums text-slate-500">
-                        {c.count} · {money(c.value)}
-                      </span>
-                    </div>
-                    <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className={`h-full rounded-full ${swatchFor(c.colorKey).dot}`}
-                        style={{ width: `${Math.round((c.count / top) * 100)}%` }}
-                      />
-                    </div>
+            <>
+              <RankedBars
+                unit="money"
+                data={[...m.clinicSplit]
+                  // Sorted by the figure the bars actually draw. clinicSplit
+                  // arrives ranked by booking count, and a ranked chart whose
+                  // longest bar is not at the top reads as a rendering fault.
+                  .sort((a, b) => b.value - a.value)
+                  .map((c) => ({
+                    key: c.name,
+                    label: c.name.replace(/^BluDerma\s+/, ""),
+                    value: c.value,
+                    secondary: `${c.count} booking${c.count === 1 ? "" : "s"}`,
+                    fill: hexFor(c.colorKey),
+                  }))}
+              />
+              <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
+                {m.clinicSplit.map((c) => (
+                  <li
+                    key={c.name}
+                    className="flex items-center gap-2 text-xs text-slate-600"
+                  >
+                    <span
+                      className={`h-2 w-2 shrink-0 rounded-full ${swatchFor(c.colorKey).dot}`}
+                    />
+                    <span className="truncate">
+                      {c.name.replace(/^BluDerma\s+/, "")}
+                    </span>
+                    <span className="font-bold tabular-nums text-slate-900">
+                      {c.count}
+                    </span>
                   </li>
-                );
-              })}
-            </ul>
+                ))}
+              </ul>
+            </>
           ) : (
             <Empty
               icon="clinic"
@@ -562,23 +803,69 @@ export default async function DashboardHome({
               body="Once clients book, this shows which of your locations they choose."
             />
           )}
-        </Panel>
+        </ChartPanel>
+      </div>
+
+      {/* ── The closing summary row ────────────────────────────────────── */}
+      {/* The reference decks end a page this way, and it earns its place: a
+          reader who scrolled past the charts still leaves with the totals. */}
+      <div className="mb-5 grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
+        <Summary
+          tone="brand"
+          icon="rupee"
+          label={`Booked, ${m.periodLabel}`}
+          value={moneyShort(m.periodBooked)}
+          hint={money(m.periodBooked)}
+        />
+        <Summary
+          tone="teal"
+          icon="chart"
+          label="Average per visit"
+          value={m.averageValue > 0 ? money(m.averageValue) : "—"}
+          hint={
+            m.averageValue > 0
+              ? `Across ${m.appointments.bookedCount} bookings`
+              : "No bookings to average yet"
+          }
+        />
+        <Summary
+          tone="violet"
+          icon="check"
+          label="Visits completed"
+          value={String(m.appointments.completedAllTime)}
+          hint="Since you joined BluDerma"
+        />
+        <Summary
+          tone="amber"
+          icon="star"
+          label="Your rating"
+          value={m.reviews.count > 0 ? m.reviews.rating.toFixed(1) : "—"}
+          hint={
+            m.reviews.count > 0
+              ? `From ${m.reviews.count} published review${m.reviews.count === 1 ? "" : "s"}`
+              : "No published reviews yet"
+          }
+        />
       </div>
 
       {/* ── Your listing, your leave, your link ────────────────────────── */}
       {/* Three things a doctor can act on in the next minute, kept together
           and away from the figures — the rest of this page is a readout, and
           mixing "here is a number" with "do this" makes both easier to skip. */}
-      <div className="mb-7 grid gap-5 lg:grid-cols-3">
-        <Panel
-          accent="amber"
+      <SectionHead
+        title="Things you can do now"
+        sub="Nothing here is a number to read. Each one is a small job that brings more bookings in."
+      />
+      <div className="mb-5 grid gap-3.5 lg:grid-cols-3">
+        <ChartPanel
+          index={9}
+          tone="amber"
           icon="user"
-          index={6}
           title="Your listing"
           sub={
             listingGaps.length
-              ? "What a client notices is missing."
-              : "Nothing missing."
+              ? "What a client notices is missing"
+              : "Nothing missing"
           }
           action={
             <Link href="/doctor/portal/profile" className={portalBtnQuiet}>
@@ -610,14 +897,14 @@ export default async function DashboardHome({
               body="Photo, biography, languages and links are all in place. Clients see the full picture."
             />
           )}
-        </Panel>
+        </ChartPanel>
 
-        <Panel
-          accent="slate"
+        <ChartPanel
+          index={10}
+          tone="slate"
           icon="calendar"
-          index={7}
           title="Time off ahead"
-          sub="Days already blocked out."
+          sub="Days already blocked out"
           action={
             <Link href="/doctor/portal/practice" className={portalBtnQuiet}>
               Manage
@@ -654,14 +941,14 @@ export default async function DashboardHome({
               body="Blocking a date here removes its slots from the booking page, so nobody can book you into a day you are away."
             />
           )}
-        </Panel>
+        </ChartPanel>
 
-        <Panel
-          accent="teal"
+        <ChartPanel
+          index={11}
+          tone="teal"
           icon="link"
-          index={8}
           title="Your booking link"
-          sub="Send it to anyone. It books straight into this calendar."
+          sub="Send it to anyone — it books straight into this calendar"
         >
           {m.slug ? (
             <ShareLink slug={m.slug} name={doctorName} />
@@ -672,40 +959,25 @@ export default async function DashboardHome({
               body="Your listing needs to be live before it has an address to share."
             />
           )}
-        </Panel>
-      </div>
-
-      {/* ── When the day fills ─────────────────────────────────────────── */}
-      <div className="mb-7">
-        <Panel
-          accent="violet"
-          icon="clock"
-          index={9}
-          title="When your day fills"
-          sub="Bookings by start hour, in clock order, last 90 days."
-        >
-          <HoursChart data={m.busiestHours} />
-        </Panel>
+        </ChartPanel>
       </div>
 
       {/* ── Reviews ────────────────────────────────────────────────────── */}
-      <Panel
-        accent="rose"
+      <ChartPanel
+        index={12}
+        tone="rose"
         icon="star"
-        index={10}
         title="What clients say"
         sub={
           m.reviews.count > 0
-            ? `${m.reviews.rating.toFixed(1)} from ${m.reviews.count} published review${
+            ? `${m.reviews.rating.toFixed(1)} out of 5, from ${m.reviews.count} published review${
                 m.reviews.count === 1 ? "" : "s"
-              }.`
-            : undefined
+              }`
+            : "No published reviews yet"
         }
         action={
           m.reviewsPending > 0 ? (
-            <Tag tone="amber">
-              {m.reviewsPending} with our team
-            </Tag>
+            <Tag tone="amber">{m.reviewsPending} with our team</Tag>
           ) : undefined
         }
       >
@@ -727,12 +999,12 @@ export default async function DashboardHome({
         )}
 
         {m.reviews.latest.length > 0 ? (
-          <ul className="space-y-3">
+          <ul className="grid gap-3 sm:grid-cols-3">
             {m.reviews.latest.map((r) => (
               <li key={r.id} className="rounded-xl bg-slate-50 px-4 py-3.5">
                 <div className="flex items-center justify-between gap-3">
                   <Stars rating={r.rating} />
-                  <span className="text-xs text-slate-400">{r.at}</span>
+                  <span className="text-xs text-slate-400">{prettyDate(r.at)}</span>
                 </div>
                 {r.title && (
                   <p className="mt-1.5 text-sm font-bold text-slate-900">{r.title}</p>
@@ -750,37 +1022,86 @@ export default async function DashboardHome({
             body="Clients can review you after a completed visit. Our team publishes them once checked, and only published reviews count toward your rating."
           />
         )}
-      </Panel>
+      </ChartPanel>
     </>
   );
 }
 
-function HeroChip({
+/** One line of the donut's key: colour, name, amount. */
+function DonutKey({
+  dot,
+  label,
+  amount,
+}: {
+  dot: string;
+  label: string;
+  amount: string;
+}) {
+  return (
+    <li className="flex items-center gap-2 text-sm">
+      <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dot}`} />
+      <span className="min-w-0 flex-1 truncate text-slate-600">{label}</span>
+      <span className="shrink-0 font-semibold tabular-nums text-slate-900">
+        {amount}
+      </span>
+    </li>
+  );
+}
+
+/** Plainer than the metric's own labels, which read like a database. */
+const FUNNEL_LABELS = [
+  "Clients asked to book",
+  "You accepted",
+  "Visit completed",
+];
+
+/**
+ * One seat figure, with its money underneath.
+ *
+ * The count and the value are deliberately in one tile rather than two. "17
+ * seats open" and "₹30,600" on opposite sides of a row are two facts the
+ * reader has to join up themselves, and the joining is the whole insight.
+ */
+function SeatStat({
   label,
   value,
+  money: amount,
+  hint,
   tone,
 }: {
   label: string;
   value: string;
-  tone: "teal" | "plain" | "amber" | "rose";
+  money?: string;
+  hint: string;
+  tone: "rose" | "teal" | "brand" | "violet";
 }) {
   // Full class strings — Tailwind never sees an interpolated one.
   const skin =
-    tone === "teal"
-      ? "bg-teal-400/15 text-teal-300"
-      : tone === "amber"
-        ? "bg-amber-400/15 text-amber-300"
-        : tone === "rose"
-          ? "bg-rose-400/15 text-rose-300"
-          : "bg-white/[0.07] text-white/70";
+    tone === "rose"
+      ? "bg-rose-50 text-rose-700 ring-rose-100"
+      : tone === "teal"
+        ? "bg-teal-50 text-teal-700 ring-teal-100"
+        : tone === "violet"
+          ? "bg-violet-50 text-violet-700 ring-violet-100"
+          : "bg-brand-50 text-brand-700 ring-brand-100";
 
   return (
-    <span
-      className={`inline-flex items-baseline gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold ${skin}`}
-    >
-      <span className="font-semibold opacity-70">{label}</span>
-      <span className="tabular-nums">{value}</span>
-    </span>
+    <div className={`rounded-xl px-4 py-3 ring-1 ring-inset ${skin}`}>
+      <p className="text-[11px] font-bold uppercase tracking-[0.1em] opacity-80">
+        {label}
+      </p>
+      <p className="mt-1 flex flex-wrap items-baseline gap-x-2">
+        <span className="font-display text-2xl font-bold leading-none tabular-nums">
+          {value}
+        </span>
+        {amount && (
+          <span className="font-display text-sm font-bold tabular-nums opacity-80">
+            {amount}
+          </span>
+        )}
+      </p>
+      <p className="mt-1.5 text-[11px] leading-snug text-slate-500">{hint}</p>
+    </div>
   );
 }
 
@@ -799,6 +1120,42 @@ function Stars({ rating }: { rating: number }) {
       ))}
     </span>
   );
+}
+
+/** "vs last month" — what the KPI arrows are comparing against. */
+function comparisonLabel(period: DashboardPeriod): string {
+  switch (period) {
+    case "last-month":
+      return "vs the month before";
+    case "last-3":
+      return "vs the 3 months before";
+    case "last-6":
+      return "vs the 6 months before";
+    case "this-year":
+      return "vs last year";
+    default:
+      return "vs last month";
+  }
+}
+
+/** "28 Aug 2026" — a date somebody would say out loud. */
+function prettyDate(iso: string): string {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+/** "Thu 14 Aug". */
+function prettyDay(iso: string): string {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
 }
 
 /**
@@ -859,28 +1216,7 @@ function greeting(): string {
   return h < 17 ? "Good afternoon" : "Good evening";
 }
 
-/** One row of the donut's key. */
-function Legend({
-  colour,
-  label,
-  value,
-}: {
-  colour: string;
-  label: string;
-  value: string;
-}) {
-  return (
-    <li className="flex items-center gap-2 text-sm">
-      <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${colour}`} />
-      <span className="min-w-0 flex-1 truncate text-slate-600">{label}</span>
-      <span className="shrink-0 font-semibold tabular-nums text-slate-900">
-        {value}
-      </span>
-    </li>
-  );
-}
-
-/** A labelled figure for places a gauge would be overkill. */
+/** A labelled figure for places a bar would be overkill. */
 function MiniStat({
   label,
   value,
@@ -901,35 +1237,4 @@ function MiniStat({
       <p className="mt-0.5 text-xs text-slate-500">{hint}</p>
     </div>
   );
-}
-
-/** One figure inside the dark hero band. */
-function HeroStat({
-  label,
-  value,
-  sub,
-}: {
-  label: string;
-  value: string;
-  sub: string;
-}) {
-  return (
-    <div className="bg-[#0b1220] px-4 py-3.5">
-      <dt className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/40">
-        {label}
-      </dt>
-      <dd className="mt-1 font-display text-xl font-bold tabular-nums text-white">
-        {value}
-      </dd>
-      <p className="text-[11px] text-white/40">{sub}</p>
-    </div>
-  );
-}
-
-/** Share of the week's slots that are booked, as a percentage string. */
-function weekFill(m: DashboardMetrics): string {
-  const capacity = m.utilisation.byDay.reduce((s, d) => s + d.capacity, 0);
-  if (capacity === 0) return "—";
-  const booked = m.utilisation.byDay.reduce((s, d) => s + d.booked, 0);
-  return `${Math.round((booked / capacity) * 100)}%`;
 }

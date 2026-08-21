@@ -80,13 +80,13 @@ export default function PortalRail({
               key={item.href}
               title={item.locked}
               aria-disabled="true"
-              className="flex cursor-default items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/25"
+              className="rail-wide flex cursor-default items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/25"
             >
               <span className="text-white/20">
                 <GlyphIcon name={item.icon} />
               </span>
-              <span className="min-w-0 flex-1 truncate">{item.label}</span>
-              <span aria-hidden className="text-white/20">
+              <span className="rail-label min-w-0 flex-1 truncate">{item.label}</span>
+              <span aria-hidden className="rail-label text-white/20">
                 <GlyphIcon name="lock" />
               </span>
             </span>
@@ -96,7 +96,8 @@ export default function PortalRail({
           <Link
             key={item.href}
             href={item.href}
-            className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
+            title={item.label}
+            className={`rail-wide group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
               active
                 ? "bg-gradient-to-r from-white/[0.12] to-white/[0.04] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
                 : "text-white/55 hover:bg-white/[0.05] hover:text-white/90"
@@ -113,9 +114,9 @@ export default function PortalRail({
             <span className={active ? "text-teal-300" : "text-white/45 group-hover:text-white/70"}>
               <GlyphIcon name={item.icon} />
             </span>
-            <span className="min-w-0 flex-1 truncate">{item.label}</span>
+            <span className="rail-label min-w-0 flex-1 truncate">{item.label}</span>
             {item.badge ? (
-              <span className="grid h-5 min-w-[20px] shrink-0 place-items-center rounded-full bg-amber-400 px-1 text-[11px] font-bold text-[#0b1220]">
+              <span className="rail-badge grid h-5 min-w-[20px] shrink-0 place-items-center rounded-full bg-amber-400 px-1 text-[11px] font-bold text-[#0b1220]">
                 {item.badge}
               </span>
             ) : null}
@@ -129,14 +130,19 @@ export default function PortalRail({
 
   const identity = (
     <div className="px-5 pb-5 pt-6">
-      <BrandLogo href="/doctor" size={40} tone="light" />
+      <span className="rail-label block">
+        <BrandLogo href="/doctor" size={40} tone="light" />
+      </span>
       {/* A monogram and a hairline of teal — the small amount of ceremony that
           separates "an internal tool" from "your practice". */}
-      <div className="mt-5 flex items-center gap-3 rounded-2xl bg-gradient-to-br from-white/[0.09] to-white/[0.03] px-3.5 py-3.5 ring-1 ring-white/10">
+      <div
+        title={doctorName}
+        className="rail-wide mt-5 flex items-center gap-3 rounded-2xl bg-gradient-to-br from-white/[0.09] to-white/[0.03] px-3.5 py-3.5 ring-1 ring-white/10"
+      >
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-teal-400 to-brand-500 font-display text-base font-bold text-[#0b1220]">
           {initial}
         </span>
-        <div className="min-w-0 flex-1">
+        <div className="rail-label min-w-0 flex-1">
         <p className="truncate text-sm font-bold text-white">{doctorName}</p>
         <p className="mt-0.5 truncate text-[11px] text-white/45">
           {clinicName || "No clinic yet"}
@@ -151,14 +157,15 @@ export default function PortalRail({
     <div className="border-t border-white/10 p-3">
       <button
         onClick={() => signOut({ callbackUrl: "/doctor" })}
-        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/50 transition hover:bg-white/[0.05] hover:text-white/85"
+        title="Sign out"
+        className="rail-wide flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/50 transition hover:bg-white/[0.05] hover:text-white/85"
       >
         <span aria-hidden className="text-white/40">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
             <path d="M15 17l5-5-5-5M20 12H9M12 20H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h6" />
           </svg>
         </span>
-        Sign out
+        <span className="rail-label">Sign out</span>
       </button>
     </div>
   );
@@ -166,9 +173,10 @@ export default function PortalRail({
   return (
     <>
       {/* ── Desktop rail ──────────────────────────────────────────────── */}
-      <aside className="on-dark fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-[#0b1220] lg:flex">
+      <aside className="portal-rail on-dark fixed inset-y-0 left-0 z-40 hidden flex-col bg-[#0b1220] lg:flex">
         {identity}
         {nav}
+        <CollapseToggle />
         {footer}
       </aside>
 
@@ -210,6 +218,70 @@ export default function PortalRail({
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * Collapses the rail to its glyphs, and remembers the choice.
+ *
+ * The state lives on `<html>` as a data attribute rather than in React. The
+ * shell that has to give back its left padding is a server component, so a
+ * React boolean here could not reach it without making the whole portal
+ * layout client-rendered — and the CSS in globals.css does the whole job
+ * from one attribute. See the note there about the pre-paint script.
+ *
+ * Desktop only. Below `lg` the rail is already a drawer, and a control that
+ * collapses something not currently on screen is a control that does nothing.
+ */
+function CollapseToggle() {
+  const [collapsed, setCollapsed] = useState(false);
+
+  // Read on mount rather than during render: `document` does not exist on the
+  // server, and the attribute has already been set by the inline script, so
+  // this only syncs the button's own label to what is on screen.
+  useEffect(() => {
+    setCollapsed(
+      document.documentElement.getAttribute("data-rail") === "collapsed"
+    );
+  }, []);
+
+  function toggle() {
+    const next = !collapsed;
+    setCollapsed(next);
+    if (next) document.documentElement.setAttribute("data-rail", "collapsed");
+    else document.documentElement.removeAttribute("data-rail");
+    try {
+      localStorage.setItem("bd-rail", next ? "collapsed" : "open");
+    } catch {
+      // Private browsing, or storage disabled. The rail still collapses for
+      // this visit; it just will not be remembered for the next one.
+    }
+  }
+
+  return (
+    <div className="px-3 pb-1">
+      <button
+        onClick={toggle}
+        title={collapsed ? "Expand the menu" : "Collapse the menu"}
+        aria-label={collapsed ? "Expand the menu" : "Collapse the menu"}
+        className="rail-wide flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/40 transition hover:bg-white/[0.05] hover:text-white/80"
+      >
+        <span aria-hidden className="shrink-0">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={`h-5 w-5 transition-transform duration-200 ${collapsed ? "rotate-180" : ""}`}
+          >
+            <path d="M15 6l-6 6 6 6" />
+          </svg>
+        </span>
+        <span className="rail-label">Collapse menu</span>
+      </button>
+    </div>
   );
 }
 

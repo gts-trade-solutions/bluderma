@@ -45,8 +45,8 @@ export default function ShareLink({ slug, name }: { slug: string; name: string }
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5 ring-1 ring-inset ring-slate-200">
-        <span className="truncate font-mono text-xs text-slate-600">{pretty}</span>
+      <div className="flex items-center gap-2 rounded-xl bg-white/[0.04] px-3 py-2.5 ring-1 ring-inset ring-white/10">
+        <span className="truncate font-mono text-xs text-ink-soft">{pretty}</span>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -60,7 +60,7 @@ export default function ShareLink({ slug, name }: { slug: string; name: string }
         <button
           type="button"
           onClick={whatsapp}
-          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
+          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white px-4 py-2 text-xs font-bold text-ink-soft transition hover:bg-white/[0.04]"
         >
           Share on WhatsApp
         </button>
@@ -68,7 +68,7 @@ export default function ShareLink({ slug, name }: { slug: string; name: string }
           href={path}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold text-slate-500 transition hover:text-slate-800"
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold text-ink-muted transition hover:text-ink"
         >
           Preview →
         </a>

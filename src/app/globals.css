@@ -309,20 +309,30 @@ body {
 }
 
 /* ── The doctor portal's canvas and motion ──────────────────────────────
-   The portal was a flat #f6f8fb with white panels on it, which is the exact
-   look of an internal admin console — and it is what the client meant by
-   "boring". The ground now carries two very faint blooms, one brand and one
-   teal, fixed so they do not travel with the scroll.
+   The portal is now the same ground the client side stands on: --surface,
+   the navy every patient screen uses, rather than the near-white console it
+   used to be. Two things follow from that.
 
-   Faint on purpose. This surface is read across a whole clinic day and the
-   calendar's per-clinic colour coding has to stay legible on top of it, so
-   the blooms sit at 5-6% and the panels remain pure white. It is depth, not
-   decoration. */
+   It is one product. A doctor who has just come off bluderma.kr and signs in
+   should not feel handed to a different company's admin tool, which is what
+   a flat #f5f7fb with white panels reads as. The portal drops `.theme-light`
+   entirely, so `text-ink`, `card-soft` and the translucent-white idiom mean
+   here exactly what they mean on the hub, and the four screens that never
+   carried a colour of their own (calendar, requests, practice, today) simply
+   arrive correct.
+
+   The blooms are stronger than the light version's 5-6%. On a pale ground a
+   tint that faint is all you can spend before panels stop separating from
+   it; on navy the same gesture has room, and the ground needs it or the page
+   reads as a black rectangle. They stay fixed so they do not travel with the
+   scroll, and they stay clear of the calendar's per-clinic colour coding,
+   which still has to be legible on top. */
 .portal-canvas {
-  background-color: #f5f7fb;
+  background-color: var(--surface);
   background-image:
-    radial-gradient(58rem 32rem at 8% -12%, rgba(50, 143, 240, 0.10), transparent 60%),
-    radial-gradient(46rem 28rem at 100% 0%, rgba(15, 160, 142, 0.09), transparent 62%);
+    radial-gradient(62rem 34rem at 6% -14%, rgba(50, 143, 240, 0.20), transparent 62%),
+    radial-gradient(50rem 30rem at 100% 2%, rgba(15, 160, 142, 0.16), transparent 64%),
+    radial-gradient(44rem 30rem at 78% 108%, rgba(124, 58, 237, 0.10), transparent 60%);
   background-attachment: fixed;
 }
 

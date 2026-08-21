@@ -52,46 +52,46 @@ export function moneyShort(n: number): string {
  */
 const TONES = {
   brand: {
-    tile: "bg-gradient-to-br from-brand-500 to-brand-600",
-    strip: "from-brand-50",
-    text: "text-brand-700",
-    dot: "bg-brand-600",
-    soft: "bg-brand-50",
+    tile: "bg-gradient-to-br from-brand-400 to-brand-600",
+    strip: "from-brand-500/20",
+    text: "text-brand-300",
+    dot: "bg-brand-400",
+    soft: "bg-brand-500/15",
   },
   teal: {
-    tile: "bg-gradient-to-br from-teal-500 to-teal-600",
-    strip: "from-teal-50",
-    text: "text-teal-700",
-    dot: "bg-teal-500",
-    soft: "bg-teal-50",
+    tile: "bg-gradient-to-br from-teal-300 to-teal-500",
+    strip: "from-teal-400/20",
+    text: "text-teal-300",
+    dot: "bg-teal-300",
+    soft: "bg-teal-400/15",
   },
   violet: {
-    tile: "bg-gradient-to-br from-violet-500 to-fuchsia-500",
-    strip: "from-violet-50",
-    text: "text-violet-700",
-    dot: "bg-violet-500",
-    soft: "bg-violet-50",
+    tile: "bg-gradient-to-br from-violet-400 to-fuchsia-500",
+    strip: "from-violet-500/20",
+    text: "text-violet-300",
+    dot: "bg-violet-400",
+    soft: "bg-violet-500/15",
   },
   amber: {
-    tile: "bg-gradient-to-br from-amber-400 to-orange-500",
-    strip: "from-amber-50",
-    text: "text-amber-700",
-    dot: "bg-amber-500",
-    soft: "bg-amber-50",
+    tile: "bg-gradient-to-br from-amber-300 to-orange-500",
+    strip: "from-amber-400/20",
+    text: "text-amber-300",
+    dot: "bg-amber-400",
+    soft: "bg-amber-400/15",
   },
   rose: {
-    tile: "bg-gradient-to-br from-rose-500 to-pink-500",
-    strip: "from-rose-50",
-    text: "text-rose-700",
-    dot: "bg-rose-600",
-    soft: "bg-rose-50",
+    tile: "bg-gradient-to-br from-rose-400 to-pink-500",
+    strip: "from-rose-500/20",
+    text: "text-rose-300",
+    dot: "bg-rose-400",
+    soft: "bg-rose-500/15",
   },
   slate: {
-    tile: "bg-gradient-to-br from-slate-400 to-slate-500",
-    strip: "from-slate-100",
-    text: "text-slate-700",
-    dot: "bg-slate-400",
-    soft: "bg-slate-100",
+    tile: "bg-gradient-to-br from-slate-400 to-slate-600",
+    strip: "from-white/[0.07]",
+    text: "text-ink-soft",
+    dot: "bg-white/45",
+    soft: "bg-white/[0.06]",
   },
 } as const;
 
@@ -120,7 +120,7 @@ export function Delta({
 }) {
   if (value === null || !Number.isFinite(value)) {
     return (
-      <span className="text-[11px] font-semibold text-slate-400">
+      <span className="text-[11px] font-semibold text-ink-muted">
         No earlier period to compare
       </span>
     );
@@ -134,13 +134,13 @@ export function Delta({
     <span className="inline-flex items-center gap-1 text-xs font-bold">
       <span
         className={`inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 ${
-          good ? "bg-teal-50 text-teal-700" : "bg-rose-50 text-rose-600"
+          good ? "bg-teal-500/15 text-teal-300" : "bg-rose-500/15 text-rose-300"
         }`}
       >
         <span aria-hidden>{up ? "▲" : "▼"}</span>
         {pct}%
       </span>
-      {since && <span className="font-semibold text-slate-400">{since}</span>}
+      {since && <span className="font-semibold text-ink-muted">{since}</span>}
     </span>
   );
 }
@@ -187,10 +187,10 @@ export function Kpi({
         <Glyph name={icon} size={18} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 sm:text-[11px] sm:tracking-[0.1em]">
+        <span className="block truncate text-[10px] font-bold uppercase tracking-[0.08em] text-ink-muted sm:text-[11px] sm:tracking-[0.1em]">
           {label}
         </span>
-        <span className="mt-1 block font-display text-[20px] font-extrabold leading-none tracking-[-0.03em] tabular-nums text-slate-900 sm:text-[26px]">
+        <span className="mt-1 block font-display text-[20px] font-extrabold leading-none tracking-[-0.03em] tabular-nums text-ink sm:text-[26px]">
           {value}
         </span>
         {(delta !== undefined || hint) && (
@@ -201,14 +201,14 @@ export function Kpi({
               // No delta to show, so the hint takes the slot. Clamped: on a
               // phone these tiles sit two across, and four lines of 11px prose
               // made the explanation taller than the figure it explains.
-              <span className="line-clamp-2 text-[11px] font-semibold leading-snug text-slate-500">
+              <span className="line-clamp-2 text-[11px] font-semibold leading-snug text-ink-muted">
                 {hint}
               </span>
             )}
           </span>
         )}
         {delta !== undefined && hint && (
-          <span className="mt-1 hidden text-[11px] leading-snug text-slate-400 sm:block">
+          <span className="mt-1 hidden text-[11px] leading-snug text-ink-muted sm:block">
             {hint}
           </span>
         )}
@@ -217,12 +217,12 @@ export function Kpi({
   );
 
   const shell =
-    "portal-enter group/kpi flex items-start gap-2.5 rounded-2xl bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_12px_32px_-24px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/80 transition duration-200 sm:gap-3.5 sm:p-4";
+    "portal-enter group/kpi flex items-start gap-2.5 rounded-2xl bg-white/[0.04] p-3 shadow-[0_18px_44px_-24px_rgba(0,0,0,0.75)] ring-1 ring-white/10 transition duration-200 sm:gap-3.5 sm:p-4";
 
   return href ? (
     <Link
       href={href}
-      className={`${shell} hover:-translate-y-0.5 hover:ring-slate-300 hover:shadow-[0_1px_2px_rgba(15,23,42,0.05),0_18px_40px_-24px_rgba(15,23,42,0.5)]`}
+      className={`${shell} hover:-translate-y-0.5 hover:ring-white/15 hover:shadow-[0_18px_44px_-24px_rgba(0,0,0,0.75)]`}
     >
       {body}
     </Link>
@@ -269,13 +269,13 @@ export function ChartPanel({
 
   return (
     <section
-      className={`portal-enter group/panel flex flex-col overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05),0_12px_32px_-22px_rgba(15,23,42,0.28)] ring-1 ring-slate-200/80 transition duration-200 hover:shadow-[0_1px_2px_rgba(15,23,42,0.05),0_20px_46px_-24px_rgba(15,23,42,0.42)] hover:ring-slate-300 ${className}`}
+      className={`portal-enter group/panel flex flex-col overflow-hidden rounded-2xl bg-white/[0.04] shadow-[0_18px_44px_-24px_rgba(0,0,0,0.75)] ring-1 ring-white/10 transition duration-200 hover:shadow-[0_18px_44px_-24px_rgba(0,0,0,0.75)] hover:ring-white/15 ${className}`}
       // Staggered so a screenful arrives rather than appearing. Capped: past
       // about eight the last panel is visibly late and stops reading as polish.
       style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
     >
       <div
-        className={`flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-gradient-to-r to-white px-3.5 py-2.5 sm:px-5 sm:py-3 ${skin.strip}`}
+        className={`flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] bg-gradient-to-r to-white px-3.5 py-2.5 sm:px-5 sm:py-3 ${skin.strip}`}
       >
         <div className="flex min-w-0 items-center gap-3">
           <span
@@ -285,11 +285,11 @@ export function ChartPanel({
             <Glyph name={icon} size={16} />
           </span>
           <div className="min-w-0">
-            <h3 className="truncate font-display text-[15px] font-bold tracking-[-0.015em] text-slate-900">
+            <h3 className="truncate font-display text-[15px] font-bold tracking-[-0.015em] text-ink">
               {title}
             </h3>
             {sub && (
-              <p className="truncate text-xs font-medium text-slate-500">{sub}</p>
+              <p className="truncate text-xs font-medium text-ink-muted">{sub}</p>
             )}
           </div>
         </div>
@@ -301,7 +301,7 @@ export function ChartPanel({
       </div>
 
       {note && (
-        <div className="border-t border-slate-100 bg-slate-50/70 px-3.5 py-2.5 text-xs leading-relaxed text-slate-600 sm:px-5 sm:py-3">
+        <div className="border-t border-white/[0.08] bg-white/[0.03] px-3.5 py-2.5 text-xs leading-relaxed text-ink-soft sm:px-5 sm:py-3">
           {note}
         </div>
       )}
@@ -327,7 +327,7 @@ export function Summary({
 }) {
   const skin = TONES[tone];
   return (
-    <div className="portal-enter flex items-center gap-2.5 rounded-2xl bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/80">
+    <div className="portal-enter flex items-center gap-2.5 rounded-2xl bg-white/[0.04] px-3 py-3 shadow-[0_18px_44px_-24px_rgba(0,0,0,0.75)] ring-1 ring-white/10">
       {icon && (
         <span
           aria-hidden
@@ -337,13 +337,13 @@ export function Summary({
         </span>
       )}
       <div className="min-w-0">
-        <p className="truncate text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400">
+        <p className="truncate text-[11px] font-bold uppercase tracking-[0.1em] text-ink-muted">
           {label}
         </p>
-        <p className="font-display text-lg font-bold leading-tight tabular-nums text-slate-900">
+        <p className="font-display text-lg font-bold leading-tight tabular-nums text-ink">
           {value}
         </p>
-        {hint && <p className="truncate text-[11px] text-slate-500">{hint}</p>}
+        {hint && <p className="truncate text-[11px] text-ink-muted">{hint}</p>}
       </div>
     </div>
   );
@@ -364,10 +364,10 @@ export function SectionHead({
   return (
     <div className="mb-2.5 flex flex-wrap items-end justify-between gap-3">
       <div className="min-w-0">
-        <h2 className="font-display text-[15px] font-extrabold tracking-[-0.03em] text-slate-900 sm:text-base">
+        <h2 className="font-display text-[15px] font-extrabold tracking-[-0.03em] text-ink sm:text-base">
           {title}
         </h2>
-        {sub && <p className="mt-0.5 text-xs leading-relaxed text-slate-500 sm:text-sm">{sub}</p>}
+        {sub && <p className="mt-0.5 text-xs leading-relaxed text-ink-muted sm:text-sm">{sub}</p>}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>
@@ -407,27 +407,27 @@ export function MoneyCard({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="portal-enter flex flex-col rounded-2xl bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_12px_32px_-24px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/80 sm:p-4">
+    <div className="portal-enter flex flex-col rounded-2xl bg-white/[0.04] p-3 shadow-[0_18px_44px_-24px_rgba(0,0,0,0.75)] ring-1 ring-white/10 sm:p-4">
       <div className="flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-2">
           <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dot}`} />
-          <span className="truncate text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 sm:text-[11px]">
+          <span className="truncate text-[10px] font-bold uppercase tracking-[0.08em] text-ink-muted sm:text-[11px]">
             {label}
           </span>
         </span>
         {share !== undefined && (
-          <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-500">
+          <span className="shrink-0 rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-ink-muted">
             {share}%
           </span>
         )}
       </div>
 
-      <p className="mt-1.5 font-display text-[20px] font-extrabold leading-none tracking-[-0.02em] tabular-nums text-slate-900 sm:text-2xl">
+      <p className="mt-1.5 font-display text-[20px] font-extrabold leading-none tracking-[-0.02em] tabular-nums text-ink sm:text-2xl">
         {amount}
       </p>
 
       {share !== undefined && (
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
           <div
             className={`h-full rounded-full ${dot}`}
             style={{ width: `${Math.max(share, 1.5)}%` }}
@@ -435,7 +435,7 @@ export function MoneyCard({
         </div>
       )}
 
-      <p className="mt-2 flex-1 text-[11px] leading-relaxed text-slate-500 sm:text-xs">
+      <p className="mt-2 flex-1 text-[11px] leading-relaxed text-ink-muted sm:text-xs">
         {body}
       </p>
       {action && <div className="mt-2">{action}</div>}
@@ -478,30 +478,30 @@ export function RateRow({
   const skin = TONES[tone];
 
   return (
-    <div className="rounded-xl bg-slate-50 px-4 py-3">
+    <div className="rounded-xl bg-white/[0.04] px-4 py-3">
       <div className="flex items-baseline justify-between gap-3">
-        <span className="text-sm font-bold text-slate-900">{label}</span>
+        <span className="text-sm font-bold text-ink">{label}</span>
         <span
           className={`font-display text-lg font-bold tabular-nums ${
             enough
               ? goodWhenUp
-                ? "text-slate-900"
+                ? "text-ink"
                 : pct >= 15
-                  ? "text-rose-600"
-                  : "text-slate-900"
-              : "text-slate-300"
+                  ? "text-rose-300"
+                  : "text-ink"
+              : "text-ink-muted"
           }`}
         >
           {enough ? `${pct}%` : "—"}
         </span>
       </div>
-      <div className="mt-2 h-2 overflow-hidden rounded-full bg-white ring-1 ring-inset ring-slate-200">
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10 ring-1 ring-inset ring-white/10">
         <div
-          className={`h-full rounded-full ${enough ? skin.dot : "bg-slate-200"}`}
+          className={`h-full rounded-full ${enough ? skin.dot : "bg-white/10"}`}
           style={{ width: `${enough ? Math.min(Math.max(pct, 1.5), 100) : 0}%` }}
         />
       </div>
-      <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
+      <p className="mt-1.5 text-xs leading-relaxed text-ink-muted">
         {enough
           ? sentence(pct)
           : `Not enough visits yet to work this out — it needs ${minSample}, and there ${

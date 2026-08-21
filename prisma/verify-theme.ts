@@ -83,10 +83,18 @@ check(
 offenders.forEach((o) => fails.push(`  light bg, no theme-light: ${o}`));
 
 // ── The known light pages still declare it ───────────────────────────────
+//
+// The doctor portal was on this list and is not any more. It now stands on
+// --surface, the same navy every client screen uses, because a practitioner
+// coming off the public site and signing in should not feel handed to a
+// different company's admin tool. Dropping `.theme-light` is what makes the
+// four screens that never carried a colour of their own (calendar, requests,
+// practice, today) arrive correct: `card-soft` and the ink tokens mean there
+// exactly what they mean on the hub. Its own checks are at the foot of this
+// file, and they are the opposite of this one.
 for (const f of [
   "src/app/patient/appointments/page.tsx",
   "src/app/admin/layout.tsx",
-  "src/app/doctor/portal/layout.tsx",
   "src/app/doctor/join/page.tsx",
 ]) {
   check(`${f.split("/").slice(-2).join("/")} is theme-light`, read(f).includes("theme-light"));
@@ -151,10 +159,12 @@ check(
 // the opposite one, and the check for it is at the foot of this file.
 // Every dark surface rendered inside a theme-light page needs the class.
 const DARK_SURFACE = /bg-\[#0[0-9a-f]{5}\]/;
-for (const f of [
-  "src/components/doctor/PortalRail.tsx",
-  "src/components/doctor/dashboard/DashboardHome.tsx",
-]) {
+// DashboardHome came off this list with the portal: it is no longer a light
+// page with dark islands on it, it is dark throughout, so there is no
+// light-to-dark boundary left for `on-dark` to repair. PortalRail stays,
+// because the rail is still its own darker surface and still has to survive
+// being rendered inside a theme-light page elsewhere.
+for (const f of ["src/components/doctor/PortalRail.tsx"]) {
   const src = read(f);
   const name = f.split("/").pop();
   // Only elements that also paint translucent whites on themselves matter.
@@ -515,6 +525,66 @@ check(
 check(
   "the photograph carries no full-frame scrim",
   !/inset-0 bg-gradient-to-[rt] from-\[#0/.test(hero)
+);
+
+/* ------------------------------------------------------------------------
+   The doctor portal is dark now, and has to stay that way
+   --------------------------------------------------------------------- */
+// It used to be a near-white console with white panels. The whole point of
+// the change is that a doctor gets the same product the client side is, so
+// the guard is the inverse of the light-page list above: the layout must NOT
+// declare theme-light, and the canvas must be the shared surface rather than
+// a colour of its own.
+const portalLayout = read("src/app/doctor/portal/layout.tsx");
+check(
+  "the portal layout is not theme-light",
+  !/theme-light/.test(portalLayout),
+  "re-adding it repaints every translucent panel solid white"
+);
+check("the portal still uses the portal canvas", /portal-canvas/.test(portalLayout));
+check(
+  "the canvas stands on the shared surface",
+  /\.portal-canvas[^}]*background-color:\s*var\(--surface\)/s.test(css),
+  "a colour of its own is how it drifted into looking like a separate product"
+);
+
+// The dashboard was built in slate literals for a white ground. Those are the
+// exact classes that turn it unreadable if any of them come back: slate-900
+// type is near-black on navy, and a solid `bg-white` panel is a hole punched
+// in the page. Comments are stripped first, because three suites in this repo
+// have now failed on the note explaining a fix rather than on the code.
+const PORTAL_SURFACES = [
+  "src/components/doctor/dashboard/kit.tsx",
+  "src/components/doctor/dashboard/DashboardHome.tsx",
+  "src/components/doctor/dashboard/Charts.tsx",
+  "src/components/doctor/portalUi.tsx",
+];
+for (const f of PORTAL_SURFACES) {
+  const code = read(f)
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/^\s*\/\/.*$/gm, " ");
+  const name = f.split("/").pop();
+  const slate = code.match(/text-slate-(?:[6-9]00|[45]00)/g) ?? [];
+  check(`${name} sets no light-ground type`, slate.length === 0, slate.join(", "));
+  // `bg-white/[0.04]` is the dark idiom and must not trip this: only a SOLID
+  // white fill is the failure.
+  const solid = code.match(/bg-white(?![\/\w-])/g) ?? [];
+  check(`${name} paints no solid white panel`, solid.length === 0, `${solid.length} found`);
+}
+
+// Recharts takes SVG attributes, not classes, so nothing about the theme
+// reaches a chart automatically. A series left at its light-ground colour is
+// a dark blue on a dark blue, and the axis labels go with it.
+const charts = read("src/components/doctor/dashboard/Charts.tsx");
+check(
+  "chart axes are set for a dark ground",
+  /rgba\(255,255,255/.test(charts),
+  "slate hex ticks disappear on navy"
+);
+check(
+  "the tooltip is a dark card",
+  /background:\s*"#0d1526"/.test(charts),
+  "a white tooltip flashing over a navy chart is the worst of both"
 );
 
 console.log(`\n${pass} passed, ${fails.length} failed`);

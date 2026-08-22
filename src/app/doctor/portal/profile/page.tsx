@@ -273,7 +273,7 @@ export default async function DoctorProfilePage() {
                       name="workDays"
                       value={d.value}
                       defaultChecked={workDays.has(d.value)}
-                      className="h-4 w-4 rounded border-white/15 text-brand-600 focus:ring-brand-400"
+                      className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-400"
                     />
                     <span className="text-ink-soft">{d.label}</span>
                   </label>
@@ -317,7 +317,7 @@ export default async function DoctorProfilePage() {
           description="Block out holidays or leave. Bookable slots are hidden for these dates, on top of your weekly hours."
         >
           {timeOff.length > 0 && (
-            <ul className="mb-6 divide-y divide-white/[0.08] rounded-xl border border-white/10">
+            <ul className="mb-6 divide-y divide-slate-100 rounded-xl border border-slate-200">
               {timeOff.map((t) => {
                 const start = DATE_FMT.format(t.startsAt);
                 const end = DATE_FMT.format(
@@ -421,10 +421,10 @@ function ListingPreview({
     <Panel>
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-display text-lg font-bold text-ink">
+          <h2 className="font-display text-lg font-bold text-slate-900">
             How your listing reads
           </h2>
-          <p className="mt-0.5 text-sm text-ink-muted">
+          <p className="mt-0.5 text-sm text-slate-500">
             Exactly what a client sees before they decide to book you.
           </p>
         </div>
@@ -439,22 +439,22 @@ function ListingPreview({
           <img
             src={doctor.image}
             alt=""
-            className="h-24 w-24 shrink-0 rounded-2xl object-cover ring-1 ring-white/10"
+            className="h-24 w-24 shrink-0 rounded-2xl object-cover ring-1 ring-slate-200"
           />
         ) : (
-          <div className="grid h-24 w-24 shrink-0 place-items-center rounded-2xl bg-white/[0.06] text-center text-[11px] font-semibold text-ink-muted ring-1 ring-white/10">
+          <div className="grid h-24 w-24 shrink-0 place-items-center rounded-2xl bg-slate-100 text-center text-[11px] font-semibold text-slate-400 ring-1 ring-slate-200">
             No photo
           </div>
         )}
 
         <div className="min-w-0 flex-1">
-          <p className="font-display text-xl font-bold text-ink">
+          <p className="font-display text-xl font-bold text-slate-900">
             {doctor.name}
           </p>
-          <p className="text-sm text-ink-soft">
+          <p className="text-sm text-slate-600">
             {[doctor.title, doctor.specialty].filter(Boolean).join(" · ")}
           </p>
-          <p className="mt-1 text-sm text-ink-muted">
+          <p className="mt-1 text-sm text-slate-500">
             {[doctor.clinic, doctor.location].filter(Boolean).join(", ")}
           </p>
 
@@ -474,7 +474,7 @@ function ListingPreview({
       </div>
 
       {doctor.about && (
-        <p className="mt-5 whitespace-pre-line text-sm leading-relaxed text-ink-soft">
+        <p className="mt-5 whitespace-pre-line text-sm leading-relaxed text-slate-700">
           {doctor.about}
         </p>
       )}
@@ -494,8 +494,8 @@ function ListingPreview({
       {/* Registration is never published — it is shown here so the doctor can
           confirm we hold the right details. */}
       {(doctor.regCouncil || doctor.regNumber) && (
-        <p className="mt-5 rounded-xl bg-white/[0.04] px-4 py-3 text-xs text-ink-muted">
-          <strong className="font-semibold text-ink-soft">
+        <p className="mt-5 rounded-xl bg-slate-50 px-4 py-3 text-xs text-slate-500">
+          <strong className="font-semibold text-slate-700">
             Registration on file
           </strong>{" "}
           is {[doctor.regCouncil, doctor.regNumber, doctor.regYear].filter(Boolean).join(" · ")}.
@@ -504,7 +504,7 @@ function ListingPreview({
       )}
 
       <div className="mt-5">
-        <p className="text-xs font-bold uppercase tracking-wide text-ink-muted">
+        <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
           Your links
         </p>
         {links.length ? (
@@ -515,25 +515,25 @@ function ListingPreview({
                 href={l.url}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:bg-white/10"
+                className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
               >
                 {l.label} · {l.handle}
               </a>
             ))}
           </div>
         ) : (
-          <p className="mt-1.5 text-sm text-ink-muted">
+          <p className="mt-1.5 text-sm text-slate-400">
             None yet. Add them above.
           </p>
         )}
       </div>
 
       {gaps.length > 0 && (
-        <div className="mt-6 rounded-xl border border-amber-300/40 bg-amber-500/15 px-4 py-3">
-          <p className="text-sm font-bold text-amber-100">
+        <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-bold text-amber-900">
             Your listing is missing {gaps.length === 1 ? "one thing" : `${gaps.length} things`}
           </p>
-          <ul className="mt-1.5 list-inside list-disc text-sm text-amber-100/90">
+          <ul className="mt-1.5 list-inside list-disc text-sm text-amber-900/90">
             {gaps.map((g) => (
               <li key={g.key}>{g.label}</li>
             ))}
@@ -547,13 +547,13 @@ function ListingPreview({
 function Detail({ label, items }: { label: string; items: string[] }) {
   return (
     <div>
-      <p className="text-xs font-bold uppercase tracking-wide text-ink-muted">
+      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
         {label}
       </p>
       {items.length ? (
-        <p className="mt-1 text-sm text-ink-soft">{items.join(", ")}</p>
+        <p className="mt-1 text-sm text-slate-700">{items.join(", ")}</p>
       ) : (
-        <p className="mt-1 text-sm text-ink-muted">Not set</p>
+        <p className="mt-1 text-sm text-slate-400">Not set</p>
       )}
     </div>
   );

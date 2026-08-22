@@ -73,11 +73,11 @@ export function PageHead({
             {eyebrow}
           </p>
         )}
-        <h1 className="mt-2 font-display text-[26px] font-extrabold leading-tight tracking-[-0.035em] text-ink sm:text-[32px]">
+        <h1 className="mt-2 font-display text-[26px] font-extrabold leading-tight tracking-[-0.035em] text-slate-900 sm:text-[32px]">
           {title}
         </h1>
         {sub && (
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-muted">
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
             {sub}
           </p>
         )}
@@ -148,7 +148,7 @@ export function Panel({
 
   return (
     <section
-      className={`portal-enter group/panel relative overflow-hidden rounded-2xl bg-white/[0.04] shadow-[0_18px_44px_-24px_rgba(0,0,0,0.75)] ring-1 ring-white/10 transition duration-200 hover:shadow-[0_18px_44px_-24px_rgba(0,0,0,0.75)] hover:ring-white/15 ${className}`}
+      className={`portal-enter group/panel relative overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05),0_12px_32px_-20px_rgba(15,23,42,0.22)] ring-1 ring-slate-200/80 transition duration-200 hover:shadow-[0_1px_2px_rgba(15,23,42,0.05),0_18px_44px_-22px_rgba(15,23,42,0.4)] hover:ring-slate-300 ${className}`}
       // Staggered so a screenful arrives rather than appearing. Capped: past
       // about eight the last panel is visibly late and it stops reading as
       // polish.
@@ -164,7 +164,7 @@ export function Panel({
       )}
 
       {(title || action) && (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.08] px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
           <div className="flex min-w-0 items-center gap-3">
             {skin && icon && (
               <span
@@ -176,11 +176,11 @@ export function Panel({
             )}
             <div className="min-w-0">
               {title && (
-                <h2 className="font-display text-base font-bold text-ink">
+                <h2 className="font-display text-base font-bold text-slate-900">
                   {title}
                 </h2>
               )}
-              {sub && <p className="mt-0.5 text-xs text-ink-muted">{sub}</p>}
+              {sub && <p className="mt-0.5 text-xs text-slate-500">{sub}</p>}
             </div>
           </div>
           {action}
@@ -230,7 +230,7 @@ export function StatTile({
       <div className="relative flex items-start justify-between gap-3">
         {/* Label first, small and set wide: the eye lands on the figure either
             way, and this way it already knows what it is looking at. */}
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
           {label}
         </p>
         {icon && (
@@ -245,7 +245,7 @@ export function StatTile({
 
       <p
         className={`relative mt-2 font-display text-3xl font-bold tracking-[-0.02em] tabular-nums ${
-          tone === "attention" ? "text-amber-600" : "text-ink"
+          tone === "attention" ? "text-amber-600" : "text-slate-900"
         }`}
       >
         {value}
@@ -258,21 +258,21 @@ export function StatTile({
           <span
             className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums ${
               delta >= 0
-                ? "bg-teal-500/15 text-teal-300"
-                : "bg-rose-500/15 text-rose-300"
+                ? "bg-teal-50 text-teal-700"
+                : "bg-rose-50 text-rose-700"
             }`}
           >
             {delta >= 0 ? "▲" : "▼"}
             {Math.abs(Math.round(delta * 100))}%
           </span>
         )}
-        {hint && <p className="text-xs leading-relaxed text-ink-muted">{hint}</p>}
+        {hint && <p className="text-xs leading-relaxed text-slate-500">{hint}</p>}
       </div>
     </>
   );
 
   const shell =
-    "portal-enter group/stat relative overflow-hidden rounded-2xl bg-white/[0.04] p-5 shadow-[0_18px_44px_-24px_rgba(0,0,0,0.75)] ring-1 ring-white/10 transition duration-200";
+    "portal-enter group/stat relative overflow-hidden rounded-2xl bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/80 transition duration-200";
   const style = { animationDelay: `${Math.min(index, 8) * 45}ms` };
 
   return href ? (
@@ -281,7 +281,7 @@ export function StatTile({
       style={style}
       // Rises under the cursor and settles when pressed. The whole of
       // "interactive" is feedback on the things that do something.
-      className={`${shell} block hover:-translate-y-0.5 hover:shadow-[0_18px_44px_-24px_rgba(0,0,0,0.75)] hover:ring-white/15 active:translate-y-0`}
+      className={`${shell} block hover:-translate-y-0.5 hover:shadow-[0_1px_2px_rgba(15,23,42,0.05),0_16px_36px_-20px_rgba(15,23,42,0.45)] hover:ring-slate-300 active:translate-y-0`}
     >
       {body}
     </Link>
@@ -306,17 +306,17 @@ export function Empty({
   icon?: "calendar" | "inbox" | "clinic" | "user";
 }) {
   return (
-    <div className="rounded-2xl border border-dashed border-white/15 bg-gradient-to-b from-white/70 to-slate-50/50 px-6 py-14 text-center">
+    <div className="rounded-2xl border border-dashed border-slate-300 bg-gradient-to-b from-white/70 to-slate-50/50 px-6 py-14 text-center">
       <span
         aria-hidden
-        className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 text-ink-muted ring-1 ring-inset ring-white"
+        className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 ring-1 ring-inset ring-white"
       >
         <GlyphIcon name={icon} />
       </span>
-      <h3 className="mt-4 font-display text-base font-bold text-ink">
+      <h3 className="mt-4 font-display text-base font-bold text-slate-900">
         {title}
       </h3>
-      <p className="mx-auto mt-1.5 max-w-sm text-sm text-ink-muted">{body}</p>
+      <p className="mx-auto mt-1.5 max-w-sm text-sm text-slate-500">{body}</p>
       {action && <div className="mt-5">{action}</div>}
     </div>
   );
@@ -336,8 +336,8 @@ export function Notice({
 }) {
   const skin = {
     info: "border-blue-200 bg-blue-50 text-blue-900",
-    attention: "border-amber-200 bg-amber-500/15 text-amber-900",
-    warning: "border-rose-200 bg-rose-500/15 text-rose-900",
+    attention: "border-amber-200 bg-amber-50 text-amber-900",
+    warning: "border-rose-200 bg-rose-50 text-rose-900",
   }[tone];
 
   return (
@@ -359,11 +359,11 @@ export function Tag({
   children: React.ReactNode;
 }) {
   const skin = {
-    slate: "bg-white/[0.06] text-ink-soft",
-    teal: "bg-teal-500/15 text-teal-300 ring-1 ring-teal-200",
-    amber: "bg-amber-500/15 text-amber-800 ring-1 ring-amber-200",
-    rose: "bg-rose-500/15 text-rose-300 ring-1 ring-rose-200",
-    brand: "bg-brand-500/15 text-brand-300 ring-1 ring-brand-200",
+    slate: "bg-slate-100 text-slate-600",
+    teal: "bg-teal-50 text-teal-700 ring-1 ring-teal-200",
+    amber: "bg-amber-50 text-amber-800 ring-1 ring-amber-200",
+    rose: "bg-rose-50 text-rose-700 ring-1 ring-rose-200",
+    brand: "bg-brand-50 text-brand-700 ring-1 ring-brand-200",
     gold: "bg-amber-100 text-amber-900 ring-1 ring-amber-300",
   }[tone];
   return (
@@ -381,7 +381,7 @@ export const portalBtn =
 // the same treatment the client side gives its primary action, so a doctor
 // who has seen the public site recognises this one.
 export const portalBtnPrimary = `${portalBtn} bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-[0_6px_18px_-6px_rgba(31,111,214,0.7)] hover:from-brand-700 hover:to-brand-600 hover:shadow-[0_8px_22px_-6px_rgba(31,111,214,0.85)]`;
-export const portalBtnQuiet = `${portalBtn} border border-white/10 bg-white/[0.04] text-ink-soft hover:border-white/15 hover:bg-white/[0.08]`;
+export const portalBtnQuiet = `${portalBtn} border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50`;
 
 /* -------------------------------- Glyphs ------------------------------- */
 

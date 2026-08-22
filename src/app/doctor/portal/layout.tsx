@@ -121,7 +121,7 @@ export default async function DoctorPortalLayout({
     : null;
 
   return (
-    <div className="portal-canvas min-h-screen">
+    <div className="theme-light portal-canvas min-h-screen">
       {/* Sets the rail state before the browser paints, so a doctor who
           collapsed it last time does not watch it slam shut a moment after
           the page appears. It has to be inline and blocking to beat first

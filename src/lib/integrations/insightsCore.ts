@@ -73,8 +73,12 @@ export function templateInsights(m: InsightMetrics): InsightItem[] {
     out.push({
       kind: "clock",
       metric: String(m.awaiting),
-      title: "Waiting on you",
-      body: "Holding slots nobody else can take.",
+      // Was "Waiting on you", which the money donut ALSO used, for a
+      // different figure entirely: this is a COUNT of booking requests, that
+      // is a SUM of money from visits never closed off. Two things cannot
+      // share one name on one screen.
+      title: "Requests to confirm",
+      body: "Each one holds a slot nobody else can book.",
     });
   }
 
@@ -82,8 +86,8 @@ export function templateInsights(m: InsightMetrics): InsightItem[] {
     out.push({
       kind: "money",
       metric: money(m.unresolved),
-      title: "Unclosed visits",
-      body: "Happened, never marked complete.",
+      title: "Not closed off",
+      body: "The visit happened but was never marked complete.",
     });
   }
 

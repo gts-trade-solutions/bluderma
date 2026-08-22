@@ -363,7 +363,25 @@ async function main() {
   // The headline still must carry a noun: the screen this replaced showed
   // "₹2,91,570" under the bare word "Booked", and a practitioner could not
   // tell whether that was money received, owed, or hoped for.
-  check("the dashboard says booked value, not collected", /"Booked value"/.test(dash));
+  // This matched anywhere the words appeared, so it passed on the CHART
+  // title and on the comment explaining the rename, neither of which is the
+  // thing it was protecting. It tests the tile's own label now, with comments
+  // stripped, and asserts the caveat that makes the figure honest rather than
+  // any particular wording of the name.
+  const dashCode = dash
+    .replace(/\{\/\*[\s\S]*?\*\/\}/g, " ")
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/^\s*\/\/.*$/gm, " ");
+  check(
+    "the revenue tile names revenue",
+    /label="Revenue booked"/.test(dashCode),
+    "the top-left figure is the one a reader anchors on"
+  );
+  check(
+    "and says plainly it is not money received",
+    /Not what has reached you yet/.test(dashCode),
+    "booked is not collected, and the tile has to say so"
+  );
   check("and never claims the money is in hand", !/label="Collected"/.test(dash));
   check("it explains the unresolved bucket", /never marked complete/.test(dash));
   // The projection must be shown as derived from the doctor's own average,

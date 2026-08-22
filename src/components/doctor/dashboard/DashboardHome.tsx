@@ -128,9 +128,9 @@ export default async function DashboardHome({
     getApplicationGaps(doctorId),
   ]);
   const listingGaps = advisoryGaps(gaps);
-  // "Dr. Nithya": a practitioner is addressed by title, and the greeting read
-  // as first-name familiarity without it. Any existing "Dr." is stripped first
-  // so it can never double up.
+  // "Dr. Nithya": a practitioner is addressed by title, and the greeting
+  // read as first-name familiarity without it. Any existing "Dr." is
+  // stripped first so it can never double up.
   const salutation = `Dr. ${doctorName.replace(/^Dr[. ]+/i, "").split(" ")[0]}`;
   const todayIso = clinicWallClock().toISOString().slice(0, 10);
   const since = comparisonLabel(m.period);
@@ -163,7 +163,7 @@ export default async function DashboardHome({
             />
             {m.periodLabel}
           </p>
-          <h1 className="mt-1.5 font-display text-[22px] font-extrabold leading-tight tracking-[-0.035em] text-ink sm:text-[28px]">
+          <h1 className="mt-1.5 font-display text-[22px] font-extrabold leading-tight tracking-[-0.035em] text-slate-900 sm:text-[28px]">
             {greeting()}, {salutation}
           </h1>
         </div>
@@ -172,7 +172,7 @@ export default async function DashboardHome({
           {m.appointments.awaiting > 0 && (
             <Link
               href="/doctor/portal/requests"
-              className="inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-amber-500/15 py-1.5 pl-1.5 pr-3.5 text-xs font-bold text-amber-100 transition hover:bg-amber-500/25"
+              className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 py-1.5 pl-1.5 pr-3.5 text-xs font-bold text-amber-900 transition hover:bg-amber-100"
             >
               <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-amber-500 text-[11px] font-bold text-white">
                 {m.appointments.awaiting}
@@ -186,14 +186,14 @@ export default async function DashboardHome({
           {m.nextToday && (
             <Link
               href="/doctor/portal/today"
-              className="inline-flex min-w-0 items-center gap-2 rounded-full border border-teal-300/40 bg-teal-500/15 py-1.5 pl-3 pr-3.5 text-xs font-bold text-teal-100 transition hover:bg-teal-500/25"
+              className="inline-flex min-w-0 items-center gap-2 rounded-full border border-teal-200 bg-teal-50 py-1.5 pl-3 pr-3.5 text-xs font-bold text-teal-900 transition hover:bg-teal-100"
             >
               <span className="tabular-nums">{m.nextToday.at}</span>
               <span className="h-3 w-px bg-teal-300" aria-hidden />
               <span className="max-w-[9rem] truncate font-semibold">
                 {m.nextToday.patientName}
               </span>
-              <span className="font-semibold text-teal-300">
+              <span className="font-semibold text-teal-700">
                 {countdown(m.nextToday.minutesAway)}
               </span>
             </Link>
@@ -207,17 +207,26 @@ export default async function DashboardHome({
       {/* Two across on a phone rather than one: four full-width tiles is four
           screens of scrolling before the first chart. */}
       <div className="mb-5 grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
+        {/* The labels are the plainest words that are still true.
+            "Booked value" and "Visits booked" both lead on a word doing
+            grammatical work rather than naming a thing, and a reader has to
+            finish the phrase before they know what they are looking at.
+            "Returning" was the worst of them: returning what?
+
+            "Revenue" is the word a practitioner already uses for the first
+            one. "Booked" stays in the hint rather than the label, because it
+            is the caveat, not the subject. */}
         <Kpi
-          label="Booked value"
+          label="Revenue booked"
           value={money(m.periodBooked)}
           delta={m.periodDelta}
           since={since}
           tone="brand"
           icon="rupee"
-          hint="Everything clients booked with you. Cancelled visits are not counted."
+          hint="What clients agreed to pay. Not what has reached you yet, and cancelled visits are left out."
         />
         <Kpi
-          label="Visits booked"
+          label="Appointments"
           value={String(m.appointments.bookedCount)}
           delta={m.appointments.countDelta}
           since={since}
@@ -225,22 +234,17 @@ export default async function DashboardHome({
           icon="calendar"
           hint={
             m.appointments.upcoming === 1
-              ? "You have 1 confirmed visit still ahead of you, on any date."
-              : `You have ${m.appointments.upcoming} confirmed visits still ahead of you, on any date.`
+              ? "Booked in this period. 1 is still ahead of you."
+              : `Booked in this period. ${m.appointments.upcoming} are still ahead of you.`
           }
         />
         {/* These two are halves of one number and were not written that way.
-            "Returning 15" over "100% of your clients this period had been
-            before" made a reader work out for themselves that the 0 in the
-            tile beside it was the other half, and "Returning" on its own is
-            not a thing: returning what?
-
-            So both now carry the same denominator in plain words. A doctor
-            reads "3 of the 18 people you saw were booking for the first time"
-            and knows what it counts and what it is out of, without the
-            percentage and without the tile next to it. */}
+            "Returning 15" over "100% of your clients had been before" made a
+            reader work out for themselves that the 0 beside it was the other
+            half. Both carry the same denominator in words now, so neither
+            depends on the other having been read first. */}
         <Kpi
-          label="New clients"
+          label="First-time clients"
           value={String(m.patients.newCount)}
           tone="violet"
           icon="users"
@@ -248,7 +252,7 @@ export default async function DashboardHome({
           href="/doctor/portal/calendar"
         />
         <Kpi
-          label="Seen you before"
+          label="Repeat clients"
           value={String(m.patients.returningCount)}
           tone="amber"
           icon="repeat"
@@ -271,22 +275,23 @@ export default async function DashboardHome({
           index={0}
           tone="brand"
           icon="trend"
-          title="Booked value over time"
+          title="Revenue booked over time"
           sub={`${m.seriesGrain === "week" ? "Week by week" : "Day by day"} across ${m.periodLabel}`}
           action={
             !m.isComplete && m.projected > 0 ? (
-              <span className="rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-bold text-ink-soft ring-1 ring-white/10">
-                On track for{" "}
-                <span className="tabular-nums text-ink">
+              <span className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-600 ring-1 ring-slate-200">
+                At this rate:{" "}
+                <span className="tabular-nums text-slate-900">
                   {money(m.projected)}
-                </span>
+                </span>{" "}
+                <span className="font-semibold text-slate-400">by month end</span>
               </span>
             ) : undefined
           }
           note={
             best.value > 0 ? (
               <>
-                <strong className="font-bold text-ink">
+                <strong className="font-bold text-slate-900">
                   Your best {m.seriesGrain === "week" ? "week" : "day"}
                   {m.seriesGrain === "week" ? " started " : " was "}
                   {prettyDay(best.date)}
@@ -299,11 +304,29 @@ export default async function DashboardHome({
                 {!m.isComplete && m.projected > 0 && (
                   <>
                     {" "}
-                    Carrying on at this rate, {m.periodLabel} finishes on about{" "}
-                    <strong className="font-bold text-ink">
+                    {/* Show the sum, do not just assert the total. It is
+                        booked-so-far ÷ days-so-far × days-in-period, which is
+                        three numbers a doctor can check against their own
+                        diary in a few seconds. Without them "on track for"
+                        reads as a forecast the system is confident about,
+                        and it is not one: it assumes the rest of the period
+                        looks like the part already gone. */}
+                    That projection is arithmetic, not a forecast:{" "}
+                    <strong className="font-bold text-slate-900">
+                      {money(m.periodBooked)}
+                    </strong>{" "}
+                    booked over {m.daysElapsed} day
+                    {m.daysElapsed === 1 ? "" : "s"} is{" "}
+                    <strong className="font-bold text-slate-900">
+                      {money(Math.round(m.periodBooked / Math.max(m.daysElapsed, 1)))}
+                    </strong>{" "}
+                    a day, and {m.daysInPeriod} days at that rate comes to{" "}
+                    <strong className="font-bold text-slate-900">
                       {money(m.projected)}
                     </strong>
-                    .
+                    . It assumes the {m.daysInPeriod - m.daysElapsed} day
+                    {m.daysInPeriod - m.daysElapsed === 1 ? "" : "s"} left look
+                    like the ones already gone.
                   </>
                 )}
               </>
@@ -355,7 +378,7 @@ export default async function DashboardHome({
             {m.revenue.unresolved > 0 && (
               <DonutKey
                 dot="bg-amber-500"
-                label="Waiting on you"
+                label="Not closed off"
                 amount={money(m.revenue.unresolved)}
               />
             )}
@@ -384,7 +407,7 @@ export default async function DashboardHome({
         />
         <MoneyCard
           dot="bg-amber-500"
-          label="Waiting on you"
+          label="Not closed off"
           amount={money(m.revenue.unresolved)}
           share={share(m.revenue.unresolved)}
           body="The visit date has passed but it was never marked complete. Close these off and the money moves into earned."
@@ -392,7 +415,7 @@ export default async function DashboardHome({
             m.revenue.unresolved > 0 ? (
               <Link
                 href="/doctor/portal/calendar"
-                className="text-[11px] font-bold text-brand-600 hover:text-brand-300"
+                className="text-[11px] font-bold text-brand-600 hover:text-brand-700"
               >
                 Tidy these up →
               </Link>
@@ -406,7 +429,7 @@ export default async function DashboardHome({
           body="Cancelled, or the client did not turn up. This is not part of the total above."
           action={
             m.revenue.recovered > 0 ? (
-              <span className="text-[11px] font-semibold text-ink-muted">
+              <span className="text-[11px] font-semibold text-slate-500">
                 You kept {money(m.revenue.recovered)} in cancellation fees
               </span>
             ) : undefined
@@ -433,13 +456,13 @@ export default async function DashboardHome({
           note={
             m.seats.emptiestDay ? (
               <>
-                <strong className="font-bold text-ink">
+                <strong className="font-bold text-slate-900">
                   {m.seats.emptiestDay.label} has the most room
                 </strong>{" "}
                 — {m.seats.emptiestDay.empty} seat
                 {m.seats.emptiestDay.empty === 1 ? "" : "s"} nobody has taken,
                 worth about{" "}
-                <strong className="font-bold text-ink">
+                <strong className="font-bold text-slate-900">
                   {money(m.seats.emptiestDay.empty * m.seats.perSeat)}
                 </strong>
                 . The value of a seat is{" "}
@@ -498,16 +521,16 @@ export default async function DashboardHome({
 
           <SeatWeekChart data={m.seats.days} perSeat={m.seats.perSeat} />
 
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-semibold text-ink-muted">
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-semibold text-slate-500">
             <span className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded-sm bg-teal-500" />
               Booked
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-sm bg-white/10" />
+              <span className="h-2.5 w-2.5 rounded-sm bg-slate-200" />
               Still open
             </span>
-            <span className="text-ink-muted">
+            <span className="text-slate-400">
               The number above each bar is that day&apos;s total seats
             </span>
           </div>
@@ -536,13 +559,13 @@ export default async function DashboardHome({
             note={
               <>
                 {m.periodLabel} is on track for{" "}
-                <strong className="font-bold text-ink">
+                <strong className="font-bold text-slate-900">
                   {money(m.projected)}
                 </strong>{" "}
                 at your current rate. Each bar is what that figure would grow by
                 — seeing one more client a week for the{" "}
                 {Math.max(m.daysInPeriod - m.daysElapsed, 0)} days left is worth{" "}
-                <strong className="font-bold text-ink">
+                <strong className="font-bold text-slate-900">
                   {money(m.uplift[0]?.amount ?? 0)}
                 </strong>
                 . This is multiplication, not a forecast: it assumes those
@@ -570,7 +593,7 @@ export default async function DashboardHome({
           note={
             m.utilisation.emptiest && m.utilisation.emptiest.free > 0 ? (
               <>
-                <strong className="font-bold text-ink">
+                <strong className="font-bold text-slate-900">
                   {m.utilisation.emptiest.label}
                 </strong>{" "}
                 has been your quietest day — about {m.utilisation.emptiest.free}{" "}
@@ -675,7 +698,7 @@ export default async function DashboardHome({
             />
           </div>
 
-          <dl className="mt-4 grid gap-3 border-t border-white/[0.08] pt-4 sm:grid-cols-2">
+          <dl className="mt-4 grid gap-3 border-t border-slate-100 pt-4 sm:grid-cols-2">
             <MiniStat
               label="Clients book ahead by"
               value={
@@ -703,11 +726,11 @@ export default async function DashboardHome({
               opposite problems, and `cancelledBy` was already being written
               on every one of them. */}
           {m.cancellations.total > 0 && (
-            <div className="mt-4 border-t border-white/[0.08] pt-4">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 Who called the cancellations off
               </p>
-              <div className="mt-2.5 flex h-2.5 overflow-hidden rounded-full bg-white/[0.06]">
+              <div className="mt-2.5 flex h-2.5 overflow-hidden rounded-full bg-slate-100">
                 <span
                   className="bg-slate-400"
                   style={{
@@ -734,14 +757,14 @@ export default async function DashboardHome({
                 />
                 {m.cancellations.unattributed > 0 && (
                   <CancelKey
-                    dot="bg-white/10"
+                    dot="bg-slate-200"
                     label="Not recorded"
                     count={m.cancellations.unattributed}
                   />
                 )}
               </ul>
               {m.cancellations.byClinic > m.cancellations.byPatient && (
-                <p className="mt-2.5 text-xs leading-relaxed text-ink-muted">
+                <p className="mt-2.5 text-xs leading-relaxed text-slate-500">
                   More of these came from your side than the client&apos;s.
                   Trimming the hours you rarely keep is usually a smaller cost
                   than cancelling on someone who booked.
@@ -770,19 +793,19 @@ export default async function DashboardHome({
               return (
                 <li key={step.label}>
                   <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-sm font-semibold text-ink-soft">
+                    <span className="text-sm font-semibold text-slate-700">
                       {FUNNEL_LABELS[i] ?? step.label}
                     </span>
-                    <span className="font-display text-base font-bold tabular-nums text-ink">
+                    <span className="font-display text-base font-bold tabular-nums text-slate-900">
                       {step.count}
                       {lost > 0 && (
-                        <span className="ml-2 text-xs font-semibold text-rose-300">
+                        <span className="ml-2 text-xs font-semibold text-rose-600">
                           −{lost} lost here
                         </span>
                       )}
                     </span>
                   </div>
-                  <div className="mt-1.5 h-3 overflow-hidden rounded-full bg-white/[0.06]">
+                  <div className="mt-1.5 h-3 overflow-hidden rounded-full bg-slate-100">
                     <div
                       className={`h-full rounded-full ${
                         i === 0 ? "bg-brand-300" : i === 1 ? "bg-brand-500" : "bg-teal-500"
@@ -801,7 +824,7 @@ export default async function DashboardHome({
           tone="amber"
           icon="clinic"
           title={m.clinicSplit.length > 1 ? "Across your locations" : "Your location"}
-          sub="Booked value by place, last 90 days"
+          sub="Revenue booked by place, last 90 days"
           note={
             m.clinicSplit.length > 1
               ? `${m.clinicSplit[0].name.replace(/^BluDerma\s+/, "")} brings you the most work — ${m.clinicSplit[0].count} bookings.`
@@ -829,7 +852,7 @@ export default async function DashboardHome({
                 {m.clinicSplit.map((c) => (
                   <li
                     key={c.name}
-                    className="flex items-center gap-2 text-xs text-ink-soft"
+                    className="flex items-center gap-2 text-xs text-slate-600"
                   >
                     <span
                       className={`h-2 w-2 shrink-0 rounded-full ${swatchFor(c.colorKey).dot}`}
@@ -837,7 +860,7 @@ export default async function DashboardHome({
                     <span className="truncate">
                       {c.name.replace(/^BluDerma\s+/, "")}
                     </span>
-                    <span className="font-bold tabular-nums text-ink">
+                    <span className="font-bold tabular-nums text-slate-900">
                       {c.count}
                     </span>
                   </li>
@@ -927,7 +950,7 @@ export default async function DashboardHome({
                 <li key={g.key}>
                   <Link
                     href="/doctor/portal/profile"
-                    className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-sm text-ink-soft transition hover:bg-white/[0.04]"
+                    className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-sm text-slate-700 transition hover:bg-slate-50"
                   >
                     <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
                     <span className="min-w-0 flex-1 truncate">{g.label}</span>
@@ -964,19 +987,19 @@ export default async function DashboardHome({
               {m.timeOffAhead.map((t) => (
                 <li
                   key={`${t.startsAt}-${t.endsAt}`}
-                  className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.04] px-4 py-3"
+                  className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3"
                 >
                   <span className="min-w-0">
-                    <span className="block text-sm font-bold text-ink">
+                    <span className="block text-sm font-bold text-slate-900">
                       {prettyRange(t.startsAt, t.endsAt)}
                     </span>
                     {t.reason && (
-                      <span className="mt-0.5 block truncate text-xs text-ink-muted">
+                      <span className="mt-0.5 block truncate text-xs text-slate-500">
                         {t.reason}
                       </span>
                     )}
                   </span>
-                  <span className="shrink-0 text-xs font-bold tabular-nums text-ink-muted">
+                  <span className="shrink-0 text-xs font-bold tabular-nums text-slate-500">
                     {t.days} {t.days === 1 ? "day" : "days"}
                   </span>
                 </li>
@@ -1034,7 +1057,7 @@ export default async function DashboardHome({
             is deliberately not shown in full: an unchecked rating on a named
             clinician is exactly what moderation exists for. */}
         {m.reviewsPending > 0 && (
-          <p className="mb-3 rounded-xl bg-amber-500/15 px-4 py-3 text-xs leading-relaxed text-amber-900 ring-1 ring-inset ring-amber-200">
+          <p className="mb-3 rounded-xl bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-900 ring-1 ring-inset ring-amber-200">
             <strong className="font-bold">
               {m.reviewsPending === 1
                 ? "One review is"
@@ -1049,16 +1072,16 @@ export default async function DashboardHome({
         {m.reviews.latest.length > 0 ? (
           <ul className="grid gap-3 sm:grid-cols-3">
             {m.reviews.latest.map((r) => (
-              <li key={r.id} className="rounded-xl bg-white/[0.04] px-4 py-3.5">
+              <li key={r.id} className="rounded-xl bg-slate-50 px-4 py-3.5">
                 <div className="flex items-center justify-between gap-3">
                   <Stars rating={r.rating} />
-                  <span className="text-xs text-ink-muted">{prettyDate(r.at)}</span>
+                  <span className="text-xs text-slate-400">{prettyDate(r.at)}</span>
                 </div>
                 {r.title && (
-                  <p className="mt-1.5 text-sm font-bold text-ink">{r.title}</p>
+                  <p className="mt-1.5 text-sm font-bold text-slate-900">{r.title}</p>
                 )}
                 {r.body && (
-                  <p className="mt-1 text-sm leading-relaxed text-ink-soft">{r.body}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-slate-700">{r.body}</p>
                 )}
               </li>
             ))}
@@ -1088,8 +1111,8 @@ function DonutKey({
   return (
     <li className="flex items-center gap-2 text-sm">
       <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dot}`} />
-      <span className="min-w-0 flex-1 truncate text-ink-soft">{label}</span>
-      <span className="shrink-0 font-semibold tabular-nums text-ink">
+      <span className="min-w-0 flex-1 truncate text-slate-600">{label}</span>
+      <span className="shrink-0 font-semibold tabular-nums text-slate-900">
         {amount}
       </span>
     </li>
@@ -1126,12 +1149,12 @@ function SeatStat({
   // Full class strings — Tailwind never sees an interpolated one.
   const skin =
     tone === "rose"
-      ? "bg-rose-500/15 text-rose-300 ring-rose-100"
+      ? "bg-rose-50 text-rose-700 ring-rose-100"
       : tone === "teal"
-        ? "bg-teal-500/15 text-teal-300 ring-teal-100"
+        ? "bg-teal-50 text-teal-700 ring-teal-100"
         : tone === "violet"
-          ? "bg-violet-500/15 text-violet-300 ring-violet-100"
-          : "bg-brand-500/15 text-brand-300 ring-brand-100";
+          ? "bg-violet-50 text-violet-700 ring-violet-100"
+          : "bg-brand-50 text-brand-700 ring-brand-100";
 
   return (
     <div className={`rounded-xl px-4 py-3 ring-1 ring-inset ${skin}`}>
@@ -1148,7 +1171,7 @@ function SeatStat({
           </span>
         )}
       </p>
-      <p className="mt-1.5 text-[11px] leading-snug text-ink-muted">{hint}</p>
+      <p className="mt-1.5 text-[11px] leading-snug text-slate-500">{hint}</p>
     </div>
   );
 }
@@ -1243,10 +1266,10 @@ function CancelKey({
   count: number;
 }) {
   return (
-    <li className="flex items-center gap-2 text-xs text-ink-soft">
+    <li className="flex items-center gap-2 text-xs text-slate-600">
       <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} />
       <span>{label}</span>
-      <span className="font-bold tabular-nums text-ink">{count}</span>
+      <span className="font-bold tabular-nums text-slate-900">{count}</span>
     </li>
   );
 }
@@ -1275,14 +1298,14 @@ function MiniStat({
   hint: string;
 }) {
   return (
-    <div className="rounded-xl bg-white/[0.04] px-4 py-3">
-      <dt className="text-[11px] font-bold uppercase tracking-wide text-ink-muted">
+    <div className="rounded-xl bg-slate-50 px-4 py-3">
+      <dt className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
         {label}
       </dt>
-      <dd className="mt-1 font-display text-lg font-bold tabular-nums text-ink">
+      <dd className="mt-1 font-display text-lg font-bold tabular-nums text-slate-900">
         {value}
       </dd>
-      <p className="mt-0.5 text-xs text-ink-muted">{hint}</p>
+      <p className="mt-0.5 text-xs text-slate-500">{hint}</p>
     </div>
   );
 }

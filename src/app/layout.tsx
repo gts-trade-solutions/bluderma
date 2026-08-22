@@ -1,3 +1,6 @@
+import { Suspense } from "react";
+
+import Toast from "@/components/Toast";
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
@@ -113,7 +116,15 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          {/* Inside AuthProvider so it can greet by name, and in Suspense
+              because it reads search params, which opts a route into
+              client-side rendering otherwise. */}
+          <Suspense fallback={null}>
+            <Toast />
+          </Suspense>
+        </AuthProvider>
         {/* Razorpay checkout. lazyOnload keeps it off the critical path —
             it is only needed once someone reaches the payment step. */}
         <Script

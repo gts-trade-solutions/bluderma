@@ -66,7 +66,6 @@ export default function Footer() {
                 info@bluderma.kr
               </a>
             </li>
-            <li>Mon–Fri, 9:00–18:00 KST</li>
           </ul>
           {/* The doctor side is a whole audience. It must be reachable from
               the page itself, not only from a first-visit dialog somebody

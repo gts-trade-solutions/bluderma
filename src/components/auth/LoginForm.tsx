@@ -1,5 +1,6 @@
 "use client";
 
+import { withToast } from "@/components/Toast";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSession, signIn } from "next-auth/react";
@@ -82,8 +83,11 @@ export default function LoginForm({ googleEnabled = false }: { googleEnabled?: b
       return;
     }
 
+    // The redirect was silent: the page simply changed, leaving a reader to
+    // infer from the furniture whether it had worked. withToast appends to
+    // whatever query string postLoginPath already produced.
     const target = postLoginPath(callbackUrl, role);
-    router.push(target);
+    router.push(withToast(target, "signed-in"));
     router.refresh();
   }
 

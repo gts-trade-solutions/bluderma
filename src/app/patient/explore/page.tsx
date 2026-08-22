@@ -78,9 +78,7 @@ export default async function ExplorePage({
                 Every treatment we cover
               </h1>
               <p className="mt-2 max-w-xl text-sm text-ink-muted">
-                {categories.length} categories, {treatmentCount}{" "}
-                treatments. No prices and no clinic names on the cards. That
-                comes from a doctor, after an assessment.
+                {categories.length} categories, {treatmentCount} treatments.
               </p>
             </div>
             <div className="shrink-0">
@@ -109,7 +107,7 @@ export default async function ExplorePage({
               <SectionHead
                 eyebrow="The whole catalogue"
                 title="Every category, at a glance"
-                sub="Each row scrolls. Names and what they do, no prices, no clinic names."
+                sub="Each row scrolls. Names, and what they do."
               />
               <CategoryRows />
             </section>

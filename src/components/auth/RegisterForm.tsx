@@ -1,5 +1,6 @@
 "use client";
 
+import { withToast } from "@/components/Toast";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSession, signIn } from "next-auth/react";
@@ -99,9 +100,12 @@ export default function RegisterForm({ googleEnabled = false }: { googleEnabled?
     // them straight into a middleware bounce to /forbidden.
     const session = await getSession();
     router.push(
-      session?.user?.role
-        ? postLoginPath(callbackUrl, session.user.role)
-        : callbackUrl
+      withToast(
+        session?.user?.role
+          ? postLoginPath(callbackUrl, session.user.role)
+          : callbackUrl,
+        "registered"
+      )
     );
     router.refresh();
   }

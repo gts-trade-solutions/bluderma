@@ -125,12 +125,7 @@ export default async function FinancePage() {
           accent="amber"
           index={0}
           note={
-            <>
-              What the practice spent this month, heaviest first. Only running
-              costs: rent, staff, consumables. Machines are capital and are
-              tracked separately below, because subtracting a laser from one
-              month would make a good month look like a disaster.
-            </>
+            <>Running costs only. Machines are tracked separately below.</>
           }
         >
           <div className="p-4 sm:p-5">
@@ -176,11 +171,7 @@ export default async function FinancePage() {
           accent="brand"
           index={1}
           note={
-            <>
-              Enter what the practice pays out. The more of it that is here,
-              the more the net figure at the top is worth trusting: with
-              nothing recorded, &ldquo;net&rdquo; is just your takings again.
-            </>
+            <>The more of this you record, the more the net figure is worth.</>
           }
         >
           <div className="p-4 sm:p-5">
@@ -196,7 +187,7 @@ export default async function FinancePage() {
           icon="today"
           accent="slate"
           index={2}
-          note={<>Everything recorded this month. Remove anything mistyped.</>}
+          note={<>Remove anything mistyped.</>}
         >
           {expenses.length === 0 ? (
             <div className="p-5">
@@ -249,13 +240,7 @@ export default async function FinancePage() {
           accent="violet"
           index={3}
           note={
-            <>
-              Register what a machine cost, then log each time you use it and
-              what you charged. That is what turns &ldquo;we bought a
-              laser&rdquo; into an answer to the question you actually have:
-              how much of it has come back, and roughly how many more
-              treatments until it has paid for itself.
-            </>
+            <>Log each use and this tracks how much of it has come back.</>
           }
         >
           <div className="p-4 sm:p-5">

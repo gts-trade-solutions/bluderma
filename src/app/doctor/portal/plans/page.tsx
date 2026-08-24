@@ -83,11 +83,7 @@ export default async function PlansPage() {
           accent="violet"
           index={0}
           note={
-            <>
-              Opens a plan built from what their scan measured, with treatments
-              proposed from the catalogue. Nothing is decided: you accept, add
-              or set aside each line before the patient sees any of it.
-            </>
+            <>Built from their scan. You accept or set aside each line.</>
           }>
           {candidates.length === 0 ? (
             <div className="p-5">
@@ -117,11 +113,7 @@ export default async function PlansPage() {
           accent="brand"
           index={1}
           note={
-            <>
-              A <strong className="font-bold">draft</strong> is yours alone. A
-              plan only reaches the patient&apos;s profile once you share it,
-              and you can withdraw it again.
-            </>
+            <>A draft is yours alone until you share it.</>
           }>
           {plans.length === 0 ? (
             <div className="p-5">

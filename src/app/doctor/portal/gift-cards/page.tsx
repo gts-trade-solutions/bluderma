@@ -2,7 +2,6 @@ import { OfferStatus } from "@prisma/client";
 
 import { Empty, PageHead, Panel } from "@/components/doctor/portalUi";
 import OfferForm, { OfferRow } from "@/components/doctor/OfferForm";
-import RedeemForm from "@/components/doctor/RedeemForm";
 import SoldCard, { type SoldCardRow } from "@/components/doctor/SoldCard";
 import { getOwnDoctor } from "@/lib/doctor/guard";
 import { prisma } from "@/lib/prisma";
@@ -15,14 +14,18 @@ const day = (d: Date) =>
   d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
 /**
- * Gift cards a clinic offers, and redeeming one at the counter.
+ * Gift cards a clinic offers, and what people are holding.
  *
- * ── Each panel says what it is FOR ───────────────────────────────────────
- * "Redeem a card" is a heading that describes a button, not a job. A
- * practitioner meeting this screen for the first time has no reason to know
- * that redemption is what happens when somebody walks in holding a code and
- * wants to pay with it, so every panel here carries a sentence answering
- * "why would I press this".
+ * ── There is no counter-redemption screen ────────────────────────────────
+ * One stood here and was removed at the clinic's request. Note what that
+ * leaves: a card can be BOUGHT, but there is no path for a practitioner to
+ * spend one against a visit, so the balances below are a record rather than
+ * something anybody can draw on. redeemGiftCard is still in the actions
+ * module, unwired, for whenever that path is decided.
+ *
+ * ── The notes are one line ───────────────────────────────────────────────
+ * Each panel says what it is for in a sentence. Longer than that and the
+ * explanation competes with the thing it is explaining.
  */
 export default async function GiftCardsPage() {
   const owner = await getOwnDoctor();
@@ -114,36 +117,25 @@ export default async function GiftCardsPage() {
       />
 
       {/* The three figures a practice actually wants from this screen. */}
-      <div className="mb-5 grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
+      <div className="mb-5 grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-3">
         <Tile label="On sale" value={String(live)} bar="border-teal-500"
               hint={pending > 0 ? `${pending} awaiting review` : "Offers patients can buy"} />
         <Tile label="Cards sold" value={String(rows.length)} bar="border-brand-500"
               hint="Paid for, and in somebody's hands" />
         <Tile label="Still to honour" value={money(outstanding)} bar="border-amber-500"
-              hint="What people can still spend with you" />
-        <Tile label="Redeemed so far" value={money(takenSoFar)} bar="border-violet-500"
-              hint="Treatment already given against a card" />
+              hint="Face value people are holding" />
+        {/* Only when something actually has been. With the counter screen
+            gone there is no way for this to move, so a permanent zero would
+            read as a broken tile rather than an honest one. */}
+        {takenSoFar > 0 && (
+          <Tile label="Redeemed so far" value={money(takenSoFar)} bar="border-violet-500"
+                hint="Treatment already given against a card" />
+        )}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[24rem_minmax(0,1fr)]">
         <div className="space-y-4">
-          <Panel
-            title="Take payment from a card"
-            sub="At the counter"
-            icon="rupee"
-            accent="teal"
-            index={0}
-            note={
-              <>
-                Use this when somebody is standing in front of you with a gift
-                card code and wants to pay with it. Type the code and how much
-                of it to put towards today&apos;s treatment. A card can be used
-                across several visits, so take only what this visit costs.
-              </>
-            }
-          >
-            <RedeemForm />
-          </Panel>
+
 
           <Panel
             title="Create an offer"
@@ -152,12 +144,7 @@ export default async function GiftCardsPage() {
             accent="violet"
             index={1}
             note={
-              <>
-                An offer is a card patients can buy from your practice. It is
-                saved as a draft first; nothing reaches the shop until you send
-                it and BluDerma has checked it, because a card sold on our
-                storefront is a promise we stand behind too.
-              </>
+              <>Saved as a draft. It reaches the shop once BluDerma approves it.</>
             }
           >
             <OfferForm clinics={clinics.map((c) => c.clinic)} />
@@ -172,11 +159,7 @@ export default async function GiftCardsPage() {
             accent="brand"
             index={2}
             note={
-              <>
-                What your practice is selling. Editing an approved offer sends
-                it back for review, so the figures a patient saw when they
-                bought cannot change underneath them.
-              </>
+              <>Editing an approved offer sends it back for review.</>
             }
           >
             {offers.length === 0 ? (
@@ -210,12 +193,7 @@ export default async function GiftCardsPage() {
             index={3}
             padded={false}
             note={
-              <>
-                Every card bought from you, who paid, who it was bought for,
-                and what has been taken off it. Open one before redeeming if
-                you want to check the person in front of you is the person it
-                was meant for.
-              </>
+              <>Who paid, who it is for, and what has been taken off it.</>
             }
           >
             {rows.length === 0 ? (

@@ -189,29 +189,53 @@ async function main() {
   check("nor from the doctor's page", !/prisma\.product\b/.test(medPage));
 
 
-  /* ── Every new panel says what it is FOR ──────────────────────────── */
+  /* ── Every new panel says what it is for, briefly ─────────────────── */
 
-  // A heading describes a button; it does not tell a practitioner why they
-  // would ever press it. "Redeem a card" was the example the clinic raised:
-  // nothing on that screen said it is what happens when somebody walks in
-  // holding a code. These assert the explanation is still there.
-  for (const [file, needle] of [
-    ["src/app/doctor/portal/gift-cards/page.tsx", "standing in front of you"],
-    ["src/app/doctor/portal/medicines/page.tsx", "hand a patient"],
-    ["src/app/doctor/portal/aftercare/page.tsx", "after a procedure"],
-    ["src/app/doctor/portal/gallery/page.tsx", "choosing a doctor look"],
-    ["src/app/doctor/portal/plans/page.tsx", "Nothing is decided"],
-    ["src/app/doctor/portal/finance/page.tsx", "how much of it has come back"],
+  // The first version of this pinned the exact wording, which broke the moment
+  // the copy was shortened, and a guard that fails on an improvement is one
+  // people learn to ignore. What actually matters is the pair of properties:
+  // a panel explains itself, and the explanation stays SHORT. A four-line note
+  // competes with the thing it is explaining.
+  const NOTE_LIMIT = 110;
+  for (const file of [
+    "src/app/doctor/portal/gift-cards/page.tsx",
+    "src/app/doctor/portal/medicines/page.tsx",
+    "src/app/doctor/portal/aftercare/page.tsx",
+    "src/app/doctor/portal/gallery/page.tsx",
+    "src/app/doctor/portal/plans/page.tsx",
+    "src/app/doctor/portal/finance/page.tsx",
   ] as const) {
-    check(
-      `${file.split("/").slice(-2)[0]} explains itself`,
-      readFileSync(file, "utf8").includes(needle),
-      needle
+    const src = readFileSync(file, "utf8");
+    const page = file.split("/").slice(-2)[0];
+
+    const panels = (src.match(/<Panel/g) ?? []).length;
+    const notes = (src.match(/note=\{/g) ?? []).length;
+    check(`${page}: every panel explains itself`, notes >= panels, `${notes} of ${panels}`);
+
+    // Measure the prose, not the JSX around it.
+    const bodies = [...src.matchAll(/note=\{\s*<>([\s\S]*?)<\/>\s*\}/g)].map((m) =>
+      m[1].replace(/\{"\s"\}/g, " ").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim()
     );
+    const tooLong = bodies.filter((b) => b.length > NOTE_LIMIT);
+    check(
+      `${page}: the notes stay short`,
+      tooLong.length === 0,
+      tooLong.map((b) => `${b.length} chars: ${b.slice(0, 44)}…`).join(" | ")
+    );
+    check(`${page}: and none is empty`, bodies.every((b) => b.length > 8));
   }
 
-  const panel = readFileSync("src/components/doctor/portalUi.tsx", "utf8");
-  check("Panel carries a note slot", /note\?: React\.ReactNode/.test(panel));
+  const panelSrc = readFileSync("src/components/doctor/portalUi.tsx", "utf8");
+  check("Panel carries a note slot", /note\?: React\.ReactNode/.test(panelSrc));
+
+  // The counter-redemption screen was removed at the clinic's request. Worth
+  // pinning, because "why can nobody spend these cards" is a question somebody
+  // will ask later and the answer should not have to be archaeology.
+  check(
+    "no counter-redemption screen is wired up",
+    !/<RedeemForm/.test(readFileSync("src/app/doctor/portal/gift-cards/page.tsx", "utf8")),
+    "removed by request; redeemGiftCard remains unwired in the actions module"
+  );
 
   /* ── A sold card is shown in full ─────────────────────────────────── */
 
@@ -233,9 +257,9 @@ async function main() {
     "unspent cards are a real liability"
   );
   check(
-    "redeeming reports what is left",
-    /remainingInr/.test(codeOnly("src/components/doctor/RedeemForm.tsx")),
-    "making the doctor look it up separately is the difference between a tool and a form"
+    "the redeem action still reports what is left",
+    /remainingInr/.test(codeOnly("src/lib/actions/giftCards.ts")),
+    "kept for whenever a redemption path is decided"
   );
 
   /* ── Reading a prescription ────────────────────────────────────────── */

@@ -86,12 +86,7 @@ export default async function MedicinesPage() {
           accent="teal"
           index={0}
           note={
-            <>
-              Your own dispensary: the creams and tablets you hand a patient
-              after a consultation. Once listed, anyone you have treated can
-              order it from their profile. This is not the clinical
-              consumables catalogue, which stays internal.
-            </>
+            <>What you hand a patient after a consultation.</>
           }>
           <div className="p-4 sm:p-5">
             <MedicineForm />
@@ -105,12 +100,7 @@ export default async function MedicinesPage() {
           accent="brand"
           index={1}
           note={
-            <>
-              What patients can currently order. Anything marked{" "}
-              <strong className="font-bold">Rx</strong> asks them to attach the
-              prescription you gave them before they can check out. Delisting
-              one hides it from patients; past orders keep their record.
-            </>
+            <>Rx items ask the patient for their prescription at checkout.</>
           }
         >
           {medicines.length === 0 ? (
@@ -138,11 +128,7 @@ export default async function MedicinesPage() {
           accent="amber"
           index={2}
           note={
-            <>
-              Patients ordering from your list. Check the prescription where
-              one is attached, then move the order along as you dispense and
-              send it. The patient sees each step on their own profile.
-            </>
+            <>Move each one along as you dispense and send it.</>
           }
         >
           {orders.length === 0 ? (

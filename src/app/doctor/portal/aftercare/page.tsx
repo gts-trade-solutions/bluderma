@@ -104,12 +104,7 @@ export default async function AftercarePage() {
           accent="brand"
           index={0}
           note={
-            <>
-              Give this to a patient after a procedure. The do&apos;s,
-              don&apos;ts and warning signs are attached for you; what you type
-              is specific to this person and overrides them. Anything you write
-              is offered again next time you issue for the same treatment.
-            </>
+            <>The standard instructions are attached. What you add is remembered for next time.</>
           }
         >
           <div className="p-4 sm:p-5">
@@ -127,12 +122,7 @@ export default async function AftercarePage() {
           accent="teal"
           index={1}
           note={
-            <>
-              Every sheet you have given out, exactly as it was worded on the
-              day. <strong className="font-bold">Not confirmed</strong> means
-              the patient has not yet ticked that the instructions were
-              explained to them.
-            </>
+            <>Kept exactly as worded on the day it was issued.</>
           }
         >
           {sheets.length === 0 ? (

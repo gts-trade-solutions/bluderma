@@ -78,12 +78,7 @@ export default async function GalleryPage() {
           accent="violet"
           index={0}
           note={
-            <>
-              Before-and-after pairs shown on the public gallery, where people
-              choosing a doctor look. The patient is asked first and sees these
-              exact images; nothing is published until they agree, and they can
-              change their mind at any time.
-            </>
+            <>Shown publicly once the patient agrees. They see these exact images.</>
           }
         >
           <div className="p-4 sm:p-5">
@@ -105,11 +100,7 @@ export default async function GalleryPage() {
           accent="teal"
           index={1}
           note={
-            <>
-              Publish becomes available once the patient has agreed. If they
-              later withdraw, the images stop being served straight away, on
-              the gallery and everywhere else.
-            </>
+            <>Withdrawn consent takes the images down straight away.</>
           }
         >
           {cases.length === 0 ? (

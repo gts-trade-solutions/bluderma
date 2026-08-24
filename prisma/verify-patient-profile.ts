@@ -202,65 +202,67 @@ check(
 
 /* ── Sample panels are marked as such ────────────────────────────────── */
 
-check("the page defines a Sample badge", /function SampleTag/.test(page));
+// ── The one mock that is left ─────────────────────────────────────────
+// Three panels here were fed from patientDemo and each carried a `Sample`
+// badge. Saved addresses and pay-later are real tables now, so their badges
+// went with them and the badge component itself is gone: nothing passes
+// `sample` any more, and a component nobody renders is a trap, not a safety
+// net.
+check("no Sample badge machinery is left", !/function SampleTag/.test(page));
+check("and nothing passes a sample prop", !/\bsample=\{|\n\s+sample\n/.test(page));
 
-// The wallet USED to be on this list. Its badge was removed by request, so it
-// now renders DEMO_WALLET as though it were a live balance. That is a product
-// decision and not this suite's to overturn, but it does move the risk: the
-// figure a client is most likely to act on is the one they can no longer tell
-// is illustrative. So the check inverts rather than disappearing. The badge is
-// asserted GONE, and the source of the number asserted still to be the mock,
-// so whoever wires a real wallet up is told by a failing test to come here.
+// The wallet is the exception, and it is deliberate: the badge was removed by
+// request while the figures stayed mock. That combination is the riskiest
+// state on the page, so it is pinned from both sides rather than left to
+// memory. Re-badging it is fine; silently making it real is not.
 {
   const at = page.indexOf('id="wallet"');
   const next = page.indexOf('id="', at + 10);
   const block = page.slice(at, next > -1 ? next : undefined);
+  check("the wallet is still deliberately unbadged", !/\bsample\b/.test(block));
   check(
-    "the wallet is deliberately unbadged",
-    !/\bsample\b/.test(block),
-    "re-badging it is fine, but then put it back on the list below"
-  );
-  check(
-    "and its figures still come from patientDemo",
+    "and its figures are still traceably mock",
     /DEMO_WALLET/.test(block),
-    "if the wallet is real now, patientDemo's header exception must go too"
+    "if the wallet is real now, the note at the top of the page must change too"
   );
 }
 
-for (const section of ["pay-later"]) {
-  // Fed entirely from patientDemo and must declare it on the heading.
-  const at = page.indexOf(`id="${section}"`);
-  const next = page.indexOf('id="', at + 10);
-  const block = page.slice(at, next > -1 ? next : undefined);
-  check(`${section} is badged Sample`, /\bsample\b/.test(block), "no sample prop");
-}
-// Saved addresses sit inside the Location section, which is otherwise real —
-// so the badge goes on the sub-heading rather than the section.
+// Addresses and instalments must be the real thing, not merely unbadged: an
+// empty section would also pass a "no badge" check on its own.
+check("saved addresses are the editable component", /<AddressBook/.test(page));
+check("instalments read the real programme", /PAY_LATER\./.test(page));
+const demoSrc = readRaw("src/data/patientDemo.ts");
 check(
-  "saved addresses are badged inside a real section",
-  /Saved addresses[\s\S]{0,120}<SampleTag \/>/.test(page)
+  "patientDemo holds nothing but the wallet",
+  !/DEMO_ADDRESSES\s*[:=]/.test(demoSrc) && !/DEMO_PAY_LATER\s*[:=]/.test(demoSrc)
 );
 
+/* ── Distances are real now, and still hedged ────────────────────────── */
+
+// This block used to assert that NO distance was printed, because nothing
+// populated Clinic.lat/lng. Every clinic is geocoded now, so the checks invert:
+// distances may be shown, and what has to hold instead is that they never
+// claim more precision than a straight line can support.
 check(
-  "the demo module says what it is for",
-  /no backend yet|does not exist|not built/i.test(demo)
-);
-check(
-  "and warns that the panels it feeds are labelled",
-  /Sample/.test(demo)
+  "the clinic list is ordered by proximity",
+  /<NearbyClinics/.test(page),
+  "the old note said distance could not be shown; it can"
 );
 
-/* ── No invented distances ───────────────────────────────────────────── */
-
-// Clinic.lat/lng exist and nothing populates them. /api/clinics already
-// refuses to print distances for that reason; this page must too.
+const nearbySrc = readRaw("src/components/patient/NearbyClinics.tsx");
 check(
-  "no distance is printed",
-  !/\bkm\b|kilometre|kilometer|distance away/i.test(page)
+  "distances are hedged, never exact",
+  /straight-line and approximate/.test(nearbySrc),
+  "a precise-looking 4.2 km that is an 11 km drive costs more trust than it buys"
 );
 check(
-  "and it says why",
-  /do not hold coordinates|by area rather than by distance/i.test(page)
+  "the ordering happens on the client, where the position already is",
+  /"use client"/.test(nearbySrc) && /useClientLocation/.test(nearbySrc),
+  "a person's coordinates should not be sent to a server so a list can sort"
+);
+check(
+  "no location means no reshuffling",
+  /byDistance\(clinics, from\)/.test(nearbySrc)
 );
 
 /* ── Conditions are attributed, never diagnosed ──────────────────────── */

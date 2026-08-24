@@ -32,6 +32,17 @@ const dayTime = (d: Date) =>
 
 /* ── Picking the treatments a question is about ───────────────────────── */
 
+/**
+ * Words that describe the site's machinery rather than anything clinical.
+ * Without these, "booking", "appointment" and "revenue" all drag treatment
+ * rows into a question that was never about treatments.
+ */
+const ADMIN_WORDS = new Set(
+  "appointment appointments booking bookings booked book slot slots visit visits revenue earnings takings income money cost costs price prices fee fees order orders card cards gift wallet balance profile account login password upload status month week today tomorrow patient patients doctor doctors clinic clinics report reports scan scans plan plans note notes".split(
+    " "
+  )
+);
+
 const STOP = new Set(
   ("a an and are as at be but by can could do does for from get had has have how i if in is it its me my of on or our so than that the their them then there these they this to too was we what when where which who why will with you your".split(
     " "
@@ -43,7 +54,7 @@ function terms(question: string): string[] {
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, " ")
     .split(/\s+/)
-    .filter((w) => w.length > 2 && !STOP.has(w));
+    .filter((w) => w.length > 2 && !STOP.has(w) && !ADMIN_WORDS.has(w));
 }
 
 /**
@@ -74,16 +85,31 @@ async function findTreatments(question: string, limit = 6) {
     const blurb = r.blurb.toLowerCase();
     const cat = r.category.name.toLowerCase();
     let score = 0;
+    let strong = false;
     for (const w of words) {
-      if (name === w) score += 12;
-      else if (name.includes(w)) score += 6;
-      if (cat.includes(w)) score += 3;
+      if (name === w) {
+        score += 12;
+        strong = true;
+      } else if (name.includes(w)) {
+        score += 6;
+        strong = true;
+      }
+      if (cat.includes(w)) {
+        score += 3;
+        strong = true;
+      }
       if (blurb.includes(w)) score += 1;
     }
-    return { row: r, score };
+    return { row: r, score, strong };
   });
 
+  // Caught live: "what have I got booked today" returned "Aftercare Planning",
+  // whose blurb reads "Booked before the procedure". A blurb brushing against
+  // an ordinary English word is not a match — it is how a question about the
+  // reader's own diary came back as a sales pitch. The name or the category
+  // has to hit.
   return scored
+    .filter((x) => x.strong)
     .sort((a, b) => b.score - a.score || a.row.name.localeCompare(b.row.name))
     .slice(0, limit)
     .map(({ row }) => ({
@@ -267,7 +293,12 @@ async function patientFacts(userId: string): Promise<Fact[]> {
   }
 
   if (scans) {
-    const pct = `${Math.round(scans.overall * 100)}/100`;
+    // SkinAnalysis.overall is ALREADY 0-100 (real rows: 54, 58, 61, 66, 71).
+    // Multiplying by 100 — copied from skinSummary, where the input really is
+    // a 0-1 fraction — reported "7800 out of 100" to a live account. On a site
+    // whose whole rule is that the server computes every number, a fabricated
+    // one is the worst possible bug, so it is pinned in the suite.
+    const pct = `${Math.round(scans.overall)}/100`;
     facts.push({
       label: "Latest skin scan",
       value: `${day(scans.createdAt)}, overall ${pct}${scans.skinType ? `, skin type ${scans.skinType}` : ""}. The full report is on their skin analysis page.`,
@@ -378,7 +409,6 @@ async function doctorFacts(doctorId: string): Promise<Fact[]> {
 /* ── The one entry point ──────────────────────────────────────────────── */
 
 export type Viewer =
-  | { audience: "visitor" }
   | { audience: "patient"; userId: string }
   | { audience: "doctor"; doctorId: string };
 
@@ -386,11 +416,7 @@ export async function groundingFor(question: string, viewer: Viewer): Promise<Gr
   const [treatments, site, own] = await Promise.all([
     findTreatments(question),
     siteFacts(),
-    viewer.audience === "patient"
-      ? patientFacts(viewer.userId)
-      : viewer.audience === "doctor"
-        ? doctorFacts(viewer.doctorId)
-        : Promise.resolve<Fact[]>([]),
+    viewer.audience === "patient" ? patientFacts(viewer.userId) : doctorFacts(viewer.doctorId),
   ]);
 
   return { treatments, site, own };

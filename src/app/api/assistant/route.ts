@@ -15,7 +15,8 @@ import { answer } from "@/lib/assistant/reply";
  * ── The caller never says who it is ──────────────────────────────────────
  * There is no userId, no doctorId and no audience in the request body. All
  * three come from the session, so the worst a crafted request can do is ask
- * a question — it cannot ask it AS somebody else. This is the same reason
+ * a question — it cannot ask it AS somebody else, and signed out it cannot
+ * ask at all. This is the same reason
  * the plan for the doctor-assist route dropped `applicationGaps`: an endpoint
  * that accepts an arbitrary id is an endpoint that will eventually be handed
  * one.
@@ -46,10 +47,17 @@ const Body = z.object({
     .default([]),
 });
 
-async function resolveViewer(): Promise<Viewer> {
+/**
+ * Null means signed out, and signed out means refused.
+ *
+ * The assistant reads somebody's own bookings and a practice's own takings.
+ * There is no version of that a stranger should be holding a conversation
+ * with, so this is a gate rather than a degraded mode.
+ */
+async function resolveViewer(): Promise<Viewer | null> {
   const session = await getServerSession(authOptions);
   const user = session?.user;
-  if (!user?.id) return { audience: "visitor" };
+  if (!user?.id) return null;
 
   if (user.role === "DOCTOR") {
     const doctor = await prisma.doctor.findFirst({
@@ -71,18 +79,19 @@ export async function POST(req: Request) {
   }
 
   const viewer = await resolveViewer();
+  if (!viewer) {
+    return NextResponse.json(
+      { error: "Please sign in to use the assistant.", signedOut: true },
+      { status: 401 }
+    );
+  }
 
-  // Signed-in people are limited per account; everyone else shares a bucket
-  // keyed on the forwarded address. Both are per-process, which is the known
-  // limitation of this rate limiter across the whole codebase.
+  // Per account, so one person cannot spend somebody else's allowance. Still
+  // per-process, which is this rate limiter's known limitation everywhere.
   const who =
-    viewer.audience === "doctor"
-      ? `dr:${viewer.doctorId}`
-      : viewer.audience === "patient"
-        ? `u:${viewer.userId}`
-        : `ip:${req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"}`;
+    viewer.audience === "doctor" ? `dr:${viewer.doctorId}` : `u:${viewer.userId}`;
 
-  const limit = rateLimit(`assistant:${who}`, viewer.audience === "visitor" ? 12 : 40, 10 * 60_000);
+  const limit = rateLimit(`assistant:${who}`, 40, 10 * 60_000);
   if (!limit.ok) {
     return NextResponse.json(
       {
@@ -120,6 +129,9 @@ export async function POST(req: Request) {
 /** The opening panel: who we think you are, and four things worth asking. */
 export async function GET() {
   const viewer = await resolveViewer();
+  if (!viewer) {
+    return NextResponse.json({ signedOut: true }, { status: 401 });
+  }
   return NextResponse.json({
     audience: viewer.audience,
     starters: starters(viewer.audience),

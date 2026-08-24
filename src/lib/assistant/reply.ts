@@ -97,17 +97,30 @@ export async function answer(
   if (kind) return { answer: deflectionReply(kind, audience), source: "deflected" };
 
   const raw = await askModel(question, g, history, audience);
-  if (!raw) return { answer: templateReply(g, audience), source: "template" };
+  if (!raw) return { answer: templateReply(g, audience, question), source: "template" };
 
   const cleaned = tidy(raw);
 
-  // The vocabulary check counts the grounded rows as known too: a name that was
-  // put in front of the model is by definition real.
+  // Everything the model was handed counts as known — clinic names, doctors,
+  // cities, the lot. A name that was put in front of it is by definition real,
+  // and rejecting a correct answer for quoting its own source material is a
+  // guard that degrades the feature every day. ("BluDerma Aesthetics" is how
+  // this was found.)
   const known = [...vocabulary, ...g.treatments.map((t) => t.name)];
-  const invented = unknownTreatments(cleaned, known);
+  const groundedText = [
+    ...g.treatments.map((t) => `${t.name} ${t.category} ${t.blurb}`),
+    ...g.site.map((f) => `${f.label} ${f.value}`),
+    ...g.own.map((f) => `${f.label} ${f.value}`),
+  ].join(" ");
+
+  const invented = unknownTreatments(cleaned, known, groundedText);
   if (invented.length) {
     console.error("[assistant] rejected an answer naming", invented, "for:", question);
-    return { answer: templateReply(g, audience), source: "template", rejected: invented };
+    return {
+      answer: templateReply(g, audience, question),
+      source: "template",
+      rejected: invented,
+    };
   }
 
   return { answer: cleaned, source: "ai" };

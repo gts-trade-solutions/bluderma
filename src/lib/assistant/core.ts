@@ -19,7 +19,16 @@
  * even if the prompt were ignored entirely.
  */
 
-export type Audience = "patient" | "doctor" | "visitor";
+/**
+ * Only two, and neither is a stranger.
+ *
+ * A "visitor" audience stood here and was removed: the assistant reads
+ * people's own bookings and a practice's own money, and the clinic's rule is
+ * that nobody signed out gets to talk to it at all. Refusing at the route is
+ * the guarantee; dropping the audience is what stops a future edit quietly
+ * re-opening the door by passing a string.
+ */
+export type Audience = "patient" | "doctor";
 
 export type Turn = { role: "user" | "assistant"; content: string };
 
@@ -64,7 +73,7 @@ const URGENT: RegExp[] = [
 /** "Look at this and tell me what it is", and "what should I have?" */
 const DIAGNOSIS: RegExp[] = [
   /(is|could|might)\s+(this|it|that|my)[^?]{0,60}(cancer|melanoma|carcinoma|malignant|serious|infected|contagious|permanent)/i,
-  /do i have\b/i,
+  /do i have\b[^?]{0,40}(rash|acne|eczema|psoriasis|rosacea|mole|infection|condition|allergy|scar|cancer|melanoma|fungal|wart|cyst)/i,
   /what.?s\s+(this|that|wrong with)/i,
   /what is (this|that)\s+(rash|spot|mole|lump|bump|patch|mark|growth|thing)/i,
   /diagnos/i,
@@ -152,18 +161,9 @@ export function systemPrompt(audience: Audience): string {
   const who =
     audience === "doctor"
       ? "You are the assistant inside the BluDerma practitioner portal. You are speaking to a practitioner about their own practice: their bookings, their money, their patients' records, and how the portal works."
-      : audience === "patient"
-        ? "You are the assistant on BluDerma, a dermatology booking site. You are speaking to a signed-in client about their own bookings and orders, and about the treatments this site lists."
-        : "You are the assistant on BluDerma, a dermatology booking site. You are speaking to a visitor who is not signed in, so you know nothing about them personally.";
+      : "You are the assistant on BluDerma, a dermatology booking site. You are speaking to a signed-in client about their own bookings and orders, and about the treatments this site lists.";
 
-  const extra =
-    audience === "visitor"
-      ? [
-          "You have no access to any personal record. If asked about a booking or an order, say they need to sign in first.",
-        ]
-      : [];
-
-  return [who, "", "Rules:", ...[...SHARED_RULES, ...extra].map((r) => `- ${r}`)].join("\n");
+  return [who, "", "Rules:", ...SHARED_RULES.map((r) => `- ${r}`)].join("\n");
 }
 
 export function userPrompt(question: string, g: Grounding, history: Turn[]): string {
@@ -204,7 +204,27 @@ export function userPrompt(question: string, g: Grounding, history: Turn[]): str
  * the model would have been handed, so the assistant degrades into something
  * terser rather than something absent. Same house rule as skinSummary.
  */
-export function templateReply(g: Grounding, audience: Audience): string {
+/**
+ * Is this about THEM, or about what the site sells?
+ *
+ * Caught live: "when is my next appointment" retrieved treatments whose blurbs
+ * happened to contain the word "appointment", and the template led with
+ * "Executive Skin Review" — an answer about the catalogue to a question about
+ * the reader's own diary. First person, or a word about their own affairs,
+ * means their record leads.
+ */
+export function isPersonal(question: string): boolean {
+  return (
+    /\b(my|mine|i|me|we|our)\b/i.test(question) ||
+    /\b(today|tomorrow|this month|so far|booked|upcoming|next)\b/i.test(question)
+  );
+}
+
+export function templateReply(g: Grounding, audience: Audience, question = ""): string {
+  if (isPersonal(question) && g.own.length) {
+    return g.own.slice(0, 3).map((f) => `${f.label}: ${f.value}`).join(" ");
+  }
+
   const t = g.treatments[0];
   if (t) {
     const others = g.treatments.slice(1, 3).map((x) => x.name);
@@ -215,7 +235,7 @@ export function templateReply(g: Grounding, audience: Audience): string {
   }
 
   if (g.own.length) {
-    return g.own.slice(0, 3).map((f) => `${f.label}: ${f.value}.`).join(" ");
+    return g.own.slice(0, 3).map((f) => `${f.label}: ${f.value}`).join(" ");
   }
 
   if (g.site.length) {
@@ -257,7 +277,20 @@ const SAFE_PHRASES = new Set(
   ].map((s) => s.toLowerCase())
 );
 
-export function unknownTreatments(answer: string, vocabulary: Iterable<string>): string[] {
+export function unknownTreatments(
+  answer: string,
+  vocabulary: Iterable<string>,
+  /**
+   * Everything the server put in front of the model, as one blob.
+   *
+   * Caught live: the model answered "...at BluDerma Aesthetics", a real clinic
+   * that WAS in the facts, and the guard rejected it because the vocabulary
+   * held only treatment names. Clinics, doctors and cities are all legitimate
+   * to quote. So the rule is simpler and stronger than a catalogue check: the
+   * model may name anything it was told, and nothing else.
+   */
+  grounded = ""
+): string[] {
   const known = new Set<string>();
   for (const v of vocabulary) known.add(v.toLowerCase());
 
@@ -277,11 +310,13 @@ export function unknownTreatments(answer: string, vocabulary: Iterable<string>):
     return false;
   };
 
+  const context = grounded.toLowerCase();
   const hits = new Set<string>();
   for (const m of answer.matchAll(CAPITALISED_PHRASE)) {
     const phrase = m[1];
     const lower = phrase.toLowerCase();
     if (known.has(lower) || SAFE_PHRASES.has(lower) || isPartialOfKnown(lower)) continue;
+    if (context.includes(lower)) continue;
     // A phrase opening a sentence is far more often ordinary prose than a
     // product name, so only flag one that appears mid-sentence.
     const at = m.index ?? 0;
@@ -315,18 +350,10 @@ export function starters(audience: Audience): string[] {
       "How much of my laser has come back?",
     ];
   }
-  if (audience === "patient") {
-    return [
-      "When is my next appointment?",
-      "What is a skin booster?",
-      "How much is a skin scan?",
-      "Where do I upload a prescription?",
-    ];
-  }
   return [
-    "What treatments do you offer?",
-    "How does the skin scan work?",
-    "What does a consultation cost?",
-    "Where are your clinics?",
+    "When is my next appointment?",
+    "What is a skin booster?",
+    "How much is a skin scan?",
+    "Where do I upload a prescription?",
   ];
 }

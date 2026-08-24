@@ -24,6 +24,7 @@ import {
   EMPTY_GROUNDING,
   type Grounding,
   deflect,
+  isPersonal,
   deflectionReply,
   starters,
   systemPrompt,
@@ -127,6 +128,12 @@ async function main() {
     "how much of my laser has come back",
     "do you offer laser hair removal",
     "how do gift cards work",
+    // Refused as a diagnosis by "do i have" until the pattern was narrowed to
+    // clinical nouns. A live account asking about its own wallet got a lecture
+    // about assessments.
+    "do I have any gift cards",
+    "do I have an appointment tomorrow",
+    "do I have any orders on the way",
   ];
   for (const q of ALLOWED) {
     check(`allowed: "${q.slice(0, 38)}…"`, deflect(q) === null, String(deflect(q)));
@@ -137,7 +144,7 @@ async function main() {
   /* ── A refusal has to be useful ────────────────────────────────────── */
 
   for (const kind of ["urgent", "diagnosis", "prescribing"] as const) {
-    for (const who of ["patient", "doctor", "visitor"] as const) {
+    for (const who of ["patient", "doctor"] as const) {
       const text = deflectionReply(kind, who);
       check(`${kind}/${who}: says something`, text.length > 60, `${text.length} chars`);
       // A refusal that does not name a next step trains people to route
@@ -157,21 +164,98 @@ async function main() {
     /comes from a doctor, after an assessment/i.test(deflectionReply("diagnosis", "patient"))
   );
 
+  /* ── A personal question is answered personally ────────────────────── */
+
+  // Live bug: "when is my next appointment" retrieved treatments whose blurbs
+  // contain the word "appointment", and the template led with "Executive Skin
+  // Review" — the catalogue answering a question about somebody's own diary.
+  for (const q of [
+    "when is my next appointment",
+    "what have I got booked today",
+    "what is my revenue this month",
+    "do I have any orders",
+  ]) {
+    check(`personal: "${q.slice(0, 34)}…"`, isPersonal(q), "their record has to lead");
+  }
+  check("but a catalogue question is not", !isPersonal("what is a skin booster"));
+  check("nor is a price question", !isPersonal("how much does a consultation cost"));
+
+  const mixed: Grounding = {
+    treatments: [
+      { name: "Executive Skin Review", blurb: "A single appointment covering skin.", category: "Reviews" },
+    ],
+    site: [],
+    own: [{ label: "Next appointment", value: "7 Sep 2026 with Dr Nithya" }],
+  };
+  check(
+    "the template leads with their record",
+    templateReply(mixed, "patient", "when is my next appointment").includes("7 Sep 2026"),
+    templateReply(mixed, "patient", "when is my next appointment").slice(0, 50)
+  );
+  check(
+    "and still leads with the catalogue otherwise",
+    templateReply(mixed, "patient", "what is a skin review").includes("Executive Skin Review")
+  );
+
+  /* ── Real numbers, never rescaled ──────────────────────────────────── */
+
+  // SkinAnalysis.overall is already 0-100. A stray *100 copied from
+  // skinSummary — where the input IS a 0-1 fraction — told a live account its
+  // score was "7800 out of 100". On a codebase whose rule is that the server
+  // computes every number, an invented one is the worst bug available.
+  const g2 = codeOnly("src/lib/assistant/grounding.ts");
+  check(
+    "the scan score is not multiplied",
+    !/scans\.overall \* 100/.test(g2) && /Math\.round\(scans\.overall\)/.test(g2),
+    "SkinAnalysis.overall is already 0-100"
+  );
+  const scanRow = await prisma.skinAnalysis.findFirst({ select: { overall: true } });
+  check(
+    "and real rows really are on that scale",
+    scanRow === null || (scanRow.overall >= 0 && scanRow.overall <= 100),
+    `overall=${scanRow?.overall}`
+  );
+
+  // A blurb brushing an ordinary English word is not a match.
+  check(
+    "a treatment needs a name or category hit",
+    /\.filter\(\(x\) => x\.strong\)/.test(g2),
+    "blurb-only matching returned Aftercare Planning for what am I booked today"
+  );
+  check(
+    "words about the site's machinery are stopped",
+    /ADMIN_WORDS/.test(g2) && /appointment/.test(g2.split("ADMIN_WORDS")[1] ?? "")
+  );
+
   /* ── The prompt carries the rules ──────────────────────────────────── */
 
-  for (const who of ["patient", "doctor", "visitor"] as const) {
+  for (const who of ["patient", "doctor"] as const) {
     const p = systemPrompt(who);
     check(`${who} prompt: forbids invention`, /Never invent/i.test(p));
     check(`${who} prompt: forbids clinical advice`, /Never give clinical advice/i.test(p));
     check(`${who} prompt: confines it to the facts`, /ONLY from the FACTS/i.test(p));
   }
+  /* ── Signed out means refused, not degraded ────────────────────────── */
+
+  // The clinic's rule. The assistant reads people's own bookings and a
+  // practice's own takings, so there is no stranger-safe version of it.
+  const routeSrc = codeOnly("src/app/api/assistant/route.ts");
+  check("POST refuses a signed-out caller", /if \(!viewer\) \{[\s\S]{0,220}status: 401/.test(routeSrc));
   check(
-    "a visitor is told they know nothing personal",
-    /no access to any personal record/i.test(systemPrompt("visitor"))
+    "GET refuses one too",
+    (routeSrc.match(/status: 401/g) ?? []).length >= 2,
+    "the opening panel leaks the audience otherwise"
   );
   check(
-    "a patient prompt is not given the visitor rule",
-    !/no access to any personal record/i.test(systemPrompt("patient"))
+    "there is no visitor audience left to pass",
+    !/"visitor"/.test(codeOnly("src/lib/assistant/core.ts")),
+    "a dead branch in a safety module is a door somebody re-opens"
+  );
+  check(
+    "the widget hides itself when signed out",
+    /useSession|status !== "authenticated"|status === "authenticated"/.test(
+      codeOnly("src/components/assistant/Assistant.tsx")
+    )
   );
 
   /* ── Facts in, nothing else ────────────────────────────────────────── */
@@ -275,7 +359,7 @@ async function main() {
 
   /* ── Openers ───────────────────────────────────────────────────────── */
 
-  for (const who of ["patient", "doctor", "visitor"] as const) {
+  for (const who of ["patient", "doctor"] as const) {
     const s = starters(who);
     check(`${who}: four openers`, s.length === 4, `${s.length}`);
     // An opener the assistant would refuse is a trap.
@@ -293,7 +377,11 @@ async function main() {
     "a body field naming a person is a body field somebody will forge"
   );
   check("the route rate limits", /rateLimit\(/.test(route));
-  check("a visitor gets a tighter limit", /audience === "visitor" \? 12 : 40/.test(route));
+  check(
+    "the limit is per account, not per address",
+    /assistant:\$\{who\}/.test(route) && /who =\s*viewer\.audience === "doctor"/.test(route),
+    "an IP bucket lets one person spend everybody's allowance"
+  );
   check("literal enum, never nativeEnum", !/nativeEnum/.test(route));
 
   const grounding = codeOnly("src/lib/assistant/grounding.ts");
@@ -326,7 +414,24 @@ async function main() {
     "an interpolated class compiles to nothing and the colour vanishes"
   );
   check("no text-ink in the panel", !/text-ink/.test(ui), "text-ink is near-white outside .theme-light");
-  check("it says it is not medical advice", /Not medical advice/i.test(ui));
+  check("it says it is not medical advice", /medical advice/i.test(ui));
+  // globals.css paints every input `ink.DEFAULT` — near WHITE — at specificity
+  // (0,4,1), which beats a (0,1,0) text-slate-900 utility. On this white panel
+  // that made people's own typing invisible. `.theme-light` re-maps the same
+  // selector at (0,5,1) and is the fix this codebase already uses.
+  check(
+    "the panel carries theme-light so typing is visible",
+    /theme-light/.test(ui),
+    "without it the input paints near-white text on a white field"
+  );
+  check(
+    "the input is 16px on a phone",
+    /text-\[16px\]/.test(ui),
+    "iOS Safari zooms the page in on focus for anything smaller"
+  );
+  check("the sheet locks the page behind it", /document\.body\.style\.overflow/.test(ui));
+  check("a client sees a clinician, a practitioner sees a machine",
+    /kind=\{isDoctor \? "bot" : "doctor"\}/.test(ui));
 
   const voice = codeOnly("src/components/assistant/useVoice.ts");
   check("capability is checked after mount", /useEffect\(\(\) => \{\s*setCanListen/.test(voice));

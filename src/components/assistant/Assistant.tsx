@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 import { useVoice } from "@/components/assistant/useVoice";
 
@@ -10,16 +11,26 @@ import { useVoice } from "@/components/assistant/useVoice";
  *
  * ── One mount, two audiences ─────────────────────────────────────────────
  * Who is asking is decided by the SERVER from the session, not by which page
- * the button was pressed on. The panel just renders what comes back, so a
- * doctor gets practice answers and a client gets their own bookings without
- * this file knowing anything about either.
+ * the button was pressed on. The panel renders what comes back, so a doctor
+ * gets practice answers and a client gets their own bookings without this
+ * file knowing anything about either.
  *
- * ── Colours are written out in full ──────────────────────────────────────
- * Every class here is a literal string. Tailwind scans source text, so an
- * interpolated class name compiles to nothing and the colour silently goes
- * missing — and `text-ink` is near-WHITE outside `.theme-light`, so explicit
- * slate is the only thing that reads correctly on both the marketing site and
- * inside the portal.
+ * ── Signed out, it does not exist ────────────────────────────────────────
+ * The route refuses anyone without a session; this hides the button so nobody
+ * is offered a door that is locked. Both, because either alone is wrong: a
+ * hidden button is not access control, and a bare 401 is a control nobody can
+ * see.
+ *
+ * ── `theme-light` is load-bearing ────────────────────────────────────────
+ * globals.css styles every input at specificity (0,4,1) — four `:not()`
+ * attribute selectors — and paints the text `ink.DEFAULT`, which is near
+ * WHITE. A Tailwind `text-slate-900` is (0,1,0) and loses, so on this white
+ * panel people could not see their own typing. `.theme-light` re-maps the
+ * same selector at (0,5,1) and is the fix this codebase already uses.
+ *
+ * Every other colour here is a full literal string: Tailwind scans source
+ * text, so an interpolated class name compiles to nothing and the colour
+ * silently goes missing.
  */
 
 type Msg = { role: "user" | "assistant"; content: string; source?: string };
@@ -28,16 +39,19 @@ const HIDDEN_ON = ["/admin", "/login", "/register", "/signin", "/signup", "/forg
 
 export default function Assistant() {
   const pathname = usePathname() ?? "";
+  const { data: session, status } = useSession();
+
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [starters, setStarters] = useState<string[]>([]);
-  const [audience, setAudience] = useState<"patient" | "doctor" | "visitor">("visitor");
+  const [audience, setAudience] = useState<"patient" | "doctor">("patient");
   const [readAloud, setReadAloud] = useState(false);
 
   const scroller = useRef<HTMLDivElement | null>(null);
   const input = useRef<HTMLInputElement | null>(null);
+  const sayRef = useRef<(t: string) => void>(() => {});
 
   const send = useCallback(
     async (question: string) => {
@@ -60,7 +74,10 @@ export default function Assistant() {
         });
         const data = await res.json();
         const reply: string =
-          data?.answer ?? "Something went wrong at our end. Please try that again.";
+          data?.answer ??
+          (res.status === 401
+            ? "Your session has ended. Please sign in again."
+            : "Something went wrong at our end. Please try that again.");
         setMsgs((m) => [...m, { role: "assistant", content: reply, source: data?.source }]);
         if (data?.audience) setAudience(data.audience);
         if (readAloud) sayRef.current(reply);
@@ -85,22 +102,21 @@ export default function Assistant() {
       [send]
     )
   );
-
-  // send() is defined before useVoice, so speaking a reply goes through a ref.
-  const sayRef = useRef(voice.say);
   sayRef.current = voice.say;
 
-  // Who is asking, and four things worth asking. Fetched once the panel opens
-  // rather than on every page load — an unopened panel should cost nothing.
+  const signedIn = status === "authenticated";
+
+  // Who is asking, and four things worth asking. Fetched when the panel first
+  // opens rather than on every page load — an unopened panel costs nothing.
   useEffect(() => {
     if (!open || starters.length) return;
     let live = true;
     fetch("/api/assistant")
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (!live) return;
-        setStarters(d?.starters ?? []);
-        setAudience(d?.audience ?? "visitor");
+        if (!live || !d) return;
+        setStarters(d.starters ?? []);
+        if (d.audience) setAudience(d.audience);
       })
       .catch(() => {});
     return () => {
@@ -118,9 +134,21 @@ export default function Assistant() {
       voice.stop();
       voice.hush();
     }
-    // Only on open/close; including the voice handles would re-run this on
+    // Only on open/close. Including the voice handles would re-run this on
     // every recognition tick and steal focus mid-sentence.
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  // On a phone the panel is a sheet over the page. Without this the page
+  // behind it scrolls under your thumb whenever the transcript hits its end.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    const phone = window.matchMedia("(max-width: 639px)").matches;
+    if (phone) document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, [open]);
 
   useEffect(() => {
@@ -132,8 +160,11 @@ export default function Assistant() {
   }, [open]);
 
   if (HIDDEN_ON.some((p) => pathname.startsWith(p))) return null;
+  if (!signedIn) return null;
 
-  const label = audience === "doctor" ? "Practice assistant" : "BluDerma assistant";
+  const isDoctor = audience === "doctor";
+  const label = isDoctor ? "Practice assistant" : "Your care assistant";
+  const firstName = (session?.user?.name ?? "").trim().split(/\s+/)[0] ?? "";
 
   return (
     <>
@@ -143,30 +174,64 @@ export default function Assistant() {
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? "Close the assistant" : "Ask the assistant"}
         aria-expanded={open}
-        className="fixed bottom-5 right-5 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 text-white shadow-[0_8px_30px_-6px_rgba(15,23,42,0.5)] ring-1 ring-white/10 transition hover:scale-105 hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 sm:h-14 sm:w-14"
+        className="fixed bottom-5 right-5 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-[0_10px_34px_-8px_rgba(15,23,42,0.65)] ring-1 ring-white/15 transition duration-200 hover:scale-105 hover:shadow-[0_14px_40px_-8px_rgba(15,23,42,0.7)] focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
+        style={{ marginBottom: "env(safe-area-inset-bottom)" }}
       >
-        {open ? <CloseGlyph /> : <ChatGlyph />}
+        {open ? (
+          <CloseGlyph />
+        ) : (
+          <>
+            <Avatar kind={isDoctor ? "bot" : "doctor"} size={34} />
+            {/* A quiet "I am here" without a notification dot's false urgency. */}
+            <span className="absolute -right-0.5 -top-0.5 h-3.5 w-3.5 rounded-full border-2 border-slate-900 bg-teal-400" />
+          </>
+        )}
       </button>
 
       {!open ? null : (
         <div
           role="dialog"
           aria-label={label}
-          className="fixed inset-x-0 bottom-0 z-[59] flex max-h-[85vh] flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_-8px_60px_-12px_rgba(15,23,42,0.45)] ring-1 ring-slate-200 sm:inset-x-auto sm:bottom-24 sm:right-5 sm:h-[min(34rem,80vh)] sm:w-[24rem] sm:rounded-3xl"
+          // theme-light: see the header comment. Without it nobody can see
+          // what they are typing.
+          className="theme-light fixed inset-x-0 bottom-0 z-[59] flex h-[88dvh] max-h-[88dvh] flex-col overflow-hidden rounded-t-[28px] bg-white shadow-[0_-10px_70px_-12px_rgba(15,23,42,0.5)] ring-1 ring-slate-200 sm:inset-x-auto sm:bottom-24 sm:right-5 sm:h-[min(36rem,78vh)] sm:w-[25rem] sm:rounded-3xl"
         >
+          {/* Thumb handle. Only on the phone sheet, where it says "this
+              slides" before anybody has to discover it. */}
+          <div className="flex justify-center pt-2.5 sm:hidden">
+            <span className="h-1.5 w-10 rounded-full bg-slate-300" />
+          </div>
+
           {/* ── Header ───────────────────────────────────────────── */}
-          <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-900 px-4 py-3 sm:rounded-t-3xl">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-teal-400/15 text-teal-300">
-              <ChatGlyph small />
+          <div className="flex items-center gap-3 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3.5 sm:rounded-t-3xl">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/10 ring-1 ring-white/15">
+              <Avatar kind={isDoctor ? "bot" : "doctor"} size={30} />
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate font-display text-[15px] font-bold leading-tight text-white">
                 {label}
               </p>
-              <p className="truncate text-[11px] leading-tight text-slate-400">
-                Treatments, bookings and orders. Not medical advice.
+              <p className="flex items-center gap-1.5 truncate text-[11px] leading-tight text-slate-300">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-teal-400" />
+                {isDoctor ? "Your practice, on call" : "Treatments and bookings. Not medical advice."}
               </p>
             </div>
+
+            {msgs.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMsgs([]);
+                  voice.hush();
+                }}
+                aria-label="Start a new conversation"
+                title="New conversation"
+                className="rounded-full bg-white/10 p-2 text-slate-300 transition hover:bg-white/20 hover:text-white"
+              >
+                <RefreshGlyph />
+              </button>
+            )}
+
             {voice.canSpeak && (
               <button
                 type="button"
@@ -176,41 +241,52 @@ export default function Assistant() {
                 }}
                 aria-pressed={readAloud}
                 aria-label={readAloud ? "Stop reading answers aloud" : "Read answers aloud"}
+                title={readAloud ? "Reading aloud" : "Read answers aloud"}
                 className={
                   readAloud
                     ? "rounded-full bg-teal-400 p-2 text-slate-900 transition"
-                    : "rounded-full bg-white/10 p-2 text-slate-300 transition hover:bg-white/20"
+                    : "rounded-full bg-white/10 p-2 text-slate-300 transition hover:bg-white/20 hover:text-white"
                 }
               >
                 <SpeakerGlyph muted={!readAloud} />
               </button>
             )}
+
             <button
               type="button"
               onClick={() => setOpen(false)}
               aria-label="Close"
-              className="rounded-full bg-white/10 p-2 text-slate-300 transition hover:bg-white/20 sm:hidden"
+              className="rounded-full bg-white/10 p-2 text-slate-300 transition hover:bg-white/20 hover:text-white sm:hidden"
             >
               <CloseGlyph />
             </button>
           </div>
 
           {/* ── Transcript ───────────────────────────────────────── */}
-          <div ref={scroller} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+          <div
+            ref={scroller}
+            className="flex-1 space-y-3.5 overflow-y-auto overscroll-contain bg-slate-50/60 px-4 py-4"
+          >
             {msgs.length === 0 && (
-              <div className="space-y-3">
-                <p className="text-[13px] leading-relaxed text-slate-600">
-                  Ask about a treatment, your bookings, or how something here works.
-                  For anything clinical you will want a doctor — I will say so rather
-                  than guess.
-                </p>
-                <div className="flex flex-wrap gap-2">
+              <div className="space-y-4">
+                <div className="flex gap-2.5">
+                  <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white shadow-sm ring-1 ring-slate-200">
+                    <Avatar kind={isDoctor ? "bot" : "doctor"} size={24} />
+                  </span>
+                  <p className="rounded-2xl rounded-tl-md bg-white px-3.5 py-2.5 text-[13.5px] leading-relaxed text-slate-700 shadow-sm ring-1 ring-slate-200">
+                    {firstName ? `Hello ${firstName}. ` : "Hello. "}
+                    {isDoctor
+                      ? "Ask me about your day, your month, or anything in your portal."
+                      : "Ask me about a treatment, your bookings, or how something here works. Anything clinical I will hand to a doctor rather than guess."}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 pl-11">
                   {starters.map((s) => (
                     <button
                       key={s}
                       type="button"
                       onClick={() => void send(s)}
-                      className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-left text-[12px] font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 hover:text-teal-800"
+                      className="rounded-full border border-slate-200 bg-white px-3 py-2 text-left text-[12.5px] font-semibold text-slate-700 shadow-sm transition hover:border-teal-400 hover:bg-teal-50 hover:text-teal-800 active:scale-[0.98]"
                     >
                       {s}
                     </button>
@@ -219,38 +295,51 @@ export default function Assistant() {
               </div>
             )}
 
-            {msgs.map((m, i) => (
-              <div
-                key={i}
-                className={m.role === "user" ? "flex justify-end" : "flex justify-start"}
-              >
-                <div
-                  className={
-                    m.role === "user"
-                      ? "max-w-[85%] rounded-2xl rounded-br-md bg-slate-900 px-3.5 py-2.5 text-[13px] leading-relaxed text-white"
-                      : "max-w-[90%] rounded-2xl rounded-bl-md bg-slate-100 px-3.5 py-2.5 text-[13px] leading-relaxed text-slate-800"
-                  }
-                >
-                  {m.content}
-                  {m.role === "assistant" && voice.canSpeak && (
-                    <button
-                      type="button"
-                      onClick={() => voice.say(m.content)}
-                      aria-label="Read this aloud"
-                      className="ml-2 align-middle text-slate-400 transition hover:text-teal-600"
-                    >
-                      <SpeakerGlyph />
-                    </button>
-                  )}
+            {msgs.map((m, i) =>
+              m.role === "user" ? (
+                <div key={i} className="flex justify-end">
+                  <p className="max-w-[85%] rounded-2xl rounded-br-md bg-slate-900 px-3.5 py-2.5 text-[13.5px] leading-relaxed text-white">
+                    {m.content}
+                  </p>
                 </div>
-              </div>
-            ))}
+              ) : (
+                <div key={i} className="flex gap-2.5">
+                  <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white shadow-sm ring-1 ring-slate-200">
+                    <Avatar kind={isDoctor ? "bot" : "doctor"} size={24} />
+                  </span>
+                  <div className="min-w-0 max-w-[85%]">
+                    <p
+                      className={
+                        m.source === "deflected"
+                          ? "rounded-2xl rounded-tl-md border-l-[3px] border-amber-400 bg-amber-50 px-3.5 py-2.5 text-[13.5px] leading-relaxed text-slate-800 shadow-sm ring-1 ring-amber-200/70"
+                          : "rounded-2xl rounded-tl-md bg-white px-3.5 py-2.5 text-[13.5px] leading-relaxed text-slate-800 shadow-sm ring-1 ring-slate-200"
+                      }
+                    >
+                      {m.content}
+                    </p>
+                    {voice.canSpeak && (
+                      <button
+                        type="button"
+                        onClick={() => voice.say(m.content)}
+                        className="mt-1 inline-flex items-center gap-1 pl-1 text-[11px] font-semibold text-slate-400 transition hover:text-teal-600"
+                      >
+                        <SpeakerGlyph />
+                        Listen
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            )}
 
             {busy && (
-              <div className="flex justify-start">
-                <div className="flex gap-1 rounded-2xl rounded-bl-md bg-slate-100 px-4 py-3">
+              <div className="flex gap-2.5">
+                <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white shadow-sm ring-1 ring-slate-200">
+                  <Avatar kind={isDoctor ? "bot" : "doctor"} size={24} />
+                </span>
+                <span className="flex items-center gap-1 rounded-2xl rounded-tl-md bg-white px-4 py-3.5 shadow-sm ring-1 ring-slate-200">
                   <Dot /> <Dot delay="150ms" /> <Dot delay="300ms" />
-                </div>
+                </span>
               </div>
             )}
 
@@ -265,7 +354,8 @@ export default function Assistant() {
               e.preventDefault();
               void send(draft);
             }}
-            className="flex items-center gap-2 border-t border-slate-100 px-3 py-3"
+            className="flex items-center gap-2 border-t border-slate-200 bg-white px-3 py-3"
+            style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
           >
             {voice.canListen && (
               <button
@@ -275,8 +365,8 @@ export default function Assistant() {
                 aria-pressed={voice.listening}
                 className={
                   voice.listening
-                    ? "flex h-10 w-10 shrink-0 animate-pulse items-center justify-center rounded-full bg-rose-500 text-white"
-                    : "flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200"
+                    ? "flex h-11 w-11 shrink-0 animate-pulse items-center justify-center rounded-full bg-rose-500 text-white shadow-sm"
+                    : "flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200 active:scale-95"
                 }
               >
                 <MicGlyph />
@@ -288,13 +378,16 @@ export default function Assistant() {
               onChange={(e) => setDraft(e.target.value)}
               placeholder={voice.listening ? "Listening…" : "Ask a question"}
               maxLength={500}
-              className="min-w-0 flex-1 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-[13px] text-slate-900 placeholder:text-slate-400 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100"
+              enterKeyHint="send"
+              // 16px on a phone: iOS Safari zooms the whole page in on focus
+              // for anything smaller, and the sheet ends up half off-screen.
+              className="min-w-0 flex-1 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-[16px] text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100 sm:text-[13.5px]"
             />
             <button
               type="submit"
               disabled={busy || !draft.trim()}
               aria-label="Send"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal-500 text-white transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-teal-500 text-white shadow-sm transition hover:bg-teal-600 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
             >
               <SendGlyph />
             </button>
@@ -305,23 +398,78 @@ export default function Assistant() {
   );
 }
 
-/* ── Glyphs. Hand-rolled: the portal carries no icon library. ─────────── */
+/* ── Faces ────────────────────────────────────────────────────────────── */
 
-function ChatGlyph({ small }: { small?: boolean }) {
-  const n = small ? 16 : 22;
+/**
+ * A client is talking to their clinic, so the face is a clinician. A
+ * practitioner is talking to their own software, so the face is a machine —
+ * showing a doctor a picture of a doctor would suggest a colleague is reading
+ * their takings.
+ */
+function Avatar({ kind, size }: { kind: "doctor" | "bot"; size: number }) {
+  if (kind === "doctor") {
+    return (
+      <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
+        <defs>
+          <linearGradient id="bd-doc" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#2dd4bf" />
+            <stop offset="100%" stopColor="#0ea5e9" />
+          </linearGradient>
+        </defs>
+        <circle cx="20" cy="20" r="20" fill="url(#bd-doc)" />
+        {/* Coat and shoulders */}
+        <path d="M8 40c0-6.6 5.4-10.5 12-10.5S32 33.4 32 40z" fill="#ffffff" />
+        <path d="M20 29.5 16.6 40h6.8z" fill="#e2e8f0" />
+        <circle cx="20" cy="16" r="7" fill="#ffffff" />
+        {/* Stethoscope: the one detail that reads as clinical at 24px */}
+        <path
+          d="M15 31v3.5a3.4 3.4 0 0 0 6.8 0V32"
+          stroke="#0f172a"
+          strokeWidth="1.5"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <circle cx="26" cy="33.5" r="2.2" fill="#0f172a" />
+      </svg>
+    );
+  }
+
   return (
-    <svg width={n} height={n} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-         strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+    <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
+      <defs>
+        <linearGradient id="bd-bot" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#818cf8" />
+          <stop offset="100%" stopColor="#14b8a6" />
+        </linearGradient>
+      </defs>
+      <circle cx="20" cy="20" r="20" fill="url(#bd-bot)" />
+      <circle cx="20" cy="8.5" r="1.9" fill="#ffffff" />
+      <path d="M20 10.4v3.2" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
+      <rect x="9.5" y="13.5" width="21" height="16" rx="5.5" fill="#ffffff" />
+      <circle cx="16" cy="21" r="2.1" fill="#0f172a" />
+      <circle cx="24" cy="21" r="2.1" fill="#0f172a" />
+      <path d="M16.5 25.6h7" stroke="#0f172a" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M6.5 19v4M33.5 19v4" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" />
     </svg>
   );
 }
+
+/* ── Glyphs. Hand-rolled: the portal carries no icon library. ─────────── */
 
 function CloseGlyph() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
          strokeLinecap="round" aria-hidden="true">
       <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
+function RefreshGlyph() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+         strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 12a9 9 0 1 1-3-6.7M21 3v6h-6" />
     </svg>
   );
 }

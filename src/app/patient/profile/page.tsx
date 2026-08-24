@@ -247,7 +247,7 @@ export default async function ProfilePage() {
     // on a phone is most of a screen's worth of scrolling before a balance
     // they did not know they had.
     { id: "wallet", label: "My wallet", icon: "wallet", badge: money(DEMO_WALLET.balanceInr) },
-    ...(GALLERY.length ? [{ id: "photos", label: "My photos", icon: "report", badge: GALLERY_WAITING ? String(GALLERY_WAITING) : undefined }] : []),
+    ...(GALLERY.length ? [{ id: "photos", label: "Before & after", icon: "treatment", badge: GALLERY_WAITING ? String(GALLERY_WAITING) : undefined }] : []),
     { id: "my-photos", label: "My photos", icon: "report", badge: MY_PHOTOS.length ? String(MY_PHOTOS.length) : undefined },
     ...(MY_CARDS.length ? [{ id: "gift-cards", label: "Gift cards", icon: "wallet", badge: String(MY_CARDS.length) }] : []),
     ...(MY_ORDERS.length ? [{ id: "medicines", label: "Medicines", icon: "rx", badge: String(MY_ORDERS.length) }] : []),

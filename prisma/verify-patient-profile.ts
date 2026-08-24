@@ -114,6 +114,37 @@ check(
     page.indexOf("<ProfileStrip") < page.indexOf("container-page grid"),
   "inside the grid its intrinsic width sets the column"
 );
+/* The rail has to survive a short screen. Seventeen sections at ~46px each
+   is ~780px starting 96px down, so on a laptop under about 900px tall the
+   last entries fell below the fold of a STICKY element — and sticky means
+   scrolling the page cannot bring them back. They were unreachable. */
+check(
+  "the rail caps its own height",
+  /lg:max-h-\[calc\(100vh-[\d.]+rem\)\]/.test(nav),
+  "a sticky rail taller than the viewport hides its last entries permanently"
+);
+check(
+  "and scrolls within itself",
+  /lg:overflow-y-auto/.test(nav) && /lg:overscroll-contain/.test(nav)
+);
+
+/* Two sections shared the label "My photos": the doctor's published
+   before-and-after gallery, and the client's own uploads. Different consent
+   rules, indistinguishable in the index. */
+const labels = [...page.matchAll(/\{ id: "([a-z-]+)", label: "([^"]+)"/g)].map((m) => ({
+  id: m[1],
+  label: m[2],
+}));
+check("the section index was parsed", labels.length > 10, `${labels.length}`);
+const dupes = labels
+  .map((l) => l.label)
+  .filter((l, i, all) => all.indexOf(l) !== i);
+check(
+  "no two sections share a label",
+  dupes.length === 0,
+  dupes.length ? `duplicated: ${[...new Set(dupes)].join(", ")}` : undefined
+);
+
 check(
   "anchors clear the sticky chrome",
   /scroll-mt-\[9rem\][\s\S]*lg:scroll-mt-28/.test(page)

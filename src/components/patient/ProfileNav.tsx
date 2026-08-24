@@ -141,14 +141,27 @@ export function ProfileStrip({ sections }: { sections: ProfileSection[] }) {
   );
 }
 
-/** The desktop rail. Lives inside the page grid, in its own column. */
+/**
+ * The desktop rail. Lives inside the page grid, in its own column.
+ *
+ * ── It has to scroll inside itself ───────────────────────────────────────
+ * The section list grew to seventeen entries. At roughly 46px each that is
+ * ~780px, starting 96px down the viewport, so on any laptop under about
+ * 900px tall the last three — Location, My orders, White Collar — fell below
+ * the fold of a `sticky` element. Scrolling the page cannot rescue those:
+ * sticky means the rail travels with the scroll, so those rows were not
+ * merely awkward to reach, they were unreachable. Capping the height and
+ * letting the rail scroll internally is what makes a long index survive a
+ * short screen. `overscroll-contain` stops that scroll running on into the
+ * page once the rail hits its end.
+ */
 export function ProfileRail({ sections }: { sections: ProfileSection[] }) {
   const active = useActiveSection(sections);
 
   return (
     <nav
       aria-label="Profile sections"
-      className="hidden min-w-0 lg:sticky lg:top-24 lg:block lg:self-start"
+      className="hidden min-w-0 lg:sticky lg:top-24 lg:block lg:max-h-[calc(100vh-7.5rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:pr-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       <ul className="space-y-1">
         {sections.map((s) => (

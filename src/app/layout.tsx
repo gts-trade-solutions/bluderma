@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 
+import Assistant from "@/components/assistant/Assistant";
 import Toast from "@/components/Toast";
 import type { Metadata } from "next";
 import Script from "next/script";
@@ -124,6 +125,11 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <Toast />
           </Suspense>
+          {/* One mount covers every audience: the panel asks the server who
+              is signed in, so a doctor gets practice answers and a client
+              gets their own bookings without this layout knowing which. It
+              hides itself on admin and auth routes. */}
+          <Assistant />
         </AuthProvider>
         {/* Razorpay checkout. lazyOnload keeps it off the critical path —
             it is only needed once someone reaches the payment step. */}

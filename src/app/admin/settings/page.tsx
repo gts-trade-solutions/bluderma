@@ -27,6 +27,7 @@ const GROUP_TITLES: Record<string, string> = {
   booking: "Booking rules",
   skin: "Skin analysis and pricing",
   offer: "Homepage offer banner",
+  paylater: "Instalment plans",
 };
 
 export default async function SettingsPage() {

@@ -47,6 +47,14 @@ export interface Prescription {
   doctor: string;
   items: string[];
   validTill: string;
+  /**
+   * The stored document, if the issuing doctor attached one.
+   *
+   * Never linked to directly: `prescriptions/` is a private bucket prefix, so
+   * it goes through /api/uploads/view, which checks that this prescription is
+   * yours before handing back a five-minute signed URL.
+   */
+  fileUrl?: string | null;
 }
 
 export interface Purchase {
@@ -76,6 +84,9 @@ export interface DiscountRecord {
 }
 
 export const CLIENT = {
+  // Blank in the fallback: an invented patient id is worse than none,
+  // because it is the number somebody would quote back to a clinic.
+  publicId: "",
   name: "Ananya Rao",
   since: "March 2026",
   city: "Chennai",

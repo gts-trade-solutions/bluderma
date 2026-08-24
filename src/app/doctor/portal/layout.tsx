@@ -109,6 +109,42 @@ export default async function DoctorPortalLayout({
       icon: "clinic",
       locked: setup ? "Add your locations in the steps first" : undefined,
     },
+    {
+      label: "Medicines",
+      href: "/doctor/portal/medicines",
+      icon: "rupee",
+      locked: setup ? notYet : undefined,
+    },
+    {
+      label: "Gift cards",
+      href: "/doctor/portal/gift-cards",
+      icon: "star",
+      locked: setup ? notYet : undefined,
+    },
+    {
+      label: "Money",
+      href: "/doctor/portal/finance",
+      icon: "chart",
+      locked: setup ? notYet : undefined,
+    },
+    {
+      label: "Gallery",
+      href: "/doctor/portal/gallery",
+      icon: "star",
+      locked: setup ? notYet : undefined,
+    },
+    {
+      label: "Plans",
+      href: "/doctor/portal/plans",
+      icon: "pulse",
+      locked: setup ? notYet : undefined,
+    },
+    {
+      label: "Aftercare",
+      href: "/doctor/portal/aftercare",
+      icon: "sheet",
+      locked: setup ? notYet : undefined,
+    },
     { label: "Profile", href: "/doctor/portal/profile", icon: "user" },
   ];
 
@@ -170,9 +206,19 @@ export default async function DoctorPortalLayout({
                 <p className="truncate text-sm font-bold text-slate-900">
                   {owner?.name || "Your practice"}
                 </p>
-                {clinicLine && (
-                  <p className="truncate text-xs text-slate-500">{clinicLine}</p>
-                )}
+                <p className="truncate text-xs text-slate-500">
+                  {/* The practice id sits with the name because that is where
+                      a doctor looks for it when a referral or an aftercare
+                      sheet asks. Monospace and selectable: its whole job is
+                      being copied or read aloud. */}
+                  {owner?.publicId && (
+                    <span className="select-all font-mono font-semibold tracking-wide text-slate-400">
+                      {owner.publicId}
+                    </span>
+                  )}
+                  {owner?.publicId && clinicLine ? " · " : ""}
+                  {clinicLine}
+                </p>
               </div>
             </div>
 

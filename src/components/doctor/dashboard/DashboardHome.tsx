@@ -6,6 +6,9 @@ import { getDashboardMetrics, type DashboardPeriod } from "@/lib/doctor/metrics"
 import { advisoryGaps, getApplicationGaps } from "@/lib/doctor/gaps";
 import { clinicWallClock } from "@/lib/queries/availability";
 import { hexFor, swatchFor } from "@/components/doctor/clinicColors";
+import { prisma } from "@/lib/prisma";
+import { netFor, recoveryFor } from "@/lib/doctor/financeCore";
+import ProfitPanel from "./ProfitPanel";
 import BookingsChart from "./BookingsChart";
 import ShareLink from "./ShareLink";
 import PeriodPicker from "./PeriodPicker";
@@ -127,6 +130,32 @@ export default async function DashboardHome({
     getDashboardMetrics(doctorId, period),
     getApplicationGaps(doctorId),
   ]);
+
+  // Costs over the SAME window the takings cover, so the two halves of "what
+  // you keep" are measuring the same period. Machines are read whole rather
+  // than windowed: recovery is a lifetime figure, and a machine that earned
+  // nothing this month has not become less recovered.
+  const [periodExpenses, machines] = await Promise.all([
+    prisma.practiceExpense.findMany({
+      where: { doctorId, spentOn: { gte: m.windowStart, lte: m.windowEnd } },
+      select: { category: true, amountInr: true },
+    }),
+    prisma.practiceAsset.findMany({
+      where: { doctorId, isActive: true },
+      orderBy: { purchasedOn: "desc" },
+      select: {
+        id: true,
+        name: true,
+        purpose: true,
+        costInr: true,
+        upkeepInr: true,
+        purchasedOn: true,
+        uses: { select: { chargedInr: true, usedOn: true } },
+      },
+    }),
+  ]);
+  const net = netFor(m.periodBooked, periodExpenses);
+  const recoveries = machines.map((a) => recoveryFor(a, new Date()));
   const listingGaps = advisoryGaps(gaps);
   // "Dr. Nithya": a practitioner is addressed by title, and the greeting
   // read as first-name familiarity without it. Any existing "Dr." is
@@ -577,6 +606,9 @@ export default async function DashboardHome({
           </ChartPanel>
         </div>
       )}
+
+      {/* ── What is left ───────────────────────────────────────────────── */}
+      <ProfitPanel net={net} recoveries={recoveries} periodLabel={m.periodLabel} />
 
       {/* ── The diary ──────────────────────────────────────────────────── */}
       <SectionHead

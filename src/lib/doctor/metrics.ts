@@ -189,6 +189,16 @@ export interface DashboardMetrics {
   period: DashboardPeriod;
   /** "August 2026" · "Jun – Aug 2026" · "2026". */
   periodLabel: string;
+  /**
+   * The window the money figures cover.
+   *
+   * Exposed so anything measuring alongside them (running costs, for one) can
+   * use the SAME dates rather than deriving its own. Two derivations of "this
+   * month" eventually disagree, and a net-profit figure built from takings in
+   * one window and costs in another is worse than no figure.
+   */
+  windowStart: Date;
+  windowEnd: Date;
   /** True when the window has already ended — no projection, no uplift. */
   isComplete: boolean;
   daysElapsed: number;
@@ -983,6 +993,8 @@ export async function getDashboardMetrics(
   return {
     period,
     periodLabel,
+    windowStart: monthStart,
+    windowEnd: monthEnd,
     isComplete: win.complete,
     daysElapsed,
     daysInPeriod,

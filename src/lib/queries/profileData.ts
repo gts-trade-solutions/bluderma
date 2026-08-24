@@ -37,6 +37,8 @@ const fmt = (d: Date | string) => {
 export interface ProfilePageData {
   client: {
     name: string;
+    /** "BLU-P-4K7M2Q". What a receptionist asks for on the phone. */
+    publicId: string;
     email: string;
     phone: string;
     city: string;
@@ -97,7 +99,10 @@ export interface ProfilePageData {
     perks: string[];
   }[];
 
-  /** Listed locations in the client's own city, nearest-city first. */
+  /**
+   * Listed locations. Ordered by distance on the client, where the visitor's
+   * own position is known; otherwise in the directory's own order.
+   */
   clinics: {
     id: string;
     name: string;
@@ -106,6 +111,8 @@ export interface ProfilePageData {
     addressLine1: string;
     pincode: string;
     phone: string | null;
+    lat: number | null;
+    lng: number | null;
   }[];
 }
 
@@ -116,6 +123,7 @@ export const getProfilePageData = cache(
       prisma.user.findUniqueOrThrow({
         where: { id: userId },
         select: {
+          publicId: true,
           name: true,
           email: true,
           phone: true,
@@ -226,6 +234,7 @@ export const getProfilePageData = cache(
       id: p.id,
       issued: fmt(p.issuedAt),
       doctor: p.doctor?.name ?? "BluDerma doctor",
+      fileUrl: p.fileUrl,
       items: [p.title, ...(p.notes ? [p.notes] : [])],
       validTill: "—",
     }));
@@ -280,9 +289,14 @@ export const getProfilePageData = cache(
       fmt
     );
 
-    // Listed locations in their city. A directory, not a distance — nothing
-    // populates Clinic.lat/lng yet and printing a "2.3 km" we cannot compute
-    // is exactly the kind of invention this codebase keeps deleting.
+    // Listed locations in their city. Coordinates come along so the list can
+    // be ordered by how near each one actually is: the visitor's own position
+    // lives in localStorage, so the ordering happens on the client, and this
+    // query only has to supply the points.
+    //
+    // Not filtered to the city when we have coordinates for everything, since
+    // the nearest clinic to somebody on a city boundary can easily be in the
+    // next one, and a directory that hides it is worse than a longer list.
     const city = user.patientProfile?.city ?? "";
     const clinics = await prisma.clinic.findMany({
       where: {
@@ -299,12 +313,15 @@ export const getProfilePageData = cache(
         addressLine1: true,
         pincode: true,
         phone: true,
+        lat: true,
+        lng: true,
       },
     });
 
     return {
       client: {
         name: user.patientProfile?.fullName ?? user.name ?? "Client",
+        publicId: user.publicId ?? "",
         email: user.email,
         phone: user.phone ?? "",
         city: user.patientProfile?.city ?? "",

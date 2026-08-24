@@ -42,6 +42,7 @@ export async function settlePayment(input: {
     select: {
       id: true,
       purpose: true,
+      giftCardId: true,
       status: true,
       amountInr: true,
       userId: true,
@@ -86,6 +87,8 @@ export async function settlePayment(input: {
   if (payment.purpose === PaymentPurpose.SKIN_SCAN) {
     await releaseScanCredit(payment.id, payment.userId, payment.entitlementId);
     await sendScanReceipt(payment.userId, payment.amountInr, input.providerPaymentId);
+  } else if (payment.purpose === PaymentPurpose.GIFT_CARD) {
+    await releaseGiftCardBalance(payment.giftCardId);
   } else if (payment.purpose === PaymentPurpose.SUBSCRIPTION) {
     await activateMembership(payment.id, payment.userId, payment.subscriptionId);
     await sendMembershipReceipt(
@@ -182,6 +185,31 @@ async function activateMembership(
       })),
     });
   }
+}
+
+/**
+ * Puts the money on a gift card, once it has actually arrived.
+ *
+ * Called only from here, for the same reason releaseScanCredit is: a card
+ * created at checkout carries a zero balance, so an abandoned payment leaves
+ * something inert rather than treatment somebody can walk out with.
+ *
+ * Idempotent. A retried webhook must not double a card's value, so the write
+ * is conditional on `paidAt` still being unset.
+ */
+async function releaseGiftCardBalance(giftCardId: string | null): Promise<void> {
+  if (!giftCardId) return;
+
+  const card = await prisma.giftCard.findUnique({
+    where: { id: giftCardId },
+    select: { id: true, valueInr: true, paidAt: true },
+  });
+  if (!card || card.paidAt) return;
+
+  await prisma.giftCard.updateMany({
+    where: { id: card.id, paidAt: null },
+    data: { paidAt: new Date(), balanceInr: card.valueInr },
+  });
 }
 
 /**

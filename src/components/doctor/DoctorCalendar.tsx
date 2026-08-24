@@ -9,6 +9,11 @@ import type {
   CalendarView,
 } from "@/lib/queries/doctorCalendar";
 import { CANCELLED_SWATCH, swatchFor } from "./clinicColors";
+import {
+  LEGEND_STATES,
+  STATE_STYLES,
+  stateOf,
+} from "./visitStatus";
 import AppointmentDrawer from "./AppointmentDrawer";
 
 /**
@@ -88,6 +93,12 @@ export default function DoctorCalendar({
   const router = useRouter();
   const params = useSearchParams();
   const [openId, setOpenId] = useState<string | null>(null);
+
+  // Only the states actually on this screen. A key that explains four things
+  // when two are visible teaches somebody to stop reading it.
+  const shownStates = LEGEND_STATES.filter((k) =>
+    appointments.some((a) => stateOf(a) === k)
+  );
 
   const anchor = seedToDate(anchorSeed);
   const today = todaySeed();
@@ -246,6 +257,31 @@ export default function DoctorCalendar({
         </div>
       )}
 
+      {/* ── What the markings mean ─────────────────────────────────────── */}
+      {/* Colour on this calendar means WHICH CLINIC, which is a good use of it
+          and not one to give up. State therefore rides on a ring and a
+          character instead, and this row is what makes either legible to
+          somebody who has not been told. It lists only the states that are
+          actually on screen: a legend explaining "did not attend" to a doctor
+          who has never had one is noise. */}
+      {shownStates.length > 0 && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-slate-500">
+          <span className="font-semibold uppercase tracking-wide text-slate-400">
+            Key
+          </span>
+          {shownStates.map((k) => (
+            <span key={k} className="inline-flex items-center gap-1.5">
+              <span
+                className={`inline-flex h-4 min-w-4 items-center justify-center rounded px-1 text-[10px] font-black ${STATE_STYLES[k].chip}`}
+              >
+                {STATE_STYLES[k].tag ?? " "}
+              </span>
+              {STATE_STYLES[k].label}
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* ── The grid ───────────────────────────────────────────────────── */}
       {view === "month" && (
         <MonthGrid anchor={anchor} byDay={byDay} today={today} onOpen={setOpenId} onDay={(s) => go({ view: "day", date: s })} />
@@ -377,18 +413,25 @@ function MonthGrid({
 }
 
 function MonthChip({ a, onOpen }: { a: CalendarAppointment; onOpen: (id: string) => void }) {
-  const cancelled = a.status === "CANCELLED";
-  const sw = cancelled ? CANCELLED_SWATCH : swatchFor(a.clinicColor);
-  const awaiting = a.approvalState === "AWAITING_DOCTOR" && !cancelled;
+  const state = stateOf(a);
+  const st = STATE_STYLES[state];
+  // Clinic carries the hue; state is a ring and a character on top of it, so
+  // both facts survive rather than one overwriting the other.
+  const sw = state === "cancelled" ? CANCELLED_SWATCH : swatchFor(a.clinicColor);
   return (
     <button
       onClick={() => onOpen(a.id)}
-      title={`${a.time} · ${a.patientName}${a.clinicName ? ` · ${a.clinicName}` : ""}`}
-      className={`flex w-full items-center gap-1 truncate rounded border-l-2 px-1 py-0.5 text-left text-[11px] transition ${sw.block} ${sw.edge}`}
+      title={`${a.time} · ${a.patientName}${a.clinicName ? ` · ${a.clinicName}` : ""} · ${st.label}`}
+      className={`flex w-full items-center gap-1 truncate rounded border-l-2 px-1 py-0.5 text-left text-[11px] transition ${sw.block} ${sw.edge} ${st.block}`}
     >
-      {awaiting && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />}
+      {st.tag && (
+        <span aria-hidden className="shrink-0 font-black leading-none">
+          {st.tag}
+        </span>
+      )}
       <span className="font-semibold tabular-nums">{a.time}</span>
       <span className="truncate">{a.patientName}</span>
+      <span className="sr-only">{st.label}</span>
     </button>
   );
 }
@@ -563,9 +606,9 @@ function TimeBlock({
   lanes: number;
   onOpen: (id: string) => void;
 }) {
-  const cancelled = a.status === "CANCELLED";
-  const sw = cancelled ? CANCELLED_SWATCH : swatchFor(a.clinicColor);
-  const awaiting = a.approvalState === "AWAITING_DOCTOR" && !cancelled;
+  const state = stateOf(a);
+  const st = STATE_STYLES[state];
+  const sw = state === "cancelled" ? CANCELLED_SWATCH : swatchFor(a.clinicColor);
 
   const top = (a.startMinute - DAY_START_HOUR * 60) * PX_PER_MIN;
   const height = Math.max(22, a.durationMin * PX_PER_MIN - 2);
@@ -574,7 +617,8 @@ function TimeBlock({
   return (
     <button
       onClick={() => onOpen(a.id)}
-      className={`absolute overflow-hidden rounded-lg border border-l-[3px] px-2 py-1 text-left shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition hover:z-10 hover:shadow-[0_6px_16px_-6px_rgba(15,23,42,0.35)] ${sw.block} ${sw.edge}`}
+      title={`${a.time} · ${a.patientName} · ${st.label}`}
+      className={`absolute overflow-hidden rounded-lg border border-l-[3px] px-2 py-1 text-left shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition hover:z-10 hover:shadow-[0_6px_16px_-6px_rgba(15,23,42,0.35)] ${sw.block} ${sw.edge} ${st.block}`}
       style={{
         top,
         height,
@@ -583,9 +627,14 @@ function TimeBlock({
       }}
     >
       <div className="flex items-center gap-1 text-[11px] font-bold leading-tight">
-        {awaiting && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />}
+        {st.tag && (
+          <span aria-hidden className="shrink-0 font-black leading-none">
+            {st.tag}
+          </span>
+        )}
         <span className="tabular-nums">{a.time}</span>
         {a.isMember && <span className="text-[9px] font-black tracking-wider">WC</span>}
+        <span className="sr-only">{st.label}</span>
       </div>
       <div className="truncate text-[11px] leading-tight">{a.patientName}</div>
       {height > 44 && a.clinicName && (

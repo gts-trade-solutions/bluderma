@@ -122,6 +122,7 @@ export type Accent = keyof typeof ACCENTS;
 export function Panel({
   title,
   sub,
+  note,
   action,
   accent,
   icon,
@@ -133,6 +134,15 @@ export function Panel({
 }: {
   title?: string;
   sub?: string;
+  /**
+   * What this panel is FOR, and when a practitioner would use it.
+   *
+   * Distinct from `sub`, which is a label. This is the sentence that answers
+   * "why is this here": a heading like "Redeem a card" tells somebody what the
+   * button does and nothing about why a doctor would ever press it. Panels a
+   * practitioner meets rarely need one; the daily ones do not.
+   */
+  note?: React.ReactNode;
   action?: React.ReactNode;
   /** A hue for the header glyph and the top edge. Omit for a quiet panel. */
   accent?: Accent;
@@ -185,6 +195,11 @@ export function Panel({
           </div>
           {action}
         </div>
+      )}
+      {note && (
+        <p className="border-b border-slate-100 bg-slate-50/70 px-5 py-3 text-[13px] leading-relaxed text-slate-600">
+          {note}
+        </p>
       )}
       <div className={padded ? "p-5" : ""}>{children}</div>
     </section>
@@ -398,6 +413,11 @@ const PATHS: Record<string, string> = {
   link: "M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1",
   star: "M12 3l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 18.3 5.9 21.6l1.4-6.8L2.2 10.1l6.9-.8z",
   clock: "M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z",
+  // A rupee sign as strokes rather than a glyph, so it inherits colour and
+  // weight like every other icon here instead of depending on a font.
+  rupee: "M6 4h11M6 9h11M15 4c0 3.5-2.4 5-5.5 5H6l7.5 10",
+  sheet:
+    "M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 12h6M9 16h4",
   pulse: "M3 12h4l2-6 3.5 12L16 9l1.5 3H21",
 };
 

@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   CalendarDays,
+  Camera,
   Download,
   FileText,
   Package,
@@ -21,11 +22,16 @@ import {
   ProfileStrip,
   type ProfileSection,
 } from "@/components/patient/ProfileNav";
+import { prisma } from "@/lib/prisma";
+import { getPayLater } from "@/lib/queries/payLater";
+import AddressBook from "@/components/patient/AddressBook";
+import FinancingPanel from "@/components/patient/FinancingPanel";
+import GalleryConsent from "@/components/patient/GalleryConsent";
+import MyPhotos from "@/components/patient/MyPhotos";
+import NearbyClinics from "@/components/patient/NearbyClinics";
 import { requireUser } from "@/lib/session";
 import { getProfilePageData } from "@/lib/queries/profileData";
 import {
-  DEMO_ADDRESSES,
-  DEMO_PAY_LATER,
   DEMO_WALLET,
 } from "@/data/patientDemo";
 
@@ -49,21 +55,168 @@ const money = (n: number) => `₹${n.toLocaleString("en-IN")}`;
  * sections the record never had: what they are being treated for, the wallet,
  * the locations they use, and pay-later.
  *
- * ── Real, and sampled, and the difference is visible ──────────────────────
- * Reports, conditions, prescriptions, treatments, appointments, orders,
- * discounts and membership all come out of the database. The wallet, pay-later
- * and the saved addresses have no tables behind them yet and are drawn from
- * `@/data/patientDemo`.
+ * ── What is real here, and the one thing that is not ─────────────────────
+ * Everything on this page comes out of the database except the wallet.
  *
- * Pay-later and the saved addresses carry a `Sample` badge, because a mock-up
- * a reader cannot distinguish from the real thing is not a mock-up. The wallet
- * does NOT, by request: it reads as a live balance. The figures behind it are
- * still `DEMO_WALLET`, so it is the panel to wire up first, and the one to
- * check before this page goes anywhere a real client can spend against it.
- * When the tables land, the import changes and the badges come off.
+ * It used to be three. Saved addresses were two invented Chennai addresses
+ * shown to every client as their own, and Buy Now Pay Later quoted an approved
+ * credit limit through a lender that does not exist. Both are real tables now,
+ * with an honest empty state instead of invented rows, so the `Sample` badge
+ * that marked them has gone with them.
+ *
+ * The wallet is still DEMO_WALLET and carries no badge, by request. That makes
+ * it the one figure on this page a client could act on and be wrong about, so
+ * it is the next thing to put behind a table. verify-profile-data asserts both
+ * halves of that: the badge stays off, and the numbers stay traceably mock, so
+ * whoever wires it up gets a failing test pointing here.
  */
 export default async function ProfilePage() {
   const user = await requireUser("/patient/profile");
+
+  // Read here rather than through profileData: these are the one thing on this
+  // page the client can edit, so they must not sit behind the same cache() as
+  // the read-only history, which would serve a stale list right after a save.
+  // Aftercare sheets a doctor has issued to this client. Newest first: the
+  // one that matters is almost always the most recent procedure.
+  const AFTERCARE = await prisma.aftercareSheet.findMany({
+    where: { patientUserId: user.id },
+    orderBy: { issuedAt: "desc" },
+    take: 12,
+    select: {
+      id: true,
+      procedure: true,
+      procedureDate: true,
+      reviewOn: true,
+      doctorName: true,
+      acknowledgedAt: true,
+      doctorNotes: true,
+    },
+  });
+
+  // Only SHARED plans. A draft is a doctor thinking aloud, and half-formed
+  // clinical advice reaching a patient is worse than none.
+  const CARE_PLANS = await prisma.treatmentPlan.findMany({
+    where: { patientUserId: user.id, sharedAt: { not: null } },
+    orderBy: { sharedAt: "desc" },
+    take: 5,
+    select: {
+      id: true,
+      sharedAt: true,
+      doctor: { select: { name: true } },
+      items: {
+        where: { state: "ACCEPTED" },
+        orderBy: { sortOrder: "asc" },
+        select: { id: true, treatment: true, rationale: true },
+      },
+    },
+  });
+
+  const [MY_PHOTOS, MY_CARDS, MY_ORDERS] = await Promise.all([
+    prisma.patientPhoto.findMany({
+      where: { patientUserId: user.id },
+      orderBy: { capturedAt: "desc" },
+      take: 24,
+      select: { id: true, angle: true, capturedAt: true, doctorId: true },
+    }),
+    // Only cards that were actually paid for. An abandoned checkout leaves an
+    // inert row behind, and showing it would look like a card they own.
+    prisma.giftCard.findMany({
+      where: { buyerUserId: user.id, paidAt: { not: null } },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      select: {
+        id: true,
+        code: true,
+        valueInr: true,
+        balanceInr: true,
+        expiresAt: true,
+        recipientName: true,
+        offer: { select: { title: true, doctor: { select: { name: true } } } },
+      },
+    }),
+    prisma.medicineOrder.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      select: {
+        id: true,
+        publicId: true,
+        status: true,
+        totalInr: true,
+        createdAt: true,
+        items: { select: { id: true, name: true, qty: true } },
+      },
+    }),
+  ]);
+
+  const GALLERY = (
+    await prisma.doctorGalleryCase.findMany({
+      where: { patientUserId: user.id },
+      orderBy: [{ consentGivenAt: "asc" }, { createdAt: "desc" }],
+      take: 10,
+      select: {
+        id: true,
+        treatmentName: true,
+        detail: true,
+        status: true,
+        consentGivenAt: true,
+        consentWithdrawnAt: true,
+        doctor: { select: { name: true } },
+      },
+    })
+  ).map((c) => ({
+    id: c.id,
+    treatmentName: c.treatmentName,
+    detail: c.detail,
+    doctorName: c.doctor.name,
+    consentGiven: Boolean(c.consentGivenAt),
+    consentWithdrawn: Boolean(c.consentWithdrawnAt),
+    published: c.status === "PUBLISHED",
+  }));
+  // Anything still unanswered is the reason to surface this section at all.
+  const GALLERY_WAITING = GALLERY.filter(
+    (c) => !c.consentGiven && !c.consentWithdrawn
+  ).length;
+
+  const FINANCING = (
+    await prisma.financingRequest.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      select: {
+        id: true,
+        treatment: true,
+        estimatedInr: true,
+        status: true,
+        createdAt: true,
+        staffNote: true,
+      },
+    })
+  ).map((r) => ({
+    ...r,
+    createdAt: r.createdAt.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }),
+  }));
+
+  const PAY_LATER = await getPayLater(user.id);
+
+  const ADDRESSES = await prisma.patientAddress.findMany({
+    where: { userId: user.id },
+    orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
+    select: {
+      id: true,
+      label: true,
+      line1: true,
+      line2: true,
+      city: true,
+      pincode: true,
+      phone: true,
+      isDefault: true,
+    },
+  });
   const {
     client: CLIENT,
     skinReports: SKIN_REPORTS,
@@ -94,6 +247,12 @@ export default async function ProfilePage() {
     // on a phone is most of a screen's worth of scrolling before a balance
     // they did not know they had.
     { id: "wallet", label: "My wallet", icon: "wallet", badge: money(DEMO_WALLET.balanceInr) },
+    ...(GALLERY.length ? [{ id: "photos", label: "My photos", icon: "report", badge: GALLERY_WAITING ? String(GALLERY_WAITING) : undefined }] : []),
+    { id: "my-photos", label: "My photos", icon: "report", badge: MY_PHOTOS.length ? String(MY_PHOTOS.length) : undefined },
+    ...(MY_CARDS.length ? [{ id: "gift-cards", label: "Gift cards", icon: "wallet", badge: String(MY_CARDS.length) }] : []),
+    ...(MY_ORDERS.length ? [{ id: "medicines", label: "Medicines", icon: "rx", badge: String(MY_ORDERS.length) }] : []),
+    { id: "plan", label: "My plan", icon: "treatment", badge: CARE_PLANS.length ? String(CARE_PLANS.length) : undefined },
+    { id: "aftercare", label: "Aftercare", icon: "rx", badge: AFTERCARE.length ? String(AFTERCARE.length) : undefined },
     { id: "reports", label: "My reports", icon: "report", badge: String(SKIN_REPORTS.length) },
     { id: "conditions", label: "My conditions", icon: "condition", badge: String(CONDITIONS.length) },
     { id: "appointments", label: "My appointments", icon: "calendar", badge: String(APPOINTMENTS.length) },
@@ -133,6 +292,21 @@ export default async function ProfilePage() {
                 .filter(Boolean)
                 .join(" · ")}
             </p>
+
+            {/* The number a clinic asks for on the phone, and the one that goes
+                in the "Patient ID" box on an aftercare sheet. A cuid does
+                neither. Selectable and in a monospace face because its whole
+                job is being read aloud or copied. */}
+            {CLIENT.publicId && (
+              <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/[0.06] px-3 py-1.5 ring-1 ring-inset ring-white/10">
+                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-muted">
+                  Patient ID
+                </span>
+                <span className="select-all font-mono text-xs font-bold tracking-wider text-ink">
+                  {CLIENT.publicId}
+                </span>
+              </p>
+            )}
 
             <dl className="mt-7 grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap sm:gap-3">
               {stats.map((s) => (
@@ -321,9 +495,16 @@ export default async function ProfilePage() {
                         ))}
                       </div>
 
-                      <button className="btn-ghost mt-4 w-full !py-2 text-sm">
-                        <Download className="h-4 w-4" /> Download report
-                      </button>
+                      {/* Was a <button> with no handler, in a server
+                          component, so there was nowhere to attach one: it
+                          rendered and did nothing. The per-scan report page
+                          already existed and nothing pointed at it. */}
+                      <Link
+                        href={`/patient/skin-analysis/${r.id}/report`}
+                        className="btn-ghost mt-4 w-full !py-2 text-sm"
+                      >
+                        <FileText className="h-4 w-4" /> Open full report
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -465,9 +646,25 @@ export default async function ProfilePage() {
                             Issued {rx.issued}
                           </p>
                         </div>
-                        <button className="btn-ghost shrink-0 !px-3 !py-1.5 text-xs">
-                          <Download className="h-3.5 w-3.5" /> PDF
-                        </button>
+                        {/* Only when a document was actually attached.
+                            /api/uploads/view checks this prescription is
+                            yours, then redirects to a five-minute signed URL:
+                            `prescriptions/` is a private prefix and must not
+                            be linked to directly. */}
+                        {rx.fileUrl ? (
+                          <a
+                            href={`/api/uploads/view?url=${encodeURIComponent(rx.fileUrl)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn-ghost shrink-0 !px-3 !py-1.5 text-xs"
+                          >
+                            <Download className="h-3.5 w-3.5" /> PDF
+                          </a>
+                        ) : (
+                          <span className="shrink-0 text-[11px] font-medium text-ink-muted">
+                            No file attached
+                          </span>
+                        )}
                       </div>
                       <ul className="mt-4 space-y-2">
                         {rx.items.map((item) => (
@@ -528,86 +725,309 @@ export default async function ProfilePage() {
               )}
             </Section>
 
+            {/* ── Gallery consent ─────────────────────────────────── */}
+            {GALLERY.length > 0 && (
+              <Section
+                id="photos"
+                icon={Camera}
+                eyebrow="Your photographs"
+                title="Before and after"
+                sub="Your doctor may ask to show these publicly. It is entirely your choice, and you can change your mind."
+              >
+                <GalleryConsent cases={GALLERY} />
+              </Section>
+            )}
+
+            {/* ── My own photographs ──────────────────────────────── */}
+            <Section
+              id="my-photos"
+              icon={Camera}
+              eyebrow="Your skin, over time"
+              title="My photos"
+              sub="Take the same views each visit and a doctor can see what actually changed. Only you and the doctors you book with can see these."
+            >
+              <MyPhotos
+                photos={MY_PHOTOS.map((p) => ({
+                  id: p.id,
+                  angle: p.angle,
+                  capturedAt: p.capturedAt.toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                  }),
+                  byDoctor: p.doctorId !== null,
+                }))}
+              />
+            </Section>
+
+            {/* ── Gift cards ──────────────────────────────────────── */}
+            {MY_CARDS.length > 0 && (
+              <Section
+                id="gift-cards"
+                icon={Wallet}
+                eyebrow="Bought as a gift"
+                title="Gift cards"
+                sub="Quote the code at the clinic. A card can be used across several visits until the balance runs out."
+              >
+                <ul className="grid gap-3 sm:grid-cols-2">
+                  {MY_CARDS.map((c) => (
+                    <li key={c.id} className="card-soft p-5">
+                      <p className="text-sm font-bold text-ink">{c.offer.title}</p>
+                      <p className="mt-0.5 text-xs text-ink-muted">
+                        {c.offer.doctor.name}
+                        {c.recipientName ? ` · for ${c.recipientName}` : ""}
+                      </p>
+                      <p className="mt-3 select-all font-mono text-lg font-bold tracking-wider text-teal-300">
+                        {c.code}
+                      </p>
+                      <div className="mt-3 flex items-baseline justify-between gap-2">
+                        <span className="display-sm text-xl text-ink">
+                          {money(c.balanceInr)}
+                        </span>
+                        <span className="text-xs text-ink-muted">
+                          of {money(c.valueInr)} left
+                        </span>
+                      </div>
+                      {c.expiresAt && (
+                        <p className="mt-1.5 text-[11px] text-ink-muted">
+                          Use it by{" "}
+                          {c.expiresAt.toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            )}
+
+            {/* ── Medicine orders ─────────────────────────────────── */}
+            {MY_ORDERS.length > 0 && (
+              <Section
+                id="medicines"
+                icon={Syringe}
+                eyebrow="From your doctor"
+                title="Medicine orders"
+                sub="What you ordered from the doctor who treated you, and where it has got to."
+              >
+                <ul className="space-y-3">
+                  {MY_ORDERS.map((o) => (
+                    <li key={o.id} className="card-soft p-5">
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <p className="font-mono text-xs font-bold text-ink-soft">
+                          {o.publicId ?? o.id.slice(0, 8)}
+                        </p>
+                        <span className="rounded-full bg-white/[0.08] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-soft">
+                          {o.status.toLowerCase()}
+                        </span>
+                      </div>
+                      <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">
+                        {o.items.map((i) => `${i.qty} × ${i.name}`).join(", ")}
+                      </p>
+                      <p className="mt-1.5 text-xs text-ink-muted">
+                        {money(o.totalInr)} ·{" "}
+                        {o.createdAt.toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            )}
+
+            {/* ── Treatment plan ──────────────────────────────────── */}
+            <Section
+              id="plan"
+              icon={Sparkles}
+              eyebrow="What your doctor suggests"
+              title="My treatment plan"
+              sub="Chosen by the doctor who read your analysis. Not a diagnosis, and not a quote."
+            >
+              {CARE_PLANS.length === 0 ? (
+                <Blank
+                  title="No plan yet"
+                  body="After a doctor reviews your skin analysis, what they suggest appears here."
+                />
+              ) : (
+                <ul className="space-y-3">
+                  {CARE_PLANS.map((p) => (
+                    <li key={p.id} className="card-soft p-5">
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <p className="text-sm font-bold text-ink">
+                          From {p.doctor.name}
+                        </p>
+                        <p className="text-xs text-ink-muted">
+                          {p.sharedAt?.toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </p>
+                      </div>
+                      <ul className="mt-3 space-y-2.5">
+                        {p.items.map((i) => (
+                          <li key={i.id} className="flex gap-3">
+                            <span
+                              aria-hidden
+                              className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-400"
+                            />
+                            <span className="min-w-0">
+                              <span className="block text-sm font-semibold text-ink">
+                                {i.treatment}
+                              </span>
+                              {i.rationale && (
+                                <span className="mt-0.5 block text-[13px] leading-relaxed text-ink-muted">
+                                  {i.rationale}
+                                </span>
+                              )}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      {/* No prices here, deliberately. The catalogue is
+                          price-free by rule and a treatment cost is quoted
+                          after an assessment, not from a list. */}
+                      <p className="mt-4 border-t border-white/10 pt-3 text-xs text-ink-muted">
+                        Talk to {p.doctor.name} about what each of these
+                        involves and what it costs.
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Section>
+
+            {/* ── Aftercare ───────────────────────────────────────── */}
+            <Section
+              id="aftercare"
+              icon={FileText}
+              eyebrow="After your procedure"
+              title="Aftercare instructions"
+              sub="What to do, what to avoid, and when to call the clinic. Issued by the doctor who treated you."
+            >
+              {AFTERCARE.length === 0 ? (
+                <Blank
+                  title="Nothing yet"
+                  body="After a procedure, your doctor issues a sheet here with instructions for the days that follow."
+                />
+              ) : (
+                <ul className="grid gap-3 sm:grid-cols-2">
+                  {AFTERCARE.map((a) => (
+                    <li key={a.id} className="card-soft p-5">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <p className="min-w-0 text-sm font-bold text-ink">
+                          {a.procedure}
+                        </p>
+                        {/* Unconfirmed is the state worth flagging: it means
+                            nobody has said the instructions were explained. */}
+                        {!a.acknowledgedAt && (
+                          <span className="shrink-0 rounded-full bg-amber-400/[14%] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-200">
+                            Please read
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-xs text-ink-muted">
+                        {a.doctorName} ·{" "}
+                        {a.procedureDate.toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
+                      {a.reviewOn && (
+                        <p className="mt-1.5 text-xs font-semibold text-teal-300">
+                          Review on{" "}
+                          {a.reviewOn.toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                          })}
+                        </p>
+                      )}
+                      {a.doctorNotes && (
+                        <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-ink-soft">
+                          {a.doctorNotes}
+                        </p>
+                      )}
+                      <Link
+                        href={`/patient/aftercare/${a.id}`}
+                        className="btn-ghost mt-4 w-full !py-2 text-sm"
+                      >
+                        <FileText className="h-4 w-4" /> Open the full sheet
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Section>
+
             {/* ── 7. Pay later ────────────────────────────────────── */}
             <Section
               id="pay-later"
               icon={Package}
-              eyebrow="Buy now, pay later"
-              title="Split a course into instalments"
-              sub={`Up to ${money(DEMO_PAY_LATER.approvedLimitInr)} through ${DEMO_PAY_LATER.provider}, with the first ${DEMO_PAY_LATER.interestFreeMonths} months at no cost.`}
-              sample
+              eyebrow="Paying for treatment"
+              title="Spreading the cost"
+              sub="Ask the clinic what is possible. Nothing is applied for here."
             >
-              <div className="card-soft p-5">
-                <div className="flex flex-wrap items-end justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
-                      Available to you
-                    </p>
-                    <p className="display-sm mt-1 text-2xl text-ink">
-                      {money(DEMO_PAY_LATER.approvedLimitInr - DEMO_PAY_LATER.usedInr)}
-                    </p>
-                  </div>
-                  <p className="text-xs text-ink-muted">
-                    {money(DEMO_PAY_LATER.usedInr)} of{" "}
-                    {money(DEMO_PAY_LATER.approvedLimitInr)} in use
-                  </p>
-                </div>
-                <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white/10">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-amber-400 to-teal-400"
-                    style={{
-                      width: `${Math.round(
-                        (DEMO_PAY_LATER.usedInr / DEMO_PAY_LATER.approvedLimitInr) * 100
-                      )}%`,
-                    }}
-                  />
-                </div>
-              </div>
+              {/* This section used to quote an "approved limit of ₹60,000
+                  through BluDerma Care Credit" and list EMI options, which
+                  read as though this platform were a lender. It is not one,
+                  no finance partner is integrated, and a credit limit shown
+                  to somebody deciding whether they can afford treatment is a
+                  representation about money they can borrow.
 
-              <ul className="mt-3 grid gap-3 xl:grid-cols-2">
-                {DEMO_PAY_LATER.plans.map((pl) => (
-                  <li key={pl.id} className="card-soft p-5">
-                    <p className="text-sm font-bold text-ink">{pl.item}</p>
-                    <p className="mt-1 text-xs text-ink-muted">
-                      {money(pl.paidInr)} paid of {money(pl.totalInr)}
-                    </p>
-
-                    <div className="mt-3 flex gap-1.5">
-                      {Array.from({ length: pl.instalmentsTotal }, (_, i) => (
-                        <span
-                          key={i}
-                          className={`h-1.5 flex-1 rounded-full ${
-                            i < pl.instalmentsPaid ? "bg-teal-400" : "bg-white/12"
-                          }`}
-                        />
-                      ))}
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-xs text-ink-muted">
-                        {pl.instalmentsPaid} of {pl.instalmentsTotal} instalments
+                  So it is an enquiry now. The client says what they are
+                  considering and roughly what they believe it costs; the
+                  clinic replies. Real instalment plans, if the clinic ever
+                  runs a programme, still show above from InstalmentPlan. */}
+              {PAY_LATER.plans.length > 0 && (
+                <ul className="mb-4 grid gap-3 xl:grid-cols-2">
+                  {PAY_LATER.plans.map((pl) => (
+                    <li key={pl.id} className="card-soft p-5">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <p className="min-w-0 text-sm font-bold text-ink">
+                          {pl.item}
+                        </p>
+                        {pl.settled && (
+                          <span className="shrink-0 rounded-full bg-teal-400/[14%] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-teal-200">
+                            Paid off
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-xs text-ink-muted">
+                        {money(pl.paidInr)} paid of {money(pl.totalInr)} ·{" "}
+                        {pl.provider}
                       </p>
-                      <p className="text-xs font-bold text-ink">
-                        {money(pl.instalmentInr)} due {pl.nextDue}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="card-soft mt-3 p-5">
-                <p className="text-sm font-bold text-ink">How it works</p>
-                <ul className="mt-3 space-y-2">
-                  {DEMO_PAY_LATER.howItWorks.map((line) => (
-                    <li key={line} className="flex gap-2.5">
-                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-400" />
-                      <span className="text-[13px] leading-relaxed text-ink-soft">
-                        {line}
-                      </span>
+                      <div className="mt-3 flex gap-1.5">
+                        {Array.from({ length: pl.instalmentsTotal }, (_, i) => (
+                          <span
+                            key={i}
+                            className={`h-1.5 flex-1 rounded-full ${
+                              i < pl.instalmentsPaid ? "bg-teal-400" : "bg-white/[0.12]"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-xs text-ink-muted">
+                          {pl.instalmentsPaid} of {pl.instalmentsTotal} instalments
+                        </p>
+                        {pl.nextDue && (
+                          <p className="text-xs font-bold text-ink">
+                            {money(pl.instalmentInr)} due {pl.nextDue}
+                          </p>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
-              </div>
+              )}
+
+              <FinancingPanel rows={FINANCING} />
             </Section>
 
             {/* ── 8. Location ─────────────────────────────────────── */}
@@ -618,74 +1038,38 @@ export default async function ProfilePage() {
               title="Location"
               sub="Your saved addresses, and the listed clinics in your city."
             >
-              <div className="mb-3 flex items-center gap-2">
-                <h3 className="text-sm font-bold text-ink">Saved addresses</h3>
-                <SampleTag />
-              </div>
-              <ul className="grid gap-3 sm:grid-cols-2">
-                {DEMO_ADDRESSES.map((a) => (
-                  <li key={a.id} className="card-soft p-5">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold text-ink">{a.label}</p>
-                      {a.isDefault && (
-                        <span className="rounded-full bg-teal-400/[14%] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-teal-200">
-                          Default
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">
-                      {a.line1}
-                      <br />
-                      {a.line2}, {a.pincode}
-                    </p>
-                    <p className="mt-2.5 text-xs text-ink-muted">
-                      {a.homeVisitAvailable
-                        ? "Home visits available at this address."
-                        : "No listed doctor travels here yet."}
-                    </p>
-                  </li>
-                ))}
-              </ul>
+              {/* Real, and editable. This was DEMO_ADDRESSES: two invented
+                  Chennai addresses shown to every client as though they were
+                  their own, in a section with no actions at all, so even a
+                  client who noticed could do nothing about it. They were also
+                  the last Indian street addresses on a site that has
+                  otherwise been stripped of them.
 
-              <h3 className="mb-3 mt-8 text-sm font-bold text-ink">
-                {CLIENT.city ? `Clinics in ${CLIENT.city}` : "Listed clinics"}
+                  The "home visits available at this address" line went with
+                  them. Nothing in the product records which doctors travel
+                  where, so it was answering a question the data cannot. */}
+              <AddressBook rows={ADDRESSES} />
+
+                            <h3 className="mb-3 mt-8 text-sm font-bold text-ink">
+                Listed clinics
               </h3>
+              {/* Ordered by how near each one actually is, when the visitor
+                  has shared a position. That happens in the client component,
+                  because their coordinates live in localStorage and are not
+                  something to send to a server merely so a list can be sorted.
+
+                  The note that stood here said no distance could be shown
+                  because nothing populated Clinic.lat/lng. Every clinic is
+                  geocoded now, so it can. */}
               {CLINICS.length > 0 ? (
-                <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {CLINICS.map((c) => (
-                    <li key={c.id} className="card-soft p-5">
-                      <p className="text-sm font-bold text-ink">
-                        {c.name.replace(/^BluDerma\s+/, "")}
-                      </p>
-                      <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-wide text-teal-300">
-                        {c.area}
-                      </p>
-                      <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">
-                        {c.addressLine1}
-                        <br />
-                        {c.city}, {c.pincode}
-                      </p>
-                      {c.phone && (
-                        <p className="mt-2 text-xs text-ink-muted">{c.phone}</p>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                <NearbyClinics clinics={CLINICS} />
               ) : (
                 <Blank
-                  title="No listed clinics in your city yet"
+                  title="No listed clinics yet"
                   body="Video consultations are available everywhere we operate."
                   cta={{ label: "See doctors", href: "/patient/doctors" }}
                 />
               )}
-
-              {/* Stated plainly rather than faked. Clinic.lat/lng exist and
-                  nothing populates them, so no distance is printed anywhere. */}
-              <p className="mt-4 text-xs leading-relaxed text-ink-muted">
-                We list clinics by area rather than by distance. We do not hold
-                coordinates for every location yet, and a distance we cannot
-                calculate is not one worth showing you.
-              </p>
             </Section>
 
             {/* ── 9. Orders & discounts ───────────────────────────── */}
@@ -872,7 +1256,6 @@ function Section({
   title,
   sub,
   action,
-  sample,
   children,
 }: {
   id: string;
@@ -882,7 +1265,6 @@ function Section({
   sub: string;
   action?: { label: string; href: string };
   /** Marks a panel whose content has no table behind it yet. */
-  sample?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -899,7 +1281,6 @@ function Section({
             <p className="section-eyebrow">{eyebrow}</p>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <h2 className="display-sm text-xl text-ink sm:text-2xl">{title}</h2>
-              {sample && <SampleTag />}
             </div>
             <p className="mt-1 max-w-xl text-sm text-ink-muted">{sub}</p>
           </div>
@@ -970,16 +1351,6 @@ function Row({
  * Deliberately not subtle. A wallet balance a client cannot tell from their
  * own money is worse than no wallet at all.
  */
-function SampleTag() {
-  return (
-    <span
-      title="Illustrative content: this feature has no data behind it yet."
-      className="inline-flex items-center gap-1 rounded-full bg-amber-400/[14%] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-300 ring-1 ring-inset ring-amber-300/30"
-    >
-      Sample
-    </span>
-  );
-}
 
 function Perk({ on, children }: { on: boolean; children: React.ReactNode }) {
   return (

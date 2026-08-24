@@ -1,5 +1,6 @@
 "use server";
 
+import { newDoctorId, newPatientId } from "@/lib/publicId";
 import { revalidatePath } from "next/cache";
 import {
   ClinicPhotoKind,
@@ -108,6 +109,7 @@ export async function startDoctorSignup(formData: FormData): Promise<AdminResult
             phone: d.phone,
             passwordHash: await hashPassword(d.password),
             role: Role.DOCTOR,
+            publicId: newPatientId(),
           },
           select: { id: true },
         });
@@ -116,6 +118,9 @@ export async function startDoctorSignup(formData: FormData): Promise<AdminResult
           data: {
             slug: doctorSlug,
             userId: user.id,
+            // Deliberately unlike a patient id: both appear on the same
+            // aftercare sheet, so a glance has to tell them apart.
+            publicId: newDoctorId(),
             name: d.name,
             phone: d.phone,
             email: d.email,

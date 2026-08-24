@@ -1,3 +1,4 @@
+import { newPatientId } from "@/lib/publicId";
 import { NextResponse } from "next/server";
 import { Prisma, Role } from "@prisma/client";
 
@@ -60,6 +61,9 @@ export async function POST(req: Request) {
           email,
           phone: phone || null,
           passwordHash: await hashPassword(password),
+          // Quoted on aftercare sheets and read down the phone; a cuid is
+          // neither. Allocated here so no account can exist without one.
+          publicId: newPatientId(),
           role: isDoctor ? Role.DOCTOR : Role.PATIENT,
           // Clients get a profile record; practitioners get a practice below.
           ...(isDoctor

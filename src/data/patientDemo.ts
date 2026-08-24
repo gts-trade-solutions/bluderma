@@ -78,82 +78,30 @@ export const DEMO_WALLET = {
   ] as WalletMovement[],
 };
 
-export interface PayLaterPlan {
-  id: string;
-  item: string;
-  totalInr: number;
-  paidInr: number;
-  instalmentInr: number;
-  instalmentsPaid: number;
-  instalmentsTotal: number;
-  nextDue: string;
-}
+/*
+ * PayLaterPlan and DEMO_PAY_LATER lived here and are gone.
+ *
+ * They are a real table now (InstalmentPlan), gated behind settings that are
+ * off until an admin names an actual lender. See src/lib/queries/payLater.ts.
+ *
+ * Of the three mocks on this page it was the one that had to go first on
+ * merit, whatever order they happened to be done in. A fake wallet balance
+ * overstates a credit the clinic owes. A fake "approved limit of 60,000
+ * through BluDerma Care Credit" is a statement about money a person can
+ * borrow, made to somebody working out whether they can afford treatment,
+ * naming a lender that does not exist.
+ */
 
-export const DEMO_PAY_LATER = {
-  /** What a course could be split across, if the client is approved. */
-  approvedLimitInr: 60_000,
-  usedInr: 18_000,
-  /** No-cost EMI window, in months. */
-  interestFreeMonths: 3,
-  provider: "BluDerma Care Credit",
-  plans: [
-    {
-      id: "bnpl1",
-      item: "Acne scar resurfacing: 4 session course",
-      totalInr: 24_000,
-      paidInr: 12_000,
-      instalmentInr: 4_000,
-      instalmentsPaid: 3,
-      instalmentsTotal: 6,
-      nextDue: "5 Sep 2026",
-    },
-    {
-      id: "bnpl2",
-      item: "Laser hair reduction: full face",
-      totalInr: 12_000,
-      paidInr: 6_000,
-      instalmentInr: 3_000,
-      instalmentsPaid: 2,
-      instalmentsTotal: 4,
-      nextDue: "18 Sep 2026",
-    },
-  ] as PayLaterPlan[],
-  howItWorks: [
-    "Split any treatment course over ₹5,000 into three, six or nine instalments.",
-    "Three months is at no cost. Longer terms carry the provider's own interest, shown before you agree.",
-    "Approval is a soft check and takes about a minute. It does not affect your credit score.",
-    "Instalments are collected automatically. Missing one is a provider charge, never a clinic one.",
-  ],
-};
-
-export interface SavedAddress {
-  id: string;
-  label: string;
-  line1: string;
-  line2: string;
-  pincode: string;
-  isDefault: boolean;
-  /** Home visits are only offered where a listed doctor travels. */
-  homeVisitAvailable: boolean;
-}
-
-export const DEMO_ADDRESSES: SavedAddress[] = [
-  {
-    id: "a1",
-    label: "Home",
-    line1: "12/4 Rajaji Salai, Pallavaram",
-    line2: "Chennai, Tamil Nadu",
-    pincode: "600043",
-    isDefault: true,
-    homeVisitAvailable: true,
-  },
-  {
-    id: "a2",
-    label: "Work",
-    line1: "Prestige Palladium, Greams Road",
-    line2: "Chennai, Tamil Nadu",
-    pincode: "600006",
-    isDefault: false,
-    homeVisitAvailable: false,
-  },
-];
+/*
+ * SavedAddress and DEMO_ADDRESSES lived here and are gone.
+ *
+ * They are a real table now (PatientAddress) with real actions behind them, so
+ * a client's saved places are their own and they can add, edit and remove
+ * them. See src/lib/actions/address.ts and components/patient/AddressBook.
+ *
+ * Worth recording why these went first of the three: the two invented
+ * addresses were the last Indian street addresses on a site that has otherwise
+ * been stripped of city and state names, and they were shown to every visitor
+ * as though they were that visitor's own. A Korean client reading their own
+ * profile found a flat in Pallavaram in it.
+ */

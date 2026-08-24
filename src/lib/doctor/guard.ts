@@ -25,6 +25,8 @@ export interface DoctorOwner {
   /** Narrows what the portal offers — a pending doctor has no patients yet. */
   status: string;
   name: string;
+  /** "BLU-DR-9T3N6XB". Quoted on referrals and aftercare sheets. */
+  publicId: string;
   requiresApproval: boolean;
   travelBufferMin: number;
 }
@@ -41,6 +43,7 @@ export async function getOwnDoctor(): Promise<DoctorOwner | null> {
     select: {
       id: true,
       name: true,
+      publicId: true,
       status: true,
       requiresApproval: true,
       travelBufferMin: true,
@@ -53,6 +56,7 @@ export async function getOwnDoctor(): Promise<DoctorOwner | null> {
     doctorId: doctor.id,
     status: doctor.status,
     name: doctor.name,
+    publicId: doctor.publicId ?? "",
     requiresApproval: doctor.requiresApproval,
     travelBufferMin: doctor.travelBufferMin,
   };

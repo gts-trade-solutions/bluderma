@@ -4,6 +4,7 @@
 import { DoctorStatus, type Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { newDoctorId } from "@/lib/publicId";
 
 /**
  * Guarantees a DOCTOR account has a practice record to onboard into.
@@ -76,6 +77,9 @@ export async function ensurePractice(
     data: {
       slug,
       userId: user.id,
+      // Deliberately unlike a patient id: both appear on the same aftercare
+      // sheet, so a glance has to tell them apart.
+      publicId: newDoctorId(),
       name,
       phone: user.phone ?? null,
       email: user.email ?? null,

@@ -34,6 +34,12 @@ enum Role {
 model User {
   id            String    @id @default(cuid())
   name          String?
+  /// The identifier this person is quoted, on paper and on the phone.
+  /// "BLU-P-4K7M2Q". Random rather than sequential: a counter would
+  /// announce how many clients the business has and let anyone walk the
+  /// list. Nullable only so existing rows could be backfilled; every new
+  /// account gets one at creation.
+  publicId      String?   @unique
   email         String    @unique
   emailVerified DateTime?
   image         String?   @db.Text
@@ -66,6 +72,16 @@ model User {
   intakes            IntakeResponse[]
   reviews            Review[]
   subscriptions      Subscription[]
+  addresses          PatientAddress[]
+  instalmentPlans    InstalmentPlan[]
+  aftercareSheets    AftercareSheet[]
+  financingRequests  FinancingRequest[]
+  treatmentPlans     TreatmentPlan[]
+  galleryConsents    DoctorGalleryCase[]
+  photos             PatientPhoto[]
+  chartNotes         PatientNote[]
+  giftCardsBought    GiftCard[]
+  medicineOrders     MedicineOrder[]
 
   @@index([role])
   @@map("users")
@@ -449,6 +465,11 @@ model DoctorDailyInsight {
 
 model Doctor {
   id              String  @id @default(cuid())
+  /// "BLU-DR-9T3N6XB". Longer and differently segmented from a patient
+  /// id on purpose: both appear on the same aftercare sheet, so a glance
+  /// has to tell them apart. A client who later becomes a doctor keeps
+  /// their BLU-P and gains this; they are two roles, not two people.
+  publicId        String? @unique
   /// Stable public handle, e.g. "aarti-menon". Was Doctor.id in the seed data.
   slug            String  @unique
   /// Set once the practitioner has a login. Null = directory record only.
@@ -523,7 +544,17 @@ model Doctor {
   appointments Appointment[]
   clinics      DoctorClinic[]
 
-  prescriptions Prescription[]
+  patientPhotos   PatientPhoto[]
+  chartNotes      PatientNote[]
+  giftCardOffers  GiftCardOffer[]
+  medicines       Medicine[]
+  expenses        PracticeExpense[]
+  assets          PracticeAsset[]
+  treatmentPlans  TreatmentPlan[]
+  galleryCases    DoctorGalleryCase[]
+  aftercareNotes  AftercareNote[]
+  aftercareSheets AftercareSheet[]
+  prescriptions   Prescription[]
 
   reviewList    Review[]
   dailyInsights DoctorDailyInsight[]
@@ -651,6 +682,823 @@ model PatientProfile {
   @@map("patient_profiles")
 }
 
+/// A place a client asks to be seen at, or have something sent to.
+///
+/// This replaces DEMO_ADDRESSES, two invented Chennai addresses shown to every
+/// client as though they were their own saved places. They also carried a city
+/// and a state, which the whole site has been stripped of: a Korean visitor
+/// reading their own profile should not find an Indian address in it.
+///
+/// Deliberately loose about shape. `line1` and `line2` are free text because
+/// an address is not a schema, and a form that insists on a structure the
+/// visitor's country does not use is worse than one that takes what they type.
+/// `pincode` is optional for the same reason.
+model PatientAddress {
+  id     String @id @default(cuid())
+  userId String
+
+  /// What the client calls it: "Home", "Mum's place", "Clinic near work".
+  label   String
+  line1   String
+  line2   String?
+  pincode String?
+  /// Free text, and only what the client chose to write.
+  city    String?
+  /// Where the client is reachable at this address, if it differs.
+  phone   String?
+
+  /// Exactly one per client, enforced in the action rather than the schema:
+  /// a partial unique index on (userId) where isDefault is not portable to
+  /// MySQL, so setDefault clears the others in the same transaction.
+  isDefault Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isDefault])
+  @@map("patient_addresses")
+}
+
+/// A treatment course a client is paying for in instalments.
+///
+/// This replaces DEMO_PAY_LATER, which was the most serious of the three mocks
+/// on My Profile. A fake wallet balance overstates a credit the clinic owes;
+/// a fake "approved limit of ₹60,000 through BluDerma Care Credit" is a
+/// statement about a lending facility, made to somebody deciding whether they
+/// can afford a course of treatment. There is no such facility and no such
+/// provider.
+///
+/// So this table records only what somebody actually agreed. Nothing computes
+/// an approval, nothing quotes a limit that has not been granted, and with no
+/// rows the profile says the programme is not open rather than inventing two
+/// courses the client is supposedly halfway through paying for.
+///
+/// Money is whole rupees, as everywhere else in this schema.
+model InstalmentPlan {
+  id     String @id @default(cuid())
+  userId String
+
+  /// What is being paid for, in the words the client would recognise.
+  item     String
+  /// Who is actually extending the credit. Required: an instalment plan with
+  /// no named provider is the exact ambiguity this table exists to remove.
+  provider String
+
+  totalInr         Int
+  instalmentInr    Int
+  /// How many instalments the agreement runs to.
+  instalmentsTotal Int
+  /// How many have been collected. Never derived from a date: a missed
+  /// payment must not silently count itself as made.
+  instalmentsPaid  Int @default(0)
+
+  nextDueAt DateTime?
+  /// Set when the course is fully paid, so a finished plan stops asking for
+  /// money without needing a date comparison to work it out.
+  settledAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, settledAt])
+  @@map("instalment_plans")
+}
+
+/// A doctor's standing additions for one treatment.
+///
+/// The aftercare sheet ends with a section the treating doctor fills in, and
+/// the clinic asked for those additions to come back the next time the same
+/// doctor issues a sheet for the same treatment. So they are stored per
+/// (doctor, treatment) rather than per sheet: written once, offered as the
+/// starting point every time after, and editable before each issue.
+///
+/// This is a DRAFT, not a record. It is what appears pre-filled in the form;
+/// what the patient was actually given is snapshotted on AftercareSheet, so
+/// editing this never rewrites a document somebody is already holding.
+model AftercareNote {
+  id            String @id @default(cuid())
+  doctorId      String
+  /// Folded form of the treatment name, so "CO2 Laser" and "co2 laser " share
+  /// one drawer. See treatmentKey() in lib/aftercare/standard.ts.
+  treatmentKey  String
+  /// The treatment as the doctor last typed it, for showing back to them.
+  treatmentName String
+  body          String @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@unique([doctorId, treatmentKey])
+  @@map("aftercare_notes")
+}
+
+/// One aftercare sheet, as issued to one patient.
+///
+/// Every word of it is COPIED here at the moment of issue: the standard do's,
+/// don'ts and warnings as well as the doctor's own additions. That looks like
+/// duplication and is the point. This is a clinical instruction the patient
+/// acts on for a fortnight, and a later revision of the standard content, or
+/// of the doctor's standing notes, must never silently change what they were
+/// told. A sheet is a record of what was said, on the day it was said.
+model AftercareSheet {
+  id String @id @default(cuid())
+
+  doctorId      String
+  /// Null when the sheet was issued to somebody with no account, which the
+  /// booking flow allows. The name and id below are what the sheet carries.
+  patientUserId String?
+  appointmentId String?
+
+  /// Snapshotted identity, so the sheet still reads correctly if the patient
+  /// later changes their name or the appointment is deleted.
+  patientName     String
+  patientPublicId String?
+  doctorName      String
+  doctorPublicId  String?
+  clinicName      String?
+  clinicContact   String?
+
+  procedure     String
+  procedureDate DateTime
+  reviewOn      DateTime?
+
+  /// The content as issued. Json arrays of strings.
+  intro            String  @db.Text
+  dos              Json
+  donts            Json
+  warnings         Json
+  /// The treating doctor's own additions for this patient. Overrides the
+  /// standard list, and the sheet says so.
+  doctorNotes      String? @db.Text
+  emergencyContact String?
+
+  issuedAt       DateTime  @default(now())
+  /// Set when the patient confirms they have read it. Never inferred from a
+  /// page view: the sheet asks them to confirm the instructions were
+  /// explained, and only they can say that.
+  acknowledgedAt DateTime?
+
+  doctor      Doctor       @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  patient     User?        @relation(fields: [patientUserId], references: [id], onDelete: SetNull)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  @@index([patientUserId, issuedAt])
+  @@index([doctorId, issuedAt])
+  @@map("aftercare_sheets")
+}
+
+/// A client asking whether a treatment can be paid for over time.
+///
+/// This replaced a mock that quoted an "approved limit of 60,000 through
+/// BluDerma Care Credit" and listed EMI options, which read as though this
+/// platform were itself a lender. It is not, and there is no finance partner
+/// integrated.
+///
+/// So the honest MVP is a request, not a quote: the client says which
+/// treatment and roughly what it costs, the clinic comes back to them. No
+/// limit is computed, no rate is shown, and nothing here implies an approval.
+model FinancingRequest {
+  id     String @id @default(cuid())
+  userId String
+
+  /// What they want to spread. Free text: they are describing it, not picking
+  /// from a catalogue we would then be quoting a price against.
+  treatment    String
+  /// What they believe it costs, if they know. Their figure, never ours.
+  estimatedInr Int?
+  note         String? @db.Text
+
+  status    FinancingStatus @default(NEW)
+  /// Written by staff when they close it off.
+  staffNote String?         @db.Text
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  respondedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
+  @@map("financing_requests")
+}
+
+enum FinancingStatus {
+  NEW
+  CONTACTED
+  CLOSED
+}
+
+/// What a doctor proposes for one patient, after reading their analysis.
+///
+/// The AI's part is deliberately small. It reads the scan's own issue scores,
+/// which the server computed, and proposes treatment NAMES drawn from the real
+/// catalogue. It does not decide, it does not rank by anything clinical, and
+/// every line it produces arrives as SUGGESTED, never accepted. A suggestion
+/// only becomes part of a plan when the treating doctor says so.
+///
+/// That division is the point. A model that invents a treatment name is a
+/// nuisance; a model whose output reaches a patient as a recommendation
+/// without a clinician between is something else entirely.
+model TreatmentPlan {
+  id String @id @default(cuid())
+
+  doctorId      String
+  patientUserId String
+  /// The analysis this was built from, when there was one. A doctor can also
+  /// start a plan from nothing.
+  scanId        String?
+  appointmentId String?
+
+  /// Set when the doctor releases it to the patient. Until then it is a draft
+  /// the patient cannot see: half-formed clinical advice is worse than none.
+  sharedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  doctor  Doctor              @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  patient User                @relation(fields: [patientUserId], references: [id], onDelete: Cascade)
+  scan    SkinScan?           @relation(fields: [scanId], references: [id], onDelete: SetNull)
+  items   TreatmentPlanItem[]
+
+  @@index([doctorId, createdAt])
+  @@index([patientUserId, sharedAt])
+  @@map("treatment_plans")
+}
+
+model TreatmentPlanItem {
+  id     String @id @default(cuid())
+  planId String
+
+  /// Always a name from the real catalogue when the source is AI: the model's
+  /// output is intersected against the vocabulary before it is stored, so an
+  /// invented treatment cannot survive to the database. A doctor may type
+  /// anything, because a doctor is allowed to know something we do not.
+  treatment String
+  /// Why, in one line. Written by whoever added it.
+  rationale String? @db.Text
+
+  source PlanItemSource @default(AI)
+  state  PlanItemState  @default(SUGGESTED)
+
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  plan TreatmentPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId, sortOrder])
+  @@map("treatment_plan_items")
+}
+
+enum PlanItemSource {
+  AI
+  DOCTOR
+}
+
+enum PlanItemState {
+  SUGGESTED
+  ACCEPTED
+  DECLINED
+}
+
+/// A before-and-after pair a doctor shows publicly.
+///
+/// ── Consent is a row, not a promise ──────────────────────────────────────
+/// These are photographs of a patient's face, so the question is not whether
+/// the doctor believes they have permission but whether the patient gave it,
+/// when, and for what. It is therefore captured in the app: the doctor
+/// prepares the case, the patient sees the actual images they are being asked
+/// about, and consent is stamped with a time.
+///
+/// A case cannot be PUBLISHED without consentGivenAt. That is enforced in the
+/// action rather than by a database constraint MySQL cannot express, and it is
+/// the single rule this model exists to hold.
+///
+/// consentWithdrawnAt is not the same as deleting the row. Somebody who
+/// changes their mind must be able to say so and have the images come down
+/// immediately, while the clinic keeps the record that consent was once given
+/// and later withdrawn.
+model DoctorGalleryCase {
+  id       String @id @default(cuid())
+  doctorId String
+
+  treatmentName String
+  caption       String? @db.Text
+  /// Sessions, timescale: what a viewer needs to read the pair honestly.
+  detail        String? @db.Text
+
+  beforeUrl String @db.Text
+  beforeKey String @db.Text
+  afterUrl  String @db.Text
+  afterKey  String @db.Text
+
+  /// The patient these are of. Required: a gallery case with no identified
+  /// subject is a case nobody can consent to.
+  patientUserId      String
+  consentRequestedAt DateTime  @default(now())
+  consentGivenAt     DateTime?
+  consentWithdrawnAt DateTime?
+
+  status    GalleryStatus @default(DRAFT)
+  sortOrder Int           @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  doctor  Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  patient User   @relation(fields: [patientUserId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId, status, sortOrder])
+  @@index([patientUserId, consentGivenAt])
+  @@map("doctor_gallery_cases")
+}
+
+enum GalleryStatus {
+  DRAFT
+  PUBLISHED
+  HIDDEN
+}
+
+/// Somebody applying to sell medicines through BluDerma.
+///
+/// Deliberately an APPLICATION rather than an account. Dispensing medicine is
+/// a licensed activity, so the drug licence number is required and the
+/// document is asked for: a marketplace that lets anyone list medicines is not
+/// a marketplace, it is a liability. Nothing about submitting this creates a
+/// seller, a listing, or a login.
+///
+/// The review is a human one. There is no automatic approval path, and there
+/// should not be until somebody has actually looked at a licence.
+model MedicineVendor {
+  id String @id @default(cuid())
+
+  /// "BLU-V-..." — quoted in correspondence, like every other party here.
+  publicId String? @unique
+
+  businessName String
+  contactName  String
+  email        String
+  phone        String
+
+  addressLine1 String
+  addressLine2 String?
+  area         String?
+  city         String
+  state        String
+  pincode      String
+
+  /// The regulatory gate. Required, because the alternative is a shop
+  /// selling prescription medicine on an unverified claim.
+  drugLicenceNo  String
+  /// Stored in a private prefix and read through a signed URL, like a
+  /// practitioner's registration certificate.
+  drugLicenceUrl String? @db.Text
+  drugLicenceKey String? @db.Text
+  gstin          String?
+
+  /// What they say they stock, in their own words. Free text at this stage:
+  /// the catalogue mapping is a later conversation, after approval.
+  categories String? @db.Text
+  about      String? @db.Text
+
+  status     VendorStatus @default(SUBMITTED)
+  /// What the reviewer said. Sent back to the applicant on rejection, so it
+  /// has to read as a message rather than an internal note.
+  reviewNote String?      @db.Text
+
+  submittedAt DateTime  @default(now())
+  reviewedAt  DateTime?
+
+  @@index([status, submittedAt])
+  @@map("medicine_vendors")
+}
+
+enum VendorStatus {
+  SUBMITTED
+  IN_REVIEW
+  APPROVED
+  REJECTED
+}
+
+/// Money a practice spent.
+///
+/// ── Operating cost, not capital ──────────────────────────────────────────
+/// A machine purchase is NOT recorded here. It goes to PracticeAsset, and the
+/// two are kept apart on purpose: subtracting a ₹5,00,000 laser from one
+/// month's takings would show a catastrophic month for a purchase that earns
+/// out over years, and a practitioner reading that number would draw exactly
+/// the wrong conclusion from it.
+///
+/// So net profit here means takings minus running costs, and the machine is
+/// tracked separately as something being recovered. Both figures are labelled
+/// as what they are.
+model PracticeExpense {
+  id       String  @id @default(cuid())
+  doctorId String
+  clinicId String?
+
+  category  ExpenseCategory @default(OTHER)
+  label     String
+  amountInr Int
+  spentOn   DateTime
+  note      String?         @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  doctor Doctor  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  clinic Clinic? @relation(fields: [clinicId], references: [id], onDelete: SetNull)
+
+  @@index([doctorId, spentOn])
+  @@map("practice_expenses")
+}
+
+enum ExpenseCategory {
+  RENT
+  SALARY
+  CONSUMABLES
+  MARKETING
+  UTILITIES
+  MAINTENANCE
+  TAX
+  OTHER
+}
+
+/// A machine or piece of equipment the practice bought.
+///
+/// Tracked so a practitioner can answer the question they actually have about
+/// it: how much of this has it earned back, and roughly how many more uses
+/// until it has paid for itself. That is arithmetic over recorded uses, never
+/// a projection dressed up as one.
+model PracticeAsset {
+  id       String  @id @default(cuid())
+  doctorId String
+  clinicId String?
+
+  name    String
+  /// What it is for, in the practitioner's words: "fractional CO2 laser".
+  purpose String?
+
+  costInr     Int
+  purchasedOn DateTime
+  /// Running costs attributable to it, e.g. an annual service contract.
+  /// Counted into what still has to be recovered.
+  upkeepInr   Int      @default(0)
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  doctor Doctor       @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  clinic Clinic?      @relation(fields: [clinicId], references: [id], onDelete: SetNull)
+  uses   AssetUsage[]
+
+  @@index([doctorId, isActive])
+  @@map("practice_assets")
+}
+
+/// One use of a machine, and what was charged for it.
+///
+/// Entered by the practitioner rather than derived from an appointment,
+/// because the two do not line up: one visit can use two machines, one machine
+/// can serve several people in a session, and plenty of uses are not billed at
+/// all. Guessing at that mapping would produce a recovery figure nobody could
+/// check, which is worse than asking for ten seconds of typing.
+model AssetUsage {
+  id      String @id @default(cuid())
+  assetId String
+
+  usedOn     DateTime
+  /// What the patient was charged for this use. Zero is legitimate: a touch-up
+  /// included in a course still wears the machine.
+  chargedInr Int      @default(0)
+  treatment  String?
+  note       String?  @db.Text
+
+  createdAt DateTime @default(now())
+
+  asset PracticeAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId, usedOn])
+  @@map("asset_usages")
+}
+
+/// A photograph of a patient, taken by them or by their doctor.
+///
+/// ── Why the angle is a column ────────────────────────────────────────────
+/// Dermatology comparisons only mean anything between the same view. A
+/// "before" taken face-on and an "after" taken three-quarters shows a change
+/// in the camera, not in the skin. Asking for the angle costs one tap and is
+/// the difference between a record and a shoebox of pictures.
+///
+/// Every one of these lives in the private `patients/` prefix and is served
+/// only through a signed URL. Nothing here is public, ever, whoever took it.
+model PatientPhoto {
+  id            String  @id @default(cuid())
+  patientUserId String
+  /// Set when a doctor took it. Null for photographs the patient uploaded
+  /// themselves, which belong to them and are shown to whoever they book with.
+  doctorId      String?
+  appointmentId String?
+
+  angle      PhotoAngle @default(FRONT)
+  url        String     @db.Text
+  storageKey String     @db.Text
+  note       String?    @db.Text
+
+  /// When the photograph was TAKEN, which is not always when it was uploaded:
+  /// a patient often submits last week's flare.
+  capturedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  patient     User          @relation(fields: [patientUserId], references: [id], onDelete: Cascade)
+  doctor      Doctor?       @relation(fields: [doctorId], references: [id], onDelete: SetNull)
+  annotations PhotoMarkup[]
+
+  @@index([patientUserId, capturedAt])
+  @@index([doctorId, capturedAt])
+  @@map("patient_photos")
+}
+
+enum PhotoAngle {
+  FRONT
+  LEFT
+  RIGHT
+  BACK
+  TOP
+  CLOSE_UP
+  OTHER
+}
+
+/// A doctor's freehand marks over a photograph.
+///
+/// ── Kept beside the image, never burnt into it ───────────────────────────
+/// The strokes are stored as coordinates, so the original photograph is never
+/// altered. That matters clinically: the unmarked image is the record, and a
+/// circle drawn round a lesion in March must not become part of what the
+/// February photograph shows. It also means marks can be corrected, layered
+/// per doctor, and switched off to look at the skin underneath.
+///
+/// Coordinates are stored NORMALISED (0-1 of the image's width and height)
+/// rather than in pixels, so a mark drawn on a phone lands in the same place
+/// on a consulting-room monitor.
+model PhotoMarkup {
+  id       String @id @default(cuid())
+  photoId  String
+  doctorId String
+
+  /// [{ "points": [[x,y], …], "color": "#f43f5e", "width": 3 }]
+  strokes Json
+  note    String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  photo PatientPhoto @relation(fields: [photoId], references: [id], onDelete: Cascade)
+
+  /// One layer per doctor per photograph. A second practitioner marking the
+  /// same image gets their own, rather than editing somebody else's reading.
+  @@unique([photoId, doctorId])
+  @@map("photo_markups")
+}
+
+/// A doctor's own notes on one patient. The chart.
+model PatientNote {
+  id            String  @id @default(cuid())
+  doctorId      String
+  patientUserId String
+  appointmentId String?
+
+  body String @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  doctor  Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  patient User   @relation(fields: [patientUserId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId, patientUserId, createdAt])
+  @@map("patient_notes")
+}
+
+/// A gift card a clinic offers for sale.
+///
+/// ── Admin sees it before a patient does ──────────────────────────────────
+/// A clinic writes the offer; it reaches the catalogue only once BluDerma has
+/// approved it. This is a promise about money made in our name, on our
+/// storefront, and the review is what stands behind that.
+///
+/// `valueInr` and `priceInr` are separate so a clinic can discount: a ₹5,000
+/// card sold for ₹4,500. Neither is derived from the other, because a promo
+/// where price equals value is legitimate and so is one where it does not.
+model GiftCardOffer {
+  id       String  @id @default(cuid())
+  doctorId String
+  clinicId String?
+
+  title       String
+  description String? @db.Text
+  /// What the holder can spend.
+  valueInr    Int
+  /// What the buyer pays. May be less than the value; never more.
+  priceInr    Int
+  terms       String? @db.Text
+  /// How long the card lasts once bought.
+  validMonths Int     @default(12)
+
+  imageUrl String? @db.Text
+  imageKey String? @db.Text
+
+  status     OfferStatus @default(DRAFT)
+  reviewNote String?     @db.Text
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  reviewedAt DateTime?
+
+  doctor Doctor     @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  clinic Clinic?    @relation(fields: [clinicId], references: [id], onDelete: SetNull)
+  cards  GiftCard[]
+
+  @@index([status, createdAt])
+  @@index([doctorId, status])
+  @@map("gift_card_offers")
+}
+
+enum OfferStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+/// One purchased card.
+///
+/// `balanceInr` is the live figure and is decremented on redemption, so a card
+/// can be spent across several visits. It is NOT derived by subtracting
+/// redemptions on read: a balance that has to be recomputed to be trusted is
+/// one that disagrees with itself the first time a redemption fails halfway.
+model GiftCard {
+  id      String @id @default(cuid())
+  offerId String
+
+  /// "BLU-G-…" — what the holder quotes at the clinic.
+  code String @unique
+
+  buyerUserId    String
+  recipientName  String?
+  recipientEmail String?
+  message        String? @db.Text
+
+  valueInr   Int
+  balanceInr Int
+
+  /// The Razorpay payment. Null until it settles: a card must not be spendable
+  /// before the money has actually arrived.
+  paymentId String?
+  paidAt    DateTime?
+
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  offer       GiftCardOffer        @relation(fields: [offerId], references: [id], onDelete: Restrict)
+  buyer       User                 @relation(fields: [buyerUserId], references: [id], onDelete: Cascade)
+  redemptions GiftCardRedemption[]
+
+  @@index([buyerUserId, createdAt])
+  @@map("gift_cards")
+}
+
+model GiftCardRedemption {
+  id         String @id @default(cuid())
+  giftCardId String
+
+  amountInr     Int
+  doctorId      String?
+  appointmentId String?
+  note          String?  @db.Text
+  redeemedAt    DateTime @default(now())
+
+  card GiftCard @relation(fields: [giftCardId], references: [id], onDelete: Cascade)
+
+  @@index([giftCardId, redeemedAt])
+  @@map("gift_card_redemptions")
+}
+
+/// A medicine a doctor dispenses from their own practice.
+///
+/// ── Not the injectables catalogue ────────────────────────────────────────
+/// The 210 rows in `Product` are botulinum toxins, fillers and biostimulators:
+/// prescription-only clinical consumables a practitioner administers, whose
+/// prices that model marks internal-only. They cannot be sold to a consumer
+/// and are deliberately not reachable from here.
+///
+/// This is the doctor's own dispensary: the topicals and orals they actually
+/// hand a patient after a consultation.
+model Medicine {
+  id       String @id @default(cuid())
+  doctorId String
+
+  name     String
+  brand    String?
+  /// Cream, tablet, solution.
+  form     String?
+  strength String?
+  about    String? @db.Text
+
+  priceInr Int
+  mrpInr   Int?
+  /// Null means the practice does not track a count for this one.
+  stock    Int?
+
+  /// Almost always true here, and stated rather than assumed: it changes what
+  /// the patient is asked for at checkout.
+  prescriptionOnly Boolean @default(true)
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  doctor Doctor              @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  items  MedicineOrderItem[]
+
+  @@index([doctorId, isActive])
+  @@map("medicines")
+}
+
+/// A patient ordering medicines their doctor listed.
+model MedicineOrder {
+  id       String  @id @default(cuid())
+  publicId String? @unique
+  userId   String
+  doctorId String?
+
+  status MedicineOrderStatus @default(PLACED)
+
+  /// The delivery address, copied at the time. A patient editing their address
+  /// book later must not silently change where a past order went.
+  deliverTo String  @db.Text
+  phone     String?
+
+  subtotalInr Int
+  deliveryInr Int @default(0)
+  totalInr    Int
+
+  /// The prescription this order is filled against, when one was supplied.
+  prescriptionUrl String? @db.Text
+  prescriptionKey String? @db.Text
+
+  note String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items MedicineOrderItem[]
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@map("medicine_orders")
+}
+
+enum MedicineOrderStatus {
+  PLACED
+  CONFIRMED
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+}
+
+model MedicineOrderItem {
+  id         String  @id @default(cuid())
+  orderId    String
+  /// Null once a doctor deletes a medicine. The name and price below are
+  /// copied at order time so the history survives the catalogue changing.
+  medicineId String?
+
+  name     String
+  priceInr Int
+  qty      Int    @default(1)
+
+  order    MedicineOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  medicine Medicine?     @relation(fields: [medicineId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@map("medicine_order_items")
+}
+
 model SkinAnalysis {
   id           String   @id @default(cuid())
   /// Null for anonymous runs before sign-in; claimed on login.
@@ -715,6 +1563,8 @@ model SkinScan {
   user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   issues       SkinScanIssue[]
   appointments Appointment[]
+
+  treatmentPlans TreatmentPlan[]
 
   @@index([userId, createdAt])
   @@map("skin_scans")
@@ -971,6 +1821,8 @@ model Appointment {
   skinAnalysis SkinAnalysis?      @relation(fields: [skinAnalysisId], references: [id], onDelete: SetNull)
   skinScan     SkinScan?          @relation(fields: [skinScanId], references: [id], onDelete: SetNull)
   photos       AppointmentPhoto[]
+
+  aftercareSheets AftercareSheet[]
 
   @@index([doctorId, scheduledAt])
   @@index([patientUserId, scheduledAt])
@@ -1336,6 +2188,7 @@ enum PaymentPurpose {
   APPOINTMENT
   SKIN_SCAN
   SUBSCRIPTION
+  GIFT_CARD
 }
 
 model Payment {
@@ -1344,6 +2197,8 @@ model Payment {
   /// matching id below is set — the other stays null.
   purpose        PaymentPurpose @default(APPOINTMENT)
   appointmentId  String?
+  /// The gift card this payment bought. Set for GIFT_CARD only.
+  giftCardId     String?
   /// The scan credit this payment bought, once the payment settles.
   entitlementId  String?
   /// The subscription term this payment bought, once the payment settles.
@@ -1669,11 +2524,14 @@ model Clinic {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  doctors      DoctorClinic[]
-  photos       ClinicPhoto[]
-  facilities   ClinicFacility[]
-  availability DoctorAvailability[]
-  appointments Appointment[]
+  doctors        DoctorClinic[]
+  photos         ClinicPhoto[]
+  facilities     ClinicFacility[]
+  availability   DoctorAvailability[]
+  appointments   Appointment[]
+  giftCardOffers GiftCardOffer[]
+  expenses       PracticeExpense[]
+  assets         PracticeAsset[]
 
   @@index([isActive, city])
   @@index([city, area])

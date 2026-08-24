@@ -21,6 +21,14 @@ const ROWS = [
   { key: "skin.scan_price_inr", value: "99", group: "skin", label: "Price charged per analysis after the first (INR)" },
   { key: "skin.scan_list_price_inr", value: "499", group: "skin", label: "Usual price, shown struck through (INR). Ignored when at or below the charged price." },
   { key: "skin.allow_access_requests", value: "true", group: "skin", label: "Clients may request a free analysis" },
+  // Instalments are OFF until somebody names the lender. See
+  // src/lib/queries/payLater.ts for why both halves are required: the mock
+  // this replaced quoted a 60,000 limit through a provider that does not
+  // exist, to clients deciding whether they could afford treatment.
+  { key: "paylater.enabled", value: "false", group: "paylater", label: "Offer instalment plans" },
+  { key: "paylater.provider", value: "", group: "paylater", label: "Credit provider's name (required before plans can be offered)" },
+  { key: "paylater.limit_inr", value: "0", group: "paylater", label: "Published limit (INR). 0 shows no limit." },
+  { key: "paylater.interest_free_months", value: "0", group: "paylater", label: "Interest-free months" },
 ];
 
 async function main() {

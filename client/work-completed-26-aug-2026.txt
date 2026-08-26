@@ -1,0 +1,81 @@
+BluDerma - WORK COMPLETED
+26 August 2026
+
+
+DOCTOR SIGNUP
+- Year of registration is now a dropdown
+- Searchable list of all world languages
+- Facilities picker grouped by category, with option to add your own
+- Landmark field and optional map location below the address
+- Option to add multiple clinic locations
+- Two doctors at the same address are automatically linked to the same clinic
+- Missing mandatory fields are highlighted and the page jumps to them
+- New "Area of Speciality" section
+- Guided demo dashboard shown after submission
+
+
+DOCTOR PORTAL
+- "Medicine" renamed to "Prescription" with the Rx symbol
+- New "My Inventory" section to manage own medicines, with automatic
+  stock updates and full stock history
+- Money section now shows revenue, total cost, net profit and profit
+  percentage for the month
+- Revenue split into bookings, medicine sales, equipment usage and
+  other income
+- Costs now include miscellaneous, infrastructure (rent, utility,
+  laundry) and employee count with salary
+- NEW: "By Location" report - each clinic ranked by revenue with
+  colour coding (blue earns most, red costs more than it earns),
+  showing earnings, costs and net for each clinic
+- Pre-treatment instructions added (this was completely missing),
+  along with post-treatment
+- Both support voice recording, AI rephrasing and a confirmation
+  step before sending
+- Doctors can view patient photos, use free sketch, and mark
+  treatment areas with pricing
+- Appointments can be rerouted to another doctor, with patient consent
+- Equipment colour coded by profitability
+
+
+PATIENT SIDE
+- Photo and report uploads fixed and now visible to the treating doctor
+- Doctor reviews visible to other patients
+- "White Collar" renamed to "Gold Collar" with a gold badge
+- Browser reminders for upcoming appointments
+- Pay Later is now an attractive pop-up offer
+- Payments page shows complete details
+
+
+DESIGN AND THEMES
+- Four themes: Default (unchanged), Daylight, Sepia and Contrast
+- All pages change colour properly and text stays clearly readable
+- Theme button now floats on screen so it is easy to notice
+- Doctor portal and admin screens stay the same in all themes, so
+  clinical work looks identical on every device
+- Old D-shaped logo removed
+- Letter-based profile pictures replaced with profile and doctor icons
+
+
+CHATBOT
+- New messenger-style chat icon
+- Suggested ready-made questions
+- Works by chat or voice
+- Continues to refuse all medical questions by design
+
+
+NAVIGATION
+- Client menu simplified
+- Logo goes to the home page for all users
+- Doctors reach their portal through the profile icon
+- Footer cleaned up
+
+
+TESTING
+- 35 automated test suites, 1,632 checks, all passing
+- Production build successful across 739 pages
+- All work committed and pushed to the repository
+
+
+PENDING (server setup only, not development)
+- Google sign-in needs its callback URL added in the Google Console
+- Database updates need to be applied on the server during deployment

@@ -95,12 +95,23 @@ export function useSkinAccess() {
       reference: "skin-scan",
     });
     if (outcome.status === "paid" || outcome.status === "no_payment_due") {
-      await load();
-    } else if (outcome.status === "failed") {
+      // Straight into the scan, rather than reloading the page that sold it.
+      // This used to stop at `load()`, which left somebody who had just paid
+      // looking at the same screen with a different button on it and no
+      // indication that the money had done anything.
+      //
+      // Safe to start immediately: /api/razorpay/verify calls settlePayment
+      // BEFORE it answers, and that is what grants the credit, so by the time
+      // this line runs the scan is already paid for. It does not wait on the
+      // webhook, which may arrive seconds later or, on a local build, never.
+      await start();
+      return;
+    }
+    if (outcome.status === "failed") {
       setError(outcome.error);
     }
     setBusy(false);
-  }, [checkout, load]);
+  }, [checkout, start]);
 
   const requestAccess = useCallback(async () => {
     setBusy(true);

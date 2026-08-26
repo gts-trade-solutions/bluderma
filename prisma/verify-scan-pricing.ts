@@ -192,7 +192,74 @@ async function live() {
   }
 }
 
+/* -- The hero told everybody about their first scan ----------------------
+   Reported from production: the second scan quoted 499 when it costs 99.
+   The buy button was right; the HERO was not. It printed the struck-through
+   list price beside a hardcoded "Your first scan / Rs 0" for every visitor,
+   including one who had already used theirs — so the only two figures on the
+   page were the one nobody pays and zero, and the price actually charged
+   appeared nowhere above the fold. */
+const landing = read("src/components/skin/SkinAnalyzerLanding.tsx");
+check(
+  "the hero price follows the entitlement, not a hardcoded zero",
+  landing.includes('{firstScanFree ? "₹0" : priceInr !== null ? inr(priceInr) : "—"}'),
+  "a returning client is quoted the free-scan story again"
+);
+check(
+  "and its label changes with it",
+  landing.includes('{firstScanFree ? "Your first scan" : "Your next scan"}')
+);
+check(
+  "the hero badge stops promising a free first scan once it is used",
+  landing.includes('{firstScanFree ? "First scan free" : "Scan again"}')
+);
+check(
+  "the landing page reads firstScanFree from the shared hook",
+  /firstScanFree,\s*\}\s*=\s*useSkinAccess\(\)/.test(landing)
+);
+
+/* -- Paying for a scan hands you the scan ------------------------------
+   It used to stop at reload(), leaving somebody who had just paid on the
+   same screen with no sign the money had done anything. Starting straight
+   away is only safe because /api/razorpay/verify settles the payment before
+   it answers, and settling is what grants the credit -- it does not wait on
+   the webhook, which may arrive late or, on a local build, never. */
+const access = read("src/hooks/useSkinAccess.ts");
+check(
+  "a settled payment goes straight into the analysis",
+  // Not a proximity regex: the gap between the two is a comment explaining
+  // why it is safe, and a check that breaks when somebody documents their
+  // work better is a check that trains people not to.
+  access.includes("await start();") && access.includes("[checkout, start]"),
+  "payment succeeds and the client is left looking at the sales page"
+);
+check(
+  "the credit is granted by verify, before the client is told it is paid",
+  read("src/app/api/razorpay/verify/route.ts").includes("settlePayment"),
+  "starting a scan on a webhook that has not landed yet would fail"
+);
+check(
+  "and settling is what releases the scan credit",
+  read("src/lib/payments/settle.ts").includes("releaseScanCredit")
+);
+
+/* -- Every surface that quotes the price uses the same source ----------- */
+for (const f of [
+  "src/components/hub/SkinScanCard.tsx",
+  "src/components/hub/AnalyzerRail.tsx",
+  "src/components/skin/SkinAnalyzerLanding.tsx",
+]) {
+  const src = read(f);
+  check(`${f.split("/").pop()} distinguishes the first scan from the next`, src.includes("firstScanFree"));
+  check(
+    `${f.split("/").pop()} quotes no hardcoded rupee figure`,
+    !/₹\s?(?:99|499)/.test(src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*/g, "")),
+    "a literal price is how the page and the checkout drifted apart before"
+  );
+}
+
 live()
+
   .catch((e) => fails.push(`live check threw: ${e.message ?? e}`))
   .then(() => {
     console.log(`\n${pass} passed, ${fails.length} failed`);

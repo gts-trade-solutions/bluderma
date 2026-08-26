@@ -59,6 +59,7 @@ export default function SkinAnalyzerLanding() {
     reload,
     priceInr,
     listPriceInr,
+    firstScanFree,
   } = useSkinAccess();
 
   // The hero and the FAQ both had 99 typed into them while the setting said
@@ -98,7 +99,8 @@ export default function SkinAnalyzerLanding() {
               className="inline-flex items-center gap-1.5 rounded-full border border-teal-300/40 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-teal-300"
               style={GLOW}
             >
-              <Zap className="h-3 w-3 fill-teal-300" /> First scan free
+              <Zap className="h-3 w-3 fill-teal-300" />{" "}
+              {firstScanFree ? "First scan free" : "Scan again"}
             </span>
 
             <h1 className="display mt-5 max-w-2xl text-balance text-[2.5rem] leading-[0.98] text-white sm:text-6xl lg:text-[4rem]">
@@ -121,7 +123,7 @@ export default function SkinAnalyzerLanding() {
                 {anchor !== null && (
                   <div>
                     <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/35">
-                      Every scan
+                      {firstScanFree ? "Every scan" : "Usually"}
                     </p>
                     <p className="relative mt-0.5 inline-block text-3xl font-extrabold tracking-tight text-white/60">
                       {inr(anchor)}
@@ -135,15 +137,22 @@ export default function SkinAnalyzerLanding() {
 
                 <ArrowRight className="h-6 w-6 shrink-0 text-teal-300/70" />
 
+                {/* The half that was wrong in production.
+                    This said "Your first scan / Rs 0" to EVERYBODY, including
+                    somebody who had already used theirs. They saw the struck
+                    through list price and a zero, and nowhere on the hero the
+                    figure they would actually be charged — so the page
+                    advertised 499 and 0 for a scan that costs 99.
+                    Both halves now follow the entitlement. */}
                 <div>
                   <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-teal-300/80">
-                    Your first scan
+                    {firstScanFree ? "Your first scan" : "Your next scan"}
                   </p>
                   <p
                     className="mt-0.5 text-3xl font-extrabold tracking-tight text-teal-200"
                     style={GLOW}
                   >
-                    ₹0
+                    {firstScanFree ? "₹0" : priceInr !== null ? inr(priceInr) : "—"}
                   </p>
                 </div>
               </div>

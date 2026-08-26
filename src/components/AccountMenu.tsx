@@ -100,7 +100,12 @@ export default function AccountMenu() {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="rounded-full ring-2 ring-white transition hover:opacity-90"
+        // `grid`, not the button default of inline-block. An inline-block
+        // button puts its child on a TEXT BASELINE, so the box picks up the
+        // font's descender space underneath the avatar and ends up taller
+        // than it is wide. `rounded-full` on a 36x41 box is an ellipse, which
+        // is why the white ring read as an oval around a circular photo.
+        className="grid shrink-0 place-items-center rounded-full leading-none ring-2 ring-white transition hover:opacity-90"
       >
         {/* A drawn figure rather than the first letter of the name. See
             Avatar.tsx — the initial was unrecognisable across screens and

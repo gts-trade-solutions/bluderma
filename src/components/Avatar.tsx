@@ -37,7 +37,11 @@ export default function Avatar({
   size?: number;
   className?: string;
 }) {
-  const shell = `inline-grid shrink-0 place-items-center overflow-hidden rounded-full ${className}`;
+  // `align-middle` and `leading-none` so an INLINE wrapper cannot stretch the
+  // box: an inline-level avatar otherwise sits on the baseline and drags the
+  // line-box's descender space along with it, which turns any ring drawn by
+  // the parent into an oval. See AccountMenu, where that is what happened.
+  const shell = `inline-grid shrink-0 place-items-center overflow-hidden rounded-full align-middle leading-none ${className}`;
 
   if (src) {
     return (

@@ -523,6 +523,35 @@ check(
   !/inset-0 bg-gradient-to-[rt] from-\[#0/.test(hero)
 );
 
+/* ------------------------------------------------------------------------
+   A round avatar needs a round box
+   ---------------------------------------------------------------------
+   Reported on the Google sign-in: the white ring around the avatar drew as an
+   oval. The photo was a perfect circle; the BUTTON around it was not. A
+   <button> is inline-block by default, so its child sits on a text baseline
+   and the box picks up the font's descender space underneath — 36 wide, ~41
+   tall. `rounded-full` on that is an ellipse.
+
+   Two fixes, because either alone would have been enough and neither is
+   obviously the one a future edit preserves: the button is a grid container,
+   and the avatar itself no longer sits on a baseline. */
+const accountMenu = read("src/components/AccountMenu.tsx");
+check(
+  "the avatar button is a grid, not an inline box that grows a descender",
+  /className="grid shrink-0 place-items-center rounded-full leading-none ring-2/.test(
+    accountMenu
+  )
+);
+const avatarSrc = read("src/components/Avatar.tsx");
+check(
+  "and the avatar cannot be stretched by whatever wraps it",
+  avatarSrc.includes("align-middle") && avatarSrc.includes("leading-none")
+);
+check(
+  "the photo still fills its circle without distorting",
+  avatarSrc.includes("h-full w-full object-cover") && avatarSrc.includes("overflow-hidden")
+);
+
 console.log(`\n${pass} passed, ${fails.length} failed`);
 if (fails.length) {
   fails.forEach((f) => console.log(`  FAIL  ${f}`));

@@ -1,0 +1,44 @@
+ANALYTICS TOOL RECOMMENDATION - BluDerma
+26 August 2026
+
+
+RECOMMENDED
+
+1. Cube (cube.dev)  -  for doctor-facing analytics
+   - Each doctor sees only their own data (built-in security)
+   - Charts built inside the portal, matching BluDerma's design
+   - Fast even as data grows
+   - Works directly with our existing MySQL database
+
+2. PostHog  -  for understanding how the platform is used
+   - Funnels and drop-off reports
+   - Session replay (see how doctors actually use the portal)
+   - A/B testing
+   - Can be self-hosted, so data stays with us
+
+
+QUICKER ALTERNATIVE
+
+Metabase  -  ready-made dashboards, no coding, open source.
+Faster to launch, but looks like a separate tool rather than
+part of BluDerma. Good as a first step.
+
+
+NOT ADVISED
+
+Google Looker Studio, Mixpanel, Amplitude - data must leave our
+servers, and per-doctor separation is weak. Not suitable for
+health-related data.
+
+
+IMPORTANT
+
+No patient names, photos or clinical notes should ever go to an
+analytics tool. Only doctor-level totals and internal IDs.
+
+
+NOTE
+
+BluDerma already calculates revenue, clinic ranking, equipment
+payback and profit correctly in its own code. An analytics tool
+adds charts and exploration on top of this - it does not replace it.

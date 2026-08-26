@@ -31,6 +31,7 @@ import MyPhotos from "@/components/patient/MyPhotos";
 import NearbyClinics from "@/components/patient/NearbyClinics";
 import { requireUser } from "@/lib/session";
 import { getProfilePageData } from "@/lib/queries/profileData";
+import GoldCollarBadge from "@/components/GoldCollarBadge";
 import {
   DEMO_WALLET,
 } from "@/data/patientDemo";
@@ -76,17 +77,20 @@ export default async function ProfilePage() {
   // Read here rather than through profileData: these are the one thing on this
   // page the client can edit, so they must not sit behind the same cache() as
   // the read-only history, which would serve a stale list right after a save.
-  // Aftercare sheets a doctor has issued to this client. Newest first: the
-  // one that matters is almost always the most recent procedure.
+  // Treatment sheets a doctor has issued to this client, BOTH sides of the
+  // procedure. Newest first: the one that matters is almost always the most
+  // recent, and on the day before a procedure that is the pre-treatment sheet.
   const AFTERCARE = await prisma.aftercareSheet.findMany({
     where: { patientUserId: user.id },
     orderBy: { issuedAt: "desc" },
-    take: 12,
+    take: 16,
     select: {
       id: true,
+      kind: true,
       procedure: true,
       procedureDate: true,
       reviewOn: true,
+      arriveAt: true,
       doctorName: true,
       acknowledgedAt: true,
       doctorNotes: true,
@@ -224,6 +228,7 @@ export default async function ProfilePage() {
     consultedDoctors: CONSULTED_DOCTORS,
     prescriptions: PRESCRIPTIONS,
     purchases: PURCHASES,
+    payments: PAYMENTS,
     procedures: PROCEDURES,
     discounts: DISCOUNTS,
     membership: MEMBERSHIP,
@@ -252,7 +257,7 @@ export default async function ProfilePage() {
     ...(MY_CARDS.length ? [{ id: "gift-cards", label: "Gift cards", icon: "wallet", badge: String(MY_CARDS.length) }] : []),
     ...(MY_ORDERS.length ? [{ id: "medicines", label: "Medicines", icon: "rx", badge: String(MY_ORDERS.length) }] : []),
     { id: "plan", label: "My plan", icon: "treatment", badge: CARE_PLANS.length ? String(CARE_PLANS.length) : undefined },
-    { id: "aftercare", label: "Aftercare", icon: "rx", badge: AFTERCARE.length ? String(AFTERCARE.length) : undefined },
+    { id: "aftercare", label: "Pre & post care", icon: "rx", badge: AFTERCARE.length ? String(AFTERCARE.length) : undefined },
     { id: "reports", label: "My reports", icon: "report", badge: String(SKIN_REPORTS.length) },
     { id: "conditions", label: "My conditions", icon: "condition", badge: String(CONDITIONS.length) },
     { id: "appointments", label: "My appointments", icon: "calendar", badge: String(APPOINTMENTS.length) },
@@ -261,14 +266,20 @@ export default async function ProfilePage() {
     { id: "pay-later", label: "Pay later", icon: "paylater" },
     { id: "locations", label: "Location", icon: "location" },
     { id: "orders", label: "My orders", icon: "order", badge: String(PURCHASES.length) },
-    { id: "white-collar", label: "White Collar", icon: "crown", badge: MEMBERSHIP ? "Active" : undefined },
+    {
+      id: "payments",
+      label: "Payments",
+      icon: "order",
+      badge: PAYMENTS.length ? String(PAYMENTS.length) : undefined,
+    },
+    { id: "gold-collar", label: "Gold Collar", icon: "crown", badge: MEMBERSHIP ? "Active" : undefined },
   ];
 
   return (
     <>
       <Navbar role="patient" menu={buildPatientMenu()} />
 
-      <main className="bg-[var(--surface)] pb-20">
+      <main className="bg-surface pb-20">
         {/* ── Header ────────────────────────────────────────────────── */}
         <section className="border-b border-white/10 bg-white/[0.04]">
           <div className="container-page py-9">
@@ -329,7 +340,7 @@ export default async function ProfilePage() {
                 to go looking for their own credit. */}
             <Link
               href="#wallet"
-              className="group mt-6 flex flex-wrap items-center gap-x-6 gap-y-4 rounded-2xl bg-gradient-to-r from-brand-800/80 via-brand-900/70 to-teal-800/70 px-5 py-4 ring-1 ring-inset ring-teal-300/25 transition hover:ring-teal-300/50"
+              className="group mt-6 flex flex-wrap items-center gap-x-6 gap-y-4 rounded-2xl bg-gradient-to-r on-dark from-brand-800/80 via-brand-900/70 to-teal-800/70 px-5 py-4 ring-1 ring-inset ring-teal-300/25 transition hover:ring-teal-300/50"
             >
               <span className="flex min-w-0 items-center gap-4">
                 <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-white/10 ring-1 ring-inset ring-white/15">
@@ -400,7 +411,7 @@ export default async function ProfilePage() {
               sub="Cashback, referral credit and refunds. Spendable against consultations and orders."
             >
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl bg-gradient-to-br from-brand-800 via-brand-900 to-teal-800 p-5 ring-1 ring-inset ring-white/15 sm:col-span-2">
+                <div className="rounded-2xl bg-gradient-to-br on-dark from-brand-800 via-brand-900 to-teal-800 p-5 ring-1 ring-inset ring-white/15 sm:col-span-2">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-200">
                     Balance
                   </p>
@@ -902,26 +913,39 @@ export default async function ProfilePage() {
               )}
             </Section>
 
-            {/* ── Aftercare ───────────────────────────────────────── */}
+            {/* ── Pre and post care ───────────────────────────────── */}
             <Section
               id="aftercare"
               icon={FileText}
-              eyebrow="After your procedure"
-              title="Aftercare instructions"
-              sub="What to do, what to avoid, and when to call the clinic. Issued by the doctor who treated you."
+              eyebrow="Around your procedure"
+              title="Before and after your treatment"
+              sub="What to do beforehand, what to do afterwards, and when to call the clinic. Written by the doctor treating you."
             >
               {AFTERCARE.length === 0 ? (
                 <Blank
                   title="Nothing yet"
-                  body="After a procedure, your doctor issues a sheet here with instructions for the days that follow."
+                  body="Your doctor issues a sheet here before a procedure, telling you how to prepare, and another afterwards for the days that follow."
                 />
               ) : (
                 <ul className="grid gap-3 sm:grid-cols-2">
                   {AFTERCARE.map((a) => (
                     <li key={a.id} className="card-soft p-5">
                       <div className="flex flex-wrap items-start justify-between gap-2">
-                        <p className="min-w-0 text-sm font-bold text-ink">
-                          {a.procedure}
+                        <p className="flex min-w-0 items-center gap-1.5 text-sm font-bold text-ink">
+                          {/* Which side. One procedure produces two sheets and
+                              they are not interchangeable — reading the wrong
+                              one the night before is the failure this label
+                              exists to prevent. */}
+                          <span
+                            className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide ${
+                              a.kind === "PRE"
+                                ? "bg-violet-400/20 text-violet-200"
+                                : "bg-teal-400/20 text-teal-200"
+                            }`}
+                          >
+                            {a.kind === "PRE" ? "Before" : "After"}
+                          </span>
+                          <span className="min-w-0 truncate">{a.procedure}</span>
                         </p>
                         {/* Unconfirmed is the state worth flagging: it means
                             nobody has said the instructions were explained. */}
@@ -939,7 +963,12 @@ export default async function ProfilePage() {
                           year: "numeric",
                         })}
                       </p>
-                      {a.reviewOn && (
+                      {a.kind === "PRE" && a.arriveAt && (
+                        <p className="mt-1.5 text-xs font-semibold text-violet-300">
+                          Arrive at {a.arriveAt}
+                        </p>
+                      )}
+                      {a.kind !== "PRE" && a.reviewOn && (
                         <p className="mt-1.5 text-xs font-semibold text-teal-300">
                           Review on{" "}
                           {a.reviewOn.toLocaleDateString("en-IN", {
@@ -1072,6 +1101,66 @@ export default async function ProfilePage() {
               )}
             </Section>
 
+            {/* ── Payments ─────────────────────────────────────────
+                Everything they have actually paid BluDerma for, in one place.
+                The admin console could see every payment and the person who
+                made them could see none of them — a consultation fee, a scan,
+                a membership term and a gift card each settled somewhere
+                different and were then invisible.
+
+                A refund is shown as its own line rather than netted off the
+                amount. Somebody reconciling this against a bank statement
+                needs the number that left their account and the number that
+                came back, not the difference. */}
+            <Section
+              id="payments"
+              icon={Package}
+              eyebrow="Money"
+              title="What you have paid"
+              sub="Consultations, analyses, memberships and gift cards. Anything refunded says so, with the amount."
+            >
+              {PAYMENTS.length > 0 ? (
+                <div className="card-soft divide-y divide-white/10 overflow-hidden">
+                  {PAYMENTS.map((pay) => (
+                    <Row
+                      key={pay.id}
+                      title={pay.what}
+                      sub={
+                        pay.reference
+                          ? `${pay.date} · ${pay.reference}`
+                          : pay.date
+                      }
+                      meta={
+                        <>
+                          <span className="text-right">
+                            <span className="block text-sm font-bold text-ink">
+                              {money(pay.amountInr)}
+                            </span>
+                            {pay.refundedInr > 0 && (
+                              <span className="block text-[11px] font-semibold text-teal-300">
+                                {money(pay.refundedInr)} refunded
+                              </span>
+                            )}
+                          </span>
+                          <Status value={pay.status} />
+                        </>
+                      }
+                    />
+                  ))}
+                </div>
+              ) : (
+                <Blank
+                  title="Nothing paid yet"
+                  body="Consultation fees, skin analyses and anything else you pay for through BluDerma will be listed here with its reference."
+                />
+              )}
+              <p className="mt-3 text-xs leading-relaxed text-ink-muted">
+                Paid at the clinic rather than here? That will not appear —
+                this lists what went through BluDerma. Ask reception for a
+                receipt for anything settled with them directly.
+              </p>
+            </Section>
+
             {/* ── 9. Orders & discounts ───────────────────────────── */}
             <Section
               id="orders"
@@ -1129,20 +1218,23 @@ export default async function ProfilePage() {
               )}
             </Section>
 
-            {/* ── 10. White Collar ────────────────────────────────── */}
+            {/* ── 10. Gold Collar ────────────────────────────────── */}
             <Section
-              id="white-collar"
+              id="gold-collar"
               icon={Sparkles}
               eyebrow="Membership"
-              title="White Collar"
+              title="Gold Collar"
               sub="What it costs, what it gives you, and exactly how it ends."
               action={{ label: "Manage membership", href: "/patient/membership" }}
             >
               {MEMBERSHIP ? (
                 <div className="rounded-2xl bg-gradient-to-br from-amber-500/20 via-amber-400/10 to-transparent p-5 ring-1 ring-inset ring-amber-300/30">
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/20 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-200">
-                      <span aria-hidden>◆</span> {MEMBERSHIP.planName} · Active
+                    <span className="inline-flex items-center gap-2">
+                      <GoldCollarBadge />
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-amber-200">
+                        {MEMBERSHIP.planName} · Active
+                      </span>
                     </span>
                     <p className="text-sm text-ink-soft">
                       {MEMBERSHIP.daysLeft <= 14

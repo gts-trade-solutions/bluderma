@@ -53,7 +53,7 @@ export interface Slot {
 export interface SlotOptions {
   /** Restrict to one location. Omitted, every clinic the doctor works at. */
   clinicId?: string;
-  /** White Collar members see slots held back from everyone else. */
+  /** Gold Collar members see slots held back from everyone else. */
   isMember?: boolean;
 }
 
@@ -272,7 +272,7 @@ export async function getSlotsForDoctor(
 }
 
 /**
- * Hold back the last few slots of a day for White Collar members.
+ * Hold back the last few slots of a day for Gold Collar members.
  *
  * The end of the day is chosen because evening appointments are what people
  * actually compete for — holding back a 10am Tuesday would be a benefit in

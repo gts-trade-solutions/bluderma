@@ -62,7 +62,7 @@ export default async function ProductPage({
     <>
       <RoleAwareNavbar doctorMenu={doctorMenu} patientMenu={patientMenu} />
 
-      <main className="theme-light bg-[#f7fafc]">
+      <main className="theme-light bg-[var(--surface)]">
         <div className="container-page py-8">
           <nav className="mb-6 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
             <Link href="/patient/explore" className="hover:text-brand-700">

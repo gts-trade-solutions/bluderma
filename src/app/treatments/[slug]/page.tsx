@@ -77,7 +77,7 @@ export default async function TreatmentPage({
       <section className="relative">
         <div className="relative h-[56vh] min-h-[420px] w-full overflow-hidden">
           <SmartImage src={treatment.image} alt={treatment.name} sizes="100vw" priority />
-          <div className="absolute inset-0 bg-gradient-to-t from-brand-950/92 via-brand-950/50 to-brand-950/25" />
+          <div className="absolute inset-0 bg-gradient-to-t on-dark from-brand-950/92 via-brand-950/50 to-brand-950/25" />
           <div className="absolute inset-0 flex items-end">
             <div className="container-page pb-12">
               <nav className="mb-4 flex items-center gap-2 text-sm text-white/75">
@@ -321,7 +321,7 @@ export default async function TreatmentPage({
       </section>
 
       {/* Matched solution + enquiry CTA band */}
-      <section className="relative overflow-hidden bg-brand-950 py-16 sm:py-20">
+      <section className="relative overflow-hidden on-dark bg-brand-950 py-16 sm:py-20">
         <div className="container-page">
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <div>

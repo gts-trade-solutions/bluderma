@@ -8,6 +8,7 @@ import {
   declineAppointment,
 } from "@/lib/actions/doctorAppointments";
 import AppointmentDrawer from "./AppointmentDrawer";
+import GoldCollarBadge from "@/components/GoldCollarBadge";
 
 /**
  * The confirmation queue.
@@ -117,9 +118,7 @@ function RequestCard({ r, onOpen }: { r: RequestRow; onOpen: () => void }) {
               {r.patientName}
             </button>
             {r.isMember && (
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900 ring-1 ring-amber-300">
-                WHITE COLLAR
-              </span>
+              <GoldCollarBadge />
             )}
             {r.isPriority && !r.isMember && (
               <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-800">

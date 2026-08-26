@@ -82,7 +82,7 @@ export default function TopTreatments() {
               light part of the photograph. */}
           <span className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/55 to-transparent" />
 
-          <span className="absolute inset-x-3 bottom-3 flex items-center justify-center rounded-full bg-white px-3 py-2.5 text-center text-[13px] font-bold leading-tight text-[#070d1c] shadow-lg transition group-hover:bg-teal-400/[12%] group-hover:text-brand-200 sm:inset-x-4 sm:bottom-4 sm:text-sm">
+          <span className="absolute inset-x-3 bottom-3 flex items-center justify-center rounded-full bg-white px-3 py-2.5 text-center text-[13px] font-bold leading-tight text-[var(--on-sheet)] shadow-lg transition group-hover:bg-teal-400/[12%] group-hover:text-brand-200 sm:inset-x-4 sm:bottom-4 sm:text-sm">
             {c.label}
           </span>
         </Link>

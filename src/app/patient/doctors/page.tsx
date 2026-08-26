@@ -35,7 +35,7 @@ export default async function DoctorsPage() {
         menu={buildPatientMenu()}
       />
 
-      <main className="bg-[var(--surface)] pb-20">
+      <main className="bg-surface pb-20">
         <section className="border-b border-white/10 bg-white/[0.04]">
           <div className="container-page py-10">
             <Link

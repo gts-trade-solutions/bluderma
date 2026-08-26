@@ -111,7 +111,7 @@ export default function Toast() {
           root layout, so it appears over the navy client pages AND the white
           doctor portal, and `text-ink` means opposite things in those two
           places. A literal is the only thing that is right in both. */}
-      <div className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl bg-[#0d1526] px-4 py-3.5 text-white shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6)] ring-1 ring-white/15">
+      <div className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl bg-[var(--sheet)] px-4 py-3.5 text-white shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6)] ring-1 ring-white/15">
         <span
           aria-hidden
           className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-500 to-teal-500"

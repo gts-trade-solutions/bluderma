@@ -7,8 +7,12 @@ import {
   addClinicalPhoto,
   addPatientNote,
   deletePatientNote,
+  sharePhotoPlan,
 } from "@/lib/actions/photos";
+import PhotoPins, { type Pin } from "@/components/doctor/PhotoPins";
 import PhotoMarkupEditor, { type Stroke } from "./PhotoMarkup";
+import { uploadFile } from "@/lib/uploadClient";
+import { useFormValidation } from "@/hooks/useFormValidation";
 
 export interface ChartPhoto {
   id: string;
@@ -18,6 +22,8 @@ export interface ChartPhoto {
   byDoctor: boolean;
   strokes: Stroke[];
   markupNote: string;
+  /** Treatments pinned to points on this photograph, with indicative prices. */
+  pins: Pin[];
 }
 
 export interface ChartNote {
@@ -60,11 +66,13 @@ export default function PatientChart({
   notes: ChartNote[];
 }) {
   const [marking, setMarking] = useState<string | null>(null);
+  const [tab, setTab] = useState<"draw" | "plan">("draw");
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [angle, setAngle] = useState<string>("FRONT");
   const fileRef = useRef<HTMLInputElement>(null);
   const [pending, start] = useTransition();
+  const formCheck = useFormValidation();
 
   async function upload(file: File) {
     setError(null);
@@ -73,39 +81,23 @@ export default function PatientChart({
       return;
     }
     setUploading(true);
-    try {
-      const presign = await fetch("/api/uploads/presign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type,
-          size: file.size,
-          // Private prefix, signed URLs only. Nothing here is ever public.
-          folder: "patients",
-        }),
-      });
-      if (!presign.ok) throw new Error();
-      const { uploadUrl, publicUrl, key } = await presign.json();
-      const put = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      if (!put.ok) throw new Error();
 
-      const res = await addClinicalPhoto({
-        patientUserId,
-        angle,
-        url: publicUrl,
-        storageKey: key,
-      });
-      if (!res.ok) setError(res.error ?? "Could not attach that.");
-    } catch {
-      setError("That upload did not go through.");
-    } finally {
+    // Private prefix, signed URLs only. Nothing here is ever public.
+    const up = await uploadFile(file, "patients");
+    if (!up.ok) {
       setUploading(false);
+      setError(up.error);
+      return;
     }
+
+    const res = await addClinicalPhoto({
+      patientUserId,
+      angle,
+      url: up.file.url,
+      storageKey: up.file.key,
+    });
+    setUploading(false);
+    if (!res.ok) setError(res.error ?? "Could not attach that.");
   }
 
   const byAngle = ANGLES.map((a) => ({
@@ -162,9 +154,20 @@ export default function PatientChart({
         {error && <p className="mb-2 text-xs font-semibold text-rose-600">{error}</p>}
 
         {photos.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-            No photographs yet. Choose the view first, then take one.
-          </p>
+          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
+            <p className="text-sm font-semibold text-slate-600">
+              No photographs yet
+            </p>
+            {/* The old copy said only what was missing. What a doctor needs to
+                know is what the section is FOR — nobody discovered the markup
+                tool because nothing said it existed. */}
+            <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-slate-500">
+              Choose the view above, then take one. Anything the patient
+              uploads themselves appears here too. Tap any photograph
+              afterwards to draw on it, mark what you would treat and what it
+              would cost, and send that to them.
+            </p>
+          </div>
         ) : (
           <div className="space-y-4">
             {byAngle.map((group) => (
@@ -181,14 +184,31 @@ export default function PatientChart({
                         className="relative block aspect-[4/5] w-full overflow-hidden rounded-xl bg-slate-900 ring-1 ring-slate-200"
                       >
                         <PhotoThumb id={p.id} />
-                        {p.strokes.length > 0 && (
-                          <span className="absolute right-1.5 top-1.5 rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-black text-white">
-                            {p.strokes.length}
-                          </span>
-                        )}
+                        {/* Two counts, because they are two different things:
+                            marks are a reading, pins are a plan with money on
+                            it. Shown always rather than on hover — a hover
+                            state does not exist on the phone this is used on. */}
+                        <span className="absolute right-1.5 top-1.5 flex gap-1">
+                          {p.strokes.length > 0 && (
+                            <span
+                              title={`${p.strokes.length} marks`}
+                              className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-black text-white"
+                            >
+                              {p.strokes.length}
+                            </span>
+                          )}
+                          {p.pins.length > 0 && (
+                            <span
+                              title={`${p.pins.length} treatments`}
+                              className="rounded-full bg-brand-600 px-1.5 py-0.5 text-[9px] font-black text-white"
+                            >
+                              {p.pins.length}
+                            </span>
+                          )}
+                        </span>
                         <span className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/70 to-transparent px-2 py-1.5 text-[10px] font-semibold text-white">
                           {p.capturedAt}
-                          <Pencil className="h-3 w-3 opacity-0 transition group-hover:opacity-100" />
+                          <Pencil className="h-3 w-3 opacity-70" />
                         </span>
                       </button>
                     </li>
@@ -206,7 +226,7 @@ export default function PatientChart({
           <div className="max-h-full w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-extrabold text-slate-900">
-                Mark the photograph
+                This photograph
               </h3>
               <button
                 type="button"
@@ -217,18 +237,58 @@ export default function PatientChart({
                 <X className="h-4 w-4" />
               </button>
             </div>
+
+            {/* Two jobs on one image, kept apart. Drawing is a clinical
+                reading; pinning a treatment attaches a price and goes to the
+                patient. Putting both in one canvas would make it impossible
+                to tell which of a doctor's marks were an opinion and which
+                were an offer. */}
+            <div className="mb-3 flex gap-1 rounded-full bg-slate-100 p-1">
+              {(["draw", "plan"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setTab(t)}
+                  aria-pressed={tab === t}
+                  className={`flex-1 rounded-full px-3 py-1.5 text-xs font-bold transition ${
+                    tab === t
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  {t === "draw" ? "Draw on it" : "What you would treat"}
+                </button>
+              ))}
+            </div>
+
             {(() => {
               const p = photos.find((x) => x.id === marking);
               if (!p) return null;
-              return (
+              return tab === "draw" ? (
                 <PhotoMarkupEditor
                   photoId={p.id}
                   src={`/api/patient-photos/${p.id}`}
                   initial={p.strokes}
                   initialNote={p.markupNote}
                 />
+              ) : (
+                <PhotoPins
+                  photoId={p.id}
+                  src={`/api/patient-photos/${p.id}`}
+                  pins={p.pins}
+                />
               );
             })()}
+
+            {/* Sharing is a separate, deliberate act. Everything above is
+                working notes until this is pressed — see sharePhotoPlan. */}
+            <ShareToPatient
+              photoId={marking}
+              hasSomething={
+                (photos.find((x) => x.id === marking)?.strokes.length ?? 0) > 0 ||
+                (photos.find((x) => x.id === marking)?.pins.length ?? 0) > 0
+              }
+            />
           </div>
         </div>
       )}
@@ -238,11 +298,10 @@ export default function PatientChart({
         <h3 className="mb-3 text-sm font-extrabold text-slate-900">Your notes</h3>
 
         <form
+          ref={formCheck.formRef}
+          noValidate
           className="mb-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const form = e.currentTarget;
-            const fd = new FormData(form);
+          onSubmit={formCheck.guard((fd, form) => {
             start(async () => {
               const res = await addPatientNote({
                 patientUserId,
@@ -251,8 +310,9 @@ export default function PatientChart({
               if (!res.ok) setError(res.error ?? "Could not save that.");
               else form.reset();
             });
-          }}
+          })}
         >
+          {formCheck.summary}
           <textarea
             name="body"
             rows={3}
@@ -309,5 +369,56 @@ function PhotoThumb({ id }: { id: string }) {
       loading="lazy"
       className="h-full w-full object-cover"
     />
+  );
+}
+
+/**
+ * "Send this to the patient."
+ *
+ * Deliberately at the foot of the modal rather than beside Save: saving a
+ * mark and telling somebody about it are different decisions, and a doctor
+ * sketching a second opinion over another practitioner's reading must not
+ * publish it by pressing the only button on screen.
+ */
+function ShareToPatient({
+  photoId,
+  hasSomething,
+}: {
+  photoId: string;
+  hasSomething: boolean;
+}) {
+  const [pending, start] = useTransition();
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  return (
+    <div className="mt-4 border-t border-slate-100 pt-3.5">
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          disabled={pending || !hasSomething || sent}
+          onClick={() =>
+            start(async () => {
+              setError(null);
+              const res = await sharePhotoPlan(photoId);
+              if (res.ok) setSent(true);
+              else setError(res.error ?? "Could not send that.");
+            })
+          }
+          className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-slate-700 disabled:opacity-50"
+        >
+          {pending && <LoaderCircle className="h-3.5 w-3.5 animate-spin" />}
+          {sent ? "Sent" : "Send this to the patient"}
+        </button>
+        <p className="min-w-0 flex-1 text-[11px] leading-snug text-slate-500">
+          {sent
+            ? "They have been emailed a link. The photograph itself is not in the email."
+            : hasSomething
+              ? "They get a link to sign in and see it. Nothing on this page has reached them yet."
+              : "Draw on it or add a treatment first."}
+        </p>
+      </div>
+      {error && <p className="mt-1.5 text-xs text-rose-600">{error}</p>}
+    </div>
   );
 }

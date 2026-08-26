@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { addHoursStep, removeHours } from "@/lib/actions/doctorOnboarding";
 import { WEEKDAYS, WEEKDAY_LABEL } from "@/data/doctorJoin";
 import { swatchFor } from "@/components/doctor/clinicColors";
+import { useFormValidation } from "@/hooks/useFormValidation";
 
 /**
  * Step 4 — working hours, per location.
@@ -99,6 +100,7 @@ function ClinicHours({
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(windows.length === 0);
+  const formCheck = useFormValidation();
   const sw = swatchFor(clinic.colorKey);
 
   // Grouped by day so a doctor reads their week rather than a flat list.
@@ -156,22 +158,23 @@ function ClinicHours({
 
       {open ? (
         <form
+          ref={formCheck.formRef}
+          noValidate
           className="mt-4 space-y-4 rounded-xl border border-slate-200 p-4"
-          onSubmit={(e) => {
-            e.preventDefault();
+          onSubmit={formCheck.guard((fd, form) => {
             setError(null);
-            const fd = new FormData(e.currentTarget);
             start(async () => {
               const res = await addHoursStep(fd);
               if (res.ok) {
-                (e.target as HTMLFormElement).reset();
+                form.reset();
                 router.refresh();
               } else {
                 setError(res.error ?? "Could not add that session.");
               }
             });
-          }}
+          })}
         >
+          {formCheck.summary}
           <input type="hidden" name="clinicId" value={clinic.id} />
 
           <div>

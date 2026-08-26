@@ -3,11 +3,19 @@ import { Suspense } from "react";
 
 import { Empty, Tag, portalBtnQuiet } from "@/components/doctor/portalUi";
 import { getDashboardMetrics, type DashboardPeriod } from "@/lib/doctor/metrics";
+import type { DemoBundle } from "@/lib/doctor/demoMetrics";
 import { advisoryGaps, getApplicationGaps } from "@/lib/doctor/gaps";
 import { clinicWallClock } from "@/lib/queries/availability";
 import { hexFor, swatchFor } from "@/components/doctor/clinicColors";
+import { MedicineOrderStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { netFor, recoveryFor } from "@/lib/doctor/financeCore";
+import {
+  machineStatus,
+  netFor,
+  recoveryFor,
+  revenueFor,
+  type RevenueSummary,
+} from "@/lib/doctor/financeCore";
 import ProfitPanel from "./ProfitPanel";
 import BookingsChart from "./BookingsChart";
 import ShareLink from "./ShareLink";
@@ -117,44 +125,100 @@ export default async function DashboardHome({
   doctorId,
   doctorName,
   period = "this-month",
+  demo,
 }: {
   doctorId: string;
   doctorName: string;
   /** Which window the money figures cover. Comes from ?period=. */
   period?: DashboardPeriod;
+  /**
+   * A worked example, for the tour a practitioner sees while they wait to be
+   * approved. When present, EVERY query below is skipped and the figures come
+   * from lib/doctor/demoMetrics.ts instead.
+   *
+   * Deliberately a prop on the real component rather than a parallel demo
+   * screen: a separate mock would teach a practitioner a layout that drifts
+   * out of step with this one the first week either changes, and the whole
+   * point of the tour is that they arrive already knowing where things are.
+   *
+   * Only /doctor/portal/demo passes it, and that page is wrapped in a banner
+   * that says so.
+   */
+  demo?: DemoBundle;
 }) {
   // The listing checklist was shown all through onboarding and then never
   // again — yet "no photo, no languages, no links" is exactly what costs an
   // APPROVED doctor the bookings this page is measuring.
-  const [m, gaps] = await Promise.all([
-    getDashboardMetrics(doctorId, period),
-    getApplicationGaps(doctorId),
-  ]);
+  const [m, gaps] = demo
+    ? [demo.metrics, demo.gaps]
+    : await Promise.all([
+        getDashboardMetrics(doctorId, period),
+        getApplicationGaps(doctorId),
+      ]);
 
   // Costs over the SAME window the takings cover, so the two halves of "what
   // you keep" are measuring the same period. Machines are read whole rather
   // than windowed: recovery is a lifetime figure, and a machine that earned
   // nothing this month has not become less recovered.
-  const [periodExpenses, machines] = await Promise.all([
-    prisma.practiceExpense.findMany({
-      where: { doctorId, spentOn: { gte: m.windowStart, lte: m.windowEnd } },
-      select: { category: true, amountInr: true },
-    }),
-    prisma.practiceAsset.findMany({
-      where: { doctorId, isActive: true },
-      orderBy: { purchasedOn: "desc" },
-      select: {
-        id: true,
-        name: true,
-        purpose: true,
-        costInr: true,
-        upkeepInr: true,
-        purchasedOn: true,
-        uses: { select: { chargedInr: true, usedOn: true } },
-      },
-    }),
-  ]);
-  const net = netFor(m.periodBooked, periodExpenses);
+  const [periodExpenses, machines, periodOrders, periodIncome] = demo
+    ? [demo.expenses, demo.machines, demo.orders, demo.income]
+    : await Promise.all([
+        prisma.practiceExpense.findMany({
+          where: { doctorId, spentOn: { gte: m.windowStart, lte: m.windowEnd } },
+          select: { category: true, amountInr: true, headcount: true },
+        }),
+        prisma.practiceAsset.findMany({
+          where: { doctorId, isActive: true },
+          orderBy: { purchasedOn: "desc" },
+          select: {
+            id: true,
+            name: true,
+            purpose: true,
+            costInr: true,
+            upkeepInr: true,
+            purchasedOn: true,
+            uses: { select: { chargedInr: true, usedOn: true } },
+          },
+        }),
+        // Medicine sales and other income, over the SAME window as the
+        // bookings. This dashboard and /doctor/portal/finance have to agree
+        // on what "revenue" means or the practitioner has two numbers for one
+        // month and no way to tell which is the real one — which is precisely
+        // the failure the comment at the top of this file describes having
+        // had once already, between the hero figure and the donut.
+        prisma.medicineOrder.findMany({
+          where: {
+            doctorId,
+            createdAt: { gte: m.windowStart, lte: m.windowEnd },
+            status: { not: MedicineOrderStatus.CANCELLED },
+          },
+          select: { totalInr: true },
+        }),
+        prisma.practiceIncome.findMany({
+          where: { doctorId, receivedOn: { gte: m.windowStart, lte: m.windowEnd } },
+          select: { amountInr: true },
+        }),
+      ]);
+
+  // Machine charges inside the window only. `machines` above carries every use
+  // ever recorded, which is right for payback — a lifetime question — and
+  // wrong for revenue, which is a monthly one.
+  const windowUses = machines.flatMap((a) =>
+    a.uses.filter((u) => u.usedOn >= m.windowStart && u.usedOn <= m.windowEnd)
+  );
+
+  const revenue: RevenueSummary = revenueFor({
+    bookingsInr: m.periodBooked,
+    bookingCount: m.appointments.bookedCount,
+    medicinesInr: periodOrders.reduce((n, o) => n + o.totalInr, 0),
+    medicineOrderCount: periodOrders.length,
+    proceduresInr: windowUses.reduce((n, u) => n + Math.max(u.chargedInr, 0), 0),
+    procedureCount: windowUses.length,
+    otherInr: periodIncome.reduce((n, i) => n + i.amountInr, 0),
+    otherCount: periodIncome.length,
+  });
+
+  const net = netFor(revenue.totalInr, periodExpenses);
   const recoveries = machines.map((a) => recoveryFor(a, new Date()));
   const listingGaps = advisoryGaps(gaps);
   // "Dr. Nithya": a practitioner is addressed by title, and the greeting
@@ -246,6 +310,7 @@ export default async function DashboardHome({
             one. "Booked" stays in the hint rather than the label, because it
             is the caveat, not the subject. */}
         <Kpi
+          data-tour="kpis"
           label="Revenue booked"
           value={money(m.periodBooked)}
           delta={m.periodDelta}
@@ -295,6 +360,7 @@ export default async function DashboardHome({
 
       {/* ── The money: over time, and where it sits ────────────────────── */}
       <SectionHead
+        data-tour="money"
         title="Your money"
         sub="What was booked, when it was booked, and which part of it you have actually earned."
       />
@@ -468,6 +534,7 @@ export default async function DashboardHome({
 
       {/* ── Empty seats ────────────────────────────────────────────────── */}
       <SectionHead
+        data-tour="seats"
         title="Your empty seats"
         sub="One seat is one appointment slot in your working hours. This is the next seven days, so it is the part you can still do something about."
       />
@@ -568,9 +635,17 @@ export default async function DashboardHome({
 
       {/* Suspended so the dashboard paints before the first generation of the
           day finishes — the numbers above are the point, this is commentary. */}
-      <Suspense fallback={<InsightStripSkeleton />}>
-        <InsightStrip doctorId={doctorId} metrics={m} />
-      </Suspense>
+      {/* Not on the demo path. getDailyInsights CACHES what it produces
+          against the doctorId, so running it over invented figures would
+          write a demo month's suggestions into this practitioner's real
+          insight cache — and they would still be sitting there on the
+          dashboard the week after approval, quoting a revenue figure that
+          never existed. */}
+      {!demo && (
+        <Suspense fallback={<InsightStripSkeleton />}>
+          <InsightStrip doctorId={doctorId} metrics={m} />
+        </Suspense>
+      )}
 
       {/* ── Growth, as arithmetic ─────────────────────────────────────── */}
       {/* A projection of a period that has already ended is not a projection.
@@ -608,10 +683,19 @@ export default async function DashboardHome({
       )}
 
       {/* ── What is left ───────────────────────────────────────────────── */}
-      <ProfitPanel net={net} recoveries={recoveries} periodLabel={m.periodLabel} />
+      <div data-tour="profit">
+        <ProfitPanel
+          net={net}
+          revenue={revenue}
+          recoveries={recoveries}
+          statusFor={machineStatus}
+          periodLabel={m.periodLabel}
+        />
+      </div>
 
       {/* ── The diary ──────────────────────────────────────────────────── */}
       <SectionHead
+        data-tour="diary"
         title="Your diary"
         sub="Which days and which hours actually fill. Both cover the pattern behind you, not the week ahead."
       />
@@ -722,7 +806,7 @@ export default async function DashboardHome({
               }
             />
             <RateRow
-              label="White Collar members"
+              label="Gold Collar members"
               value={m.ops.memberShare.value}
               sampleSize={m.ops.memberShare.sampleSize}
               tone="brand"

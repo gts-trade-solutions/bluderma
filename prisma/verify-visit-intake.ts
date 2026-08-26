@@ -200,11 +200,26 @@ check("patients/ is never in the public list", !publicArray.includes('"patients"
 check("credentials/ is never in the public list", !publicArray.includes('"credentials"'));
 check("prescriptions/ is never in the public list", !publicArray.includes('"prescriptions"'));
 check("the public list is non-empty", publicArray.includes('"doctors"'));
-const presignSrc = read("src/app/api/uploads/presign/route.ts");
+// The folder policy moved into lib/uploadAuth when the direct-upload fallback
+// was added, so that both entry points answer to one rule rather than two that
+// can drift. Checking the presign route alone would now pass while the fallback
+// route let a patient write anywhere — so check the rule where it lives, AND
+// check that both doors actually go through it.
+const authSrc = read("src/lib/uploadAuth.ts");
 check(
   "a patient may upload only to patients/",
-  /PATIENT_FOLDERS = new Set\(\["patients"\]\)/.test(presignSrc)
+  /PATIENT_FOLDERS = new Set\(\["patients"\]\)/.test(authSrc)
 );
+check(
+  "a patient role is granted nothing beyond that",
+  /user\.role === "PATIENT" && PATIENT_FOLDERS\.has\(folder\)/.test(authSrc)
+);
+for (const route of ["presign", "direct"]) {
+  check(
+    `the ${route} route authorises through the shared policy`,
+    /authorizeUpload\(folder/.test(read(`src/app/api/uploads/${route}/route.ts`))
+  );
+}
 const viewSrc = read("src/app/api/uploads/view/route.ts");
 check(
   "only the treating doctor or the patient may view a photo",

@@ -239,7 +239,10 @@ check(
   "the doctor front door is not theme-light",
   !/className="[^"]*\btheme-light\b/.test(front)
 );
-check("it paints the shared surface", front.includes("bg-[var(--surface)]"));
+// `bg-surface`, not `bg-[var(--surface)]`: the ground became a declared
+// utility when the theme toggle landed, because a Tailwind arbitrary value is
+// frozen at build time and could not follow a reader's choice. See globals.css.
+check("it paints the shared surface", front.includes("bg-surface"));
 check("its navbar is not forced light", !front.includes('chrome="light"'));
 
 // The calendar sketch inside it is deliberately still white — it depicts the
@@ -373,11 +376,14 @@ for (const f of [
 // The skin card was given a gradient and the other two were left flat, so the
 // rail read as one real product and two afterthoughts.
 const analyzer = read("src/components/hub/AnalyzerRail.tsx");
-const gradients = (analyzer.match(/bg-gradient-to-br from-\w+-\d00/g) ?? []).length;
+// `(?:on-dark )?` because a saturated brand gradient now carries the marker
+// that keeps its white text white on a light theme. The gradient is the
+// thing being checked; the marker sitting between the two utilities is not
+// a reason to report it missing.
+const GRAD = /bg-gradient-to-br (?:on-dark )?from-(\w+)-\d00/g;
+const gradients = (analyzer.match(GRAD) ?? []).length;
 check("all three analyser cards carry a gradient", gradients >= 3, `${gradients} found`);
-const hues = new Set(
-  [...analyzer.matchAll(/bg-gradient-to-br from-(\w+)-\d00/g)].map((m) => m[1])
-);
+const hues = new Set([...analyzer.matchAll(GRAD)].map((m) => m[1]));
 check("each in its own hue", hues.size >= 3, [...hues].join(", "));
 
 /* ------------------------------------------------------------------------

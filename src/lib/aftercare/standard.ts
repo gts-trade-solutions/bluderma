@@ -83,6 +83,78 @@ export const STANDARD_AFTERCARE: AftercareContent = {
 };
 
 /**
+ * The standard PRE-procedure content.
+ *
+ * ── The half that was missing ────────────────────────────────────────────
+ * The platform issued aftercare and nothing before. That is the wrong way
+ * round for the things that actually go wrong: a patient who took ibuprofen
+ * that morning bruises, one who came with a fresh tan cannot be lasered at
+ * all, one who did not stop their retinoid gets a chemical burn, and one who
+ * ate nothing before a long session faints in the chair. Every one of those
+ * is a wasted appointment or a complication, and every one is prevented by a
+ * message sent two days earlier rather than a leaflet handed over afterwards.
+ *
+ * Written in the same register as the aftercare content and kept as clinical
+ * wording rather than reworded to sound better — "for 7 days" becoming "for
+ * about a week" is how a patient takes aspirin on day five.
+ *
+ * The doctor's own additions override anything here, and the sheet says so.
+ */
+export const STANDARD_PRETREATMENT: AftercareContent = {
+  title: "Before your procedure",
+  subtitle: "How to prepare, and what to stop",
+
+  intro:
+    "How well this goes depends partly on what you do in the days before it. The list below is what most patients are asked to do; anything your doctor has added at the bottom is specific to you and takes precedence. If you are unsure about any of it, ring the clinic rather than guessing — a question the day before costs nothing, and a postponed appointment costs you a slot.",
+
+  dos: [
+    "Tell us about every medicine and supplement you take, including anything bought without a prescription, and anything herbal or ayurvedic.",
+    "Tell us if you have ever had a cold sore. Procedures on or around the lips can bring one on, and it is prevented with a tablet started beforehand rather than treated afterwards.",
+    "Tell us if you are pregnant, breastfeeding, or trying to conceive.",
+    "Tell us if you have taken isotretinoin in the last six months.",
+    "Come with the treated area clean and bare — no make-up, no moisturiser, no sunscreen, no deodorant if the area is underarm.",
+    "Shave the area the night before if you have been asked to, not on the day.",
+    "Eat a proper meal beforehand and drink water. Long sessions on an empty stomach are the commonest reason somebody feels faint.",
+    "Arrive at the time you were given rather than the appointment time if numbing cream is needed — it takes 45 to 60 minutes to work.",
+    "Bring a hat, scarf or umbrella for the journey home, and sunglasses if the area is near the eyes.",
+    "Arrange a lift home if you have been told you will be sedated or have had anything for anxiety.",
+    "Wear loose clothing that does not have to be pulled over the treated area afterwards.",
+  ],
+
+  donts: [
+    "Do not take aspirin, ibuprofen or other anti-inflammatory painkillers for 7 days beforehand unless a doctor has told you to keep taking them. Never stop a prescribed blood thinner on your own — tell us instead.",
+    "Do not take fish oil, vitamin E, ginkgo, garlic or ginseng supplements for 7 days beforehand. All of them increase bruising.",
+    "Do not use retinol, tretinoin, AHA, BHA, benzoyl peroxide or any exfoliant on the area for 5 to 7 days beforehand.",
+    "Do not sunbathe, use a tanning bed or apply fake tan for 4 weeks beforehand. A tan is the single commonest reason a laser appointment has to be sent away.",
+    "Do not wax, thread, pluck or use hair-removal cream on the area for 4 weeks beforehand. Shaving is fine.",
+    "Do not drink alcohol for 24 hours beforehand.",
+    "Do not have any other facial treatment — peel, facial, laser, injectable — on the area for 2 weeks beforehand.",
+    "Do not come with an active infection, open sore or cold sore on the area. Ring us and we will move the appointment.",
+  ],
+
+  warningsLead: "Ring the clinic before you come if",
+  warnings: [
+    "You have developed a cold sore, rash, sunburn or any skin infection on the area",
+    "You have started a new medicine since you were booked, particularly an antibiotic or a steroid",
+    "You are unwell, feverish, or have an infection anywhere",
+    "You think you may be pregnant",
+    "You have had a vaccination in the last two weeks",
+    "You cannot stop a blood thinner, or nobody has told you whether to",
+  ],
+
+  additionsLead:
+    "Written by the treating doctor for this patient. Anything below is specific to you and overrides the standard list above.",
+
+  consent:
+    "I confirm that these instructions have been explained to me and I have had the opportunity to ask questions.",
+};
+
+/** The standard content for either side of the treatment. */
+export function standardFor(kind: "PRE" | "POST"): AftercareContent {
+  return kind === "PRE" ? STANDARD_PRETREATMENT : STANDARD_AFTERCARE;
+}
+
+/**
  * A stable key for "the same treatment", used to remember a doctor's standing
  * additions between patients.
  *

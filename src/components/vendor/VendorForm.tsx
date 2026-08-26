@@ -4,6 +4,8 @@ import { useRef, useState, useTransition } from "react";
 import { Check, FileUp, LoaderCircle, ShieldCheck } from "lucide-react";
 
 import { applyAsVendor } from "@/lib/actions/vendor";
+import { uploadFile } from "@/lib/uploadClient";
+import { useFormValidation } from "@/hooks/useFormValidation";
 
 const field =
   "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-[15px] text-slate-900 placeholder:text-slate-400 transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20";
@@ -34,6 +36,7 @@ export default function VendorForm() {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [pending, start] = useTransition();
+  const v = useFormValidation();
 
   async function upload(file: File) {
     setError(null);
@@ -42,33 +45,20 @@ export default function VendorForm() {
       return;
     }
     setUploading(true);
-    try {
-      const presign = await fetch("/api/uploads/presign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type,
-          size: file.size,
-          folder: "credentials",
-        }),
-      });
-      if (!presign.ok) throw new Error();
-      const { uploadUrl, publicUrl, key } = await presign.json();
-      const put = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      if (!put.ok) throw new Error();
-      setLicence({ url: publicUrl, key, name: file.name });
-    } catch {
+
+    // `vendor-licences/`, not `credentials/`. This form is public — an
+    // applicant has no account — and `credentials/` is doctors-only, which is
+    // why every licence upload here used to come back "Not permitted".
+    const res = await uploadFile(file, "vendor-licences");
+    setUploading(false);
+
+    if (!res.ok) {
       setError(
-        "That upload did not go through. You can submit without it and send the licence separately."
+        `${res.error} You can submit without it and send the licence separately.`
       );
-    } finally {
-      setUploading(false);
+      return;
     }
+    setLicence({ url: res.file.url, key: res.file.key, name: file.name });
   }
 
   if (sent) {
@@ -91,11 +81,11 @@ export default function VendorForm() {
 
   return (
     <form
+      ref={v.formRef}
+      noValidate
       className="space-y-6"
-      onSubmit={(e) => {
-        e.preventDefault();
+      onSubmit={v.guard((fd, form) => {
         setError(null);
-        const fd = new FormData(e.currentTarget);
         start(async () => {
           const res = await applyAsVendor({
             businessName: String(fd.get("businessName") ?? ""),
@@ -118,8 +108,9 @@ export default function VendorForm() {
           if (!res.ok) setError(res.error ?? "Something went wrong.");
           else setSent(true);
         });
-      }}
+      })}
     >
+      {v.summary}
       <Section title="The business" step={1}>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field name="businessName" label="Registered business name" required
@@ -232,7 +223,7 @@ export default function VendorForm() {
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-600 to-teal-600 px-8 py-3 text-sm font-extrabold text-white shadow-[0_14px_34px_-10px_rgba(31,111,214,0.85)] transition hover:from-brand-700 hover:to-teal-700 disabled:opacity-60"
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-600 to-teal-600 px-8 py-3 text-sm font-extrabold text-white shadow-[0_14px_34px_-10px_rgba(31,111,214,0.85)] transition hover:on-dark from-brand-700 hover:to-teal-700 disabled:opacity-60"
         >
           {pending && <LoaderCircle className="h-4 w-4 animate-spin" />}
           Send the application

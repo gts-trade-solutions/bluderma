@@ -18,7 +18,13 @@ export default function StartPlanButton({
   scanId,
 }: {
   patientUserId: string;
-  scanId: string;
+  /**
+   * Optional, because a plan does not need one. startTreatmentPlan has always
+   * taken it as a head start rather than a prerequisite — the page used to
+   * filter out every patient without one, which is why most doctors found
+   * this feature empty.
+   */
+  scanId?: string;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();

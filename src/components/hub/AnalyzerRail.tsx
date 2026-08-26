@@ -59,7 +59,7 @@ export default function AnalyzerRail() {
           the home banner uses, which is the only other place on the client
           side that colour appears: it marks "this is the thing to do first"
           without inventing a new colour for it. */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-800 via-brand-900 to-teal-800 p-5 text-white shadow-[0_18px_44px_-18px_rgba(15,88,173,0.75)] ring-1 ring-inset ring-white/15">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br on-dark from-brand-800 via-brand-900 to-teal-800 p-5 text-white shadow-[0_18px_44px_-18px_rgba(15,88,173,0.75)] ring-1 ring-inset ring-white/15">
         {/* A single bloom so the gradient has depth rather than looking flat. */}
         <div
           aria-hidden
@@ -79,7 +79,7 @@ export default function AnalyzerRail() {
         </p>
 
         {price !== null && (
-          <div className="mt-4 flex items-center gap-3 rounded-2xl bg-[#04101f]/45 px-4 py-3 ring-1 ring-inset ring-white/10">
+          <div className="mt-4 flex items-center gap-3 rounded-2xl bg-[var(--scrim)] px-4 py-3 ring-1 ring-inset ring-white/10">
             {listPriceInr !== null && (
               <>
                 <div className="text-right">
@@ -188,7 +188,7 @@ export default function AnalyzerRail() {
           obviously siblings rather than obviously ranked. Dimmed a shade
           because it genuinely is not built yet, and a card that looks as
           ready as the one above it would be a promise. */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-800 via-purple-900 to-fuchsia-800 p-5 text-white shadow-[0_18px_44px_-18px_rgba(126,34,206,0.65)] ring-1 ring-inset ring-white/15">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br on-dark from-violet-800 via-purple-900 to-fuchsia-800 p-5 text-white shadow-[0_18px_44px_-18px_rgba(126,34,206,0.65)] ring-1 ring-inset ring-white/15">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-fuchsia-400/20 blur-3xl"
@@ -213,7 +213,7 @@ export default function AnalyzerRail() {
               which is a saving on something nobody can buy yet, backed by no
               setting and inconsistent with the skin scan's own pricing. Free
               at launch is the claim that is actually true. */}
-          <div className="mt-4 flex items-center gap-3 rounded-2xl bg-[#100420]/45 px-4 py-3 ring-1 ring-inset ring-white/10">
+          <div className="mt-4 flex items-center gap-3 rounded-2xl bg-[var(--scrim)] px-4 py-3 ring-1 ring-inset ring-white/10">
             <div>
               <p className="text-[9px] font-medium uppercase tracking-wider text-fuchsia-200">
                 At launch
@@ -229,7 +229,7 @@ export default function AnalyzerRail() {
           route for somebody who does not want a scan at all, and it should
           read as the calm alternative to the two analysers, not compete with
           them. */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-800 via-teal-900 to-brand-900 p-5 text-white shadow-[0_18px_44px_-18px_rgba(10,102,93,0.7)] ring-1 ring-inset ring-white/15">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br on-dark from-teal-800 via-teal-900 to-brand-900 p-5 text-white shadow-[0_18px_44px_-18px_rgba(10,102,93,0.7)] ring-1 ring-inset ring-white/15">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-teal-400/20 blur-3xl"

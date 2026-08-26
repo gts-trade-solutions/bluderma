@@ -4,6 +4,7 @@ import Link from"next/link";
 import { usePathname } from"next/navigation";
 import { signOut, useSession } from"next-auth/react";
 import { useEffect, useRef, useState } from"react";
+import Avatar from "@/components/Avatar";
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN:"Administrator",
@@ -84,7 +85,7 @@ export default function AccountMenu() {
       // image happens to be bright.
       <Link
         href={`/login?callbackUrl=${encodeURIComponent(pathname ??"/")}`}
-        className="inline-flex items-center rounded-full border border-transparent bg-white px-5 py-2 [.theme-light_&]:border-slate-300 text-sm font-bold text-[#070d1c] shadow-[0_2px_12px_-2px_rgba(0,0,0,0.35)] transition hover:bg-teal-100"
+        className="inline-flex items-center rounded-full border border-transparent bg-white px-5 py-2 [.theme-light_&]:border-slate-300 text-sm font-bold text-[var(--on-sheet)] shadow-[0_2px_12px_-2px_rgba(0,0,0,0.35)] transition hover:bg-teal-100"
       >
         Sign in
       </Link>
@@ -92,7 +93,6 @@ export default function AccountMenu() {
   }
 
   const { name, email, role, image } = session.user;
-  const initial = (name ?? email ??"?").trim().charAt(0).toUpperCase();
 
   return (
     <div className="relative" ref={ref}>
@@ -100,14 +100,19 @@ export default function AccountMenu() {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-brand-600 text-sm font-bold text-white ring-2 ring-white transition hover:bg-brand-700"
+        className="rounded-full ring-2 ring-white transition hover:opacity-90"
       >
-        {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={image} alt="" className="h-full w-full object-cover" />
-        ) : (
-          initial
-        )}
+        {/* A drawn figure rather than the first letter of the name. See
+            Avatar.tsx — the initial was unrecognisable across screens and
+            said nothing about whether this was a doctor or a client. */}
+        <Avatar
+          src={image}
+          alt={name ?? email ?? "Your account"}
+          role={
+            role === "DOCTOR" ? "doctor" : role === "ADMIN" ? "admin" : "patient"
+          }
+          size={36}
+        />
       </button>
 
       {open && (

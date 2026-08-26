@@ -91,6 +91,57 @@ check("rail is the dark surface", /bg-\[#0b1220\]/.test(rail));
 check("no admin console chrome left", !/@\/components\/admin\/ui/.test(layout));
 check("unapproved doctors still get in", /pending &&/.test(layout));
 
+/* -- How a practitioner gets to their own portal -------------------------
+   The route changed on purpose, so it is worth stating what it now is:
+
+     - the brand mark goes to the CLIENT home, for everybody, because a doctor
+       is also a person who wants to look at the site they are listed on;
+     - the avatar carries the portal's real sections, which is where somebody
+       looks for their own records;
+     - the navbar and footer no longer carry a portal link, because both were
+       aiming a returning practitioner at a page selling them the thing they
+       had already signed up for.
+
+   None of that is safe to leave unasserted: removing the last route to a
+   surface is a one-line change that nothing else would notice. */
+const navSrc = read("src/components/Navbar.tsx");
+const menuSrc = read("src/lib/queries/nav.ts");
+const footerSrc = read("src/components/Footer.tsx");
+const accountSrc = read("src/components/AccountMenu.tsx");
+
+check("the brand mark goes to the client home for every role", navSrc.includes('href="/"'));
+check(
+  "and never to the doctor marketing page",
+  !navSrc.includes('role === "doctor" ? "/doctor"')
+);
+check(
+  "the client bar carries no cross-audience doctor link",
+  !menuSrc.includes("free, no commission")
+);
+check("the footer carries no portal link", !footerSrc.includes("FooterSignIn"));
+check("but the pitch is still reachable from every page", footerSrc.includes('href="/doctor"'));
+check(
+  "the avatar is the way in, and lists real sections",
+  ["/doctor/portal", "/doctor/portal/calendar", "/doctor/portal/practice"].every((h) =>
+    accountSrc.includes(h)
+  )
+);
+check(
+  "and signing in as a doctor still lands on the portal",
+  read("src/lib/roles.ts").includes('if (role === "DOCTOR") return "/doctor/portal"')
+);
+
+// The appearance control does not appear on surfaces it cannot change.
+const fab = read("src/components/ThemeFab.tsx");
+check(
+  "the theme control is hidden on the console it cannot theme",
+  ["/admin", "/doctor/portal", "/doctor/join"].every((x) => fab.includes(`"${x}"`))
+);
+check(
+  "and floats clear of the assistant launcher",
+  fab.includes("left-5") && !fab.includes("right-5")
+);
+
 console.log(`\n${pass} passed, ${fails.length} failed`);
 if (fails.length) {
   fails.forEach((f) => console.log(`  FAIL  ${f}`));

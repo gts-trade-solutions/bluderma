@@ -57,7 +57,7 @@ export default async function GiftCardsPage() {
     <>
       <Navbar role="patient" menu={buildPatientMenu()} cta="know-you" />
 
-      <main className="bg-[var(--surface)] pb-20">
+      <main className="bg-surface pb-20">
         <section className="border-b border-white/10 bg-white/[0.04]">
           <div className="container-page py-9">
             <p className="section-eyebrow">Gift cards</p>
@@ -92,7 +92,7 @@ export default async function GiftCardsPage() {
                 return (
                   <li
                     key={o.id}
-                    className="flex flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-brand-800 via-brand-900 to-teal-800 p-5 ring-1 ring-inset ring-white/15"
+                    className="flex flex-col overflow-hidden rounded-2xl bg-gradient-to-br on-dark from-brand-800 via-brand-900 to-teal-800 p-5 ring-1 ring-inset ring-white/15"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <Gift aria-hidden className="h-6 w-6 text-teal-200" strokeWidth={1.7} />

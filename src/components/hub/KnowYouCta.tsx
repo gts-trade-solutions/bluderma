@@ -98,7 +98,7 @@ it&apos;s optional. At the end you&apos;ll see the doctors who
             </div>
           </div>
 
-          <div className="relative hidden bg-gradient-to-br from-brand-700 to-teal-600 p-9 sm:block">
+          <div className="relative hidden bg-gradient-to-br on-dark from-brand-700 to-teal-600 p-9 sm:block">
             <div className="flex h-full flex-col justify-center text-white">
               <p className="text-5xl font-extrabold tracking-[-0.04em]">7</p>
               <p className="mt-1 text-sm font-semibold text-white/80">
@@ -131,7 +131,7 @@ it&apos;s optional. At the end you&apos;ll see the doctors who
 
   if (variant === "advice") {
     return (
-      <div className="flex flex-col items-start justify-between gap-5 rounded-3xl bg-gradient-to-r from-brand-700 to-teal-600 p-7 text-white sm:flex-row sm:items-center sm:p-9">
+      <div className="flex flex-col items-start justify-between gap-5 rounded-3xl bg-gradient-to-r on-dark from-brand-700 to-teal-600 p-7 text-white sm:flex-row sm:items-center sm:p-9">
         <div className="flex items-start gap-4">
           <span className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 sm:flex">
             <MessageSquareHeart className="h-6 w-6" strokeWidth={1.7} />

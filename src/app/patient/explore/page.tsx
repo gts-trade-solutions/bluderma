@@ -68,7 +68,7 @@ export default async function ExplorePage({
     <>
       <Navbar role="patient" menu={buildPatientMenu()} cta="know-you" />
 
-      <main className="bg-[var(--surface)] pb-20">
+      <main className="bg-surface pb-20">
         {/* ── Page head ─────────────────────────────────────────────── */}
         <section className="border-b border-white/10 bg-white/[0.04]">
           <div className="container-page flex flex-wrap items-end justify-between gap-4 py-7">
@@ -288,7 +288,7 @@ export default async function ExplorePage({
 
             {/* Closing */}
             <section>
-              <div className="flex flex-col items-start justify-between gap-5 rounded-3xl bg-gradient-to-r from-brand-700 to-teal-600 p-7 text-white sm:flex-row sm:items-center sm:p-9">
+              <div className="flex flex-col items-start justify-between gap-5 rounded-3xl bg-gradient-to-r on-dark from-brand-700 to-teal-600 p-7 text-white sm:flex-row sm:items-center sm:p-9">
                 <div>
                   <h2 className="display-sm text-xl sm:text-2xl">
                     Still scrolling?

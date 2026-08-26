@@ -8,20 +8,30 @@ import AftercareForm, {
 import { getOwnDoctor } from "@/lib/doctor/guard";
 import { prisma } from "@/lib/prisma";
 import { reasonLabel } from "@/lib/booking/visitIntake";
+import { aiEnabled } from "@/lib/integrations/aiAssist";
 
-export const metadata = { title: "Aftercare" };
+export const metadata = { title: "Pre and post care" };
 export const dynamic = "force-dynamic";
 
 /**
- * Post-procedure aftercare sheets.
+ * Both sides of the treatment: what to do before it, and what to do after.
  *
- * The clinic's own sheet, issued to a named patient and kept as a record. The
- * standard do's, don'ts and warning signs come from lib/aftercare/standard.ts
- * and are copied into every sheet at the moment it is issued, so revising the
- * guidance later never changes a document a patient is already following.
+ * The clinic's own sheets, issued to a named patient and kept as a record.
+ * The standard do's, don'ts and warning signs come from
+ * lib/aftercare/standard.ts and are copied into every sheet at the moment it
+ * is issued, so revising the guidance later never changes a document a
+ * patient is already following.
  *
- * What a doctor adds is remembered per treatment and offered back the next
- * time they issue for the same one, which is the part the clinic asked for.
+ * What a doctor adds is remembered per treatment AND per side, and offered
+ * back the next time they issue for the same one — which is the part the
+ * clinic asked for, now applied to both halves.
+ *
+ * ── Why the before half exists ───────────────────────────────────────────
+ * The platform issued aftercare and nothing beforehand, which is the wrong
+ * way round for the things that actually go wrong: a patient who took
+ * ibuprofen that morning bruises, one who arrives with a fresh tan cannot be
+ * lasered at all, one who did not stop their retinoid gets a chemical burn.
+ * Each is a wasted appointment prevented by a message two days earlier.
  */
 export default async function AftercarePage() {
   const owner = await getOwnDoctor();
@@ -59,9 +69,10 @@ export default async function AftercarePage() {
     prisma.aftercareSheet.findMany({
       where: { doctorId: owner.doctorId },
       orderBy: { issuedAt: "desc" },
-      take: 30,
+      take: 40,
       select: {
         id: true,
+        kind: true,
         patientName: true,
         patientPublicId: true,
         procedure: true,
@@ -76,6 +87,8 @@ export default async function AftercarePage() {
       select: { clinic: { select: { phone: true } } },
     }),
   ]);
+
+  const ai = aiEnabled();
 
   const visits: RecentVisit[] = recent.map((a) => ({
     id: a.id,
@@ -92,35 +105,67 @@ export default async function AftercarePage() {
   return (
     <>
       <PageHead
-        title="Aftercare sheets"
-        sub="The clinic's post-procedure instructions, issued to a named patient and kept as a record."
+        title="Pre and post treatment"
+        sub="What a patient has to do before they come, and what to do afterwards. Issued to a named patient and kept as a record of what was said on the day."
       />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <Panel
-          title="Issue a sheet"
-          sub="The clinic's standard instructions, plus your own"
-          icon="sheet"
-          accent="brand"
-          index={0}
-          note={
-            <>The standard instructions are attached. What you add is remembered for next time.</>
-          }
-        >
-          <div className="p-4 sm:p-5">
-            <AftercareForm
-              visits={visits}
-              defaultEmergencyContact={primary?.clinic.phone ?? ""}
-            />
-          </div>
-        </Panel>
+        <div className="space-y-4">
+          {/*
+            Before first, because that is the order it happens in and the
+            half that gets forgotten. It is also the half that prevents the
+            appointment being wasted.
+          */}
+          <Panel
+            title="Before the treatment"
+            sub="What to stop, what to avoid, when to arrive"
+            icon="clock"
+            accent="violet"
+            index={0}
+            note={
+              <>
+                Send it when the appointment is booked. Two days&rsquo; notice
+                is what saves a wasted slot.
+              </>
+            }
+          >
+            <div className="p-4 sm:p-5">
+              <AftercareForm
+                kind="PRE"
+                visits={visits}
+                defaultEmergencyContact={primary?.clinic.phone ?? ""}
+                aiEnabled={ai}
+              />
+            </div>
+          </Panel>
+
+          <Panel
+            title="After the treatment"
+            sub="The clinic's standard instructions, plus your own"
+            icon="sheet"
+            accent="brand"
+            index={1}
+            note={
+              <>The standard instructions are attached. What you add is remembered for next time.</>
+            }
+          >
+            <div className="p-4 sm:p-5">
+              <AftercareForm
+                kind="POST"
+                visits={visits}
+                defaultEmergencyContact={primary?.clinic.phone ?? ""}
+                aiEnabled={ai}
+              />
+            </div>
+          </Panel>
+        </div>
 
         <Panel
           title="Issued"
           sub={sheets.length === 1 ? "1 sheet" : `${sheets.length} sheets`}
           icon="today"
           accent="teal"
-          index={1}
+          index={2}
           note={
             <>Kept exactly as worded on the day it was issued.</>
           }
@@ -141,8 +186,20 @@ export default async function AftercarePage() {
                     className="block px-4 py-3.5 transition hover:bg-slate-50 sm:px-5"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="min-w-0 text-sm font-bold text-slate-900">
-                        {s.patientName}
+                      <p className="flex min-w-0 items-center gap-1.5 text-sm font-bold text-slate-900">
+                        {/* Which side, at a glance. Two sheets for one patient
+                            on one day is the normal case, and without this
+                            they are indistinguishable in the list. */}
+                        <span
+                          className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide ${
+                            s.kind === "PRE"
+                              ? "bg-violet-100 text-violet-800"
+                              : "bg-brand-100 text-brand-800"
+                          }`}
+                        >
+                          {s.kind === "PRE" ? "Before" : "After"}
+                        </span>
+                        <span className="min-w-0 truncate">{s.patientName}</span>
                       </p>
                       {/* Whether they have confirmed it was explained to them.
                           Never inferred from a page view: the sheet asks them

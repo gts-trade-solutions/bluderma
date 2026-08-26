@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { PlanItemState } from "@prisma/client";
 import { Check, LoaderCircle, Plus, Sparkles, Undo2, X } from "lucide-react";
+import { useFormValidation } from "@/hooks/useFormValidation";
 
 import {
   addPlanItem,
@@ -45,6 +46,7 @@ export default function PlanEditor({
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [pending, start] = useTransition();
+  const formCheck = useFormValidation();
 
   const accepted = items.filter((i) => i.state === "ACCEPTED");
   const suggested = items.filter((i) => i.state === "SUGGESTED");
@@ -166,10 +168,10 @@ export default function PlanEditor({
 
         {adding ? (
           <form
+            ref={formCheck.formRef}
+            noValidate
             className="mt-3 rounded-xl border border-slate-200 bg-white p-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const fd = new FormData(e.currentTarget);
+            onSubmit={formCheck.guard((fd, form) => {
               run(() =>
                 addPlanItem({
                   planId,
@@ -177,8 +179,9 @@ export default function PlanEditor({
                   rationale: String(fd.get("rationale") ?? ""),
                 })
               );
-            }}
+            })}
           >
+            {formCheck.summary}
             {/* Free text, unlike the AI's lines. A doctor is allowed to know
                 something the catalogue does not contain; a model is not. */}
             <input

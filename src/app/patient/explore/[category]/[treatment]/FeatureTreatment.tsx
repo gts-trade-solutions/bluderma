@@ -68,7 +68,7 @@ export default async function FeatureTreatment({
   ];
 
   return (
-    <main className="relative isolate bg-[var(--surface)] pb-32">
+    <main className="relative isolate bg-surface pb-32">
       <TreatmentBackdrop />
       <div className="container-page max-w-5xl">
         {/* ── Header ────────────────────────────────────────────────── */}
@@ -242,7 +242,7 @@ export default async function FeatureTreatment({
       </div>
 
       {/* ── Pinned enquiry ──────────────────────────────────────────── */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#070d1c]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-surface-95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
         <div className="container-page flex max-w-5xl items-center justify-between gap-4 py-3">
           <div className="hidden min-w-0 sm:block">
             <p className="truncate text-sm font-bold text-white">

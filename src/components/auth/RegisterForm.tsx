@@ -12,6 +12,7 @@ import FormAlert from "./FormAlert";
 import GoogleButton from "./GoogleButton";
 import AuthDivider from "./AuthDivider";
 import AudienceToggle from "./AudienceToggle";
+import { focusField, validateForm } from "@/lib/formValidation";
 
 interface FormState {
   name: string;
@@ -58,8 +59,18 @@ export default function RegisterForm({ googleEnabled = false }: { googleEnabled?
     setFields((f) => ({ ...f, [key]: "" }));
   };
 
-  async function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    // The same pass every other form in the app runs. `noValidate` is on the
+    // form below, so without this nothing would check the fields at all.
+    const check = validateForm(e.currentTarget);
+    if (!check.ok) {
+      setFields(check.fields);
+      focusField(e.currentTarget, check.problems[0].name);
+      return;
+    }
+
     setBusy(true);
     setError(null);
     setFields({});
@@ -127,7 +138,7 @@ export default function RegisterForm({ googleEnabled = false }: { googleEnabled?
           finds out at /doctor/join. */}
       <AudienceToggle value={isDoctor ? "doctor" : "client"} paramKey="as" />
 
-      <form onSubmit={onSubmit} className="mt-8 space-y-4">
+      <form noValidate onSubmit={onSubmit} className="mt-8 space-y-4">
         {error && <FormAlert>{error}</FormAlert>}
 
         <Field

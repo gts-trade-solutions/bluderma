@@ -5,6 +5,7 @@ import { OfferStatus } from "@prisma/client";
 import { LoaderCircle, Send } from "lucide-react";
 
 import { saveOffer, submitOffer, withdrawOffer } from "@/lib/actions/giftCards";
+import { useFormValidation } from "@/hooks/useFormValidation";
 
 const field =
   "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none";
@@ -20,15 +21,15 @@ export default function OfferForm({
 }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const v = useFormValidation();
 
   return (
     <form
+      ref={v.formRef}
+      noValidate
       className="space-y-3"
-      onSubmit={(e) => {
-        e.preventDefault();
+      onSubmit={v.guard((fd, form) => {
         setError(null);
-        const form = e.currentTarget;
-        const fd = new FormData(form);
         start(async () => {
           const res = await saveOffer({
             title: String(fd.get("title") ?? ""),
@@ -42,8 +43,9 @@ export default function OfferForm({
           if (!res.ok) setError(res.error ?? "Could not save that.");
           else form.reset();
         });
-      }}
+      })}
     >
+      {v.summary}
       <label className="block">
         <span className={labelClass}>What the card is called</span>
         <input name="title" required placeholder="₹5,000 treatment credit" className={field} />

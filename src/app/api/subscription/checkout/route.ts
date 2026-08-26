@@ -19,7 +19,7 @@ import {
 import { periodEndFrom, renewalStartFrom } from "@/lib/subscription/plan";
 
 /**
- * Starts a White Collar term.
+ * Starts a Gold Collar term.
  *
  * Mirrors /api/razorpay/create exactly, including the two rules that matter:
  * the amount comes from the PLAN row and never from the request body, and the

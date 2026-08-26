@@ -147,7 +147,7 @@ export default function MembershipPlans({
               {!signedIn ? (
                 <Link
                   href={`/login?callbackUrl=/patient/membership`}
-                  className="mt-7 inline-flex justify-center rounded-full bg-brand-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-brand-700"
+                  className="mt-7 inline-flex justify-center rounded-full bg-brand-600 px-6 py-3 text-sm font-bold text-white transition hover:on-dark bg-brand-700"
                 >
                   Sign in to join
                 </Link>
@@ -160,7 +160,7 @@ export default function MembershipPlans({
                 <button
                   disabled={busy !== null}
                   onClick={() => buy(p)}
-                  className="mt-7 rounded-full bg-brand-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-brand-700 disabled:opacity-50"
+                  className="mt-7 rounded-full bg-brand-600 px-6 py-3 text-sm font-bold text-white transition hover:on-dark bg-brand-700 disabled:opacity-50"
                 >
                   {busy === p.slug
                     ? "Opening payment…"

@@ -2,15 +2,20 @@
 
 import { useId, useRef, useState } from "react";
 
+import { displayUrl, uploadFile } from "@/lib/uploadClient";
 import { useFieldError } from "./formContext";
 
 /**
- * URL input with an optional direct-to-S3 upload.
+ * URL input with an optional upload.
  *
  * The URL is the source of truth: all seeded content points at remote CDN
  * images, and uploads are additive. If S3 isn't configured the upload button
  * explains why and the field still works by pasting a URL — so the admin is
  * fully usable before any AWS setup.
+ *
+ * The upload itself is lib/uploadClient.ts, shared with every other place in
+ * the app that takes a file. It tries the browser-to-S3 path and falls back
+ * through our own server when the bucket will not talk to this origin.
  */
 export default function ImageField({
   label,
@@ -38,12 +43,11 @@ export default function ImageField({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [broken, setBroken] = useState(false);
 
-  // Certificates and prescriptions live in bucket prefixes that are not
-  // publicly readable, so the stored URL 403s in an <img>. The signed-view
-  // route is the only way to show the doctor the file they just uploaded.
-  const previewSrc = isPrivateUrl(url)
-    ? `/api/uploads/view?url=${encodeURIComponent(url)}`
-    : url;
+  // Certificates, prescriptions and patient photographs live in bucket
+  // prefixes that are not publicly readable, so the stored URL 403s in an
+  // <img>. The signed-view route is the only way to show the doctor the file
+  // they just uploaded.
+  const previewSrc = displayUrl(url);
 
   async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -53,71 +57,15 @@ export default function ImageField({
     setBusy(true);
     setUploadError(null);
 
-    try {
-      const presignRes = await fetch("/api/uploads/presign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type,
-          size: file.size,
-          folder,
-        }),
-      });
+    const res = await uploadFile(file, folder);
+    setBusy(false);
 
-      const presign = await presignRes.json().catch(() => ({}));
-      if (!presignRes.ok) {
-        setUploadError(presign.error ?? "Upload failed.");
-        return;
-      }
-
-      // A CORS preflight refusal makes this THROW rather than return a
-      // response, so it has to be caught here to be told apart from a genuine
-      // network drop — otherwise both surface as "upload failed" and the
-      // bucket configuration never gets suspected.
-      let put: Response;
-      try {
-        put = await fetch(presign.uploadUrl, {
-          method: "PUT",
-          headers: { "Content-Type": file.type },
-          body: file,
-        });
-      } catch {
-        setUploadError(
-          "Storage refused the upload from this site. The bucket needs a CORS rule for this domain — run: npx tsx prisma/setup-s3.ts"
-        );
-        return;
-      }
-      if (!put.ok) {
-        setUploadError(
-          put.status === 403
-            ? "Storage rejected the upload (403). The signed link may have expired — try again."
-            : `Storage rejected the upload (${put.status}).`
-        );
-        return;
-      }
-
-      // Register the object so it shows up in media_assets.
-      await fetch("/api/uploads/presign", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: presign.key,
-          url: presign.publicUrl,
-          mimeType: file.type,
-          sizeBytes: file.size,
-        }),
-      }).catch(() => undefined);
-
-      setUrl(presign.publicUrl);
-      setBroken(false);
-    } catch {
-      // Everything S3-side is handled above, so reaching here means our own
-      // API was unreachable.
-      setUploadError("Couldn't reach the server. Check your connection and try again.");
-    } finally {
-      setBusy(false);
+    if (!res.ok) {
+      setUploadError(res.error);
+      return;
     }
+    setUrl(res.file.url);
+    setBroken(false);
   }
 
   return (
@@ -203,22 +151,4 @@ export default function ImageField({
       />
     </div>
   );
-}
-
-/**
- * Is this one of ours, in a prefix the bucket keeps private?
- *
- * Matched on the path rather than the host so it holds for both the S3
- * endpoint and a CDN domain. The server re-derives this properly in
- * lib/storage.ts — getting it wrong here only costs a broken preview, never
- * access, since the route authorises independently.
- */
-function isPrivateUrl(url: string): boolean {
-  if (!url) return false;
-  try {
-    const p = new URL(url, "http://local").pathname.replace(/^\//, "");
-    return ["credentials/", "prescriptions/"].some((x) => p.startsWith(x));
-  } catch {
-    return false;
-  }
 }

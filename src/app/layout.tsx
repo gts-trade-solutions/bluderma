@@ -4,6 +4,9 @@ import Assistant from "@/components/assistant/Assistant";
 import Toast from "@/components/Toast";
 import type { Metadata } from "next";
 import Script from "next/script";
+import { THEME_BOOTSTRAP } from "@/lib/theme";
+import PayLaterOffer from "@/components/PayLaterOffer";
+import ThemeFab from "@/components/ThemeFab";
 import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
 import AuthProvider from "@/components/AuthProvider";
 import { baseOpenGraph, siteUrl } from "@/lib/seo";
@@ -116,6 +119,24 @@ export default function RootLayout({
       // this one element, which is the only place anything does that.
       suppressHydrationWarning
     >
+      <head>
+        {/*
+          The theme, before anything paints.
+
+          It has to be inline, blocking, and in <head>: reading the preference
+          from an effect is one frame too late, and a light-theme reader would
+          get a full-screen flash of navy on every single navigation. Same
+          reasoning as the portal rail's collapsed state, one element up.
+
+          It writes both `data-theme` and, for light, the `theme-light` class —
+          which is what makes the ~60 existing light-scope rules apply globally
+          without one of them being duplicated. See src/lib/theme.ts.
+        */}
+        <script
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }}
+        />
+      </head>
       <body>
         <AuthProvider>
           {children}
@@ -129,7 +150,15 @@ export default function RootLayout({
               is signed in, so a doctor gets practice answers and a client
               gets their own bookings without this layout knowing which. It
               hides itself on admin and auth routes. */}
+          <ThemeFab />
           <Assistant />
+          {/*
+            The pay-later offer. Mounted once, but it shows itself only on the
+            pages that arm it and only after somebody has read most of one —
+            see PayLaterOffer. A modal over a page nobody has read yet is an
+            advert; this waits for a signal that a cost is being weighed.
+          */}
+          <PayLaterOffer />
         </AuthProvider>
         {/* Razorpay checkout. lazyOnload keeps it off the critical path —
             it is only needed once someone reaches the payment step. */}

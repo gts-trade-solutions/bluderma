@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { NO_BENEFITS, type MembershipBenefits } from "./plan";
 
 /**
- * White Collar — the data half.
+ * Gold Collar — the data half.
  *
  * A membership is "active" when its status says so AND its paid term has not
  * run out. Both conditions are checked on read rather than relying on a job to

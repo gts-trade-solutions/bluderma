@@ -70,7 +70,7 @@ export default function WhyList() {
 
         <div className="mt-12 grid gap-4 lg:grid-cols-12">
           {/* ── The one worth showing ──────────────────────────────── */}
-          <article className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-800 via-brand-900 to-teal-800 p-6 ring-1 ring-inset ring-white/15 sm:p-8 lg:col-span-7 lg:row-span-2">
+          <article className="relative overflow-hidden rounded-3xl bg-gradient-to-br on-dark from-brand-800 via-brand-900 to-teal-800 p-6 ring-1 ring-inset ring-white/15 sm:p-8 lg:col-span-7 lg:row-span-2">
             <div
               aria-hidden
               className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-teal-400/20 blur-3xl"
@@ -153,7 +153,7 @@ export default function WhyList() {
               />
               <div
                 aria-hidden
-                className="absolute inset-0 bg-gradient-to-t from-[#04101f] via-[#04101f]/40 to-transparent"
+                className="absolute inset-0 bg-gradient-to-t from-[var(--panel)] via-[#04101f]/40 to-transparent"
               />
               <div className="absolute inset-x-0 bottom-0 p-5">
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-teal-300">
@@ -200,7 +200,7 @@ export default function WhyList() {
  */
 function ExampleBrief() {
   return (
-    <figure className="mt-6 rounded-2xl bg-[#04101f]/55 p-4 ring-1 ring-inset ring-white/10">
+    <figure className="mt-6 rounded-2xl bg-[var(--scrim)] p-4 ring-1 ring-inset ring-white/10">
       <div className="flex items-start gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/10 text-sm font-bold text-teal-200 ring-1 ring-inset ring-white/15">
           MP
@@ -209,7 +209,7 @@ function ExampleBrief() {
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <p className="text-sm font-bold text-white">Meghna P.</p>
             <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-200">
-              White Collar
+              Gold Collar
             </span>
           </div>
           <p className="mt-0.5 text-[11px] text-white/50">

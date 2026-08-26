@@ -63,7 +63,12 @@ async function main() {
   const chart = codeOnly("src/components/doctor/PatientChart.tsx");
   const mine = codeOnly("src/components/patient/MyPhotos.tsx");
   for (const [name, src] of [["the chart", chart], ["the patient's own page", mine]] as const) {
-    check(`${name} uploads to the private prefix`, /folder: "patients"/.test(src));
+    // Every upload in the app now goes through lib/uploadClient.ts, so the
+    // folder is an argument rather than a property of an inline presign call.
+    check(
+      `${name} uploads to the private prefix`,
+      /uploadFile\((?:file|\w+), "patients"\)/.test(src)
+    );
     check(`${name} serves through the signing route`, /api\/patient-photos\//.test(src));
   }
 

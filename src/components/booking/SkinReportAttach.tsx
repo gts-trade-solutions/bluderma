@@ -112,7 +112,7 @@ export default function SkinReportAttach({
           <Link
             href="/patient/skin-analyzer#start"
             target="_blank"
-            className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-700"
+            className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-4 py-2 text-sm font-bold text-white transition hover:on-dark bg-brand-700"
           >
             Run a free analysis
           </Link>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
+import { CLINIC_LIST_SELECT } from "@/lib/queries/clinicSelect";
 import { JOIN_STEPS } from "@/data/doctorJoin";
 import {
   blockingGaps,
@@ -66,30 +67,10 @@ export default async function OnboardingHome({
       modes: { select: { mode: true } },
       languages: { orderBy: { sortOrder: "asc" }, select: { name: true } },
       services: { orderBy: { sortOrder: "asc" }, select: { name: true } },
+      specialtyAreas: { orderBy: { sortOrder: "asc" }, select: { name: true } },
       focus: { select: { concern: { select: { key: true } } } },
-      clinics: {
-        orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }],
-        select: {
-          feeInr: true,
-          isPrimary: true,
-          clinic: {
-            select: {
-              id: true,
-              name: true,
-              addressLine1: true,
-              addressLine2: true,
-              area: true,
-              city: true,
-              state: true,
-              pincode: true,
-              phone: true,
-              colorKey: true,
-              photos: { select: { kind: true, url: true } },
-              facilities: { orderBy: { sortOrder: "asc" }, select: { name: true } },
-            },
-          },
-        },
-      },
+      otherFocus: { orderBy: { sortOrder: "asc" }, select: { name: true } },
+      clinics: CLINIC_LIST_SELECT,
       availability: {
         orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
         select: {

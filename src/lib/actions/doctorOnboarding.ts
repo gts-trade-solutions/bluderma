@@ -14,11 +14,12 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { audit } from "@/lib/admin/audit";
-import { type AdminResult, parseForm, runAction } from "@/lib/admin/form";
+import { asArray, type AdminResult, parseForm, runAction } from "@/lib/admin/form";
 import { getCurrentUser } from "@/lib/session";
 import { getOwnDoctor } from "@/lib/doctor/guard";
 import { blockingGaps, getApplicationGaps } from "@/lib/doctor/gaps";
 import { rateLimit } from "@/lib/rateLimit";
+import { categoryOf } from "@/data/facilities";
 import { headers } from "next/headers";
 import { sendEmail, enquiryNotifyAddress } from "@/lib/email";
 
@@ -258,32 +259,84 @@ export async function saveCredentialsStep(
 
 /* --------------------------- Step 3: clinics ---------------------------- */
 
+/**
+ * A coordinate that may legitimately be absent.
+ *
+ * NOT `z.coerce.number().optional().or(z.literal(""))`: coercion turns "" into
+ * 0 before the union is ever consulted, so an empty field would silently
+ * become latitude 0, longitude 0 — a point in the Gulf of Guinea, and a clinic
+ * that would then appear at the top of every "nearest to me" list computed
+ * from a distance to it.
+ */
+const optionalCoord = (min: number, max: number) =>
+  z.preprocess(
+    (v) => (v === "" || v === undefined || v === null ? undefined : Number(v)),
+    z.number().min(min).max(max).optional()
+  );
+
 const clinicSchema = z.object({
   clinicId: z.string().trim().max(40).optional().or(z.literal("")),
+  /**
+   * Set when the practitioner picked an existing clinic out of the "already
+   * on BluDerma" suggestions instead of describing a new one. Everything
+   * below except feeInr and isPrimary is then ignored: they are joining
+   * somebody else's premises, not redescribing them.
+   */
+  joinClinicId: z.string().trim().max(40).optional().or(z.literal("")),
   name: z.string().trim().min(2, "What is the clinic called?").max(160),
   addressLine1: z.string().trim().min(4, "Street address.").max(200),
   addressLine2: z.string().trim().max(200).optional().or(z.literal("")),
   area: z.string().trim().min(2, "Which neighbourhood?").max(120),
+  landmark: z.string().trim().max(160).optional().or(z.literal("")),
   city: z.string().trim().min(2, "Which city?").max(120),
   state: z.string().trim().min(2).max(120),
   pincode: z.string().trim().regex(/^\d{6}$/, "Six digits."),
+  /**
+   * Coordinates from the map picker. Blank is the norm and always allowed —
+   * the pin is optional, and a clinic that never drops one must still be able
+   * to finish onboarding.
+   */
+  lat: optionalCoord(-90, 90),
+  lng: optionalCoord(-180, 180),
   phone: z.string().trim().max(20).optional().or(z.literal("")),
   feeInr: z.coerce.number().int().min(0, "Zero means enquiry-only.").max(200000),
   exteriorImage: z.string().trim().max(2000).optional().or(z.literal("")),
   interiorImage: z.string().trim().max(2000).optional().or(z.literal("")),
-  facilities: z.string().trim().max(600).optional().or(z.literal("")),
+  /**
+   * Repeated inputs from the facilities picker, which formToObject collapses
+   * into an array. The old comma-separated string is still accepted so the
+   * admin screens that post one keep working.
+   */
+  facilities: z.union([z.string(), z.array(z.string())]).optional(),
   isPrimary: z
     .union([z.literal("on"), z.literal("true"), z.literal(""), z.undefined()])
     .transform((v) => v === "on" || v === "true"),
 });
 
 /**
- * Adds or edits one location.
+ * Adds one location, joins an existing one, or edits one.
  *
- * A clinic is created fresh per doctor rather than matched by name to an
- * existing one. Fuzzy-matching "Skin Clinic, Anna Nagar" onto somebody else's
- * record would silently attach a stranger's practice to their listing, which
- * is a much worse failure than two similar rows an admin can merge later.
+ * -- Clinics are shared, and now the form knows it ------------------------
+ * This used to create a brand-new Clinic row every time, with a note
+ * explaining that fuzzy-matching a stranger's practice onto somebody's
+ * listing was worse than duplicate rows an admin could merge. That reasoning
+ * still holds for AUTOMATIC matching and is why none happens. What changed is
+ * that the practitioner is now shown the candidates and presses the button
+ * themselves - see /api/clinics/match. Three dermatologists at one Anna Nagar
+ * address stop producing three clinics, three addresses and three map pins.
+ *
+ * -- Who may edit a shared clinic -----------------------------------------
+ * Only the practitioner who is its sole occupant. The moment a second doctor
+ * holds hours there, the shared fields - name, address, landmark, pin,
+ * photographs, facilities - become read-only to everyone, and only the
+ * doctor-specific fee and primary flag stay writable.
+ *
+ * The alternative was letting any linked doctor edit them, and that is a
+ * stranger being able to rename your clinic, move its pin and replace its
+ * photographs from inside their own onboarding form, with no notification and
+ * no audit trail. A correction to a shared clinic goes through an admin,
+ * which is slower and is the right trade for premises several practices
+ * depend on.
  */
 export async function saveClinicStep(formData: FormData): Promise<AdminResult> {
   return runAction("saveClinicStep", async () => {
@@ -298,11 +351,70 @@ export async function saveClinicStep(formData: FormData): Promise<AdminResult> {
       where: { doctorId: owner.doctorId },
     });
     // The first location a doctor adds is their primary whether they ticked
-    // the box or not — a practice with no primary has nothing to show on a card.
+    // the box or not - a practice with no primary has nothing to show on a card.
     const makePrimary = d.isPrimary || existingCount === 0;
 
+    // -- Joining somebody else's clinic ---------------------------------
+    // A separate branch rather than a flag inside the one below, because
+    // almost nothing about it is the same: no clinic row is written, no
+    // photograph is replaced, no facility is touched. Only the join.
+    if (d.joinClinicId) {
+      const target = await prisma.clinic.findUnique({
+        where: { id: d.joinClinicId },
+        select: { id: true, name: true, city: true },
+      });
+      if (!target) {
+        return {
+          ok: false,
+          error: "That clinic no longer exists. Add it as a new location instead.",
+        };
+      }
+
+      const already = await prisma.doctorClinic.findUnique({
+        where: {
+          doctorId_clinicId: { doctorId: owner.doctorId, clinicId: target.id },
+        },
+        select: { clinicId: true },
+      });
+      if (already) {
+        return { ok: false, error: "You already practise at that location." };
+      }
+
+      await prisma.$transaction(async (tx) => {
+        if (makePrimary) {
+          await tx.doctorClinic.updateMany({
+            where: { doctorId: owner.doctorId },
+            data: { isPrimary: false },
+          });
+        }
+        await tx.doctorClinic.create({
+          data: {
+            doctorId: owner.doctorId,
+            clinicId: target.id,
+            feeInr: d.feeInr,
+            isPrimary: makePrimary,
+            sortOrder: existingCount,
+          },
+        });
+        if (makePrimary) {
+          await tx.doctor.update({
+            where: { id: owner.doctorId },
+            data: { clinic: target.name, location: target.city, fee: d.feeInr },
+          });
+        }
+      });
+
+      revalidatePath("/doctor/portal");
+      revalidatePath("/doctor/portal/practice");
+      return { ok: true, id: target.id };
+    }
+
+    // -- Creating or editing a location of their own --------------------
     const clinicId = await prisma.$transaction(async (tx) => {
       let id = d.clinicId || null;
+      // Whether the shared fields may be written. True for a brand-new
+      // clinic; for an existing one, only while nobody else works there.
+      let mayEditShared = true;
 
       if (id) {
         // Only a location this doctor actually practises at.
@@ -312,19 +424,28 @@ export async function saveClinicStep(formData: FormData): Promise<AdminResult> {
         });
         if (!link) throw new Error("not_your_clinic");
 
-        await tx.clinic.update({
-          where: { id },
-          data: {
-            name: d.name,
-            addressLine1: d.addressLine1,
-            addressLine2: d.addressLine2 || null,
-            area: d.area,
-            city: d.city,
-            state: d.state,
-            pincode: d.pincode,
-            phone: d.phone || null,
-          },
-        });
+        const occupants = await tx.doctorClinic.count({ where: { clinicId: id } });
+        mayEditShared = occupants <= 1;
+
+        if (mayEditShared) {
+          await tx.clinic.update({
+            where: { id },
+            data: {
+              name: d.name,
+              addressLine1: d.addressLine1,
+              addressLine2: d.addressLine2 || null,
+              area: d.area,
+              landmark: d.landmark || null,
+              city: d.city,
+              state: d.state,
+              pincode: d.pincode,
+              phone: d.phone || null,
+              // Both or neither: half a coordinate pair is not a location.
+              lat: d.lat ?? null,
+              lng: d.lng ?? null,
+            },
+          });
+        }
       } else {
         const created = await tx.clinic.create({
           data: {
@@ -333,9 +454,12 @@ export async function saveClinicStep(formData: FormData): Promise<AdminResult> {
             addressLine1: d.addressLine1,
             addressLine2: d.addressLine2 || null,
             area: d.area,
+            landmark: d.landmark || null,
             city: d.city,
             state: d.state,
             pincode: d.pincode,
+            lat: d.lat ?? null,
+            lng: d.lng ?? null,
             phone: d.phone || null,
             // Cycles through the calendar palette so a doctor's locations are
             // distinguishable from the moment they are added.
@@ -367,31 +491,43 @@ export async function saveClinicStep(formData: FormData): Promise<AdminResult> {
         },
       });
 
-      // Photographs. Replaced rather than appended, because these two slots are
-      // "the outside" and "the inside" — there is only one of each.
-      for (const [kind, url] of [
-        [ClinicPhotoKind.EXTERIOR, d.exteriorImage],
-        [ClinicPhotoKind.INTERIOR, d.interiorImage],
-      ] as const) {
-        await tx.clinicPhoto.deleteMany({ where: { clinicId: id!, kind } });
-        if (url) {
-          await tx.clinicPhoto.create({
-            data: { clinicId: id!, kind, url, alt: `${d.name} ${kind.toLowerCase()}` },
+      if (mayEditShared) {
+        // Photographs. Replaced rather than appended, because these two slots
+        // are "the outside" and "the inside" - there is only one of each.
+        for (const [kind, url] of [
+          [ClinicPhotoKind.EXTERIOR, d.exteriorImage],
+          [ClinicPhotoKind.INTERIOR, d.interiorImage],
+        ] as const) {
+          await tx.clinicPhoto.deleteMany({ where: { clinicId: id!, kind } });
+          if (url) {
+            await tx.clinicPhoto.create({
+              data: { clinicId: id!, kind, url, alt: `${d.name} ${kind.toLowerCase()}` },
+            });
+          }
+        }
+
+        // The picker posts one input per facility; the older admin forms post
+        // one comma-separated string. Both land here.
+        const facilities = asArray(d.facilities)
+          .flatMap((f) => (f.includes(",") ? f.split(",") : [f]))
+          .map((f) => f.trim())
+          .filter(Boolean)
+          .slice(0, 40);
+
+        await tx.clinicFacility.deleteMany({ where: { clinicId: id! } });
+        if (facilities.length) {
+          await tx.clinicFacility.createMany({
+            data: facilities.map((name, i) => ({
+              clinicId: id!,
+              name,
+              // Null for anything the practitioner typed themselves, which is
+              // how the clinic page tells curated from custom.
+              category: categoryOf(name),
+              sortOrder: i,
+            })),
+            skipDuplicates: true,
           });
         }
-      }
-
-      const facilities = (d.facilities || "")
-        .split(/[\n,]/)
-        .map((f) => f.trim())
-        .filter(Boolean)
-        .slice(0, 20);
-      await tx.clinicFacility.deleteMany({ where: { clinicId: id! } });
-      if (facilities.length) {
-        await tx.clinicFacility.createMany({
-          data: facilities.map((name, i) => ({ clinicId: id!, name, sortOrder: i })),
-          skipDuplicates: true,
-        });
       }
 
       if (makePrimary) {
@@ -549,10 +685,26 @@ const consultSchema = z.object({
   offersClinic: z.string().optional(),
   offersVideo: z.string().optional(),
   offersHome: z.string().optional(),
-  languages: z.string().trim().max(400).optional().or(z.literal("")),
+  // All four accept either shape: the pickers submit repeated inputs, which
+  // formToObject collapses into an array, while /doctor/portal/practice and
+  // the admin screens still post one comma-separated string.
+  languages: z.union([z.string(), z.array(z.string())]).optional(),
   services: z.union([z.string(), z.array(z.string())]).optional(),
+  specialtyAreas: z.union([z.string(), z.array(z.string())]).optional(),
   concerns: z.union([z.string(), z.array(z.string())]).optional(),
-  travelBufferMin: z.coerce.number().int().min(0).max(240).default(0),
+  otherConcerns: z.union([z.string(), z.array(z.string())]).optional(),
+  // The diary levers are no longer asked for during onboarding — they live in
+  // My practice (savePracticeSettings), where a doctor changes them once they
+  // have a diary to have an opinion about.
+  //
+  // They stay in this schema behind a marker rather than being deleted from
+  // it, because an unticked checkbox and an absent field are indistinguishable
+  // in a FormData: without an explicit "this submission carries them" flag,
+  // every save of a doctor's languages would silently reset requiresApproval
+  // to false. No form sets the marker today, which is the intended state —
+  // this step no longer owns those two columns.
+  diarySettings: z.string().optional(),
+  travelBufferMin: z.coerce.number().int().min(0).max(240).optional(),
   requiresApproval: z.string().optional(),
 });
 
@@ -628,6 +780,32 @@ export async function saveConsultStep(formData: FormData): Promise<AdminResult> 
         });
       }
 
+      // Areas of speciality: what the practitioner is known FOR, which is
+      // neither their qualification line nor their procedure list.
+      await tx.doctorSpecialtyArea.deleteMany({
+        where: { doctorId: owner.doctorId },
+      });
+      const areas = lines(d.specialtyAreas, 8);
+      if (areas.length) {
+        await tx.doctorSpecialtyArea.createMany({
+          data: areas.map((name, i) => ({ doctorId: owner.doctorId, name, sortOrder: i })),
+          skipDuplicates: true,
+        });
+      }
+
+      // Concerns the catalogue has no row for. Stored, shown, and pointedly
+      // NOT joined to the analyzer's matching index — see DoctorConcernOther.
+      await tx.doctorConcernOther.deleteMany({
+        where: { doctorId: owner.doctorId },
+      });
+      const extra = lines(d.otherConcerns, 12);
+      if (extra.length) {
+        await tx.doctorConcernOther.createMany({
+          data: extra.map((name, i) => ({ doctorId: owner.doctorId, name, sortOrder: i })),
+          skipDuplicates: true,
+        });
+      }
+
       if (concernKeys.length) {
         const concerns = await tx.skinConcern.findMany({
           where: { key: { in: concernKeys } },
@@ -642,16 +820,66 @@ export async function saveConsultStep(formData: FormData): Promise<AdminResult> 
         }
       }
 
-      await tx.doctor.update({
-        where: { id: owner.doctorId },
-        data: {
-          travelBufferMin: d.travelBufferMin,
-          requiresApproval: Boolean(d.requiresApproval),
-        },
-      });
+      if (d.diarySettings) {
+        await tx.doctor.update({
+          where: { id: owner.doctorId },
+          data: {
+            travelBufferMin: d.travelBufferMin ?? 0,
+            requiresApproval: Boolean(d.requiresApproval),
+          },
+        });
+      }
     });
 
     revalidatePath("/doctor/join");
+    revalidatePath("/doctor/portal");
+    return { ok: true };
+  });
+}
+
+/* ------------------------ The last question, on review ------------------ */
+
+/**
+ * "Are you listed on any other consultation platform?"
+ *
+ * Takes an object rather than FormData because it saves as the practitioner
+ * answers rather than on a submit — see the note in ListedElsewhere.tsx for
+ * why it is not a second button next to the real one.
+ *
+ * `null` is a real, storable answer and means "not said". Nothing infers
+ * "no" from silence: the admin reviewing an application can tell a
+ * practitioner who answered no from one who skipped it, and those are
+ * different facts.
+ */
+export async function saveListedElsewhere(input: {
+  listedElsewhere: boolean | null;
+  names: string;
+}): Promise<AdminResult> {
+  return runAction("saveListedElsewhere", async () => {
+    const owner = await getOwnDoctor();
+    if (!owner) return { ok: false, error: "Start your application first." };
+
+    const parsed = z
+      .object({
+        listedElsewhere: z.boolean().nullable(),
+        names: z.string().trim().max(300),
+      })
+      .safeParse(input);
+    if (!parsed.success) return { ok: false, error: "Could not save that." };
+
+    await prisma.doctor.update({
+      where: { id: owner.doctorId },
+      data: {
+        listedElsewhere: parsed.data.listedElsewhere,
+        // Only meaningful alongside a yes. Clearing it when the answer is no
+        // or unset stops a stale list of platforms outliving the claim.
+        listedElsewhereNames:
+          parsed.data.listedElsewhere === true
+            ? parsed.data.names || null
+            : null,
+      },
+    });
+
     revalidatePath("/doctor/portal");
     return { ok: true };
   });

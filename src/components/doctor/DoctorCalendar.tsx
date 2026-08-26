@@ -15,6 +15,7 @@ import {
   stateOf,
 } from "./visitStatus";
 import AppointmentDrawer from "./AppointmentDrawer";
+import GoldCollarBadge from "@/components/GoldCollarBadge";
 
 /**
  * The doctor's calendar.
@@ -633,7 +634,7 @@ function TimeBlock({
           </span>
         )}
         <span className="tabular-nums">{a.time}</span>
-        {a.isMember && <span className="text-[9px] font-black tracking-wider">WC</span>}
+        {a.isMember && <GoldCollarBadge size="short" />}
         <span className="sr-only">{st.label}</span>
       </div>
       <div className="truncate text-[11px] leading-tight">{a.patientName}</div>

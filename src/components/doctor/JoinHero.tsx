@@ -81,7 +81,7 @@ export default function JoinHero({
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Link
                 href={cta.href}
-                className="group inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-600 to-teal-600 px-7 py-3.5 text-sm font-extrabold text-white shadow-[0_14px_34px_-10px_rgba(31,111,214,0.85)] transition hover:from-brand-700 hover:to-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 sm:w-auto"
+                className="group inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-600 to-teal-600 px-7 py-3.5 text-sm font-extrabold text-white shadow-[0_14px_34px_-10px_rgba(31,111,214,0.85)] transition hover:on-dark from-brand-700 hover:to-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 sm:w-auto"
               >
                 {cta.label}
                 <ArrowRight

@@ -85,7 +85,7 @@ export default function SkinAnalyzerLanding() {
           the same thing twice and put three calls to action above the fold;
           the offer now sits inside the hero as the lit teal accent, and there is
           exactly one button. */}
-      <section className="relative isolate overflow-hidden bg-[#0b1020]">
+      <section className="relative isolate overflow-hidden bg-[var(--panel)]">
         <div className="pointer-events-none absolute -left-32 top-0 h-96 w-96 rounded-full bg-brand-600/25 blur-[120px]" />
         <div className="pointer-events-none absolute -right-24 bottom-0 h-[26rem] w-[26rem] rounded-full bg-teal-500/20 blur-[120px]" />
         {/* Extra spill under the offer, so the teal reads as lit rather than
@@ -200,7 +200,7 @@ export default function SkinAnalyzerLanding() {
           acts on is a nice number and nothing else. */}
       <section
         id="consult"
-        className="scroll-mt-24 bg-[var(--surface)] py-16 sm:py-20"
+        className="scroll-mt-24 bg-surface py-16 sm:py-20"
       >
         <div className="container-page">
           <div className="mb-7">
@@ -257,7 +257,7 @@ export default function SkinAnalyzerLanding() {
       />
 
       {/* ── FAQ ───────────────────────────────────────────────────────── */}
-      <section className="bg-[var(--surface)] py-16 sm:py-20">
+      <section className="bg-surface py-16 sm:py-20">
         <div className="container-page">
           <p className="section-eyebrow">Questions</p>
           <h2 className="display mt-2 text-3xl text-ink sm:text-4xl">
@@ -308,7 +308,7 @@ export default function SkinAnalyzerLanding() {
       {/* ── Closing ───────────────────────────────────────────────────── */}
       <section className="bg-white/[0.04] pb-20">
         <div className="container-page">
-          <div className="flex flex-col items-start justify-between gap-5 rounded-[2rem] bg-gradient-to-r from-brand-700 to-teal-600 p-8 text-white sm:flex-row sm:items-center sm:p-11">
+          <div className="flex flex-col items-start justify-between gap-5 rounded-[2rem] bg-gradient-to-r on-dark from-brand-700 to-teal-600 p-8 text-white sm:flex-row sm:items-center sm:p-11">
             <div>
               <h2 className="display-sm text-2xl sm:text-3xl">
                 Everything else lives on the hub
@@ -495,7 +495,7 @@ function FaceAnalysisCard() {
         <ScanDot top="33%" left="65%" delay="0.9s" />
         <ScanDot top="58%" left="50%" delay="1.8s" />
 
-        <div className="absolute left-3 top-3 rounded-2xl bg-[#070d1c]/85 px-3 py-2 shadow-lg ring-1 ring-white/15 backdrop-blur">
+        <div className="absolute left-3 top-3 rounded-2xl bg-surface-85 px-3 py-2 shadow-lg ring-1 ring-white/15 backdrop-blur">
           <div className="text-[9px] uppercase tracking-wide text-ink-muted">
             Overall
           </div>

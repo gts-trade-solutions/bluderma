@@ -85,7 +85,12 @@ const PUBLIC_PREFIXES = [
  * default and the behaviour we want. Staff access to these goes through a
  * presigned GET instead — see /api/uploads/view.
  */
-const PRIVATE_PREFIXES = ["credentials", "prescriptions", "patients"];
+const PRIVATE_PREFIXES = [
+  "credentials",
+  "prescriptions",
+  "patients",
+  "vendor-licences",
+];
 
 function originsToAllow(): string[] {
   const out = new Set<string>();
@@ -104,12 +109,15 @@ function originsToAllow(): string[] {
     }
   }
 
-  // Dev servers move ports constantly; covering the usual few avoids a
-  // baffling "works on 3000, fails on 3001".
-  for (const port of [3000, 3001, 3002]) {
-    out.add(`http://localhost:${port}`);
-    out.add(`http://127.0.0.1:${port}`);
-  }
+  // Dev servers move ports constantly, and `next dev` silently walks up when
+  // 3000 is taken — which is how uploads start failing with no code change.
+  // S3 allows exactly one `*` per origin, so a port wildcard covers every
+  // port at once and this stops being something to remember.
+  out.add("http://localhost:*");
+  out.add("http://127.0.0.1:*");
+  // Testing on a phone means the LAN address, which no fixed list ever has.
+  out.add("http://192.168.*");
+  out.add("http://10.*");
 
   return [...out];
 }

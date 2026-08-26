@@ -26,7 +26,7 @@ export const metadata: Metadata = {
  */
 export default function KnowYouPage() {
   return (
-    <div className="min-h-screen bg-[#0d1526]">
+    <div className="min-h-screen bg-[var(--sheet)]">
       <header className="border-b border-white/10">
         <div className="mx-auto flex h-16 max-w-3xl items-center justify-between gap-4 px-5 sm:px-8">
           {/* tone="light" — the header sits on #0d1526, and the dark logotype

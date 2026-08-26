@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Check, MapPin, Pencil, Plus, Trash2, X } from "lucide-react";
+import { useFormValidation } from "@/hooks/useFormValidation";
 
 import {
   deleteAddress,
@@ -191,12 +192,13 @@ function AddressForm({
   onCancel: () => void;
   onSubmit: (data: Record<string, unknown>) => void;
 }) {
+  const formCheck = useFormValidation();
   return (
     <form
+      ref={formCheck.formRef}
+      noValidate
       className="card-soft mb-3 p-5"
-      onSubmit={(e) => {
-        e.preventDefault();
-        const fd = new FormData(e.currentTarget);
+      onSubmit={formCheck.guard((fd, form) => {
         onSubmit({
           label: String(fd.get("label") ?? ""),
           line1: String(fd.get("line1") ?? ""),
@@ -206,8 +208,9 @@ function AddressForm({
           phone: String(fd.get("phone") ?? ""),
           isDefault: fd.get("isDefault") === "on",
         });
-      }}
+      })}
     >
+      {formCheck.summary}
       <p className="text-sm font-bold text-ink">
         {initial ? "Edit this address" : "Add an address"}
       </p>

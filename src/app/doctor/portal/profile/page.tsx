@@ -7,6 +7,7 @@ import {
   addOwnTimeOff,
   removeOwnTimeOff,
   updateOwnAvailability,
+  updateOwnCredentials,
   updateOwnProfile,
 } from "@/lib/actions/doctor";
 import EntityForm from "@/components/admin/EntityForm";
@@ -14,6 +15,7 @@ import ImageField from "@/components/admin/ImageField";
 import { DeleteButton } from "@/components/admin/RowActions";
 import {
   Card,
+  SelectField,
   TextArea,
   TextField,
 } from "@/components/admin/ui";
@@ -26,9 +28,12 @@ import {
 } from "@/components/doctor/portalUi";
 import { SOCIALS, socialLinks } from "@/lib/social";
 import Combobox from "@/components/doctor/fields/Combobox";
+import TagPicker from "@/components/doctor/fields/TagPicker";
+import { LANGUAGES, COMMON_LANGUAGES } from "@/data/languages";
+import { MEDICAL_COUNCILS, REGISTRATION_YEARS } from "@/data/doctorJoin";
 import AssistTextArea from "@/components/doctor/fields/AssistTextArea";
 import ChipMultiSelect from "@/components/doctor/fields/ChipMultiSelect";
-import { DOCTOR_SPECIALTIES } from "@/data/specialties";
+import { DOCTOR_SPECIALTIES, SPECIALTY_AREAS } from "@/data/specialties";
 import { aiEnabled } from "@/lib/integrations/aiAssist";
 import {
   getSuggestedTreatments,
@@ -203,24 +208,58 @@ export default async function DoctorProfilePage() {
                 aiEnabled={ai}
                 draftTask="draft-about"
               />
-              <div className="grid gap-5 sm:grid-cols-2">
-                <TextArea
-                  label="Languages"
-                  name="languages"
-                  rows={4}
-                  hint="One per line."
-                  defaultValue={doctor.languages.map((l) => l.name).join("\n")}
-                />
-                <ChipMultiSelect
-                  label="Treatments you offer"
-                  name="services"
-                  hint="What clients search by."
-                  defaultSelected={doctor.services.map((s) => s.name)}
-                  suggestions={treatmentSuggestions}
-                  vocabulary={treatmentVocabulary}
-                  aiEnabled={ai}
-                />
-              </div>
+              {/*
+                The same pickers onboarding uses. This page had a plain
+                "one per line" textarea for languages, which meant a doctor
+                who chose theirs from the searchable list during onboarding
+                met a different control the first time they edited their
+                profile — and, because the schema only accepted the textarea
+                shape, could lose them.
+              */}
+              <TagPicker
+                name="languages"
+                label="Languages you consult in"
+                hint="Search in English or in the language's own script."
+                placeholder="Search any language…"
+                defaultSelected={doctor.languages.map((l) => l.name)}
+                options={LANGUAGES.map((l) => ({
+                  value: l.name,
+                  alias: l.native,
+                  note: l.native,
+                }))}
+                common={COMMON_LANGUAGES}
+                max={12}
+              />
+
+              <TagPicker
+                name="specialtyAreas"
+                label="What you are known for"
+                hint="Two or three, not fifteen. This is what a referring doctor reads first."
+                placeholder="Search — acne scarring, hair loss, melasma…"
+                defaultSelected={doctor.specialtyAreas.map((a) => a.name)}
+                options={SPECIALTY_AREAS.map((v) => ({ value: v }))}
+                max={8}
+              />
+
+              <ChipMultiSelect
+                label="Treatments you offer"
+                name="services"
+                hint="What clients search by."
+                defaultSelected={doctor.services.map((s) => s.name)}
+                suggestions={treatmentSuggestions}
+                vocabulary={treatmentVocabulary}
+                aiEnabled={ai}
+              />
+
+              <TagPicker
+                name="otherConcerns"
+                label="Something else you treat"
+                hint="Anything our list does not cover, in your own words."
+                placeholder="Type it and press Enter"
+                defaultSelected={doctor.otherFocus.map((f) => f.name)}
+                options={[]}
+                max={12}
+              />
             </div>
           </Card>
 
@@ -249,6 +288,84 @@ export default async function DoctorProfilePage() {
               real {SOCIALS.map((x) => x.label).slice(0, 2).join(" or ")} address
               is dropped rather than saved, so a mistyped link never goes live.
             </p>
+          </Card>
+        </EntityForm>
+
+        {/*
+          Registration — the part of a practitioner's record the platform makes
+          a public claim about, and until now the one part they could not
+          touch. It was captured once at onboarding and frozen, so a doctor who
+          moved council, renewed a certificate or mistyped a digit had no route
+          to fix it.
+
+          Changing the council or the number clears the verified mark and sends
+          it back for a re-check. They stay live and bookable throughout —
+          delisting somebody for correcting a typo would be absurd — and the
+          form says so before they save rather than leaving them to discover it
+          from a missing badge. See updateOwnCredentials.
+        */}
+        <EntityForm
+          action={updateOwnCredentials}
+          cancelHref="/doctor/portal"
+          submitLabel="Save registration"
+          submitHint="Correcting the council or number pauses your verified mark until we re-check it. You stay listed and bookable."
+        >
+          <Card
+            title="Your registration"
+            description="Checked against the council's own register. Never shown to clients — it is what earns the verified mark, not what is displayed."
+          >
+            {doctor.verified ? (
+              <p className="mb-4 rounded-xl bg-teal-50 px-3.5 py-2.5 text-xs leading-relaxed text-teal-900 ring-1 ring-inset ring-teal-200">
+                <strong className="font-bold">Verified.</strong> Changing the
+                council or the number below pauses this until somebody has
+                re-checked it. Replacing only the certificate does not.
+              </p>
+            ) : (
+              <p className="mb-4 rounded-xl bg-amber-50 px-3.5 py-2.5 text-xs leading-relaxed text-amber-900 ring-1 ring-inset ring-amber-200">
+                Not verified yet. Clients can still book you; the badge appears
+                once we have checked these details against the register.
+              </p>
+            )}
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Combobox
+                name="regCouncil"
+                label="Registering council"
+                required
+                defaultValue={doctor.regCouncil ?? ""}
+                options={MEDICAL_COUNCILS}
+                hint="Pick yours, or type it."
+              />
+              <TextField
+                label="Registration number"
+                name="regNumber"
+                required
+                defaultValue={doctor.regNumber ?? ""}
+              />
+              <SelectField
+                label="Year of registration"
+                name="regYear"
+                required
+                defaultValue={doctor.regYear ? String(doctor.regYear) : ""}
+                options={[
+                  { value: "", label: "Select a year" },
+                  ...REGISTRATION_YEARS.map((y) => ({
+                    value: String(y),
+                    label: String(y),
+                  })),
+                ]}
+              />
+            </div>
+
+            <div className="mt-5">
+              <ImageField
+                label="Registration certificate"
+                name="licenceDocUrl"
+                folder="credentials"
+                defaultValue={doctor.licenceDocUrl ?? ""}
+                hint="A photo or scan is fine. It goes to our review team and nowhere else. Leaving this blank keeps the one already on file."
+              />
+            </div>
           </Card>
         </EntityForm>
 

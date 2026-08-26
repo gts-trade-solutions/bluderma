@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import BrandLogo from "./BrandLogo";
-import FooterSignIn from "./FooterSignIn";
 
 const legal = [
   { label: "Privacy Policy", href: "/privacy" },
@@ -12,7 +11,7 @@ const legal = [
 
 export default function Footer() {
   return (
-    <footer id="contact" className="bg-brand-950 text-brand-100">
+    <footer id="contact" className="on-dark bg-brand-950 text-brand-100">
       <div className="container-page grid gap-10 py-14 md:grid-cols-4">
         <div className="md:col-span-2">
           <BrandLogo href="/" tone="light" size={54} />
@@ -79,10 +78,13 @@ export default function Footer() {
                 List your practice
               </Link>
             </li>
-            {/* Gated on the session — see the component. This used to offer
-                "Doctor sign in" to signed-in doctors, and to clients who were
-                then bounced when they followed it. */}
-            <FooterSignIn />
+            {/* The portal link that used to sit here is gone. A footer is
+                where somebody looks for a page they have not been to; a
+                practitioner returning to their own portal is doing the
+                opposite, and that route now lives behind the avatar with the
+                rest of their sections. What is left is the pitch, which is
+                the one thing a footer should carry for an audience that has
+                not arrived yet. */}
           </ul>
 
           <h4 className="mt-6 text-sm font-semibold text-white">Legal</h4>

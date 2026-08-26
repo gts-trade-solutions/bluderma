@@ -61,7 +61,7 @@ export default function GalleryConsent({ cases }: { cases: ConsentCase[] }) {
                 subject of a case to see it at any status. */}
             <div className="grid grid-cols-2 gap-px bg-white/10">
               {(["before", "after"] as const).map((side) => (
-                <div key={side} className="relative aspect-[4/5] bg-[#0b1220]">
+                <div key={side} className="relative aspect-[4/5] bg-[var(--panel)]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`/api/gallery/${c.id}/${side}`}

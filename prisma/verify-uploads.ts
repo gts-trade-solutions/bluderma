@@ -86,18 +86,68 @@ check(
 );
 
 // ── The client ─────────────────────────────────────────────────────────────
-const field = read("src/components/admin/ImageField.tsx");
+//
+// The presigned dance used to be written out by hand in seven components,
+// and these checks used to read the admin image field's copy of it. There is
+// one implementation now, so they read that instead.
+const client = read("src/lib/uploadClient.ts");
 check(
-  "a thrown PUT is caught separately from a network drop",
-  /try \{\s*put = await fetch/.test(field)
+  "a thrown PUT is caught rather than treated as fatal",
+  /catch \{[\s\S]{0,400}?kind: "unreachable"/.test(client)
 );
-check("the CORS case names the fix", /setup-s3\.ts/.test(field));
-check("the old catch-all message is gone", !/Upload failed\. Please try again or paste a URL/.test(field));
-check("private files preview through the signed route", /api\/uploads\/view/.test(field));
+check(
+  "a refused preflight falls back through our own server",
+  /uploadViaServer/.test(client) && /api\/uploads\/direct/.test(client)
+);
+check(
+  "a refusal we can explain is NOT retried a second way",
+  /kind === "refused"/.test(client)
+);
+check(
+  "one failure stops later files re-paying for the same preflight",
+  /s3Unreachable/.test(client)
+);
+check("private files preview through the signed route", /api\/uploads\/view/.test(client));
 
-// ── The presign endpoint's folder scoping ──────────────────────────────────
+const field = read("src/components/admin/ImageField.tsx");
+check("the image field goes through the shared uploader", /uploadFile\(/.test(field));
+check("the old catch-all message is gone", !/Upload failed\. Please try again or paste a URL/.test(field));
+check(
+  "no component still hand-rolls the presign dance",
+  ["src/components/booking/PhotoAttach.tsx",
+   "src/components/doctor/GalleryComposer.tsx",
+   "src/components/doctor/PatientChart.tsx",
+   "src/components/patient/MyPhotos.tsx",
+   "src/components/vendor/VendorForm.tsx",
+  ].every((f) => !/uploads\/presign/.test(read(f)))
+);
+
+// ── The server fallback ────────────────────────────────────────────────────
+const direct = read("src/app/api/uploads/direct/route.ts");
+check(
+  "the fallback authorises exactly as the presigned route does",
+  /authorizeUpload\(folder, req\)/.test(direct)
+);
+check("the fallback enforces the size limit", /file\.size > maxBytes/.test(direct));
+
+// ── Folder scoping, now shared by both upload routes ───────────────────────
+const auth = read("src/lib/uploadAuth.ts");
 const presign = read("src/app/api/uploads/presign/route.ts");
-check("doctors are folder-scoped", /DOCTOR_FOLDERS/.test(presign));
+check("doctors are folder-scoped", /DOCTOR_FOLDERS/.test(auth));
+check("both upload routes read the same rule", /authorizeUpload/.test(presign) && /authorizeUpload/.test(direct));
+check(
+  "a doctor may write clinical photographs",
+  /DOCTOR_FOLDERS = new Set\(\[[\s\S]*?"patients"/.test(auth)
+);
+check(
+  "a vendor licence does not land in the doctors-only credentials prefix",
+  /PUBLIC_FOLDERS = new Set\(\["vendor-licences"\]\)/.test(auth) &&
+    /vendor-licences/.test(read("src/components/vendor/VendorForm.tsx"))
+);
+check(
+  "an anonymous upload is rate limited",
+  /rateLimit\(\s*`upload:anon/.test(auth)
+);
 check("the register half re-checks the folder", /d\.key\.split\("\/"\)\[0\]/.test(presign));
 
 // ── The bucket itself ──────────────────────────────────────────────────────

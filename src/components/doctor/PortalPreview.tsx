@@ -67,7 +67,7 @@ export default function PortalPreview() {
             <div className="overflow-hidden rounded-2xl bg-white p-1 shadow-[0_30px_70px_-24px_rgba(2,10,28,0.85)] ring-1 ring-white/15">
             <div className="overflow-hidden rounded-[0.85rem] border border-slate-200 bg-white">
               <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 px-4 py-3">
-                <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
+                <span className="rounded-full on-dark bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
                   All locations
                 </span>
                 {CLINICS.map((c) => (

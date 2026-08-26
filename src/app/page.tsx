@@ -10,7 +10,7 @@ import {
 
 import Navbar from "@/components/Navbar";
 import RoleChooser from "@/components/RoleChooser";
-import WhiteCollarBanner from "@/components/home/WhiteCollarBanner";
+import GoldCollarBanner from "@/components/home/GoldCollarBanner";
 import Footer from "@/components/Footer";
 import { buildPatientMenu } from "@/lib/queries/nav";
 import ComingSoonTicker from "@/components/hub/ComingSoonTicker";
@@ -112,12 +112,12 @@ export default async function Home() {
         chrome="dark"
       />
 
-      <main className="relative isolate overflow-hidden bg-[#070d1c] pb-20">
+      <main className="relative isolate overflow-hidden bg-surface pb-20">
         {/* Atmosphere. A dark theme goes generic the moment the background is
             one flat neutral; this keeps a hue and a light source. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-[#070d1c] via-[#0a1226] to-[#070d1c]"
+          className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-[var(--surface)] via-[var(--band-b)] to-[var(--surface)]"
         />
         <div
           aria-hidden
@@ -206,7 +206,7 @@ export default async function Home() {
                   <li key={c.slug} className="min-w-0">
                     <Link
                       href={`/patient/explore?c=${c.slug}`}
-                      className="flex h-full min-h-[3.25rem] items-center justify-center text-balance rounded-2xl bg-white px-3 py-2.5 text-center text-[13px] font-semibold leading-tight text-[#070d1c] transition hover:bg-teal-400/[12%] hover:text-brand-200 sm:text-sm"
+                      className="flex h-full min-h-[3.25rem] items-center justify-center text-balance rounded-2xl bg-white px-3 py-2.5 text-center text-[13px] font-semibold leading-tight text-[var(--on-sheet)] transition hover:bg-teal-400/[12%] hover:text-brand-200 sm:text-sm"
                     >
                       {c.name}
                     </Link>
@@ -217,14 +217,14 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* ── White Collar ──────────────────────────────────────────── */}
+        {/* ── Gold Collar ──────────────────────────────────────────── */}
         {/* A section rather than a nav item: a membership is sold once, then
             lived with on the profile. Renders nothing when no plan is live. */}
-        <WhiteCollarBanner />
+        <GoldCollarBanner />
 
         {/* ── Know about you ────────────────────────────────────────── */}
         <section className="container-page pt-14">
-          <div className="flex flex-col items-start justify-between gap-6 rounded-[2rem] bg-gradient-to-r from-brand-700 to-teal-600 p-8 text-white sm:p-11 lg:flex-row lg:items-center">
+          <div className="flex flex-col items-start justify-between gap-6 rounded-[2rem] bg-gradient-to-r on-dark from-brand-700 to-teal-600 p-8 text-white sm:p-11 lg:flex-row lg:items-center">
             <div className="flex items-start gap-5">
               <span className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 sm:flex">
                 <ClipboardList className="h-6 w-6" strokeWidth={1.7} />
@@ -313,7 +313,7 @@ export default async function Home() {
             </div>
             <Link
               href="/patient/explore"
-              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-bold text-[#070d1c] transition hover:bg-teal-100"
+              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-bold text-[var(--on-sheet)] transition hover:bg-teal-100"
             >
               <ScanFace className="h-4 w-4" />
               Scan your skin

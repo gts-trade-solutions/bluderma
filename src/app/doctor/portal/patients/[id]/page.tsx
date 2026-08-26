@@ -77,6 +77,22 @@ export default async function PatientPage({ params }: { params: { id: string } }
           where: { doctorId: owner.doctorId },
           select: { strokes: true, note: true },
         },
+        // Same rule as the marks: this doctor's plan for the photograph, not
+        // somebody else's.
+        pins: {
+          where: { doctorId: owner.doctorId },
+          orderBy: { label: "asc" },
+          select: {
+            id: true,
+            x: true,
+            y: true,
+            label: true,
+            treatment: true,
+            note: true,
+            priceInr: true,
+            sessions: true,
+          },
+        },
       },
     }),
     prisma.patientNote.findMany({
@@ -101,6 +117,7 @@ export default async function PatientPage({ params }: { params: { id: string } }
       ? (p.annotations[0].strokes as unknown as ChartPhoto["strokes"])
       : [],
     markupNote: p.annotations[0]?.note ?? "",
+    pins: p.pins,
   }));
   const s = summarise(events);
   const name = patient?.name ?? seen.patientName;

@@ -1,7 +1,7 @@
 import EntityForm from "@/components/admin/EntityForm";
 import ImageField from "@/components/admin/ImageField";
 import { Card, SelectField, TextField } from "@/components/admin/ui";
-import { MEDICAL_COUNCILS } from "@/data/doctorJoin";
+import { MEDICAL_COUNCILS, REGISTRATION_YEARS } from "@/data/doctorJoin";
 import { saveCredentialsStep } from "@/lib/actions/doctorOnboarding";
 
 /**
@@ -11,6 +11,13 @@ import { saveCredentialsStep } from "@/lib/actions/doctorOnboarding";
  * cannot do without. A directory of practitioners that never checks whether
  * they are registered is not a medical marketplace, and the "verified" badge
  * on every card is a claim we have to be able to stand behind.
+ *
+ * The year is a dropdown rather than a number input. A spinner on a four-digit
+ * year is a control nobody can use — reaching 1998 from a blank field is
+ * either twenty-six clicks or typing anyway — and it accepted "19", "0" and
+ * "20255" on the way to being corrected, each of which the doctor had to see
+ * rejected. A list of the only years that can possibly be right removes the
+ * whole category.
  */
 export default function CredentialsStep({
   doctor,
@@ -33,6 +40,8 @@ export default function CredentialsStep({
     <EntityForm
       action={saveCredentialsStep}
       submitLabel="Save and continue"
+      submitHint="Saves your registration details and opens the next step. These are checked by our team and never shown publicly."
+      cancelHint="Back to the previous step. Your answers there are already saved."
       cancelHref={cancelHref}
       cancelLabel="Back"
       redirectTo={redirectTo}
@@ -59,13 +68,17 @@ export default function CredentialsStep({
             defaultValue={doctor.regNumber ?? ""}
             required
           />
-          <TextField
+          <SelectField
             name="regYear"
             label="Year of registration"
-            type="number"
-            min={1940}
-            max={new Date().getUTCFullYear()}
             defaultValue={doctor.regYear ? String(doctor.regYear) : ""}
+            options={[
+              { value: "", label: "Select a year" },
+              ...REGISTRATION_YEARS.map((y) => ({
+                value: String(y),
+                label: String(y),
+              })),
+            ]}
             required
           />
         </div>

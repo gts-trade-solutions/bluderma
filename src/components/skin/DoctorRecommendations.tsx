@@ -47,6 +47,12 @@ function toDoctorDTO(d: RecommendedDoctor): DoctorDTO {
     fee: 0,
     languages: [],
     services: [],
+    // Empty rather than fetched: this is the lean recommendation row, and a
+    // second query per recommended doctor to fill in fields the booking page
+    // does not render is not worth it. The full profile has them.
+    specialtyAreas: [],
+    otherFocus: [],
+    reviewList: [],
     modes: ["clinic"],
     about: "",
     verified: false,

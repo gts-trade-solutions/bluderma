@@ -66,6 +66,31 @@ export interface Purchase {
   status: "Delivered" | "Shipped" | "Processing";
 }
 
+/**
+ * One payment this person actually made.
+ *
+ * ── Why this is separate from Purchase ───────────────────────────────────
+ * `Purchase` is a product order. This is MONEY — a consultation fee, a skin
+ * scan, a membership term, a gift card — and until now a patient had no
+ * single place showing what they had paid BluDerma for. The admin console
+ * could see every payment; the person who made them could not see any.
+ *
+ * `refundedInr` is stated rather than netted off `amountInr`. A refund is a
+ * thing that happened, and a line that quietly shows a smaller number is a
+ * line somebody cannot reconcile against their bank statement.
+ */
+export interface PaymentRecord {
+  id: string;
+  date: string;
+  /** "Consultation with Dr. Menon", "Skin analysis", "Gold Collar — monthly". */
+  what: string;
+  amountInr: number;
+  refundedInr: number;
+  status: "Paid" | "Refunded" | "Partly refunded" | "Failed" | "Pending";
+  /** The gateway reference, for quoting when something has gone wrong. */
+  reference: string | null;
+}
+
 export interface ProcedureRecord {
   id: string;
   name: string;

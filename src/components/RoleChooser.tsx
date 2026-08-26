@@ -23,7 +23,7 @@ import { ROLE_STORAGE_KEY } from "@/lib/roles";
  *
  * It is asked ONCE. After a choice — or a dismissal — the answer lives in
  * localStorage and this never renders again. Which is why the permanent
- * entry points matter just as much: a "For doctors" link in the navbar and
+ * entry points matter just as much: a "For doctors" link in the footer and
  * in the footer, both server-rendered, both always there. This dialog is a
  * convenience for the first visit, not the only way in.
  */
@@ -84,7 +84,7 @@ export default function RoleChooser() {
       <button
         aria-label="Close"
         onClick={() => choose("patient", false)}
-        className="absolute inset-0 bg-slate-950/50 backdrop-blur-[3px] animate-fade-in-fast"
+        className="absolute inset-0 on-dark bg-slate-950/50 backdrop-blur-[3px] animate-fade-in-fast"
       />
 
       <div
@@ -167,8 +167,7 @@ export default function RoleChooser() {
           </div>
 
           <p className="mt-5 text-[11px] text-ink-muted">
-            Asked once. &ldquo;For doctors&rdquo; in the menu takes you
-            across at any time.
+            Asked once. The footer has a link across at any time.
           </p>
         </div>
       </div>

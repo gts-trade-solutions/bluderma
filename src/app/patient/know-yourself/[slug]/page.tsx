@@ -47,7 +47,7 @@ export default function ArticlePage({ params }: Params) {
         menu={buildPatientMenu()}
       />
 
-      <main className="bg-[var(--surface)] pb-20">
+      <main className="bg-surface pb-20">
         <article>
           {/* ── Header ─────────────────────────────────────────────────── */}
           <header className="border-b border-white/10 bg-white/[0.04]">

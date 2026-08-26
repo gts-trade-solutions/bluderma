@@ -66,7 +66,7 @@ export function evaluateCancellation(
   policy: BookingPolicy,
   now: Date = new Date(),
   /**
-   * A White Collar member never pays the late-cancellation fee. It does NOT
+   * A Gold Collar member never pays the late-cancellation fee. It does NOT
    * lift the reception window: inside a few hours somebody still has to be
    * told a slot is going empty, and that conversation is not something a
    * membership buys its way out of.

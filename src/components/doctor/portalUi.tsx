@@ -54,7 +54,8 @@ export function PageHead({
   action,
 }: {
   eyebrow?: string;
-  title: string;
+  /** A node, not a string, so a heading can carry a mark — see RxMark. */
+  title: React.ReactNode;
   sub?: string;
   action?: React.ReactNode;
 }) {
@@ -158,6 +159,9 @@ export function Panel({
 
   return (
     <section
+      // Outlines the whole panel when a field inside it fails validation.
+      // See lib/formValidation.ts.
+      data-form-section
       className={`portal-enter group/panel relative overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05),0_12px_32px_-20px_rgba(15,23,42,0.22)] ring-1 ring-slate-200/80 transition duration-200 hover:shadow-[0_1px_2px_rgba(15,23,42,0.05),0_18px_44px_-22px_rgba(15,23,42,0.4)] hover:ring-slate-300 ${className}`}
       // Staggered so a screenful arrives rather than appearing. Capped: past
       // about eight the last panel is visibly late and it stops reading as
@@ -419,7 +423,38 @@ const PATHS: Record<string, string> = {
   sheet:
     "M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 12h6M9 16h4",
   pulse: "M3 12h4l2-6 3.5 12L16 9l1.5 3H21",
+  // ℞ — the prescription mark, drawn as strokes for the same reason the
+  // rupee sign is: a glyph would depend on a font having it and would not
+  // take the stroke weight the rest of the rail is set in. An R whose leg
+  // carries the crossed tail, which is what tells it apart from a plain R.
+  rx: "M7 20V5h4a3.5 3.5 0 0 1 0 7H7M11 12l6 8M13 15l4-3",
 };
+
+/**
+ * ℞, set as an inline mark for a heading.
+ *
+ * The character U+211E exists, and is not used: it is absent from most UI
+ * font stacks and falls back to a serif face at a different weight, so the
+ * heading it sits in visibly changes typeface. Drawn instead, at the same
+ * stroke weight as the rail glyphs, sized to the text it accompanies.
+ */
+export function RxMark({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={`inline-block h-[0.9em] w-[0.9em] shrink-0 align-[-0.08em] text-brand-600 ${className}`}
+      role="img"
+      aria-label="Prescription"
+    >
+      <path d="M7 20V5h4a3.5 3.5 0 0 1 0 7H7M11 12l6 8M13 15l4-3" />
+    </svg>
+  );
+}
 
 export function GlyphIcon({ name }: { name: string }) {
   return (

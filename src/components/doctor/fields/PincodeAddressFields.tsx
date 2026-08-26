@@ -31,6 +31,8 @@ type State =
 export default function PincodeAddressFields({
   defaults,
   errors,
+  onPincodeChange,
+  readOnly = false,
 }: {
   defaults: {
     pincode: string;
@@ -44,6 +46,21 @@ export default function PincodeAddressFields({
    * EntityForm's provider, so context alone would show nothing there.
    */
   errors?: Record<string, string | undefined>;
+  /**
+   * Reported upward as it is typed.
+   *
+   * ClinicsStep needs the PIN code to ask whether the clinic already exists,
+   * and this component owns that state. Lifting it entirely would mean the
+   * India Post lookup living at the call site, which is the one thing this
+   * component is for.
+   */
+  onPincodeChange?: (pincode: string) => void;
+  /**
+   * Set on a clinic shared with other practitioners: the premises' address is
+   * not one practice's to change. Shown rather than hidden, because a doctor
+   * checking they joined the right building needs to read it.
+   */
+  readOnly?: boolean;
 }) {
   const [pincode, setPincode] = useState(defaults.pincode);
   const [area, setArea] = useState(defaults.area);
@@ -64,6 +81,7 @@ export default function PincodeAddressFields({
 
   useEffect(() => {
     const pin = pincode.trim();
+    if (readOnly) return;
     if (!/^\d{6}$/.test(pin) || lastLooked.current === pin) return;
     lastLooked.current = pin;
 
@@ -126,15 +144,22 @@ export default function PincodeAddressFields({
           id="pincode"
           name="pincode"
           value={pincode}
-          onChange={(e) =>
-            setPincode(e.target.value.replace(/\D/g, "").slice(0, 6))
-          }
+          onChange={(e) => {
+            const next = e.target.value.replace(/\D/g, "").slice(0, 6);
+            setPincode(next);
+            onPincodeChange?.(next);
+          }}
+          readOnly={readOnly}
           inputMode="numeric"
           autoComplete="postal-code"
           required
           aria-invalid={pinError ? true : undefined}
-          className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100 ${
-            pinError ? "border-rose-300" : "border-slate-200"
+          className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100 ${
+            readOnly
+              ? "border-slate-200 bg-slate-50 text-slate-500"
+              : pinError
+                ? "border-rose-300 bg-white text-slate-900"
+                : "border-slate-200 bg-white text-slate-900"
           }`}
         />
         {pinError ? (
@@ -160,6 +185,7 @@ export default function PincodeAddressFields({
         defaultValue={area}
         options={status.kind === "found" ? status.areas : []}
         onPick={setArea}
+        readOnly={readOnly}
         error={errors?.area}
         hint="The neighbourhood clients navigate by."
         emptyText="Type the neighbourhood: your own wording is fine"
@@ -174,10 +200,15 @@ export default function PincodeAddressFields({
           name="city"
           value={city}
           onChange={(e) => setCity(e.target.value)}
+          readOnly={readOnly}
           required
           aria-invalid={cityError ? true : undefined}
-          className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100 ${
-            cityError ? "border-rose-300" : "border-slate-200"
+          className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100 ${
+            readOnly
+              ? "border-slate-200 bg-slate-50 text-slate-500"
+              : cityError
+                ? "border-rose-300 bg-white text-slate-900"
+                : "border-slate-200 bg-white text-slate-900"
           }`}
         />
         {cityError && (
@@ -194,10 +225,15 @@ export default function PincodeAddressFields({
           name="state"
           value={stateName}
           onChange={(e) => setStateName(e.target.value)}
+          readOnly={readOnly}
           required
           aria-invalid={stateError ? true : undefined}
-          className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100 ${
-            stateError ? "border-rose-300" : "border-slate-200"
+          className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100 ${
+            readOnly
+              ? "border-slate-200 bg-slate-50 text-slate-500"
+              : stateError
+                ? "border-rose-300 bg-white text-slate-900"
+                : "border-slate-200 bg-white text-slate-900"
           }`}
         />
         {stateError && (

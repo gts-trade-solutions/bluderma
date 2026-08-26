@@ -27,7 +27,7 @@ export default function PromoCarousel({ slides }: { slides: HubPromo[] }) {
 
   return (
     <div
-      className="relative overflow-hidden rounded-[2rem] bg-[#070d1c]"
+      className="relative overflow-hidden rounded-[2rem] bg-surface"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -48,7 +48,7 @@ export default function PromoCarousel({ slides }: { slides: HubPromo[] }) {
             />
             <div className="absolute inset-0 bg-gradient-to-r from-[#070d1c] via-[#070d1c]/80 to-transparent" />
 
-            <div className="relative flex h-full max-w-xl flex-col justify-center px-6 py-8 sm:px-10">
+            <div className="on-dark relative flex h-full max-w-xl flex-col justify-center px-6 py-8 sm:px-10">
               <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-teal-300">
                 {s.eyebrow}
               </span>

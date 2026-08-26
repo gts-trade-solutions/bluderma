@@ -27,6 +27,8 @@ export const dynamic = "force-dynamic";
  *     photographs attached to THEIR OWN appointments.
  *   - A PATIENT may view what they uploaded and what is attached to their own
  *     appointment.
+ *   - A vendor applicant may view the drug licence they just uploaded, by the
+ *     same uploader check. Nobody else but an admin ever reads one.
  *   - Nobody else gets anything.
  */
 export async function GET(req: Request) {
@@ -107,7 +109,7 @@ async function ownsPrivateObject(
     // A booking photograph. Readable by the patient who attached it (covered
     // by the uploader check above) and by the doctor whose appointment it is
     // — nobody else, including other doctors.
-    const mine = await prisma.appointmentPhoto.findFirst({
+    const onBooking = await prisma.appointmentPhoto.findFirst({
       where: {
         url,
         OR: [
@@ -117,7 +119,49 @@ async function ownsPrivateObject(
       },
       select: { id: true },
     });
-    return Boolean(mine);
+    if (onBooking) return true;
+
+    // A clinical photograph on the chart. This branch was missing entirely,
+    // and it is the one that matters most day to day: the uploader check only
+    // proves you can see your OWN file, so a doctor could not open a picture
+    // their patient had uploaded, and a patient could not open one taken for
+    // them in clinic. Both sides saw a broken image and no explanation.
+    //
+    // A photograph is readable by the patient it is of, by the doctor who
+    // took it, and by a doctor the patient has actually booked with — which
+    // is the promise PatientPhoto's own comment makes ("shown to whoever they
+    // book with"). Never by a practitioner with no relationship to them.
+    const onChart = await prisma.patientPhoto.findFirst({
+      where: {
+        url,
+        OR: [
+          { patientUserId: userId },
+          { doctor: { userId } },
+          { patient: { appointments: { some: { doctor: { userId } } } } },
+        ],
+      },
+      select: { id: true },
+    });
+    if (onChart) return true;
+
+    // A before/after pair. The treating doctor owns the case; the patient it
+    // is of may see their own images whether or not they have consented to it
+    // being published.
+    const onCase = await prisma.doctorGalleryCase.findFirst({
+      where: {
+        OR: [{ beforeUrl: url }, { afterUrl: url }],
+        AND: [{ OR: [{ doctor: { userId } }, { patientUserId: userId }] }],
+      },
+      select: { id: true },
+    });
+    return Boolean(onCase);
+  }
+
+  if (prefix === "vendor-licences") {
+    // A drug licence is submitted to BluDerma for approval and read by the
+    // review team. The uploader check above covers the applicant looking at
+    // what they just attached; nobody else but an admin ever sees it.
+    return false;
   }
 
   if (prefix === "prescriptions") {

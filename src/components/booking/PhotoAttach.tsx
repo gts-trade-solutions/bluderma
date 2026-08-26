@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { uploadFile } from "@/lib/uploadClient";
 
 /**
  * Optional photographs of the concern, attached at booking.
@@ -39,56 +40,14 @@ export default function PhotoAttach({
   const [error, setError] = useState<string | null>(null);
 
   async function uploadOne(file: File): Promise<AttachedPhoto | null> {
-    const presignRes = await fetch("/api/uploads/presign", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        filename: file.name,
-        contentType: file.type,
-        size: file.size,
-        folder: "patients",
-      }),
-    });
-    const presign = await presignRes.json().catch(() => ({}));
-    if (!presignRes.ok) {
-      setError(presign.error ?? "That photo could not be uploaded.");
+    const res = await uploadFile(file, "patients");
+    if (!res.ok) {
+      setError(res.error);
       return null;
     }
-
-    // A refused CORS preflight makes fetch throw rather than return a failed
-    // response, so it has to be caught to be told apart from a dropped
-    // connection. Same trap as the admin image field.
-    try {
-      const put = await fetch(presign.uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      if (!put.ok) {
-        setError(`Storage rejected the photo (${put.status}).`);
-        return null;
-      }
-    } catch {
-      setError("Storage refused the upload from this site. Please try again.");
-      return null;
-    }
-
-    // Registering it is what records who uploaded it, which is what lets them
-    // see their own photo back before the booking exists.
-    await fetch("/api/uploads/presign", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        key: presign.key,
-        url: presign.publicUrl,
-        mimeType: file.type,
-        sizeBytes: file.size,
-      }),
-    }).catch(() => undefined);
-
     return {
-      url: presign.publicUrl,
-      key: presign.key,
+      url: res.file.url,
+      key: res.file.key,
       preview: URL.createObjectURL(file),
     };
   }
@@ -156,7 +115,7 @@ export default function PhotoAttach({
                 onClick={() => onChange(photos.filter((x) => x.key !== p.key))}
                 // 32px hit area at the corner: small enough not to cover the
                 // thumbnail, large enough to hit with a thumb.
-                className="absolute -right-1.5 -top-1.5 grid h-7 w-7 place-items-center rounded-full bg-slate-900 text-sm font-bold text-white shadow-md"
+                className="absolute -right-1.5 -top-1.5 grid h-7 w-7 place-items-center rounded-full on-dark bg-slate-900 text-sm font-bold text-white shadow-md"
               >
                 ×
               </button>

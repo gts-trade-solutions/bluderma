@@ -9,6 +9,7 @@ import { Experience, roleMeta } from "@/lib/roles";
 import type { NavNode } from "@/lib/queries/nav";
 import AccountMenu, { linksFor } from "./AccountMenu";
 import BrandLogo from "./BrandLogo";
+import ThemeToggle from "./ThemeToggle";
 import KnowYouCta from "./hub/KnowYouCta";
 import LocationButton from "./hub/LocationButton";
 
@@ -78,32 +79,61 @@ export default function Navbar({
   // that background dark? Transparent-over-a-hero and navy-chrome both want
   // light type, but for different reasons.
   const opaque = !overlay || scrolled || mobileOpen;
-  const onDark = !opaque || chrome === "dark";
+
+  /* ── One question, not three ────────────────────────────────────────
+     This used to ask JavaScript what the theme was and pick colours from the
+     answer. That answer arrives a frame after CSS already has it, and the two
+     disagreed: on sepia the bar painted itself the cream `--surface` while
+     the JS branch still believed the chrome was navy and kept the type white.
+     Cream bar, white type, nothing readable — and the page scrolling visibly
+     underneath it, because a bar nobody can see reads as no bar at all.
+
+     So the theme is out of it. There is only one question left, and CSS
+     cannot answer it because it is about what is UNDERNEATH: is this bar
+     floating over the hero photograph?
+
+       - Over the hero  → genuinely dark on every theme, so `.on-dark` and
+                          white type, and that stays true whatever is picked.
+       - Anywhere else  → `bg-surface-95` and TOKEN type. Both sides move
+                          together because both come from the same token, on
+                          all four themes, with nothing to get out of step.
+
+     `chrome` is left in the props because pages pass it, but it no longer
+     picks a colour — no page has asked for anything but the default in some
+     time, and the opaque bar is now correct on every theme without it. */
+  const overHero = !opaque;
 
   return (
     <>
       <header
+        // `on-dark` when the bar is genuinely dark — transparent over a hero
+        // photograph, or navy chrome on a dark theme. Without it the generated
+        // theme layer repaints this bar's `text-white` to var(--ink), which on
+        // daylight and sepia is near-black: the wordmark and every nav link
+        // turn dark ON TOP OF THE PHOTOGRAPH, which is still dark. That is the
+        // invisible "BLU" in the header.
         className={`top-0 z-40 transition-colors duration-300 ${
+          overHero ? "on-dark " : ""
+        }${
           overlay ? "fixed inset-x-0" : "sticky"
         } ${
-          !opaque
+          overHero
             ? "bg-transparent"
-            : chrome === "dark"
-            ? "bg-[#070d1c]/95 shadow-soft backdrop-blur"
-            : "bg-white/95 shadow-soft backdrop-blur"
+            : "bg-surface-95 shadow-soft backdrop-blur"
         }`}
       >
 
         <div className="container-page flex h-20 items-center justify-between gap-4">
           {/* Brand */}
-          {/* The logo always goes home. It used to use the role's landing
-              path, which sent a client clicking the brand mark into the skin
-              analyzer — never what a logo should do. */}
+          {/* The logo always goes to the client home — for a practitioner
+              too. Their own way back is the avatar, which lists the portal's
+              actual sections; sending them to the doctor marketing page
+              instead meant a doctor could not reach the site they are listed
+              on without editing the URL. */}
           <BrandLogo
-            href={role === "doctor" ? "/doctor" : "/"}
-            tone={onDark ? "light" : "dark"}
+            href="/"
+            tone={overHero ? "light" : "auto"}
             size={46}
-            showMark={false}
             onClick={() => setMobileOpen(false)}
           />
 
@@ -113,7 +143,7 @@ export default function Navbar({
               <DesktopNavItem
                 key={node.label}
                 node={node}
-                solid={!onDark}
+                solid={!overHero}
                 pathname={pathname}
               />
             ))}
@@ -127,9 +157,13 @@ export default function Navbar({
                 <LocationButton />
               </div>
             )}
+            {/* The appearance control is no longer here. In a row of small
+                round glyphs it read as a fourth icon rather than as the way
+                into the feature — see ThemeFab, which floats it on its own
+                where it has nothing to be mistaken for. */}
             <AccountMenu />
             <button
-              className={`lg:hidden ${onDark ? "text-white" : "text-ink"}`}
+              className={`lg:hidden ${overHero ? "text-white" : "text-ink"}`}
               aria-label="Toggle menu"
               onClick={() => setMobileOpen((v) => !v)}
             >
@@ -148,6 +182,16 @@ export default function Navbar({
         {/* Mobile drawer */}
         {mobileOpen && (
           <div className="max-h-[calc(100vh-4rem)] overflow-y-auto border-t border-white/10 bg-white/[0.04] px-4 pb-8 pt-2 lg:hidden">
+            {/* The full three-way control, where there is room to say what
+                each option means. On a phone this is the only copy: the
+                floating button is hidden behind the open drawer. */}
+            <div className="flex items-center justify-between gap-3 border-b border-white/10 py-3">
+              <span className="text-xs font-bold uppercase tracking-wide text-ink-muted">
+                Appearance
+              </span>
+              <ThemeToggle variant="compact" />
+            </div>
+
             {(cta !== "none" || showLocation) && (
               <div className="space-y-2 pb-4 pt-2">
                 {cta !== "none" && (

@@ -60,8 +60,33 @@ export interface DoctorClinicDTO {
   name: string;
   area: string;
   city: string;
+  /** "Opposite the Krishna temple". How the address is actually given. */
+  landmark: string | null;
+  /** Null until the clinic has been pinned. Never assume 0,0. */
+  lat: number | null;
+  lng: number | null;
   feeInr: number;
   isPrimary: boolean;
+}
+
+/**
+ * One published review, as a client reading a doctor's card sees it.
+ *
+ * Only the reviewer's first name and last initial. A full name against a
+ * dermatology consultation is more than anybody agreed to publish — the same
+ * rule /api/reviews/published already applies, restated here because this is
+ * the second place it is shown and a rule with one enforcement point is a
+ * rule that gets forgotten at the third.
+ */
+export interface DoctorReviewDTO {
+  id: string;
+  rating: number;
+  title: string | null;
+  body: string | null;
+  /** "Priya R." */
+  author: string;
+  /** ISO date. */
+  at: string;
 }
 
 export interface DoctorDTO {
@@ -80,6 +105,17 @@ export interface DoctorDTO {
   fee: number;
   languages: string[];
   services: string[];
+  /**
+   * What the practitioner is known FOR, as distinct from their qualification
+   * (`specialty`) and from the procedures they perform (`services`).
+   */
+  specialtyAreas: string[];
+  /**
+   * Concerns they named themselves, because the catalogue has no row for
+   * them. Shown on the profile; deliberately NOT part of `focus`, which is
+   * what the analyzer matches on — see DoctorConcernOther.
+   */
+  otherFocus: string[];
   modes: ConsultModeDTO[];
   about: string;
   verified: boolean;
@@ -87,6 +123,20 @@ export interface DoctorDTO {
   /** Every location this doctor consults at. Empty for a directory-only
    *  record that has not been migrated onto clinics yet. */
   clinics: DoctorClinicDTO[];
+  /**
+   * Published reviews of THIS doctor, newest first.
+   *
+   * `rating` and `reviews` above are the aggregate, recomputed from exactly
+   * these rows by recomputeDoctorRating(). A patient choosing between two
+   * practitioners is choosing on what people said, not on a number, and the
+   * words were being kept on a site-wide testimonials strip where they could
+   * not be attached to the doctor they were about.
+   *
+   * Empty until real clients have reviewed and an admin has published them.
+   * Nothing falls back to anything: this codebase has already deleted one set
+   * of invented testimonials.
+   */
+  reviewList: DoctorReviewDTO[];
 }
 
 export interface ConcernDTO {

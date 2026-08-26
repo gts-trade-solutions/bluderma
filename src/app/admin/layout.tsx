@@ -21,7 +21,7 @@ export default async function AdminLayout({
   const user = await requireRole("ADMIN", "/admin");
 
   return (
-    <div className="theme-light min-h-screen bg-[#f7fafc]">
+    <div className="theme-light pro-surface min-h-screen bg-[#f7fafc]">
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white">
         <div className="flex h-16 items-center justify-between gap-4 px-5 sm:px-8">
           <div className="flex items-center gap-3">

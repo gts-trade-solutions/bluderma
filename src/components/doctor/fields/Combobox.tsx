@@ -32,6 +32,7 @@ export default function Combobox({
   required,
   emptyText = "No matches: your own wording is fine",
   onPick,
+  readOnly = false,
   error: explicitError,
 }: {
   name: string;
@@ -43,6 +44,8 @@ export default function Combobox({
   required?: boolean;
   emptyText?: string;
   onPick?: (value: string) => void;
+  /** Shown but not editable — a value that belongs to somebody else. */
+  readOnly?: boolean;
   /** Wins over the form context, for forms that track errors themselves. */
   error?: string;
 }) {
@@ -125,6 +128,7 @@ export default function Combobox({
         name={name}
         value={value}
         required={required}
+        readOnly={readOnly}
         placeholder={placeholder}
         autoComplete="off"
         role="combobox"
@@ -137,10 +141,14 @@ export default function Combobox({
           setOpen(true);
           setActive(-1);
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={() => !readOnly && setOpen(true)}
         onKeyDown={onKeyDown}
-        className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 ${
-          error ? "border-rose-300" : "border-slate-200"
+        className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 ${
+          readOnly
+            ? "border-slate-200 bg-slate-50 text-slate-500"
+            : error
+              ? "border-rose-300 bg-white text-slate-900"
+              : "border-slate-200 bg-white text-slate-900"
         }`}
       />
 

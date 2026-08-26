@@ -73,7 +73,7 @@ export default function OfferBanner({
   copy?: OfferCopy;
 }) {
   return (
-    <div className="relative isolate overflow-hidden bg-[#070d1c]">
+    <div className="relative isolate overflow-hidden bg-surface">
       {/* Tube spill */}
       <div className="pointer-events-none absolute left-[8%] top-1/2 h-72 w-[34rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-600/30 blur-[100px]" />
       <div className="pointer-events-none absolute left-1/2 top-0 h-64 w-[28rem] -translate-x-1/2 rounded-full bg-teal-400/20 blur-[90px]" />

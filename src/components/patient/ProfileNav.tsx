@@ -113,7 +113,7 @@ export function ProfileStrip({ sections }: { sections: ProfileSection[] }) {
     <nav
       aria-label="Profile sections"
       // top-20 is the navbar's own h-20; z-30 keeps this under it.
-      className="sticky top-20 z-30 border-b border-white/10 bg-[#070d1c]/95 py-2.5 backdrop-blur lg:hidden"
+      className="sticky top-20 z-30 border-b border-white/10 bg-surface-95 py-2.5 backdrop-blur lg:hidden"
     >
       {/* Ten pills never fit a phone and the scrollbar is hidden, so the row
           fades at its right edge to say there is more this way. Without it the
@@ -127,7 +127,7 @@ export function ProfileStrip({ sections }: { sections: ProfileSection[] }) {
               aria-current={active === s.id ? "true" : undefined}
               className={`inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-semibold transition ${
                 active === s.id
-                  ? "bg-white text-[#070d1c]"
+                  ? "bg-white text-[var(--on-sheet)]"
                   : "bg-white/[0.06] text-ink-soft ring-1 ring-inset ring-white/10"
               }`}
             >
@@ -147,7 +147,7 @@ export function ProfileStrip({ sections }: { sections: ProfileSection[] }) {
  * ── It has to scroll inside itself ───────────────────────────────────────
  * The section list grew to seventeen entries. At roughly 46px each that is
  * ~780px, starting 96px down the viewport, so on any laptop under about
- * 900px tall the last three — Location, My orders, White Collar — fell below
+ * 900px tall the last three — Location, My orders, Gold Collar — fell below
  * the fold of a `sticky` element. Scrolling the page cannot rescue those:
  * sticky means the rail travels with the scroll, so those rows were not
  * merely awkward to reach, they were unreachable. Capping the height and

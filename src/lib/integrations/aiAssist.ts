@@ -191,6 +191,58 @@ ${text}`,
   );
 }
 
+/* --------------------------- Clinical rephrase --------------------------- */
+
+/**
+ * Turns what a doctor dictated into instructions a patient can follow.
+ *
+ * -- The one thing this is not allowed to do ------------------------------
+ * Add anything. Not a duration, not a product, not a precaution, not a
+ * reassurance. A model that helpfully appends "and use sunscreen daily" to a
+ * dictated note has written a clinical instruction nobody said, and the
+ * patient cannot tell which sentence came from their doctor. So the brief
+ * forbids it in four different ways, and the result is shown to the doctor
+ * BESIDE what they said, for them to accept, before anything is submitted.
+ *
+ * -- Why there is no deterministic fallback -------------------------------
+ * Unlike the profile drafts, which fall back to a template built from the
+ * doctor's own database fields, there is no honest non-AI version of "say
+ * this more clearly". Returning the input unchanged and calling it rephrased
+ * would be a lie about what happened. With no key the button is not offered
+ * and the doctor types or dictates plainly — which is a perfectly good way to
+ * write instructions and how every sheet was written until now.
+ */
+export async function rephraseClinical(
+  text: string,
+  kind: "PRE" | "POST"
+): Promise<string | null> {
+  const when =
+    kind === "PRE"
+      ? "in the days BEFORE their procedure"
+      : "in the days AFTER their procedure";
+
+  return chat(
+    `You are formatting a dermatologist's own words into instructions for their patient to read ${when}.
+
+Rewrite the text below so a non-medical adult can follow it. Keep it in the second person ("you"). Use short sentences. Where the doctor listed several things, use one short line per instruction.
+
+RULES, in order of importance:
+1. Do NOT add any instruction, medicine, product, duration, frequency, quantity, precaution, warning or reassurance that is not already in the text. Not one. If the doctor did not say how long, do not say how long.
+2. Do NOT remove any instruction, and do not soften one. "Stop it for seven days" must not become "avoid it for about a week".
+3. Keep every number, dose, strength, duration and product name exactly as given.
+4. If a word is obviously a transcription error for a common dermatology term, correct the spelling but never change the meaning. If you are not sure, leave it exactly as it is.
+5. Do not add a greeting, a sign-off, a heading, or any markdown.
+
+Return only the rewritten instructions.
+
+The doctor's words:
+${text}`,
+    // Low temperature: this is a formatting task and invention is the failure
+    // mode being guarded against.
+    { maxTokens: 700, temperature: 0.15 }
+  );
+}
+
 /* ----------------------------- Treatments ------------------------------- */
 
 /**

@@ -71,7 +71,7 @@ export default async function DoctorHome() {
      * in front of it now matches the rest of the site. The only light thing
      * left is the calendar sketch, which is meant to look like a screenshot
      * of the portal and is framed as one. */
-    <div className="bg-[var(--surface)]">
+    <div className="bg-surface">
 
       <Navbar
         role="doctor"
@@ -97,7 +97,7 @@ export default async function DoctorHome() {
 
         {/* ── Closing ───────────────────────────────────────────────── */}
         <section className="container-page py-20">
-          <div className="overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-800 via-brand-900 to-teal-800 px-6 py-16 ring-1 ring-inset ring-white/15 sm:px-10">
+          <div className="overflow-hidden rounded-[2rem] bg-gradient-to-br on-dark from-brand-800 via-brand-900 to-teal-800 px-6 py-16 ring-1 ring-inset ring-white/15 sm:px-10">
           <div className="text-center">
             <h2 className="display mx-auto max-w-2xl text-balance text-3xl text-white sm:text-4xl">
               Free to list. Ten minutes to fill in. You can stop halfway.

@@ -50,7 +50,7 @@ export default function DoctorGoogleBootstrap() {
   }, [status, router, update]);
 
   return (
-    <div className="theme-light flex min-h-screen items-center justify-center bg-[#f7fafc] px-6">
+    <div className="theme-light pro-surface flex min-h-screen items-center justify-center bg-[var(--surface)] px-6">
       <div className="max-w-md text-center">
         {error ? (
           <>

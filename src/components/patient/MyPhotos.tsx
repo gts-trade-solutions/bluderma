@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { Camera, LoaderCircle, Trash2 } from "lucide-react";
 
 import { addOwnPhoto, deleteOwnPhoto } from "@/lib/actions/photos";
+import { uploadFile } from "@/lib/uploadClient";
 
 export interface MyPhoto {
   id: string;
@@ -53,33 +54,21 @@ export default function MyPhotos({ photos }: { photos: MyPhoto[] }) {
       return;
     }
     setBusy(true);
-    try {
-      const presign = await fetch("/api/uploads/presign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type,
-          size: file.size,
-          folder: "patients",
-        }),
-      });
-      if (!presign.ok) throw new Error();
-      const { uploadUrl, publicUrl, key } = await presign.json();
-      const put = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      if (!put.ok) throw new Error();
 
-      const res = await addOwnPhoto({ angle, url: publicUrl, storageKey: key });
-      if (!res.ok) setError(res.error ?? "Could not add that.");
-    } catch {
-      setError("That upload did not go through. Please try again.");
-    } finally {
+    const up = await uploadFile(file, "patients");
+    if (!up.ok) {
       setBusy(false);
+      setError(up.error);
+      return;
     }
+
+    const res = await addOwnPhoto({
+      angle,
+      url: up.file.url,
+      storageKey: up.file.key,
+    });
+    setBusy(false);
+    if (!res.ok) setError(res.error ?? "Could not add that.");
   }
 
   return (
@@ -94,7 +83,7 @@ export default function MyPhotos({ photos }: { photos: MyPhoto[] }) {
             aria-pressed={angle === a}
             className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
               angle === a
-                ? "bg-white text-[#070d1c]"
+                ? "bg-white text-[var(--on-sheet)]"
                 : "bg-white/[0.06] text-ink-soft ring-1 ring-inset ring-white/10"
             }`}
           >
@@ -147,7 +136,7 @@ export default function MyPhotos({ photos }: { photos: MyPhoto[] }) {
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {photos.map((p) => (
             <li key={p.id} className="group relative">
-              <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-[#0b1220] ring-1 ring-white/10">
+              <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-[var(--panel)] ring-1 ring-white/10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`/api/patient-photos/${p.id}`}

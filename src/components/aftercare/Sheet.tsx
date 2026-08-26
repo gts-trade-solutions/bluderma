@@ -2,6 +2,8 @@ import { AlertTriangle, Check, X } from "lucide-react";
 
 export interface SheetData {
   id: string;
+  /** PRE or POST. Decides the heading, the dates and the warning wording. */
+  kind: "PRE" | "POST";
   patientName: string;
   patientPublicId: string | null;
   doctorName: string;
@@ -11,6 +13,8 @@ export interface SheetData {
   procedure: string;
   procedureDate: Date;
   reviewOn: Date | null;
+  /** PRE only: what time to be at the clinic. */
+  arriveAt: string | null;
   intro: string;
   dos: string[];
   donts: string[];
@@ -39,8 +43,40 @@ const fmt = (d: Date) =>
  * document orders them. On paper a reader takes in the whole page; on a phone
  * they take in the first screen. The one section where being late matters is
  * the one that says when to call the clinic.
+ *
+ * ── One component, two documents ─────────────────────────────────────────
+ * A pre-treatment sheet and an aftercare sheet are the same document with a
+ * different date on it, so this renders both. Only the wording changes, and
+ * every word of it is chosen by `kind` in one place at the top rather than
+ * scattered through the markup — a second copy of this file would have drifted
+ * from the first the week after it was made.
  */
 export default function AftercareSheetView({ sheet }: { sheet: SheetData }) {
+  const isPre = sheet.kind === "PRE";
+
+  const copy = isPre
+    ? {
+        title: "Before your procedure",
+        subtitle: "How to prepare, and what to stop",
+        dateLabel: "Date of the procedure",
+        warningsLead: "Ring the clinic before you come if",
+        dos: "Please do",
+        donts: "Please avoid",
+        // A PRE sheet's warnings are reasons to postpone, not reasons to seek
+        // urgent care, so calling the line "Emergency contact" would be wrong
+        // and would send somebody to A&E over a cold sore.
+        contactLabel: "Ring the clinic on",
+      }
+    : {
+        title: "Post-procedure aftercare instructions",
+        subtitle: "Invasive and barrier-disrupting dermatological procedures",
+        dateLabel: "Date of procedure",
+        warningsLead: "Contact the clinic immediately if you notice",
+        dos: "Please do",
+        donts: "Please avoid",
+        contactLabel: "Emergency contact",
+      };
+
   return (
     <article className="mx-auto max-w-3xl rounded-2xl bg-white p-6 text-slate-900 shadow-sm ring-1 ring-slate-200 sm:p-8 print:shadow-none print:ring-0">
       <header className="border-b border-slate-200 pb-5">
@@ -48,21 +84,29 @@ export default function AftercareSheetView({ sheet }: { sheet: SheetData }) {
           {sheet.clinicName ?? "BluDerma"}
         </p>
         <h1 className="mt-1.5 font-display text-2xl font-extrabold tracking-[-0.02em] text-slate-900 sm:text-3xl">
-          Post-procedure aftercare instructions
+          {copy.title}
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Invasive and barrier-disrupting dermatological procedures
-        </p>
+        <p className="mt-1 text-sm text-slate-500">{copy.subtitle}</p>
       </header>
 
       <dl className="grid gap-x-6 gap-y-3.5 border-b border-slate-200 py-5 sm:grid-cols-2">
         <Row label="Patient" value={sheet.patientName} id={sheet.patientPublicId} />
         <Row label="Procedure" value={sheet.procedure} />
-        <Row label="Date of procedure" value={fmt(sheet.procedureDate)} />
-        <Row
-          label="Review / next visit"
-          value={sheet.reviewOn ? fmt(sheet.reviewOn) : "Not scheduled"}
-        />
+        <Row label={copy.dateLabel} value={fmt(sheet.procedureDate)} />
+        {isPre ? (
+          // The most useful line on a pre-treatment sheet, and the one a
+          // patient gets wrong: numbing cream needs an hour, so "arrive at"
+          // is genuinely not the appointment time.
+          <Row
+            label="Please arrive at"
+            value={sheet.arriveAt || "Your appointment time"}
+          />
+        ) : (
+          <Row
+            label="Review / next visit"
+            value={sheet.reviewOn ? fmt(sheet.reviewOn) : "Not scheduled"}
+          />
+        )}
         <Row
           label="Treating doctor"
           value={sheet.doctorName}
@@ -78,7 +122,7 @@ export default function AftercareSheetView({ sheet }: { sheet: SheetData }) {
       <section className="rounded-xl border-2 border-rose-300 bg-rose-50 p-4 sm:p-5">
         <h2 className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide text-rose-800">
           <AlertTriangle className="h-4 w-4" aria-hidden />
-          Contact the clinic immediately if you notice
+          {copy.warningsLead}
         </h2>
         <ul className="mt-3 space-y-2">
           {sheet.warnings.map((w) => (
@@ -90,7 +134,7 @@ export default function AftercareSheetView({ sheet }: { sheet: SheetData }) {
         </ul>
         {(sheet.emergencyContact ?? sheet.clinicContact) && (
           <p className="mt-3.5 border-t border-rose-200 pt-3 text-sm font-bold text-rose-900">
-            Emergency contact: {sheet.emergencyContact ?? sheet.clinicContact}
+            {copy.contactLabel}: {sheet.emergencyContact ?? sheet.clinicContact}
           </p>
         )}
       </section>
@@ -114,18 +158,8 @@ export default function AftercareSheetView({ sheet }: { sheet: SheetData }) {
       )}
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <List
-          title="Please do"
-          items={sheet.dos}
-          tone="teal"
-          Icon={Check}
-        />
-        <List
-          title="Please avoid"
-          items={sheet.donts}
-          tone="slate"
-          Icon={X}
-        />
+        <List title={copy.dos} items={sheet.dos} tone="teal" Icon={Check} />
+        <List title={copy.donts} items={sheet.donts} tone="slate" Icon={X} />
       </div>
 
       <footer className="mt-6 border-t border-slate-200 pt-5">

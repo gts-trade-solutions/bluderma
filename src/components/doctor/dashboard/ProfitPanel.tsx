@@ -2,13 +2,26 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { ChartPanel, SectionHead, money } from "./kit";
-import { categoryLabel, type NetSummary, type Recovery } from "@/lib/doctor/financeCore";
+import {
+  categoryLabel,
+  type MachineStatus,
+  type NetSummary,
+  type Recovery,
+  type RevenueSummary,
+} from "@/lib/doctor/financeCore";
 
 /**
  * What is left after the practice has paid for itself.
  *
+ * ── Revenue is four streams ──────────────────────────────────────────────
+ * Bookings, medicine sales, procedure charges and other income, each counted
+ * once. It used to be bookings alone while the other three sat recorded and
+ * unread, which made this panel wrong in the least helpful direction: the
+ * costs were complete, so a practitioner who recorded their expenses properly
+ * made their own practice look unprofitable.
+ *
  * ── Two figures that must not be added together ──────────────────────────
- * Net is takings minus RUNNING costs. Machines are shown beside it, being
+ * Net is revenue minus RUNNING costs. Machines are shown beside it, being
  * recovered, and are deliberately not subtracted from the month: a ₹5,00,000
  * laser taken out of one month's takings reads as a disaster for something
  * that earns out over years, and a practitioner acting on that number would
@@ -22,20 +35,30 @@ import { categoryLabel, type NetSummary, type Recovery } from "@/lib/doctor/fina
  */
 export default function ProfitPanel({
   net,
+  revenue,
   recoveries,
+  statusFor,
   periodLabel,
 }: {
   net: NetSummary;
+  /** The four streams behind net.takingsInr. */
+  revenue: RevenueSummary;
   recoveries: Recovery[];
+  /** How each machine is doing. Passed in so this stays a pure renderer. */
+  statusFor: (r: Recovery) => MachineStatus;
   periodLabel: string;
 }) {
   const nothingRecorded = net.runningCostInr === 0;
+
+  // Streams worth drawing. A stream at zero is a stream the practice does not
+  // run, and four bars where three are empty says less than one bar does.
+  const streams = revenue.streams.filter((r) => r.amountInr > 0);
 
   return (
     <>
       <SectionHead
         title="What you keep"
-        sub="Takings against what the practice costs to run. Equipment is tracked separately, below."
+        sub="All four revenue streams against what the practice costs to run. Equipment is tracked separately, below."
         action={
           <Link
             href="/doctor/portal/finance"
@@ -52,7 +75,7 @@ export default function ProfitPanel({
           index={0}
           tone="teal"
           icon="rupee"
-          title="Takings against running costs"
+          title="Revenue against running costs"
           sub={periodLabel}
           note={
             nothingRecorded ? (
@@ -68,10 +91,10 @@ export default function ProfitPanel({
                   {money(net.netInr)}
                 </strong>{" "}
                 left after {money(net.runningCostInr)} of running costs
-                {net.costRatio !== null && (
+                {net.profitRatio !== null && (
                   <>
-                    , which is {Math.round(net.costRatio * 100)}% of what you
-                    booked
+                    , which is {Math.round(net.profitRatio * 100)}% of
+                    everything you took
                   </>
                 )}
                 . Equipment is not in this figure: a machine is capital, and
@@ -86,11 +109,27 @@ export default function ProfitPanel({
                 comparison, and a bar the reader can measure against the one
                 above it says it better than axes would. */}
             <Bar
-              label="Booked"
+              label="Revenue"
               value={net.takingsInr}
               max={Math.max(net.takingsInr, net.runningCostInr, 1)}
               className="bg-gradient-to-r from-brand-500 to-brand-400"
             />
+
+            {/* What the revenue bar is made of. Printed under it rather than
+                as a second chart: it is a decomposition of the bar above, and
+                a separate ring beside it is how this screen once ended up with
+                two different totals for one month. */}
+            {streams.length > 1 && (
+              <ul className="-mt-1 mb-3 flex flex-wrap gap-x-3 gap-y-0.5">
+                {streams.map((r) => (
+                  <li key={r.key} className="text-[11px] text-slate-500">
+                    <span className="font-semibold text-slate-600">{r.label}</span>{" "}
+                    {money(r.amountInr)}
+                  </li>
+                ))}
+              </ul>
+            )}
+
             <Bar
               label="Running costs"
               value={net.runningCostInr}
@@ -166,11 +205,31 @@ export default function ProfitPanel({
               <ul className="space-y-4">
                 {recoveries.slice(0, 4).map((r) => {
                   const pct = Math.round(r.progress * 100);
+                  const status = statusFor(r);
+                  // Full literal strings: Tailwind never sees an interpolated
+                  // class, so an interpolated colour compiles to nothing.
+                  const bar = {
+                    blue: "from-blue-500 to-teal-400",
+                    teal: "from-teal-500 to-emerald-400",
+                    amber: "from-amber-400 to-orange-500",
+                    rose: "from-rose-400 to-rose-600",
+                    slate: "from-slate-300 to-slate-400",
+                  }[status.tone];
+                  const dot = {
+                    blue: "bg-blue-500",
+                    teal: "bg-teal-500",
+                    amber: "bg-amber-500",
+                    rose: "bg-rose-500",
+                    slate: "bg-slate-300",
+                  }[status.tone];
                   return (
                     <li key={r.id}>
                       <div className="flex items-baseline justify-between gap-2">
-                        <span className="min-w-0 truncate text-sm font-semibold text-slate-700">
-                          {r.name}
+                        <span className="flex min-w-0 items-center gap-1.5">
+                          <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${dot}`} />
+                          <span className="min-w-0 truncate text-sm font-semibold text-slate-700">
+                            {r.name}
+                          </span>
                         </span>
                         <span className="shrink-0 text-sm font-bold tabular-nums text-slate-900">
                           {pct}%
@@ -178,7 +237,7 @@ export default function ProfitPanel({
                       </div>
                       <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
                         <div
-                          className="h-full rounded-full bg-gradient-to-r from-violet-500 to-teal-500"
+                          className={`h-full rounded-full bg-gradient-to-r ${bar}`}
                           style={{ width: `${pct}%` }}
                         />
                       </div>

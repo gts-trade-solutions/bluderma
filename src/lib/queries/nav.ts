@@ -62,13 +62,15 @@ export function buildPatientMenu(): NavNode[] {
     // menu behind the avatar, which is where people look for their own
     // records — listing it twice made the bar longer without making anything
     // easier to find.
-    // The one cross-audience link. Always present and server-rendered, so the
-    // doctor side stays findable after the first-visit dialog is dismissed.
-    {
-      label: "For doctors",
-      href: "/doctor",
-      tagline: "List your practice: free, no commission",
-    },
+    // "For doctors" used to sit here. It was carrying two different jobs at
+    // once — an advert aimed at practitioners who have never heard of us, and
+    // the only way back for a practitioner who was already signed in — and it
+    // did the second badly: a doctor reading the client site pressed it and
+    // landed on a page selling them something they had already bought.
+    //
+    // A signed-in practitioner now navigates from the avatar, which lists the
+    // portal's real sections. The pitch keeps its own entry points: the
+    // first-visit dialog, and the footer link on every page.
   ];
 }
 

@@ -183,7 +183,7 @@ export function useRazorpayCheckout() {
     [checkout]
   );
 
-  /** Buy or renew a White Collar term. */
+  /** Buy or renew a Gold Collar term. */
   const paySubscription = useCallback(
     (planSlug: string, planName: string) =>
       checkout({

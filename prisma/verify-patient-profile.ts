@@ -13,7 +13,7 @@
  *   - nothing prints a distance, because Clinic.lat/lng are still empty;
  *   - conditions are labelled with where they came from, and never called a
  *     diagnosis;
- *   - the White Collar panel states that nothing auto-debits, which is the
+ *   - the Gold Collar panel states that nothing auto-debits, which is the
  *     one thing people get caught by.
  *
  *   npx tsx prisma/verify-patient-profile.ts
@@ -73,7 +73,7 @@ const REQUIRED = [
   ["locations", "Location"],
   ["appointments", "My appointments"],
   ["pay-later", "Pay later"],
-  ["white-collar", "White Collar"],
+  ["gold-collar", "Gold Collar"],
 ] as const;
 
 for (const [id, label] of REQUIRED) {
@@ -310,7 +310,7 @@ check(
 /* ── Membership tells the truth about renewal ────────────────────────── */
 
 check(
-  "White Collar states that nothing auto-debits",
+  "Gold Collar states that nothing auto-debits",
   /Nothing auto-debits|auto-debited/i.test(page)
 );
 check("the perks come from the plan rows, not prose", /p\.discountPercent/.test(page));

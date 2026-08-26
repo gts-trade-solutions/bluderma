@@ -16,6 +16,20 @@ const DATE = (d: Date) =>
  *
  * The list is ordered drafts-first, because a plan sitting unshared is the one
  * that needs the doctor and a shared one does not.
+ *
+ * ── What was wrong with this screen ──────────────────────────────────────
+ * Two things, and together they made it unusable for most practitioners.
+ *
+ * It only offered patients who had run a SKIN SCAN. `startTreatmentPlan` has
+ * always taken the scan as an optional argument — it is a head start, not a
+ * prerequisite — but the list filtered scanned patients and showed everybody
+ * else "Nobody to start one for". A doctor whose patients had not used the
+ * analyzer met a dead end and reasonably concluded the feature was broken.
+ *
+ * And nothing said what a plan IS. "Treatment plans" over an empty list is a
+ * heading, not an explanation, and the sequence — start it, accept the lines
+ * you agree with, add your own, then share it — is not guessable from a
+ * button called Start.
  */
 export default async function PlansPage() {
   const owner = await getOwnDoctor();
@@ -36,13 +50,13 @@ export default async function PlansPage() {
         items: { select: { state: true } },
       },
     }),
-    // People this doctor has seen who have run an analysis. A plan is built
-    // from a scan, so these are who one can be started for.
+    // Everybody this doctor has seen. A scan makes the first draft better; it
+    // is not what makes a plan possible.
     prisma.appointment.findMany({
       where: { doctorId: owner.doctorId, patientUserId: { not: null } },
       distinct: ["patientUserId"],
       orderBy: { scheduledAt: "desc" },
-      take: 12,
+      take: 20,
       select: {
         patientUserId: true,
         patientName: true,
@@ -61,35 +75,74 @@ export default async function PlansPage() {
   ]);
 
   const candidates = scannedPatients
-    .filter((a) => a.patientUserId && a.patient?.skinScans.length)
-    .map((a) => ({
-      userId: a.patientUserId as string,
-      name: a.patientName,
-      scanId: a.patient!.skinScans[0].id,
-      scannedOn: DATE(a.patient!.skinScans[0].createdAt),
-    }));
+    .filter((a) => a.patientUserId)
+    .map((a) => {
+      const scan = a.patient?.skinScans[0];
+      return {
+        userId: a.patientUserId as string,
+        name: a.patientName,
+        // Undefined where they have not scanned. The action treats that as
+        // "no head start" rather than as a reason to refuse.
+        scanId: scan?.id,
+        scannedOn: scan ? DATE(scan.createdAt) : null,
+      };
+    });
 
   return (
     <>
       <PageHead
         title="Treatment plans"
-        sub="Built from a patient's own analysis. Suggestions are proposed; you decide what goes in."
+        sub="A course of treatment you propose for one patient, in writing, that they can read and think about at home."
       />
+
+      {/* What it is and how it goes, before the buttons. The sequence is not
+          guessable from a control called Start, and a doctor who cannot guess
+          it does not press it. */}
+      <ol className="mb-5 grid gap-3 sm:grid-cols-3">
+        {[
+          {
+            n: 1,
+            t: "Start it for a patient",
+            b: "Anyone you have seen. If they have run a skin analysis, the first draft is written from it — otherwise you start from a blank one.",
+          },
+          {
+            n: 2,
+            t: "Keep what you agree with",
+            b: "Every suggested line arrives unaccepted. Take the ones you would actually do, set the rest aside, and add anything of your own.",
+          },
+          {
+            n: 3,
+            t: "Share it when it is right",
+            b: "Until you do, it is yours alone. Once shared it appears in their profile and they can read it at home.",
+          },
+        ].map((s) => (
+          <li
+            key={s.n}
+            className="rounded-2xl bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_12px_32px_-24px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/80"
+          >
+            <span className="grid h-6 w-6 place-items-center rounded-full bg-violet-100 text-[11px] font-black text-violet-800">
+              {s.n}
+            </span>
+            <p className="mt-2 text-sm font-bold text-slate-900">{s.t}</p>
+            <p className="mt-1 text-xs leading-relaxed text-slate-500">{s.b}</p>
+          </li>
+        ))}
+      </ol>
 
       <div className="grid gap-4 lg:grid-cols-[22rem_minmax(0,1fr)]">
         <Panel title="Start a plan"
-          sub="Patients of yours who have run an analysis"
+          sub="Anyone you have seen"
           icon="pulse"
           accent="violet"
           index={0}
           note={
-            <>Built from their scan. You accept or set aside each line.</>
+            <>A scan writes the first draft. Without one you start blank.</>
           }>
           {candidates.length === 0 ? (
             <div className="p-5">
               <Empty
-                title="Nobody to start one for"
-                body="A plan is built from a patient's skin analysis. Once one of your patients has run a scan, they appear here."
+                title="Nobody yet"
+                body="Patients you have seen appear here, and you can start a plan for any of them. Your first booking is what fills this."
               />
             </div>
           ) : (
@@ -98,7 +151,14 @@ export default async function PlansPage() {
                 <li key={c.userId} className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold text-slate-900">{c.name}</p>
-                    <p className="text-xs text-slate-500">Scanned {c.scannedOn}</p>
+                    {/* Said either way. "No analysis" is not a problem to be
+                        solved before starting — it only changes whether the
+                        first draft is pre-filled. */}
+                    <p className="text-xs text-slate-500">
+                      {c.scannedOn
+                        ? `Scanned ${c.scannedOn} — the draft starts from it`
+                        : "No analysis yet — you will start from blank"}
+                    </p>
                   </div>
                   <StartPlanButton patientUserId={c.userId} scanId={c.scanId} />
                 </li>
@@ -117,7 +177,10 @@ export default async function PlansPage() {
           }>
           {plans.length === 0 ? (
             <div className="p-5">
-              <Empty title="No plans yet" body="Start one from a patient on the left." />
+              <Empty
+                title="No plans yet"
+                body="Pick a patient on the left to start one. Nothing reaches them until you press Share, so a plan you are still thinking about is safe to leave here."
+              />
             </div>
           ) : (
             <ul className="divide-y divide-slate-100">

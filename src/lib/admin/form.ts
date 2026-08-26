@@ -9,6 +9,15 @@ export interface AdminResult {
   error?: string;
   fields?: Record<string, string>;
   id?: string;
+  /**
+   * Something worth saying on a SUCCESSFUL save that "Saved." does not cover.
+   *
+   * Added for the one case that needed it: correcting your council
+   * registration succeeds AND pauses your verified mark, and a doctor who
+   * finds that out later from a missing badge has been told badly. Left
+   * undefined everywhere else, where "Saved." is the whole story.
+   */
+  message?: string;
 }
 
 /**

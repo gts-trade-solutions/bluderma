@@ -127,7 +127,7 @@ function Shell({
   const pct = Math.round((step / (JOIN_STEPS.length - 1)) * 100);
 
   return (
-    <div className="theme-light min-h-screen bg-[#f7fafc]">
+    <div className="theme-light pro-surface min-h-screen bg-[var(--surface)]">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-5 sm:px-8">
           <BrandLogo href="/doctor" size={44} />

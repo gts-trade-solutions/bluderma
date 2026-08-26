@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AppointmentsView from "@/components/patient/AppointmentsView";
+import ReminderOptIn from "@/components/patient/ReminderOptIn";
 import { buildPatientMenu } from "@/lib/queries/nav";
 import { getMyAppointments } from "@/lib/queries/patient";
 import { requireUser } from "@/lib/session";
@@ -62,8 +63,26 @@ export default async function AppointmentsPage() {
           translucent "raise" surfaces both default to the dark theme, so a
           light page without this class renders near-white text on near-white
           cards. */}
-      <main className="theme-light min-h-screen bg-[#f7fafc]">
+      <main className="theme-light min-h-screen bg-[var(--surface)]">
         <AppointmentsView appointments={appointments} policies={policies} />
+
+        {/*
+          Offered here rather than on arrival anywhere. A permission prompt on
+          page load is the most-refused dialog on the web and a refusal is
+          close to permanent — browsers remember it and will not ask again. On
+          the page about their appointments, after they have seen what it is
+          for, is the one honest place to ask.
+        */}
+        <section className="container-page pb-14">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5">
+            <p className="text-sm font-bold text-slate-900">
+              Remind me the day before
+            </p>
+            <div className="mt-2">
+              <ReminderOptIn />
+            </div>
+          </div>
+        </section>
       </main>
       <Footer />
     </>

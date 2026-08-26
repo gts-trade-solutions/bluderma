@@ -276,7 +276,7 @@ export default function IntakeFlow() {
           old dialog the panel clipped its own overflow for rounded corners,
           which stopped sticky pinning and put the Next button below a fold
           inside a fold. That whole class of problem goes away on a page. */}
-      <div className="sticky top-0 z-20 bg-[#0d1526]">
+      <div className="sticky top-0 z-20 bg-[var(--sheet)]">
         <div className="h-1.5 w-full bg-white/10">
           <div
             className="h-full bg-gradient-to-r from-brand-500 to-teal-500 transition-all duration-500"
@@ -386,7 +386,7 @@ export default function IntakeFlow() {
             <button
               onClick={submit}
               disabled={!agreed || submitting}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-brand-600 px-8 py-3.5 text-sm font-bold text-white transition hover:bg-brand-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-brand-600 px-8 py-3.5 text-sm font-bold text-white transition hover:on-dark bg-brand-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
             >
               {submitting ? (
                 <>
@@ -407,7 +407,7 @@ export default function IntakeFlow() {
               className={`inline-flex flex-1 items-center justify-center gap-2 rounded-full px-8 py-3.5 text-sm font-bold text-white transition active:scale-[0.99] sm:flex-none ${
                 outstanding.missing > 0 && !step.skippable
                   ? "bg-brand-600/50 hover:bg-brand-600/70"
-                  : "bg-brand-600 hover:bg-brand-700"
+                  : "bg-brand-600 hover:on-dark bg-brand-700"
               }`}
             >
               {step.skippable ? "Skip" : "Next"}

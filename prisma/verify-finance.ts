@@ -16,7 +16,9 @@ import { readFileSync } from "node:fs";
 import { PrismaClient } from "@prisma/client";
 
 import {
+  CLINIC_TIERS,
   categoryLabel,
+  clinicPerformanceFor,
   netFor,
   recoveryFor,
   type AssetRow,
@@ -236,7 +238,12 @@ async function main() {
   const vendorForm = codeOnly("src/components/vendor/VendorForm.tsx");
   check(
     "the licence uploads to a private prefix",
-    /folder: "credentials"/.test(vendorForm)
+    // `vendor-licences/`, not `credentials/`. This form is public and
+    // `credentials/` is doctors-only, so every licence upload used to come
+    // back "Not permitted" — see the note in lib/uploadAuth.ts. Both prefixes
+    // are private; only one of them an applicant may write to.
+    /uploadFile\(file, "vendor-licences"\)/.test(vendorForm) &&
+      /"vendor-licences"/.test(codeOnly("src/lib/uploadAuth.ts"))
   );
   check(
     "and the form says submitting creates nothing",
@@ -282,6 +289,164 @@ async function main() {
     const left = await prisma.practiceAsset.count({ where: { name: "vfy-machine" } });
     check("the fixture cleaned up after itself", left === 0, `${left} left`);
   }
+
+  /* ------------------------------------------------------------------------
+     Which clinic earned it
+     ---------------------------------------------------------------------
+     The ranking is meant to be acted on — which rent to keep paying, where the
+     extra session goes — so the rules that matter are the ones that stop it
+     being more confident than the rows underneath it.
+     --------------------------------------------------------------------- */
+
+  console.log("\nWhich clinic earned it");
+
+  const C = (id: string, name: string) => ({ id, name });
+  const at = (clinicId: string | null, amountInr: number) => ({ clinicId, amountInr });
+
+  {
+    const perf = clinicPerformanceFor({
+      clinics: [C("a", "Adyar"), C("b", "Besant Nagar"), C("c", "Velachery")],
+      bookings: [at("a", 40_000), at("b", 90_000), at("c", 10_000)],
+      procedures: [at("b", 20_000), at("a", 5_000)],
+      otherIncome: [at("c", 2_000)],
+      expenses: [at("a", 15_000), at("b", 30_000), at("c", 40_000)],
+      unattributableInr: 25_000,
+    });
+
+    check(
+      "the strongest clinic is first",
+      perf.rows[0].name === "Besant Nagar" && perf.rows[0].rank === 1,
+      perf.rows.map((r) => r.name).join(" > ")
+    );
+    check(
+      "and the ranking is by revenue, not by name or id",
+      perf.rows.map((r) => r.revenueInr).join(",") === "110000,45000,12000"
+    );
+    check("the leader reads as the leader", perf.rows[0].tier === "LEADING");
+
+    // The rule worth having: placing second is not the same as being fine.
+    const velachery = perf.rows.find((r) => r.name === "Velachery")!;
+    check(
+      "a clinic spending more than it takes is flagged whatever its rank",
+      velachery.tier === "LOSING" && velachery.netInr === -28_000,
+      `${velachery.tier} at ${velachery.netInr}`
+    );
+    check(
+      "and it says so in money rather than in a tier name",
+      /28,000/.test(velachery.meaning),
+      velachery.meaning
+    );
+
+    // The dispensary cannot be placed, so it must not be placed.
+    check(
+      "dispensary income is never divided between clinics",
+      perf.attributedInr === 167_000 && perf.unattributableInr === 25_000,
+      `attributed ${perf.attributedInr}, held back ${perf.unattributableInr}`
+    );
+    check(
+      "no clinic's revenue contains any of it",
+      perf.rows.every(
+        (r) => r.revenueInr === r.bookingsInr + r.proceduresInr + r.otherInr
+      )
+    );
+
+    // Shares are a share OF something, and that something is the table.
+    const shares = perf.rows.reduce((n, r) => n + r.sharePct, 0);
+    check("the shares add up to one whole", Math.abs(shares - 1) < 1e-9, String(shares));
+
+    check(
+      "margin is net over revenue, not over takings-plus-dispensary",
+      Math.abs((perf.rows[0].marginPct ?? 0) - 80_000 / 110_000) < 1e-9
+    );
+    check("three clinics is not a single clinic", perf.singleClinic === false);
+  }
+
+  {
+    // Rows recorded without a location are the common real-world case: they
+    // must be reported, because silently dropping them makes every margin above
+    // look better than it is.
+    const perf = clinicPerformanceFor({
+      clinics: [C("a", "Adyar")],
+      bookings: [at("a", 10_000), at(null, 7_000)],
+      procedures: [],
+      otherIncome: [at(null, 3_000)],
+      expenses: [at(null, 4_000)],
+    });
+    check(
+      "takings with no location are reported, not dropped",
+      perf.unplacedInr === 10_000,
+      String(perf.unplacedInr)
+    );
+    check(
+      "costs with no location are reported too",
+      perf.unplacedCostsInr === 4_000,
+      String(perf.unplacedCostsInr)
+    );
+    check("one clinic says ranking means nothing here", perf.singleClinic === true);
+  }
+
+  {
+    // A month where nothing happened must not divide by zero or crown a winner.
+    const perf = clinicPerformanceFor({
+      clinics: [C("a", "Adyar"), C("b", "Besant Nagar")],
+      bookings: [],
+      procedures: [],
+      otherIncome: [],
+      expenses: [],
+    });
+    check("an empty month produces no leader", perf.rows.every((r) => r.tier === "QUIET"));
+    check(
+      "and no NaN shares or margins",
+      perf.rows.every((r) => r.sharePct === 0 && r.marginPct === null)
+    );
+  }
+
+  {
+    // A refund or a correction can leave a negative amount on a row. It must not
+    // subtract from a clinic's takings through the back door.
+    const perf = clinicPerformanceFor({
+      clinics: [C("a", "Adyar")],
+      bookings: [at("a", 5_000), at("a", -2_000)],
+      procedures: [],
+      otherIncome: [],
+      expenses: [],
+    });
+    check(
+      "a negative row cannot quietly reduce a clinic's revenue",
+      perf.rows[0].revenueInr === 5_000,
+      String(perf.rows[0].revenueInr)
+    );
+  }
+
+  // The colours are the ones the machines already use, so the two tables read
+  // the same way, and blue is the good end.
+  check(
+    "blue is the strongest tier and rose is the losing one",
+    CLINIC_TIERS.LEADING.tone === "blue" && CLINIC_TIERS.LOSING.tone === "rose"
+  );
+
+  const perfUi = readFileSync("src/components/doctor/ClinicPerformance.tsx", "utf8");
+  check(
+    "the panel names every tone as a full literal class",
+    ["border-l-blue-500", "border-l-rose-500", "bg-teal-100", "from-amber-400"].every((c) =>
+      perfUi.includes(c)
+    )
+  );
+  check(
+    "and says what is missing from the split rather than hiding it",
+    /Medicine orders belong to the practice/.test(perfUi)
+  );
+
+  const financePage = readFileSync("src/app/doctor/portal/finance/page.tsx", "utf8");
+  check(
+    "the finance page passes the dispensary in as unattributable",
+    /unattributableInr: orders\.reduce/.test(financePage)
+  );
+  check(
+    "and attributes machine charges through the asset's clinic",
+    /clinicId: a\.clinicId, amountInr: Math\.max\(u\.chargedInr, 0\)/.test(financePage)
+  );
+
 }
 
 main()

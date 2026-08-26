@@ -1,5 +1,5 @@
 /**
- * End-to-end checks for the doctor portal and White Collar.
+ * End-to-end checks for the doctor portal and Gold Collar.
  *
  * Exercises the real query and pricing paths against the real database, then
  * puts everything back. The three things worth proving:

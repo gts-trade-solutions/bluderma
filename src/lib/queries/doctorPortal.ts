@@ -17,6 +17,8 @@ export async function getDoctorForUser(userId: string) {
       focus: { include: { concern: { select: { key: true, label: true } } } },
       languages: { orderBy: { sortOrder: "asc" } },
       services: { orderBy: { sortOrder: "asc" } },
+      specialtyAreas: { orderBy: { sortOrder: "asc" } },
+      otherFocus: { orderBy: { sortOrder: "asc" } },
       modes: true,
       availability: { orderBy: { dayOfWeek: "asc" } },
     },

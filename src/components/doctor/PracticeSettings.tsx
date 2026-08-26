@@ -51,7 +51,7 @@ export default function PracticeSettings({
       )}
 
       <Card
-        title="White Collar priority"
+        title="Gold Collar priority"
         description="Members pay for a better chance at the times everyone wants."
       >
         <TextField

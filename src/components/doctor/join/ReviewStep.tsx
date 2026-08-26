@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import { prisma } from "@/lib/prisma";
 import { blockingGaps, getApplicationGaps } from "@/lib/doctor/gaps";
+import ListedElsewhere from "./ListedElsewhere";
 import SubmitApplication from "./SubmitApplication";
 
 /**
@@ -23,7 +25,13 @@ export default async function ReviewStep({
   backHref?: string;
   stepHref?: (step: number) => string;
 }) {
-  const gaps = blockingGaps(await getApplicationGaps(doctorId));
+  const [gaps, doctor] = await Promise.all([
+    getApplicationGaps(doctorId).then(blockingGaps),
+    prisma.doctor.findUniqueOrThrow({
+      where: { id: doctorId },
+      select: { listedElsewhere: true, listedElsewhereNames: true },
+    }),
+  ]);
 
   if (status === "PENDING") {
     return (
@@ -90,6 +98,12 @@ export default async function ReviewStep({
           Until then your profile is not visible to anyone outside our team.
         </p>
       </div>
+
+      {/* Asked last, and never required. See ListedElsewhere.tsx. */}
+      <ListedElsewhere
+        defaultAnswer={doctor.listedElsewhere}
+        defaultNames={doctor.listedElsewhereNames ?? ""}
+      />
 
       <div className="flex items-center gap-3 border-t border-slate-100 pt-5">
         <SubmitApplication disabled={gaps.length > 0} />

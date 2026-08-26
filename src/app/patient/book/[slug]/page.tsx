@@ -63,7 +63,7 @@ export default async function BookPage({
   const benefits = benefitsOf(membership);
 
   return (
-    <div className="min-h-screen bg-[var(--surface)]">
+    <div className="min-h-screen bg-surface">
       <header className="border-b border-white/10">
         <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-5 sm:px-8">
           {/* The page ground is --surface (#070d1c); tone defaults to "dark",

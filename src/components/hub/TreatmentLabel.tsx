@@ -47,7 +47,7 @@ export default function TreatmentLabel({
       />
       <div className="absolute inset-x-0 top-0 h-[62%] bg-gradient-to-b from-[#070d1c]/90 via-[#070d1c]/65 to-transparent" />
 
-      <div className="relative flex h-full flex-col p-3.5">
+      <div className="on-dark relative flex h-full flex-col p-3.5">
         <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-teal-300">
           {categoryLabel}
         </p>

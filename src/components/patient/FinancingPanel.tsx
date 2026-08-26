@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Check, LoaderCircle, MessageSquare, X } from "lucide-react";
+import { useFormValidation } from "@/hooks/useFormValidation";
 
 import {
   requestFinancing,
@@ -52,6 +53,7 @@ export default function FinancingPanel({ rows }: { rows: FinancingRow[] }) {
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const [pending, start] = useTransition();
+  const formCheck = useFormValidation();
 
   return (
     <div>
@@ -105,11 +107,11 @@ export default function FinancingPanel({ rows }: { rows: FinancingRow[] }) {
         </p>
       ) : open ? (
         <form
+          ref={formCheck.formRef}
+          noValidate
           className="card-soft p-5"
-          onSubmit={(e) => {
-            e.preventDefault();
+          onSubmit={formCheck.guard((fd, form) => {
             setError(null);
-            const fd = new FormData(e.currentTarget);
             start(async () => {
               const res = await requestFinancing({
                 treatment: String(fd.get("treatment") ?? ""),
@@ -122,8 +124,9 @@ export default function FinancingPanel({ rows }: { rows: FinancingRow[] }) {
                 setOpen(false);
               }
             });
-          }}
+          })}
         >
+          {formCheck.summary}
           <p className="text-sm font-bold text-ink">Ask about paying over time</p>
           <p className="mt-1 text-xs leading-relaxed text-ink-muted">
             Tell us what you are considering. The clinic will tell you what is

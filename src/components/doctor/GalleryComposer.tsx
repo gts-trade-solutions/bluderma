@@ -4,6 +4,8 @@ import { useRef, useState, useTransition } from "react";
 import { Check, ImagePlus, LoaderCircle, X } from "lucide-react";
 
 import { createGalleryCase } from "@/lib/actions/gallery";
+import { uploadFile } from "@/lib/uploadClient";
+import { useFormValidation } from "@/hooks/useFormValidation";
 
 export interface GalleryPatient {
   userId: string;
@@ -41,7 +43,7 @@ export default function GalleryComposer({
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState<"before" | "after" | null>(null);
   const [pending, start] = useTransition();
-  const formRef = useRef<HTMLFormElement>(null);
+  const formCheck = useFormValidation();
 
   async function upload(file: File, side: "before" | "after") {
     setError(null);
@@ -50,50 +52,35 @@ export default function GalleryComposer({
       return;
     }
     setBusy(side);
-    try {
-      const presign = await fetch("/api/uploads/presign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type,
-          size: file.size,
-          // Private prefix. See the note at the top.
-          folder: "patients",
-        }),
-      });
-      if (!presign.ok) throw new Error();
-      const { uploadUrl, publicUrl, key } = await presign.json();
 
-      const put = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      if (!put.ok) throw new Error();
+    // Private prefix. See the note at the top.
+    const res = await uploadFile(file, "patients");
+    setBusy(null);
 
-      const row = { url: publicUrl, key, preview: URL.createObjectURL(file) };
-      if (side === "before") setBefore(row);
-      else setAfter(row);
-    } catch {
-      setError("That upload did not go through. Please try again.");
-    } finally {
-      setBusy(null);
+    if (!res.ok) {
+      setError(res.error);
+      return;
     }
+    const row = {
+      url: res.file.url,
+      key: res.file.key,
+      preview: URL.createObjectURL(file),
+    };
+    if (side === "before") setBefore(row);
+    else setAfter(row);
   }
 
   const ready = before && after;
 
   return (
     <form
-      ref={formRef}
+      ref={formCheck.formRef}
+      noValidate
       className="space-y-4"
-      onSubmit={(e) => {
-        e.preventDefault();
+      onSubmit={formCheck.guard((fd, form) => {
         if (!before || !after) return;
         setError(null);
         setDone(false);
-        const fd = new FormData(e.currentTarget);
         start(async () => {
           const res = await createGalleryCase({
             patientUserId: String(fd.get("patientUserId") ?? ""),
@@ -110,11 +97,12 @@ export default function GalleryComposer({
             setDone(true);
             setBefore(null);
             setAfter(null);
-            formRef.current?.reset();
+            formCheck.formRef.current?.reset();
           }
         });
-      }}
+      })}
     >
+      {formCheck.summary}
       <div className="grid gap-3 sm:grid-cols-2">
         <Slot
           label="Before"

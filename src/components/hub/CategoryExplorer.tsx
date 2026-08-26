@@ -231,7 +231,7 @@ function Chip({
       aria-pressed={on}
       className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${
         on
-          ? "bg-white text-[#070d1c]"
+          ? "bg-white text-[var(--on-sheet)]"
           : "bg-white/[0.04] text-ink-soft ring-1 ring-white/10 hover:text-brand-200"
       }`}
     >

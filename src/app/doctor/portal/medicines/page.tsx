@@ -1,14 +1,20 @@
 import { MedicineOrderStatus } from "@prisma/client";
 
-import { Empty, PageHead, Panel } from "@/components/doctor/portalUi";
-import MedicineForm, {
-  MedicineRow,
-} from "@/components/doctor/MedicineForm";
+import Link from "next/link";
+
+import {
+  Empty,
+  PageHead,
+  Panel,
+  RxMark,
+  portalBtnQuiet,
+} from "@/components/doctor/portalUi";
+import { MedicineRow } from "@/components/doctor/MedicineForm";
 import OrderRow from "@/components/doctor/OrderRow";
 import { getOwnDoctor } from "@/lib/doctor/guard";
 import { prisma } from "@/lib/prisma";
 
-export const metadata = { title: "Medicines" };
+export const metadata = { title: "Prescriptions" };
 export const dynamic = "force-dynamic";
 
 const money = (n: number) => `₹${n.toLocaleString("en-IN")}`;
@@ -24,6 +30,18 @@ const day = (d: Date) =>
  * cannot be sold to a consumer and nothing here reaches them.
  *
  * This is what a doctor actually hands a patient after a consultation.
+ *
+ * ── What moved out, and why ──────────────────────────────────────────────
+ * Adding stock, counting the shelf and booking in a delivery used to happen
+ * on this screen. They are a different job: a doctor prescribes during a
+ * consultation, and somebody counts the shelf on a Friday afternoon — often
+ * not the same person, never at the same moment. Folding the second into the
+ * first meant it had no home and did not get done, and a stock figure nobody
+ * maintains is worse than none, because the order flow refuses orders against
+ * it.
+ *
+ * So it lives at /doctor/portal/inventory now. This screen is what you give a
+ * patient; that one is what you have.
  */
 export default async function MedicinesPage() {
   const owner = await getOwnDoctor();
@@ -44,6 +62,7 @@ export default async function MedicinesPage() {
         priceInr: true,
         mrpInr: true,
         stock: true,
+        lowStockAt: true,
         prescriptionOnly: true,
       },
     }),
@@ -75,30 +94,26 @@ export default async function MedicinesPage() {
   return (
     <>
       <PageHead
-        title="Medicines"
-        sub="What you dispense, and what patients have ordered. Your own list, not the clinical consumables catalogue."
+        title={
+          <>
+            <RxMark /> Prescriptions
+          </>
+        }
+        sub="What you prescribe, and what patients have ordered against it. Write a prescription from a booking in Today or Calendar; this is the list it draws on."
+        action={
+          <Link href="/doctor/portal/inventory" className={portalBtnQuiet}>
+            My inventory
+          </Link>
+        }
       />
 
-      <div className="grid gap-4 lg:grid-cols-[24rem_minmax(0,1fr)]">
-        <Panel title="Add a medicine"
-          sub="What you dispense yourself"
-          icon="rupee"
-          accent="teal"
-          index={0}
-          note={
-            <>What you hand a patient after a consultation.</>
-          }>
-          <div className="p-4 sm:p-5">
-            <MedicineForm />
-          </div>
-        </Panel>
-
+      <div className="mb-4 grid gap-4 lg:grid-cols-2">
         <Panel
-          title="Your list"
+          title="What you prescribe"
           sub={`${medicines.length} listed`}
           icon="clinic"
           accent="brand"
-          index={1}
+          index={0}
           note={
             <>Rx items ask the patient for their prescription at checkout.</>
           }
@@ -107,7 +122,12 @@ export default async function MedicinesPage() {
             <div className="p-5">
               <Empty
                 title="Nothing listed yet"
-                body="Add what you dispense and patients can order it after a consultation."
+                body="Add what you dispense in My inventory, and it becomes something you can prescribe in one tap and patients can reorder from you."
+                action={
+                  <Link href="/doctor/portal/inventory" className={portalBtnQuiet}>
+                    Open my inventory
+                  </Link>
+                }
               />
             </div>
           ) : (
@@ -117,6 +137,66 @@ export default async function MedicinesPage() {
               ))}
             </ul>
           )}
+        </Panel>
+
+        {/* Where a prescription is actually written, said plainly. It happens
+            inside an appointment — which is correct, because a prescription
+            has to be against a visit — and nothing on this page said so, so
+            the screen read as a list with no verb. */}
+        <Panel
+          title="How to write one"
+          sub="It happens against a booking"
+          icon="sheet"
+          accent="violet"
+          index={1}
+          note={<>A prescription is always tied to a visit you actually had.</>}
+        >
+          <div className="p-4 sm:p-5">
+            <ol className="space-y-3">
+              {[
+                {
+                  n: 1,
+                  t: "Open the booking",
+                  b: "From Today or the Calendar, tap the appointment.",
+                },
+                {
+                  n: 2,
+                  t: "Issue a prescription",
+                  b: "Near the foot of the panel. Give it a heading — what the course is for.",
+                },
+                {
+                  n: 3,
+                  t: "Pick off your list",
+                  b: "Anything you stock fills in its own strength and form, and warns you if you have run out. Anything else you type.",
+                },
+                {
+                  n: 4,
+                  t: "It reaches them",
+                  b: "Filed to their record, readable in their profile, and reorderable from you where you stock it.",
+                },
+              ].map((s) => (
+                <li key={s.n} className="flex gap-3">
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-violet-100 text-[11px] font-black text-violet-800">
+                    {s.n}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-900">{s.t}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+                      {s.b}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link href="/doctor/portal/today" className={portalBtnQuiet}>
+                Today
+              </Link>
+              <Link href="/doctor/portal/calendar" className={portalBtnQuiet}>
+                Calendar
+              </Link>
+            </div>
+          </div>
         </Panel>
       </div>
 
@@ -128,7 +208,7 @@ export default async function MedicinesPage() {
           accent="amber"
           index={2}
           note={
-            <>Move each one along as you dispense and send it.</>
+            <>Dispensing one takes it off your shelf automatically.</>
           }
         >
           {orders.length === 0 ? (

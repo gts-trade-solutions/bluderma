@@ -64,7 +64,7 @@ export default function DoctorDirectory({ doctors }: { doctors: Doctor[] }) {
             onClick={() => setCity(c)}
             className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition ${
               city === c
-                ? "bg-white text-[#070d1c]"
+                ? "bg-white text-[var(--on-sheet)]"
                 : "bg-white/[0.04] text-ink-soft ring-1 ring-white/10 hover:text-brand-200"
             }`}
           >
@@ -161,8 +161,32 @@ function DirectoryCard({
 
       <p className="mt-3 text-xs leading-relaxed text-ink-muted">{doctor.about}</p>
 
+      {/* Areas of speciality lead, because "known for acne scarring" is what
+          a person choosing a dermatologist is actually reading for, and it
+          says more than three procedure names. The services fill in behind
+          them for a practitioner who has not named any. */}
+      {(doctor.specialtyAreas?.length ?? 0) > 0 && (
+        <div className="mt-3">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-teal-300/80">
+            Known for
+          </p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {doctor.specialtyAreas!.slice(0, 3).map((a: string) => (
+              <span
+                key={a}
+                className="rounded-full bg-teal-400/15 px-2.5 py-1 text-[11px] font-semibold text-teal-100 ring-1 ring-inset ring-teal-300/25"
+              >
+                {a}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="mt-3 flex flex-wrap gap-1.5">
-        {doctor.services.slice(0, 3).map((s) => (
+        {doctor.services
+          .slice(0, (doctor.specialtyAreas?.length ?? 0) > 0 ? 2 : 3)
+          .map((s) => (
           <span
             key={s}
             className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-ink-soft"
@@ -172,9 +196,47 @@ function DirectoryCard({
         ))}
       </div>
 
-      <p className="mt-3 flex items-center gap-1.5 text-[11px] text-ink-muted">
-        <Languages className="h-3 w-3" /> {doctor.languages.join(", ")}
-      </p>
+      {doctor.languages.length > 0 && (
+        <p className="mt-3 flex items-center gap-1.5 text-[11px] text-ink-muted">
+          <Languages className="h-3 w-3" /> {doctor.languages.join(", ")}
+        </p>
+      )}
+
+      {/*
+        What a previous patient actually said.
+
+        The star rating was already here and the words were not — they were on
+        a site-wide testimonials strip where they could not be attached to the
+        doctor they were about, which is the one place they are worth reading.
+        A person choosing between two practitioners is choosing on what
+        somebody said, not on a number to one decimal place.
+
+        Nothing renders when there is nothing published. There is deliberately
+        no fallback: this codebase has already deleted one set of invented
+        testimonials, and a card that quietly borrows somebody else's review
+        would be the same mistake wearing a different hat.
+      */}
+      {(doctor.reviewList?.length ?? 0) > 0 && (
+        <figure className="mt-3 rounded-xl bg-white/[0.05] p-3 ring-1 ring-inset ring-white/10">
+          <blockquote className="text-[12px] leading-relaxed text-ink-soft">
+            &ldquo;{doctor.reviewList![0].body}&rdquo;
+          </blockquote>
+          <figcaption className="mt-1.5 flex items-center gap-1.5 text-[11px] text-ink-muted">
+            <span aria-hidden className="text-amber-400">
+              {"★".repeat(doctor.reviewList![0].rating)}
+            </span>
+            <span className="sr-only">
+              {doctor.reviewList![0].rating} out of 5
+            </span>
+            {doctor.reviewList![0].author}
+            {(doctor.reviewList?.length ?? 0) > 1 && (
+              <span className="text-ink-muted/70">
+                · {doctor.reviewList!.length - 1} more
+              </span>
+            )}
+          </figcaption>
+        </figure>
+      )}
 
       <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-medium text-ink-muted">
         <span className="inline-flex items-center gap-1">

@@ -12,6 +12,7 @@ import {
   draftClinicAbout,
   improveText,
   matchTreatments,
+  rephraseClinical,
 } from "@/lib/integrations/aiAssist";
 import { getTreatmentVocabulary } from "@/lib/queries/treatmentVocabulary";
 
@@ -44,6 +45,19 @@ const schema = z.discriminatedUnion("task", [
   z.object({
     task: z.literal("match-treatments"),
     query: z.string().trim().min(3).max(300),
+  }),
+  z.object({
+    task: z.literal("clinical-rephrase"),
+    /**
+     * What the doctor dictated or typed. The one place in this route where
+     * the text genuinely comes from the request body rather than the
+     * database — because it is the doctor's own words about the patient in
+     * front of them, and there is nowhere else it could come from. It is
+     * never treated as fact about anything: it is formatted and handed
+     * straight back for them to approve.
+     */
+    text: z.string().trim().min(10).max(4000),
+    kind: z.enum(["PRE", "POST"]),
   }),
 ]);
 
@@ -152,6 +166,28 @@ export async function POST(req: Request) {
       );
     }
     return NextResponse.json({ ok: true, text, source: "ai" });
+  }
+
+  // ── A dictated note, formatted for the patient to read ─────────────────
+  //
+  // Returns BOTH halves. The component shows them side by side and submits
+  // nothing until the doctor picks one: a rewritten clinical instruction that
+  // slid into the field on its own is one nobody checked, and the patient
+  // cannot tell which sentence came from their doctor.
+  if (body.task === "clinical-rephrase") {
+    const text = await rephraseClinical(body.text, body.kind);
+    if (!text) {
+      return NextResponse.json(
+        { ok: false, error: "ai_unavailable" },
+        { status: 503 }
+      );
+    }
+    return NextResponse.json({
+      ok: true,
+      original: body.text,
+      text,
+      source: "ai",
+    });
   }
 
   // ── Matching free text to real treatment names ─────────────────────────

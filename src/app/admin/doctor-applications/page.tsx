@@ -66,6 +66,8 @@ export default async function DoctorApplicationsPage({
         regNumber: true,
         regYear: true,
         licenceDocUrl: true,
+        listedElsewhere: true,
+        listedElsewhereNames: true,
         createdAt: true,
         user: { select: { email: true, lastLoginAt: true } },
         clinics: {
@@ -239,6 +241,32 @@ export default async function DoctorApplicationsPage({
                       <span className="font-semibold text-rose-600">
                         No location added
                       </span>
+                    )}
+                  </Fact>
+
+                  {/*
+                    Never a reason to refuse anybody. It is here because a
+                    practitioner already taking bookings elsewhere has a
+                    calendar we cannot see, which is the commonest cause of a
+                    clash in their first month — so whoever approves them
+                    knows to talk about it.
+
+                    The three states are genuinely three: NULL means the
+                    question was skipped, which is not the same as "no", and
+                    the column is nullable precisely so this can say so.
+                  */}
+                  <Fact label="Listed elsewhere">
+                    {d.listedElsewhere === true ? (
+                      <>
+                        Yes
+                        <span className="block text-xs text-ink-muted">
+                          {d.listedElsewhereNames || "Did not say which"}
+                        </span>
+                      </>
+                    ) : d.listedElsewhere === false ? (
+                      "No"
+                    ) : (
+                      <span className="text-ink-muted">Not answered</span>
                     )}
                   </Fact>
                 </dl>

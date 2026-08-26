@@ -83,10 +83,24 @@ async function main() {
   /* ── The storage arrangement that makes withdrawal real ────────────── */
 
   const composer = codeOnly("src/components/doctor/GalleryComposer.tsx");
+  // The composer now goes through the shared client uploader, so the folder is
+  // an argument rather than a request field. What matters is unchanged and is
+  // checked twice: it writes to `patients`, and `patients` is not a prefix the
+  // bucket policy makes readable — a withdrawn consent cannot un-share an
+  // object that anyone with the URL can already fetch.
   check(
     "gallery images upload to a PRIVATE prefix",
-    /folder: "patients"/.test(composer),
+    /uploadFile\([^)]*"patients"\)/.test(composer),
     "a public object cannot be un-shown"
+  );
+  const s3Setup = codeOnly("prisma/setup-s3.ts");
+  const publicList = s3Setup.slice(
+    s3Setup.indexOf("const PUBLIC_PREFIXES = ["),
+    s3Setup.indexOf("];", s3Setup.indexOf("const PUBLIC_PREFIXES = ["))
+  );
+  check(
+    "and patients/ is never made world-readable",
+    publicList.length > 0 && !publicList.includes('"patients"')
   );
 
   const route = codeOnly("src/app/api/gallery/[id]/[side]/route.ts");

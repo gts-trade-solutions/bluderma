@@ -9,6 +9,7 @@ import {
 } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { slotLockFor } from "@/lib/booking/slotLock";
 import { bookingSchema, fieldErrors } from "@/lib/validation";
 import { getCurrentUser } from "@/lib/session";
 import {
@@ -61,10 +62,9 @@ const MAX_OPEN_BOOKINGS = 8;
 /** Appointment.durationMin's schema default, which client bookings take. */
 const DEFAULT_DURATION_MIN = 30;
 
-/** The lock value whose unique index prevents two people holding one slot. */
-function slotLockFor(doctorId: string, at: Date): string {
-  return `${doctorId}@${at.toISOString()}`;
-}
+// The lock format lives in lib/booking/slotLock.ts: the hand-over flow writes
+// it too, and two copies of a string that must match exactly is a bug waiting
+// for the day somebody changes one of them.
 
 export async function bookAppointment(input: unknown): Promise<BookingResult> {
   // Booking requires an account — that is a product decision from the sprint
@@ -196,7 +196,7 @@ export async function bookAppointment(input: unknown): Promise<BookingResult> {
   const visitFee =
     wantedMode === ConsultMode.HOME ? await getHomeVisitFee() : 0;
 
-  // White Collar pricing. Resolved server-side from the session — the client
+  // Gold Collar pricing. Resolved server-side from the session — the client
   // never gets to assert that it is a member.
   const membership = await getMembership(user.id);
   const benefits = benefitsOf(membership);
@@ -364,7 +364,7 @@ export async function bookAppointment(input: unknown): Promise<BookingResult> {
           : practice
           ? `${practice.clinic.name}, ${practice.clinic.area}, ${practice.clinic.city}`
           : `${doctor.clinic}, ${doctor.location}`;
-      const savedLine = discountInr > 0 ? `\nWhite Collar saving: ₹${discountInr}` : "";
+      const savedLine = discountInr > 0 ? `\nGold Collar saving: ₹${discountInr}` : "";
       await sendEmail({
         to: user.email,
         template: "booking-confirmation",

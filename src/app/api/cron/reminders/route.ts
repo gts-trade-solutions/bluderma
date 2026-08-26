@@ -4,6 +4,7 @@ import { AppointmentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
 import { getBookingPolicy } from "@/lib/booking/policySettings";
+import { pushToUser } from "@/lib/push";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -58,6 +59,7 @@ export async function GET(req: Request) {
       mode: true,
       patientName: true,
       patientEmail: true,
+      patientUserId: true,
       doctor: { select: { name: true, clinic: true, location: true } },
     },
   });
@@ -67,9 +69,39 @@ export async function GET(req: Request) {
   let sent = 0;
   let skipped = 0;
 
+  let pushed = 0;
+
   for (const a of due) {
+    // ── The browser notification ────────────────────────────────────
+    //
+    // Sent BEFORE the email guard below, because the two are independent: a
+    // booking made without an email address can still have a signed-in
+    // patient with a phone, and that person was getting nothing at all.
+    //
+    // The payload carries a time, a name and a link. Never the reason for the
+    // visit — a notification is read on a lock screen by whoever is holding
+    // the phone, and "your acne review is at 4pm" is a disclosure nobody
+    // agreed to by tapping Allow. See lib/push.ts.
+    if (a.patientUserId) {
+      const at = a.scheduledAt.toISOString().slice(11, 16);
+      const outcome = await pushToUser(a.patientUserId, {
+        title: `Tomorrow at ${at}`,
+        body: `Your appointment with ${a.doctor.name}.`,
+        url: "/patient/appointments",
+        // One tag per appointment: a second reminder replaces the first
+        // rather than stacking, which is how a tray gets muted.
+        tag: `appt-${a.id}`,
+      }).catch((e) => {
+        console.error("reminder push failed", a.id, e);
+        return { sent: 0, pruned: 0, failed: 1 };
+      });
+      pushed += outcome.sent;
+    }
+
     if (!a.patientEmail) {
-      // Nothing to send to, but stamp it so it stops being picked up.
+      // No email address. A push may still have gone out just above — that is
+      // the point of doing it first — but there is nothing more to do here, so
+      // stamp it and stop picking it up.
       await prisma.appointment.update({
         where: { id: a.id },
         data: { reminderSentAt: now },
@@ -107,5 +139,11 @@ export async function GET(req: Request) {
     sent += 1;
   }
 
-  return NextResponse.json({ ok: true, considered: due.length, sent, skipped });
+  return NextResponse.json({
+    ok: true,
+    considered: due.length,
+    sent,
+    skipped,
+    pushed,
+  });
 }

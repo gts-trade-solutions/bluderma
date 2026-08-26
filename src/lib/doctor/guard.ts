@@ -29,6 +29,8 @@ export interface DoctorOwner {
   publicId: string;
   requiresApproval: boolean;
   travelBufferMin: number;
+  /** Their portrait, for the rail and the portal header. */
+  image: string;
 }
 
 export async function getOwnDoctor(): Promise<DoctorOwner | null> {
@@ -47,6 +49,7 @@ export async function getOwnDoctor(): Promise<DoctorOwner | null> {
       status: true,
       requiresApproval: true,
       travelBufferMin: true,
+      image: true,
     },
   });
   if (!doctor) return null;
@@ -57,6 +60,7 @@ export async function getOwnDoctor(): Promise<DoctorOwner | null> {
     status: doctor.status,
     name: doctor.name,
     publicId: doctor.publicId ?? "",
+    image: doctor.image,
     requiresApproval: doctor.requiresApproval,
     travelBufferMin: doctor.travelBufferMin,
   };

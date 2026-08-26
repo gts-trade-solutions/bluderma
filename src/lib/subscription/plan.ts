@@ -1,7 +1,7 @@
 import { SubscriptionInterval } from "@prisma/client";
 
 /**
- * White Collar, the client membership — the pure half.
+ * Gold Collar, the client membership — the pure half.
  *
  * No data access lives here on purpose, so the fee arithmetic can be reasoned
  * about and tested without a database, and so scripts can import it without

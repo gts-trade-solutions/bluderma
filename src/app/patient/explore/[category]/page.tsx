@@ -64,9 +64,9 @@ export default async function CategoryPage({ params }: Params) {
         menu={buildPatientMenu()}
       />
 
-      <main className="bg-[var(--surface)] pb-20">
+      <main className="bg-surface pb-20">
         {/* ── Category header ───────────────────────────────────────── */}
-        <section className="relative isolate overflow-hidden bg-[#070d1c]">
+        <section className="relative isolate overflow-hidden bg-surface">
           <SmartImage
             src={category.image}
             alt=""
@@ -76,7 +76,7 @@ export default async function CategoryPage({ params }: Params) {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#070d1c] via-[#070d1c]/85 to-[#070d1c]/15" />
 
-          <div className="container-page relative py-14 sm:py-20">
+          <div className="on-dark container-page relative py-14 sm:py-20">
             <Link
               href="/patient/explore"
               className="inline-flex items-center gap-1.5 text-sm font-medium text-white/70 transition hover:text-white"

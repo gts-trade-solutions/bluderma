@@ -10,6 +10,7 @@ import HoursStep from "@/components/doctor/join/HoursStep";
 import PracticeSettings from "@/components/doctor/PracticeSettings";
 import { getOwnDoctor } from "@/lib/doctor/guard";
 import { prisma } from "@/lib/prisma";
+import { CLINIC_LIST_SELECT } from "@/lib/queries/clinicSelect";
 
 export const metadata = { title: "My practice" };
 export const dynamic = "force-dynamic";
@@ -43,29 +44,7 @@ export default async function PracticePage() {
       travelBufferMin: true,
       requiresApproval: true,
       priorityHoldPerDay: true,
-      clinics: {
-        orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }],
-        select: {
-          feeInr: true,
-          isPrimary: true,
-          clinic: {
-            select: {
-              id: true,
-              name: true,
-              addressLine1: true,
-              addressLine2: true,
-              area: true,
-              city: true,
-              state: true,
-              pincode: true,
-              phone: true,
-              colorKey: true,
-              photos: { select: { kind: true, url: true } },
-              facilities: { orderBy: { sortOrder: "asc" }, select: { name: true } },
-            },
-          },
-        },
-      },
+      clinics: CLINIC_LIST_SELECT,
       availability: {
         orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
         select: {

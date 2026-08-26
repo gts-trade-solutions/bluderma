@@ -59,7 +59,7 @@ export default function SkinScanCard() {
   const used = status?.authed === true && status.state.status === "none";
 
   return (
-    <section className="relative overflow-hidden rounded-[2rem] bg-[#070d1c]">
+    <section className="relative overflow-hidden rounded-[2rem] bg-surface">
       {/* Photographic ground */}
       <div className="absolute inset-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -73,7 +73,7 @@ export default function SkinScanCard() {
       </div>
       <div className="pointer-events-none absolute -left-24 top-1/3 h-72 w-72 rounded-full bg-teal-500/20 blur-[100px]" />
 
-      <div className="relative grid items-center gap-10 px-6 py-12 sm:px-10 sm:py-16 lg:grid-cols-[1fr_20rem] lg:px-14 lg:py-20">
+      <div className="on-dark relative grid items-center gap-10 px-6 py-12 sm:px-10 sm:py-16 lg:grid-cols-[1fr_20rem] lg:px-14 lg:py-20">
         {/* ── Copy ─────────────────────────────────────────────────── */}
         <div className="max-w-xl">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-300 backdrop-blur">

@@ -35,6 +35,8 @@ import { useVoice } from "@/components/assistant/useVoice";
 
 type Msg = { role: "user" | "assistant"; content: string; source?: string };
 
+/** Remembers that the launcher has introduced itself. Set once, read forever. */
+const NUDGE_KEY = "bd-assistant-nudged";
 const HIDDEN_ON = ["/admin", "/login", "/register", "/signin", "/signup", "/forgot", "/reset"];
 
 export default function Assistant() {
@@ -46,6 +48,8 @@ export default function Assistant() {
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [starters, setStarters] = useState<string[]>([]);
+  /** The one-time nudge beside the launcher. See dismissNudge below. */
+  const [nudge, setNudge] = useState(false);
   const [audience, setAudience] = useState<"patient" | "doctor">("patient");
   const [readAloud, setReadAloud] = useState(false);
 
@@ -159,6 +163,37 @@ export default function Assistant() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  /* ── The one-time nudge ──────────────────────────────────────────────
+     An assistant nobody notices is an assistant nobody uses, and a floating
+     circle in the corner is easy not to notice. So it says one sentence, once
+     — after forty seconds, which is long enough to be past skim-reading and
+     into actually wondering something.
+
+     Once, ever, is the whole point: it is remembered in localStorage rather
+     than in state, so it does not reappear on the next page or the next
+     visit. Anything that pops up twice is an interruption the second time. */
+  useEffect(() => {
+    if (open) return;
+    try {
+      if (localStorage.getItem(NUDGE_KEY)) return;
+    } catch {
+      // No storage means no way to remember having shown it, and something
+      // that cannot be dismissed permanently should not appear at all.
+      return;
+    }
+    const t = window.setTimeout(() => setNudge(true), 40_000);
+    return () => window.clearTimeout(t);
+  }, [open]);
+
+  function dismissNudge() {
+    setNudge(false);
+    try {
+      localStorage.setItem(NUDGE_KEY, "1");
+    } catch {
+      /* nothing to remember it with */
+    }
+  }
+
   if (HIDDEN_ON.some((p) => pathname.startsWith(p))) return null;
   if (!signedIn) return null;
 
@@ -169,24 +204,57 @@ export default function Assistant() {
   return (
     <>
       {/* ── The button ─────────────────────────────────────────────── */}
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-label={open ? "Close the assistant" : "Ask the assistant"}
-        aria-expanded={open}
-        className="fixed bottom-5 right-5 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-[0_10px_34px_-8px_rgba(15,23,42,0.65)] ring-1 ring-white/15 transition duration-200 hover:scale-105 hover:shadow-[0_14px_40px_-8px_rgba(15,23,42,0.7)] focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
+      {/* The launcher ─────────────────────────── */}
+      <div
+        className="fixed bottom-5 right-5 z-[60] flex items-center gap-2.5"
         style={{ marginBottom: "env(safe-area-inset-bottom)" }}
       >
-        {open ? (
-          <CloseGlyph />
-        ) : (
-          <>
-            <Avatar kind={isDoctor ? "bot" : "doctor"} size={34} />
-            {/* A quiet "I am here" without a notification dot's false urgency. */}
-            <span className="absolute -right-0.5 -top-0.5 h-3.5 w-3.5 rounded-full border-2 border-slate-900 bg-teal-400" />
-          </>
+        {/* The nudge. Shown once, ever, and only after somebody has been on
+            the page long enough to have a question — an assistant that
+            announces itself on arrival is an advert for itself. */}
+        {nudge && !open && (
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(true);
+              dismissNudge();
+            }}
+            className="on-dark animate-scale-in max-w-[13rem] rounded-2xl rounded-br-md bg-gradient-to-br from-brand-800 to-brand-900 px-3.5 py-2.5 text-left text-[12.5px] font-semibold leading-snug text-white shadow-[0_10px_30px_-10px_rgba(2,32,71,0.8)] ring-1 ring-white/15"
+          >
+            {isDoctor ? "Ask me about your day" : "Question about a treatment?"}
+            <span className="mt-0.5 block text-[10.5px] font-medium text-white/60">
+              Tap to ask — no waiting
+            </span>
+          </button>
         )}
-      </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setOpen((o) => !o);
+            dismissNudge();
+          }}
+          aria-label={open ? "Close the assistant" : "Ask the assistant"}
+          aria-expanded={open}
+          className="on-dark group relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-700 via-brand-800 to-teal-800 text-white shadow-[0_12px_36px_-8px_rgba(2,32,71,0.75)] ring-1 ring-white/20 transition duration-200 hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-300"
+        >
+          {/* The halo. Only while closed and only until it has been opened
+              once — a permanent pulse in the corner of every page is a
+              distraction, not an affordance. */}
+          {!open && nudge && (
+            <span
+              aria-hidden
+              className="absolute inset-0 animate-ping rounded-full bg-teal-400/30"
+            />
+          )}
+          <span className="relative transition-transform duration-200 group-hover:scale-110">
+            {open ? <CloseGlyph /> : <ChatGlyph />}
+          </span>
+          {!open && (
+            <span className="absolute -right-0.5 -top-0.5 h-3.5 w-3.5 rounded-full border-2 border-brand-900 bg-teal-400" />
+          )}
+        </button>
+      </div>
 
       {!open ? null : (
         <div
@@ -194,7 +262,7 @@ export default function Assistant() {
           aria-label={label}
           // theme-light: see the header comment. Without it nobody can see
           // what they are typing.
-          className="theme-light fixed inset-x-0 bottom-0 z-[59] flex h-[88dvh] max-h-[88dvh] flex-col overflow-hidden rounded-t-[28px] bg-white shadow-[0_-10px_70px_-12px_rgba(15,23,42,0.5)] ring-1 ring-slate-200 sm:inset-x-auto sm:bottom-24 sm:right-5 sm:h-[min(36rem,78vh)] sm:w-[25rem] sm:rounded-3xl"
+          className="theme-light animate-scale-in fixed inset-x-0 bottom-0 z-[59] flex h-[88dvh] max-h-[88dvh] flex-col overflow-hidden rounded-t-[28px] bg-white shadow-[0_-10px_70px_-12px_rgba(15,23,42,0.5)] ring-1 ring-slate-200 sm:inset-x-auto sm:bottom-24 sm:right-5 sm:h-[min(36rem,78vh)] sm:w-[26rem] sm:rounded-3xl"
         >
           {/* Thumb handle. Only on the phone sheet, where it says "this
               slides" before anybody has to discover it. */}
@@ -203,16 +271,27 @@ export default function Assistant() {
           </div>
 
           {/* ── Header ───────────────────────────────────────────── */}
-          <div className="flex items-center gap-3 bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3.5 sm:rounded-t-3xl">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/10 ring-1 ring-white/15">
+          {/* on-dark: this header is a brand gradient on every theme, so the
+              white type on it must stay white. Without the mark the generated
+              theme layer repaints it to var(--ink) — near-black on daylight,
+              on a near-black header. */}
+          <div className="on-dark relative flex items-center gap-3 overflow-hidden bg-gradient-to-br from-brand-800 via-brand-900 to-teal-900 px-4 py-3.5 sm:rounded-t-3xl">
+            <span
+              aria-hidden
+              className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-teal-400/25 blur-2xl"
+            />
+            <span className="relative grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/10 ring-1 ring-white/20">
               <Avatar kind={isDoctor ? "bot" : "doctor"} size={30} />
             </span>
-            <div className="min-w-0 flex-1">
+            <div className="relative min-w-0 flex-1">
               <p className="truncate font-display text-[15px] font-bold leading-tight text-white">
                 {label}
               </p>
-              <p className="flex items-center gap-1.5 truncate text-[11px] leading-tight text-slate-300">
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-teal-400" />
+              <p className="flex items-center gap-1.5 truncate text-[11px] leading-tight text-white/70">
+                <span className="relative flex h-1.5 w-1.5 shrink-0">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-70" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-teal-300" />
+                </span>
                 {isDoctor ? "Your practice, on call" : "Treatments and bookings. Not medical advice."}
               </p>
             </div>
@@ -226,7 +305,7 @@ export default function Assistant() {
                 }}
                 aria-label="Start a new conversation"
                 title="New conversation"
-                className="rounded-full bg-white/10 p-2 text-slate-300 transition hover:bg-white/20 hover:text-white"
+                className="relative rounded-full bg-white/10 p-2 text-white/70 transition hover:bg-white/20 hover:text-white"
               >
                 <RefreshGlyph />
               </button>
@@ -244,7 +323,7 @@ export default function Assistant() {
                 title={readAloud ? "Reading aloud" : "Read answers aloud"}
                 className={
                   readAloud
-                    ? "rounded-full bg-teal-400 p-2 text-slate-900 transition"
+                    ? "relative rounded-full bg-teal-400 p-2 text-slate-900 transition"
                     : "rounded-full bg-white/10 p-2 text-slate-300 transition hover:bg-white/20 hover:text-white"
                 }
               >
@@ -256,7 +335,7 @@ export default function Assistant() {
               type="button"
               onClick={() => setOpen(false)}
               aria-label="Close"
-              className="rounded-full bg-white/10 p-2 text-slate-300 transition hover:bg-white/20 hover:text-white sm:hidden"
+              className="relative rounded-full bg-white/10 p-2 text-white/70 transition hover:bg-white/20 hover:text-white sm:hidden"
             >
               <CloseGlyph />
             </button>
@@ -280,25 +359,39 @@ export default function Assistant() {
                       : "Ask me about a treatment, your bookings, or how something here works. Anything clinical I will hand to a doctor rather than guess."}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2 pl-11">
-                  {starters.map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => void send(s)}
-                      className="rounded-full border border-slate-200 bg-white px-3 py-2 text-left text-[12.5px] font-semibold text-slate-700 shadow-sm transition hover:border-teal-400 hover:bg-teal-50 hover:text-teal-800 active:scale-[0.98]"
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
+                {/* The prefilled questions, as rows rather than pills.
+                    A pill truncates the moment a question is a real sentence,
+                    and these are the part people actually use — giving them
+                    the full width is what makes them readable at a glance. */}
+                {starters.length > 0 && (
+                  <div className="pl-11">
+                    <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                      Try asking
+                    </p>
+                    <div className="grid gap-1.5">
+                      {starters.map((s, i) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => void send(s)}
+                          style={{ animationDelay: `${i * 55}ms` }}
+                          className="animate-scale-in group flex items-center gap-2.5 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-left text-[12.5px] font-semibold leading-snug text-slate-700 shadow-sm transition hover:-translate-y-px hover:border-teal-400 hover:bg-teal-50 hover:text-teal-900 hover:shadow-md active:scale-[0.99]"
+                        >
+                          <SparkGlyph />
+                          <span className="min-w-0 flex-1">{s}</span>
+                          <ArrowGlyph />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
             {msgs.map((m, i) =>
               m.role === "user" ? (
                 <div key={i} className="flex justify-end">
-                  <p className="max-w-[85%] rounded-2xl rounded-br-md bg-slate-900 px-3.5 py-2.5 text-[13.5px] leading-relaxed text-white">
+                  <p className="max-w-[85%] rounded-2xl rounded-br-md on-dark bg-slate-900 px-3.5 py-2.5 text-[13.5px] leading-relaxed text-white">
                     {m.content}
                   </p>
                 </div>
@@ -455,6 +548,53 @@ function Avatar({ kind, size }: { kind: "doctor" | "bot"; size: number }) {
 }
 
 /* ── Glyphs. Hand-rolled: the portal carries no icon library. ─────────── */
+
+/** The messenger mark. A speech bubble reads as "talk to something" in a way
+ *  an avatar in a circle does not — an avatar reads as a person who is not
+ *  there. */
+function ChatGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden className="h-7 w-7">
+      <path
+        d="M12 3.2c-4.9 0-8.8 3.4-8.8 7.6 0 2.4 1.3 4.6 3.3 6v3.4a.6.6 0 0 0 .93.5l2.9-1.9c.53.09 1.08.14 1.64.14 4.9 0 8.8-3.4 8.8-7.6S16.9 3.2 12 3.2Z"
+        fill="currentColor"
+      />
+      <circle cx="8.3" cy="10.8" r="1.15" fill="#0b2545" />
+      <circle cx="12" cy="10.8" r="1.15" fill="#0b2545" />
+      <circle cx="15.7" cy="10.8" r="1.15" fill="#0b2545" />
+    </svg>
+  );
+}
+
+function SparkGlyph() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+      className="h-3.5 w-3.5 shrink-0 text-teal-500 transition group-hover:text-teal-600"
+    >
+      <path d="M12 2l2.2 6.1L20 10l-5.8 1.9L12 18l-2.2-6.1L4 10l5.8-1.9z" />
+    </svg>
+  );
+}
+
+function ArrowGlyph() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      className="h-3.5 w-3.5 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-teal-600"
+    >
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  );
+}
 
 function CloseGlyph() {
   return (

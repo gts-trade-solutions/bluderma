@@ -3,7 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
 /**
- * White Collar, on the client home page.
+ * Gold Collar, on the client home page.
  *
  * A section rather than a menu item, because a membership is something you are
  * persuaded into once, not something you navigate to repeatedly. Once someone
@@ -17,7 +17,7 @@ import { prisma } from "@/lib/prisma";
  * Renders nothing at all when no plan is live, so switching memberships off in
  * the admin removes the pitch rather than leaving an empty band.
  */
-export default async function WhiteCollarBanner() {
+export default async function GoldCollarBanner() {
   const plans = await prisma.subscriptionPlan.findMany({
     where: { isActive: true },
     orderBy: { sortOrder: "asc" },
@@ -38,13 +38,13 @@ export default async function WhiteCollarBanner() {
   );
 
   return (
-    <section className="container-page pt-16" id="white-collar">
+    <section className="container-page pt-16" id="gold-collar">
       <div className="relative overflow-hidden rounded-[2rem] ring-1 ring-amber-300/20">
         {/* Warm, and deliberately unlike anything else on the page — this is
             the one commercial ask on a site that otherwise refuses to quote. */}
         <div
           aria-hidden
-          className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.14] via-[#0d1526] to-[#070d1c]"
+          className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.14] via-[var(--sheet)] to-[var(--surface)]"
         />
         <div
           aria-hidden
@@ -59,7 +59,7 @@ export default async function WhiteCollarBanner() {
             </span>
 
             <h2 className="display mt-4 text-3xl leading-tight text-white sm:text-4xl">
-              White Collar
+              Gold Collar
             </h2>
             <p className="mt-3 max-w-lg text-base leading-relaxed text-white/60">
               For people who treat their skin as ongoing care rather than a

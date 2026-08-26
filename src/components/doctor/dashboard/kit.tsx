@@ -171,6 +171,7 @@ export function Kpi({
   tone = "brand",
   icon,
   href,
+  "data-tour": tour,
 }: {
   label: string;
   value: string;
@@ -182,6 +183,8 @@ export function Kpi({
   icon: string;
   /** Makes the whole tile a link, for figures with somewhere to go. */
   href?: string;
+  /** Tour anchor. See the note on SectionHead. */
+  "data-tour"?: string;
 }) {
   const skin = TONES[tone];
   const body = (
@@ -228,12 +231,15 @@ export function Kpi({
   return href ? (
     <Link
       href={href}
+      data-tour={tour}
       className={`${shell} hover:-translate-y-0.5 hover:ring-slate-300 hover:shadow-[0_1px_2px_rgba(15,23,42,0.05),0_18px_40px_-24px_rgba(15,23,42,0.5)]`}
     >
       {body}
     </Link>
   ) : (
-    <div className={shell}>{body}</div>
+    <div data-tour={tour} className={shell}>
+      {body}
+    </div>
   );
 }
 
@@ -366,13 +372,24 @@ export function SectionHead({
   title,
   sub,
   action,
+  /**
+   * An anchor for the guided tour. Inert everywhere else — nothing styles or
+   * reads it but DemoTour, which uses it to point at the real section rather
+   * than at a CSS selector that would break the next time this file is
+   * touched.
+   */
+  "data-tour": tour,
 }: {
   title: string;
   sub?: string;
   action?: React.ReactNode;
+  "data-tour"?: string;
 }) {
   return (
-    <div className="mb-3.5 mt-1 flex flex-wrap items-end justify-between gap-3">
+    <div
+      data-tour={tour}
+      className="mb-3.5 mt-1 flex flex-wrap items-end justify-between gap-3"
+    >
       <div className="min-w-0">
         <h2 className="font-display text-xl font-extrabold tracking-[-0.03em] text-slate-900 sm:text-2xl">
           {title}

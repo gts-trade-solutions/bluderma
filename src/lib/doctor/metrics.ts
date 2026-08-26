@@ -137,7 +137,7 @@ export interface RevenueTiers {
   lost: number;
   /** Cancellation fees actually charged on those. */
   recovered: number;
-  /** Given away to White Collar members in this period. */
+  /** Given away to Gold Collar members in this period. */
   discountGiven: number;
 }
 

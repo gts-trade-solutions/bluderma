@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import Field from "./Field";
 import FormAlert from "./FormAlert";
+import { focusField, validateForm } from "@/lib/formValidation";
 
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
@@ -12,8 +13,18 @@ export default function ForgotPasswordForm() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    // The same pass every other form in the app runs. `noValidate` is on the
+    // form below, so without this nothing would check the fields at all.
+    const check = validateForm(e.currentTarget);
+    if (!check.ok) {
+      
+      focusField(e.currentTarget, check.problems[0].name);
+      return;
+    }
+
     setBusy(true);
     setError(null);
 
@@ -71,7 +82,7 @@ export default function ForgotPasswordForm() {
         choose a new password.
       </p>
 
-      <form onSubmit={onSubmit} className="mt-8 space-y-4">
+      <form noValidate onSubmit={onSubmit} className="mt-8 space-y-4">
         {error && <FormAlert>{error}</FormAlert>}
 
         <Field

@@ -1,22 +1,40 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import Hint from "@/components/Hint";
 import ImageField from "@/components/admin/ImageField";
+import FacilityPicker from "@/components/doctor/fields/FacilityPicker";
+import LocationPicker from "@/components/doctor/fields/LocationPicker";
 import PincodeAddressFields from "@/components/doctor/fields/PincodeAddressFields";
+import { useFormValidation } from "@/hooks/useFormValidation";
 import { removeClinic, saveClinicStep } from "@/lib/actions/doctorOnboarding";
-import { COMMON_FACILITIES } from "@/data/doctorJoin";
+import { CATEGORY_LABEL } from "@/data/facilities";
 import { swatchFor } from "@/components/doctor/clinicColors";
 
 /**
  * Step 3 — locations.
  *
- * The heart of the whole multi-clinic feature. A practitioner adds each place
- * they consult, with its own address, photographs and fee — because branches
- * of the same practice genuinely do charge differently, and a client searching
- * "near me" is searching for an address, not a practice name.
+ * The heart of the multi-clinic feature. A practitioner adds each place they
+ * consult, with its own address, landmark, photographs and fee — because
+ * branches of the same practice genuinely do charge differently, and a client
+ * searching "near me" is searching for an address, not a practice name.
+ *
+ * ── The three things this step now does that it did not ──────────────────
+ *  1. **Finds the clinic if it is already here.** Clinic has always been a
+ *     shared entity, but nothing in the form knew it, so every doctor created
+ *     a fresh row and three dermatologists at one address produced three
+ *     clinics. As the name and PIN code are typed, /api/clinics/match offers
+ *     the candidates and the doctor joins one. Nothing is ever merged
+ *     automatically — see the note in lib/clinicMatch.ts.
+ *  2. **Asks for the landmark, and offers a pin.** In most Indian cities the
+ *     landmark is the address that actually works, and Clinic.lat/lng have
+ *     sat unwritten since they were added.
+ *  3. **Offers the facilities instead of asking for a sentence.** Especially
+ *     the equipment, which is the most persuasive thing on a clinic page and
+ *     the one nobody ever typed into a comma-separated box.
  */
 
 interface ClinicView {
@@ -28,13 +46,17 @@ interface ClinicView {
     addressLine1: string;
     addressLine2: string | null;
     area: string;
+    landmark: string | null;
     city: string;
     state: string;
     pincode: string;
+    lat: number | null;
+    lng: number | null;
     phone: string | null;
     colorKey: string;
     photos: { kind: string; url: string }[];
-    facilities: { name: string }[];
+    facilities: { name: string; category: string | null }[];
+    _count: { doctors: number };
   };
 }
 
@@ -54,6 +76,8 @@ export default function ClinicsStep({
 }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(doctor.clinics.length === 0);
+
+  const none = doctor.clinics.length === 0;
 
   return (
     <div className="space-y-5">
@@ -82,30 +106,48 @@ export default function ClinicsStep({
       {adding ? (
         <ClinicForm
           onDone={() => setAdding(false)}
-          onCancel={doctor.clinics.length > 0 ? () => setAdding(false) : undefined}
+          onCancel={
+            doctor.clinics.length > 0 ? () => setAdding(false) : undefined
+          }
         />
       ) : (
-        <button
-          onClick={() => setAdding(true)}
-          className="w-full rounded-2xl border-2 border-dashed border-slate-300 bg-white px-4 py-5 text-sm font-bold text-slate-600 transition hover:border-brand-400 hover:text-brand-700"
+        <Hint
+          className="w-full"
+          side="top"
+          text={
+            none
+              ? "Every place you consult at, with its own address and fee."
+              : "If you practise in more than one place, use this. Each location keeps its own address, hours, photographs and consultation fee."
+          }
         >
-          + Add another location
-        </button>
+          <button
+            onClick={() => setAdding(true)}
+            className="w-full rounded-2xl border-2 border-dashed border-slate-300 bg-white px-4 py-5 text-sm font-bold text-slate-600 transition hover:border-brand-400 hover:text-brand-700"
+          >
+            + Add another location
+          </button>
+        </Hint>
       )}
 
       {mode === "join" && doctor.clinics.length > 0 && !adding && !editing && (
         <div className="flex items-center gap-3 border-t border-slate-100 pt-5">
-          <Link href={nextHref} className="btn-primary">
-            Save and continue
-          </Link>
-          <Link href={backHref} className="btn-ghost">
-            Back
-          </Link>
+          <Hint text="Saves your locations and opens the hours step, where you set when you see clients at each one.">
+            <Link href={nextHref} className="btn-primary">
+              Save and continue
+            </Link>
+          </Hint>
+          <Hint text="Back to your registration details. Nothing here is lost.">
+            <Link href={backHref} className="btn-ghost">
+              Back
+            </Link>
+          </Hint>
         </div>
       )}
     </div>
   );
 }
+
+/* ------------------------------- The card -------------------------------- */
 
 function ClinicCard({
   c,
@@ -122,6 +164,7 @@ function ClinicCard({
   const sw = swatchFor(c.clinic.colorKey);
   const exterior = c.clinic.photos.find((p) => p.kind === "EXTERIOR");
   const interior = c.clinic.photos.find((p) => p.kind === "INTERIOR");
+  const shared = c.clinic._count.doctors > 1;
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -135,12 +178,24 @@ function ClinicCard({
                 MAIN
               </span>
             )}
+            {shared && (
+              <Hint text={`${c.clinic._count.doctors} practitioners hold hours here. The address, photographs and facilities are shared, so only an admin can change them.`}>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                  SHARED · {c.clinic._count.doctors}
+                </span>
+              </Hint>
+            )}
           </div>
           <p className="mt-0.5 text-sm text-slate-600">
             {c.clinic.addressLine1}
             {c.clinic.addressLine2 ? `, ${c.clinic.addressLine2}` : ""},{" "}
             {c.clinic.area}, {c.clinic.city} {c.clinic.pincode}
           </p>
+          {c.clinic.landmark && (
+            <p className="mt-0.5 text-sm italic text-slate-500">
+              {c.clinic.landmark}
+            </p>
+          )}
           <p className="mt-1 flex flex-wrap gap-x-3 text-xs text-slate-500">
             <span>
               {c.feeInr > 0
@@ -149,41 +204,100 @@ function ClinicCard({
             </span>
             {c.clinic.phone && <span>{c.clinic.phone}</span>}
             <span>
-              {[exterior && "exterior", interior && "interior"].filter(Boolean).join(" + ") ||
-                "no photos yet"}
+              {[exterior && "exterior", interior && "interior"]
+                .filter(Boolean)
+                .join(" + ") || "no photos yet"}
             </span>
+            {c.clinic.lat !== null && <span>pinned on the map</span>}
             {c.clinic.facilities.length > 0 && (
               <span>{c.clinic.facilities.length} facilities</span>
             )}
           </p>
+
+          {c.clinic.facilities.length > 0 && (
+            <FacilitySummary facilities={c.clinic.facilities} />
+          )}
         </div>
         <div className="flex shrink-0 gap-2">
-          <button
-            onClick={onEdit}
-            className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+          <Hint
+            text={
+              shared
+                ? "Change your own consultation fee here. The shared address and photographs are read-only."
+                : "Change this location's details."
+            }
           >
-            Edit
-          </button>
-          {!soleLocation && (
             <button
-              disabled={pending}
-              onClick={() =>
-                start(async () => {
-                  const res = await removeClinic(c.clinic.id);
-                  if (res.ok) router.refresh();
-                  else setError(res.error ?? "Could not remove that.");
-                })
-              }
-              className="rounded-full px-3 py-1.5 text-xs font-bold text-rose-600 transition hover:bg-rose-50 disabled:opacity-50"
+              onClick={onEdit}
+              className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
             >
-              Remove
+              Edit
             </button>
+          </Hint>
+          {!soleLocation && (
+            <Hint text="Takes this location off your listing. The clinic itself stays, along with anyone else who practises there.">
+              <button
+                disabled={pending}
+                onClick={() =>
+                  start(async () => {
+                    const res = await removeClinic(c.clinic.id);
+                    if (res.ok) router.refresh();
+                    else setError(res.error ?? "Could not remove that.");
+                  })
+                }
+                className="rounded-full px-3 py-1.5 text-xs font-bold text-rose-600 transition hover:bg-rose-50 disabled:opacity-50"
+              >
+                Remove
+              </button>
+            </Hint>
           )}
         </div>
       </div>
       {error && <p className="mt-2 text-sm text-rose-600">{error}</p>}
     </div>
   );
+}
+
+/** Facilities on the card, grouped, so thirty of them stay readable. */
+function FacilitySummary({
+  facilities,
+}: {
+  facilities: { name: string; category: string | null }[];
+}) {
+  const groups = new Map<string, string[]>();
+  for (const f of facilities) {
+    const key = f.category ?? "OTHER";
+    groups.set(key, [...(groups.get(key) ?? []), f.name]);
+  }
+
+  return (
+    <ul className="mt-2 space-y-0.5">
+      {[...groups.entries()].map(([cat, names]) => (
+        <li key={cat} className="text-xs text-slate-500">
+          <span className="font-semibold text-slate-600">
+            {cat === "OTHER"
+              ? "Also here"
+              : (CATEGORY_LABEL[cat as keyof typeof CATEGORY_LABEL] ?? cat)}
+            :
+          </span>{" "}
+          {names.join(", ")}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/* ------------------------------- The form -------------------------------- */
+
+interface MatchRow {
+  id: string;
+  name: string;
+  addressLine1: string;
+  landmark: string | null;
+  area: string;
+  city: string;
+  pincode: string;
+  reason: string;
+  doctorCount: number;
 }
 
 function ClinicForm({
@@ -198,32 +312,150 @@ function ClinicForm({
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [fields, setFields] = useState<Record<string, string>>({});
+  const v = useFormValidation();
 
   const c = existing?.clinic;
   const exterior = c?.photos.find((p) => p.kind === "EXTERIOR")?.url ?? "";
   const interior = c?.photos.find((p) => p.kind === "INTERIOR")?.url ?? "";
 
+  // Above one occupant the premises belong to more than one practice, and the
+  // shared fields stop being this doctor's to change. Enforced again in
+  // saveClinicStep — this only stops them being offered.
+  const shared = (c?._count.doctors ?? 0) > 1;
+
+  // ── "Is this clinic already here?" ────────────────────────────────────
+  const [name, setName] = useState(c?.name ?? "");
+  const [address1, setAddress1] = useState(c?.addressLine1 ?? "");
+  const [pincode, setPincode] = useState(c?.pincode ?? "");
+  const [matches, setMatches] = useState<MatchRow[]>([]);
+  const [joining, setJoining] = useState<MatchRow | null>(null);
+  const [dismissed, setDismissed] = useState(false);
+
+  useClinicMatches({
+    name,
+    addressLine1: address1,
+    pincode,
+    excludeId: c?.id ?? "",
+    enabled: !shared && !joining && !dismissed,
+    onResult: setMatches,
+  });
+
+  function submit(fd: FormData) {
+    setError(null);
+    start(async () => {
+      const res = await saveClinicStep(fd);
+      if (res.ok) {
+        onDone();
+        router.refresh();
+      } else {
+        setError(res.error ?? "Could not save that location.");
+        v.showServerErrors(res.fields);
+      }
+    });
+  }
+
+  // ── Joining an existing clinic ────────────────────────────────────────
+  // A different form entirely: the premises are already described, so the
+  // only questions left are this practitioner's own fee and whether it is
+  // their main location.
+  if (joining) {
+    return (
+      <form
+        ref={v.formRef}
+        noValidate
+        className="space-y-5 rounded-2xl border-2 border-brand-300 bg-brand-50/40 p-5"
+        onSubmit={v.guard(submit)}
+      >
+        {v.summary}
+        <input type="hidden" name="joinClinicId" value={joining.id} />
+        {/* The schema still requires these, and they are what the clinic
+            already says. Never read on the join path — see saveClinicStep. */}
+        <input type="hidden" name="name" value={joining.name} />
+        <input type="hidden" name="addressLine1" value={joining.addressLine1} />
+        <input type="hidden" name="area" value={joining.area} />
+        <input type="hidden" name="city" value={joining.city} />
+        <input type="hidden" name="state" value="Tamil Nadu" />
+        <input type="hidden" name="pincode" value={joining.pincode} />
+
+        {error && (
+          <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+            {error}
+          </p>
+        )}
+
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-brand-700">
+            Joining an existing location
+          </p>
+          <h3 className="mt-1 text-lg font-bold text-slate-900">
+            {joining.name}
+          </h3>
+          <p className="mt-0.5 text-sm text-slate-600">
+            {joining.addressLine1}, {joining.area}, {joining.city}{" "}
+            {joining.pincode}
+          </p>
+          {joining.landmark && (
+            <p className="text-sm italic text-slate-500">{joining.landmark}</p>
+          )}
+          <p className="mt-2 text-xs leading-relaxed text-slate-600">
+            {joining.doctorCount === 1
+              ? "One practitioner already holds hours here."
+              : `${joining.doctorCount} practitioners already hold hours here.`}{" "}
+            You will share the address, photographs and facilities — they are
+            the building&rsquo;s, not yours — and keep your own fee, hours and
+            calendar. Ask us if any of the shared details are wrong.
+          </p>
+        </div>
+
+        <Text
+          name="feeInr"
+          label="Your consultation fee at this location (₹)"
+          type="number"
+          min={0}
+          defaultValue="0"
+          hint="Yours alone. Other practitioners here set their own."
+          required
+        />
+
+        <label className="flex items-center gap-2.5 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            name="isPrimary"
+            className="h-4 w-4 rounded border-slate-300"
+          />
+          This is my main location
+        </label>
+
+        <div className="flex flex-wrap items-center gap-3 border-t border-brand-100 pt-4">
+          <Hint text="Adds you to this clinic. It keeps the same clinic record, so clients see one place rather than two copies of it.">
+            <button
+              type="submit"
+              disabled={pending}
+              className="btn-primary disabled:opacity-60"
+            >
+              {pending ? "Joining…" : "Join this location"}
+            </button>
+          </Hint>
+          <button
+            type="button"
+            onClick={() => setJoining(null)}
+            className="btn-ghost"
+          >
+            Not this one
+          </button>
+        </div>
+      </form>
+    );
+  }
+
   return (
     <form
+      ref={v.formRef}
+      noValidate
       className="space-y-5 rounded-2xl border border-brand-200 bg-white p-5"
-      onSubmit={(e) => {
-        e.preventDefault();
-        setError(null);
-        setFields({});
-        const fd = new FormData(e.currentTarget);
-        start(async () => {
-          const res = await saveClinicStep(fd);
-          if (res.ok) {
-            onDone();
-            router.refresh();
-          } else {
-            setError(res.error ?? "Could not save that location.");
-            setFields(res.fields ?? {});
-          }
-        });
-      }}
+      onSubmit={v.guard(submit)}
     >
+      {v.summary}
       <input type="hidden" name="clinicId" value={c?.id ?? ""} />
 
       {error && (
@@ -232,20 +464,57 @@ function ClinicForm({
         </p>
       )}
 
-      <Text name="name" label="Clinic name" defaultValue={c?.name} error={fields.name} required />
+      {shared && (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+          <p className="text-sm font-bold text-slate-800">
+            This location is shared with {c!._count.doctors - 1} other
+            practitioner{c!._count.doctors - 1 === 1 ? "" : "s"}
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-slate-600">
+            The address, landmark, photographs and facilities belong to the
+            premises rather than to any one practice, so they are read-only
+            here — a change would alter them for everybody without their
+            knowing. Your fee and whether this is your main location are yours
+            to set. Email us if a shared detail needs correcting.
+          </p>
+        </div>
+      )}
+
+      <Text
+        name="name"
+        label="Clinic name"
+        value={shared ? undefined : name}
+        defaultValue={shared ? c?.name : undefined}
+        onChange={shared ? undefined : (e) => setName(e.target.value)}
+        readOnly={shared}
+        required
+      />
+
+      {/* ── The suggestions ────────────────────────────────────────── */}
+      {matches.length > 0 && (
+        <MatchList
+          matches={matches}
+          onJoin={setJoining}
+          onDismiss={() => setDismissed(true)}
+        />
+      )}
+
       <Text
         name="addressLine1"
         label="Address"
-        defaultValue={c?.addressLine1}
-        error={fields.addressLine1}
+        value={shared ? undefined : address1}
+        defaultValue={shared ? c?.addressLine1 : undefined}
+        onChange={shared ? undefined : (e) => setAddress1(e.target.value)}
+        readOnly={shared}
         required
       />
       <Text
         name="addressLine2"
         label="Address line 2"
         defaultValue={c?.addressLine2 ?? ""}
-        error={fields.addressLine2}
+        readOnly={shared}
       />
+
       <div className="grid gap-4 sm:grid-cols-2">
         {/* PIN code first, because it fills the other three. */}
         <PincodeAddressFields
@@ -255,53 +524,71 @@ function ClinicForm({
             city: c?.city ?? "",
             state: c?.state ?? "Tamil Nadu",
           }}
-          errors={fields}
+          errors={v.fields}
+          onPincodeChange={shared ? undefined : setPincode}
+          readOnly={shared}
         />
-        <Text name="phone" label="Clinic phone" defaultValue={c?.phone ?? ""} error={fields.phone} />
+        <Text
+          name="phone"
+          label="Clinic phone"
+          defaultValue={c?.phone ?? ""}
+          readOnly={shared}
+        />
         <Text
           name="feeInr"
           label="Consultation fee (₹)"
           type="number"
           min={0}
           defaultValue={String(existing?.feeInr ?? 0)}
-          hint="Leave 0 to show 'on enquiry' instead of a price."
-          error={fields.feeInr}
+          hint="Yours alone. Leave 0 to show 'on enquiry' instead of a price."
           required
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <ImageField
-          name="exteriorImage"
-          label="Outside the clinic"
-          defaultValue={exterior}
-          folder="clinics"
-          hint="A shopfront or entrance shot, so people can find you."
+      {/* ── Landmark and the map, under the address where they belong ─ */}
+      {shared ? (
+        c?.landmark ? (
+          <div>
+            <p className="text-sm font-semibold text-slate-800">Landmark</p>
+            <p className="mt-1 text-sm italic text-slate-600">{c.landmark}</p>
+          </div>
+        ) : null
+      ) : (
+        <LocationPicker
+          defaultLandmark={c?.landmark ?? ""}
+          defaultLat={c?.lat ?? null}
+          defaultLng={c?.lng ?? null}
+          addressHint={() =>
+            [address1, pincode].filter(Boolean).join(", ")
+          }
         />
-        <ImageField
-          name="interiorImage"
-          label="Inside the clinic"
-          defaultValue={interior}
-          folder="clinics"
-          hint="Reception or a treatment room."
-        />
-      </div>
+      )}
 
-      <div>
-        <label className="block text-sm font-semibold text-slate-800">
-          Facilities
-        </label>
-        <textarea
-          name="facilities"
-          rows={2}
-          defaultValue={c?.facilities.map((f) => f.name).join(", ") ?? ""}
-          placeholder={COMMON_FACILITIES.slice(0, 4).join(", ")}
-          className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-900 outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-500/15"
-        />
-        <p className="mt-1 text-xs text-slate-500">
-          Comma separated. Common ones: {COMMON_FACILITIES.join(", ")}.
-        </p>
-      </div>
+      {!shared && (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <ImageField
+              name="exteriorImage"
+              label="External photos of clinic"
+              defaultValue={exterior}
+              folder="clinics"
+              hint="A shopfront or entrance shot, so people can find you."
+            />
+            <ImageField
+              name="interiorImage"
+              label="Clinic interior photos"
+              defaultValue={interior}
+              folder="clinics"
+              hint="Reception or a treatment room."
+            />
+          </div>
+
+          <FacilityPicker
+            name="facilities"
+            defaultSelected={c?.facilities.map((f) => f.name) ?? []}
+          />
+        </>
+      )}
 
       <label className="flex items-center gap-2.5 text-sm text-slate-700">
         <input
@@ -314,9 +601,25 @@ function ClinicForm({
       </label>
 
       <div className="flex items-center gap-3 border-t border-slate-100 pt-4">
-        <button type="submit" disabled={pending} className="btn-primary disabled:opacity-60">
-          {pending ? "Saving…" : existing ? "Save changes" : "Add this location"}
-        </button>
+        <Hint
+          text={
+            existing
+              ? "Saves the changes to this location."
+              : "Saves this location. You can add more afterwards, and set hours for each one on the next step."
+          }
+        >
+          <button
+            type="submit"
+            disabled={pending}
+            className="btn-primary disabled:opacity-60"
+          >
+            {pending
+              ? "Saving…"
+              : existing
+                ? "Save changes"
+                : "Add this location"}
+          </button>
+        </Hint>
         {onCancel && (
           <button type="button" onClick={onCancel} className="btn-ghost">
             Cancel
@@ -327,11 +630,142 @@ function ClinicForm({
   );
 }
 
+/* ---------------------------- The suggestions ---------------------------- */
+
+function MatchList({
+  matches,
+  onJoin,
+  onDismiss,
+}: {
+  matches: MatchRow[];
+  onJoin: (m: MatchRow) => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <div className="rounded-xl border-2 border-brand-200 bg-brand-50/60 p-4">
+      <p className="text-sm font-bold text-brand-900">
+        {matches.length === 1
+          ? "This clinic may already be on BluDerma"
+          : "One of these may be your clinic"}
+      </p>
+      <p className="mt-1 text-xs leading-relaxed text-brand-800/80">
+        Joining an existing location keeps one record instead of two, so
+        clients see one clinic rather than duplicates of it, and the address
+        and photographs are already done. Ignore this if none of them is yours.
+      </p>
+
+      <ul className="mt-3 space-y-2">
+        {matches.map((m) => (
+          <li
+            key={m.id}
+            className="flex flex-wrap items-start gap-3 rounded-lg bg-white p-3 ring-1 ring-brand-200/70"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-slate-900">{m.name}</p>
+              <p className="text-xs text-slate-600">
+                {m.addressLine1}, {m.area}, {m.city} {m.pincode}
+              </p>
+              {m.landmark && (
+                <p className="text-xs italic text-slate-500">{m.landmark}</p>
+              )}
+              <p className="mt-1 text-[11px] font-semibold text-brand-700">
+                {m.reason} ·{" "}
+                {m.doctorCount === 1
+                  ? "1 practitioner here"
+                  : `${m.doctorCount} practitioners here`}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onJoin(m)}
+              className="shrink-0 rounded-full bg-brand-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-brand-700"
+            >
+              This is mine
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      <button
+        type="button"
+        onClick={onDismiss}
+        className="mt-2.5 text-xs font-semibold text-brand-700 hover:underline"
+      >
+        None of these — mine is a different clinic
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Asks the server whether this clinic already exists, as the doctor types.
+ *
+ * Debounced hard at 500ms and gated on having both a name and a full PIN code,
+ * because this is a search across the clinic table and the alternative is one
+ * query per keystroke of a name. The last response wins: a fast reply to an
+ * early query must not overwrite the answer to a later one, which is what the
+ * sequence counter is for.
+ */
+function useClinicMatches({
+  name,
+  addressLine1,
+  pincode,
+  excludeId,
+  enabled,
+  onResult,
+}: {
+  name: string;
+  addressLine1: string;
+  pincode: string;
+  excludeId: string;
+  enabled: boolean;
+  onResult: (rows: MatchRow[]) => void;
+}) {
+  const seq = useRef(0);
+
+  useEffect(() => {
+    if (!enabled || name.trim().length < 3 || !/^\d{6}$/.test(pincode.trim())) {
+      onResult([]);
+      return;
+    }
+
+    const mine = ++seq.current;
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await fetch("/api/clinics/match", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: name.trim(),
+            addressLine1: addressLine1.trim(),
+            pincode: pincode.trim(),
+            excludeId,
+          }),
+        });
+        const data = await res.json();
+        if (seq.current !== mine) return;
+        onResult(res.ok && data?.ok ? (data.matches as MatchRow[]) : []);
+      } catch {
+        // A failed lookup is a missing convenience, never a blocked form.
+        if (seq.current === mine) onResult([]);
+      }
+    }, 500);
+
+    return () => window.clearTimeout(timer);
+    // onResult is a setState function and stable; listing it would re-run this
+    // on every parent render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, addressLine1, pincode, excludeId, enabled]);
+}
+
+/* ------------------------------- Field ----------------------------------- */
+
 function Text({
   name,
   label,
   hint,
   error,
+  readOnly,
   ...rest
 }: {
   name: string;
@@ -341,17 +775,23 @@ function Text({
 } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <div>
-      <label htmlFor={name} className="block text-sm font-semibold text-slate-800">
+      <label
+        htmlFor={name}
+        className="block text-sm font-semibold text-slate-800"
+      >
         {label}
       </label>
       <input
         id={name}
         name={name}
+        readOnly={readOnly}
         aria-invalid={error ? true : undefined}
-        className={`mt-1.5 w-full rounded-xl border bg-white px-3.5 py-2.5 text-slate-900 outline-none transition focus:ring-4 ${
-          error
-            ? "border-rose-300 focus:border-rose-400 focus:ring-rose-500/15"
-            : "border-slate-200 focus:border-brand-400 focus:ring-brand-500/15"
+        className={`mt-1.5 w-full rounded-xl border px-3.5 py-2.5 text-slate-900 outline-none transition focus:ring-4 ${
+          readOnly
+            ? "border-slate-200 bg-slate-50 text-slate-500"
+            : error
+              ? "border-rose-300 bg-white focus:border-rose-400 focus:ring-rose-500/15"
+              : "border-slate-200 bg-white focus:border-brand-400 focus:ring-brand-500/15"
         }`}
         {...rest}
       />

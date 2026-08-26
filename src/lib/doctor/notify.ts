@@ -204,3 +204,70 @@ export async function notifyDoctorOfBooking(p: {
     ...body,
   }).catch((e) => console.error("doctor booking notice failed", e));
 }
+
+/**
+ * A treatment sheet has been issued.
+ *
+ * -- Why this exists at all -----------------------------------------------
+ * Sheets landed in the patient's profile and nowhere else. For aftercare that
+ * was defensible — the patient has just been handed a printout and told to
+ * look — but it does not work at all for a pre-treatment sheet, whose entire
+ * value is arriving two days early. "Stop your retinoid a week before" sitting
+ * unread in a portal is not an instruction, it is a record that one was
+ * written.
+ *
+ * -- What it does NOT contain ---------------------------------------------
+ * The instructions themselves. Only the procedure, the date and a link. An
+ * email is not a private channel — it sits on a phone lock screen, in a
+ * shared family inbox, in a mail client somebody else has open — and a list
+ * of what a named person must stop taking before a named dermatological
+ * procedure is clinical information about them. The link goes behind the
+ * login they already have.
+ *
+ * Best-effort, like everything else here: a mail outage must not roll back a
+ * sheet the doctor has already issued and can see in their list.
+ */
+export async function notifySheetIssued(p: {
+  to: string | null | undefined;
+  patientName: string;
+  doctorName: string;
+  kind: "PRE" | "POST";
+  procedure: string;
+  procedureDate: Date;
+  arriveAt?: string | null;
+  sheetId: string;
+  baseUrl: string;
+}) {
+  if (!p.to) return;
+
+  const date = p.procedureDate.toISOString().slice(0, 10);
+  const link = `${p.baseUrl.replace(/\/$/, "")}/patient/aftercare/${p.sheetId}`;
+
+  const body =
+    p.kind === "PRE"
+      ? wrap([
+          `Hi ${p.patientName},`,
+          `${p.doctorName} has sent you instructions to follow BEFORE your ${p.procedure} on ${date}.`,
+          p.arriveAt
+            ? `Please arrive at ${p.arriveAt}, which may be earlier than your appointment time.`
+            : "",
+          `Some of them need a few days' notice, so please read them now rather than the night before: ${link}`,
+          "If anything on the list is a problem, ring the clinic before you come rather than turning up — it is far easier to move an appointment than to waste one.",
+        ].filter(Boolean))
+      : wrap([
+          `Hi ${p.patientName},`,
+          `${p.doctorName} has issued your aftercare instructions for the ${p.procedure} on ${date}.`,
+          `How well this heals depends more on the next fortnight than on the procedure itself, so please read them: ${link}`,
+          "The sheet includes the signs that mean you should ring the clinic straight away.",
+        ]);
+
+  await sendEmail({
+    to: p.to,
+    template: p.kind === "PRE" ? "pre-treatment-sheet" : "aftercare-sheet",
+    subject:
+      p.kind === "PRE"
+        ? `Before your ${p.procedure} on ${date}`
+        : `Your aftercare instructions from ${p.doctorName}`,
+    ...body,
+  }).catch((e) => console.error("sheet email failed", e));
+}

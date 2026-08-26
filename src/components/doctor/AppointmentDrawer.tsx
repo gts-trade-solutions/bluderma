@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import type { VisitReason, SymptomDuration } from "@prisma/client";
 
 import { useBackToClose } from "@/hooks/useBackToClose";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import PrescriptionLines from "@/components/doctor/PrescriptionLines";
 import {
   durationLabel,
   isUrgent,
@@ -175,8 +177,12 @@ export default function AppointmentDrawer({
 
   if (!mounted) return null;
 
+  // `pro-surface` because createPortal renders to document.body, OUTSIDE the
+  // portal layout that carries it. Without it this drawer is the one clinical
+  // surface a theme can reach — and a patient's appointment inverting colour
+  // mid-consultation is precisely what the console is kept out of themes for.
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex justify-end">
+    <div className="theme-light pro-surface fixed inset-0 z-[60] flex justify-end">
       <button
         aria-label="Close"
         onClick={onClose}
@@ -594,6 +600,7 @@ function RescheduleForm({
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const formCheck = useFormValidation();
 
   if (!open) {
     return (
@@ -608,11 +615,11 @@ function RescheduleForm({
 
   return (
     <form
+      ref={formCheck.formRef}
+      noValidate
       className="space-y-3 rounded-xl border border-slate-200 p-4"
-      onSubmit={(e) => {
-        e.preventDefault();
+      onSubmit={formCheck.guard((fd, form) => {
         setError(null);
-        const fd = new FormData(e.currentTarget);
         fd.set("appointmentId", id);
         start(async () => {
           const res = await rescheduleByDoctor(fd);
@@ -623,8 +630,9 @@ function RescheduleForm({
             setError(res.error ?? "Could not move that.");
           }
         });
-      }}
+      })}
     >
+      {formCheck.summary}
       <p className="text-sm font-semibold text-slate-800">Move to</p>
       <div className="grid grid-cols-2 gap-2">
         <input
@@ -730,15 +738,16 @@ function MeetingLinkForm({
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const formCheck = useFormValidation();
 
   return (
     <form
+      ref={formCheck.formRef}
+      noValidate
       className="space-y-2 rounded-xl border border-slate-200 p-4"
-      onSubmit={(e) => {
-        e.preventDefault();
+      onSubmit={formCheck.guard((fd, form) => {
         setError(null);
         setSaved(false);
-        const fd = new FormData(e.currentTarget);
         fd.set("appointmentId", id);
         start(async () => {
           const res = await setMeetingLink(fd);
@@ -749,8 +758,9 @@ function MeetingLinkForm({
             setError(res.error ?? "Could not save that link.");
           }
         });
-      }}
+      })}
     >
+      {formCheck.summary}
       <label className="block text-sm font-semibold text-slate-800">
         Meeting link
       </label>
@@ -881,6 +891,7 @@ function PrescribeForm({ id, onDone }: { id: string; onDone: () => void }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const formCheck = useFormValidation();
 
   if (!open) {
     return (
@@ -895,11 +906,11 @@ function PrescribeForm({ id, onDone }: { id: string; onDone: () => void }) {
 
   return (
     <form
+      ref={formCheck.formRef}
+      noValidate
       className="space-y-2 rounded-xl border border-slate-200 p-4"
-      onSubmit={(e) => {
-        e.preventDefault();
+      onSubmit={formCheck.guard((fd, form) => {
         setError(null);
-        const fd = new FormData(e.currentTarget);
         fd.set("appointmentId", id);
         start(async () => {
           const res = await issuePrescription(fd);
@@ -911,26 +922,33 @@ function PrescribeForm({ id, onDone }: { id: string; onDone: () => void }) {
             setError(res.error ?? "Could not file that.");
           }
         });
-      }}
+      })}
     >
+      {formCheck.summary}
       <label className="block text-sm font-semibold text-slate-800">
-        Prescription
+        What this prescription is for
       </label>
       <input
         name="title"
         required
         maxLength={160}
-        placeholder="e.g. Tretinoin 0.025% nightly"
+        placeholder="e.g. Acne — 12 week course"
         className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
       />
+
+      {/* The lines, picked off the doctor's own dispensary where they stock
+          it and typed where they do not. See PrescriptionLines.tsx. */}
+      <PrescriptionLines />
+
       <textarea
         name="notes"
-        rows={4}
-        placeholder="Directions, duration, review date, anything the client should read."
+        rows={3}
+        placeholder="Anything else the client should read — review date, what to stop, what to watch for."
         className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
       />
       <p className="text-xs text-slate-500">
-        Filed to the client&apos;s record, where they can read it in their profile.
+        Filed to the client&apos;s record, where they can read it in their
+        profile — and reorder anything you stock, from you.
       </p>
       {error && <p className="text-sm text-rose-600">{error}</p>}
       <div className="flex gap-2">

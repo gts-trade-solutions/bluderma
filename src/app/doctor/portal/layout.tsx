@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AppointmentStatus, ApprovalState } from "@prisma/client";
 
 import PortalRail, { type RailItem } from "@/components/doctor/PortalRail";
+import Avatar from "@/components/Avatar";
 import { Notice, portalBtnQuiet } from "@/components/doctor/portalUi";
 import { requireRole } from "@/lib/session";
 import { getOwnDoctor } from "@/lib/doctor/guard";
@@ -110,9 +111,21 @@ export default async function DoctorPortalLayout({
       locked: setup ? "Add your locations in the steps first" : undefined,
     },
     {
-      label: "Medicines",
+      // "Medicines" described the list; "Prescriptions" describes what the
+      // doctor does there, which is what a nav label is for. The ℞ mark is
+      // the one symbol every clinician reads without reading.
+      label: "Prescriptions",
       href: "/doctor/portal/medicines",
-      icon: "rupee",
+      icon: "rx",
+      locked: setup ? notYet : undefined,
+    },
+    {
+      // Its own entry, not a panel inside Prescriptions. Counting the shelf
+      // and prescribing are different jobs done at different times, and the
+      // one that was nested never got done.
+      label: "My inventory",
+      href: "/doctor/portal/inventory",
+      icon: "clinic",
       locked: setup ? notYet : undefined,
     },
     {
@@ -140,7 +153,10 @@ export default async function DoctorPortalLayout({
       locked: setup ? notYet : undefined,
     },
     {
-      label: "Aftercare",
+      // Both halves live here now, so the label names both. "Aftercare"
+      // described the screen accurately right up until it stopped being
+      // only that.
+      label: "Pre & post care",
       href: "/doctor/portal/aftercare",
       icon: "sheet",
       locked: setup ? notYet : undefined,
@@ -157,7 +173,7 @@ export default async function DoctorPortalLayout({
     : null;
 
   return (
-    <div className="theme-light portal-canvas min-h-screen">
+    <div className="theme-light pro-surface portal-canvas min-h-screen">
       {/* Sets the rail state before the browser paints, so a doctor who
           collapsed it last time does not watch it slam shut a moment after
           the page appears. It has to be inline and blocking to beat first
@@ -183,6 +199,7 @@ export default async function DoctorPortalLayout({
         doctorName={owner?.name || "Your practice"}
         clinicName={clinicLine}
         status={owner?.status ?? "DRAFT"}
+        photo={owner?.image ?? null}
       />
 
       <div className="portal-shell">
@@ -195,13 +212,20 @@ export default async function DoctorPortalLayout({
             own place to put them. */}
         <header className="sticky top-0 z-30 hidden border-b border-slate-200/70 bg-white/80 backdrop-blur-md lg:block">
           <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-8 py-2.5 lg:px-10">
-            <div className="flex min-w-0 items-center gap-3">
-              <span
-                aria-hidden
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand-600 to-teal-500 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(31,111,214,0.8)]"
-              >
-                {(owner?.name || "P").replace(/^Dr\.?\s+/i, "").charAt(0).toUpperCase()}
-              </span>
+            {/* Same rule as the rail: the practitioner's own face is a link
+                to their own profile, because that is what everybody tries. */}
+            <Link
+              href="/doctor/portal/profile"
+              title="Open my profile"
+              className="flex min-w-0 items-center gap-3 rounded-xl px-1.5 py-1 transition hover:bg-slate-100"
+            >
+              <Avatar
+                src={owner?.image}
+                alt={owner?.name ?? "Your practice"}
+                role="doctor"
+                size={36}
+                className="ring-1 ring-slate-200"
+              />
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold text-slate-900">
                   {owner?.name || "Your practice"}
@@ -220,7 +244,7 @@ export default async function DoctorPortalLayout({
                   {clinicLine}
                 </p>
               </div>
-            </div>
+            </Link>
 
             <div className="flex shrink-0 items-center gap-2">
               <Link href="/doctor/portal/today" className={portalBtnQuiet}>

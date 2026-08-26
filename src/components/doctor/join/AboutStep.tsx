@@ -30,13 +30,20 @@ export default function AboutStep({
     <EntityForm
       action={saveAboutStep}
       submitLabel="Save and continue"
+      submitHint="Saves what is on this page and opens the next step. Everything is kept as you go, so you can close this and come back."
+      cancelHint="Leaves onboarding. Nothing you have already saved is lost."
       cancelHref={cancelHref}
       cancelLabel="Back"
       redirectTo={redirectTo}
     >
-      <Card title="Who you are">
+      <Card title="Personal Credentials">
         <div className="grid gap-5 sm:grid-cols-2">
-          <TextField name="name" label="Full name" defaultValue={doctor.name} required />
+          <TextField
+            name="name"
+            label="Full name"
+            defaultValue={doctor.name}
+            required
+          />
           <TextField
             name="title"
             label="Qualifications"
@@ -68,7 +75,12 @@ export default function AboutStep({
         title="Your photograph"
         description="A clear head-and-shoulders picture. Clients skip listings without one far more often than any other single thing."
       >
-        <ImageField name="image" label="Photo" defaultValue={doctor.image} folder="doctors" />
+        <ImageField
+          name="image"
+          label="Photo"
+          defaultValue={doctor.image}
+          folder="doctors"
+        />
       </Card>
 
       <Card

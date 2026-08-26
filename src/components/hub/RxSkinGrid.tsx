@@ -40,7 +40,7 @@ export default function RxSkinGrid({ limit }: { limit?: number }) {
               onClick={() => setGroup(g)}
               className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition ${
                 on
-                  ? "bg-white text-[#070d1c]"
+                  ? "bg-white text-[var(--on-sheet)]"
                   : "bg-white/[0.04] text-ink-soft ring-1 ring-white/10 hover:text-brand-200"
               }`}
             >

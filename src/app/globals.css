@@ -24,6 +24,32 @@
      sit over arbitrary page content, and a translucent panel lets whatever is
      behind it read straight through the text. */
   --sheet: #0d1526;
+  /* Text for a solid `bg-white` pill on the dark ground. It cannot be
+     the ink token — on midnight that is near-white, and a white button with
+     near-white text is nothing. Everywhere else it equals --ink, which is
+     what makes the contrast theme flip the pill to black-on-white. */
+  --on-sheet: #070d1c;
+  /* The wordmark on a themed bar. Midnight keeps the exact white and
+     teal-300 it always had, so adding the option changes nothing for
+     anyone who never picks one. */
+  --logo-ink: #ffffff;
+  --logo-accent: #5eead4;
+  /* ── The surfaces that were hardcoded ───────────────────────────────
+     Forty files painted their own dark backgrounds — bg-[#0b1220] for a
+     panel, a from-[#0b1428] gradient for a feature band, bg-[#04070f]/80
+     for a modal scrim. None of them moved when the theme did, which is why
+     a light theme still had navy blocks in it.
+
+     These are those literals, named. Midnight's values ARE the literals, so
+     the default keeps its exact appearance; the other themes give the same
+     roles their own colours. --panel is a deeper card, --band-a/b/c are the
+     three stops of a feature gradient, --scrim is what a modal dims with. */
+  --tint: #0f1a30;
+  --panel: #0b1220;
+  --band-a: #0b1428;
+  --band-b: #0d1a33;
+  --band-c: #06101f;
+  --scrim: rgba(4, 7, 15, 0.8);
   /* Tells the browser to render its own controls dark: select popups, date
      pickers, scrollbars, autofill, the caret. Without it a native control
      paints itself white and takes our light text with it. */
@@ -55,6 +81,387 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* ── The reader's own choice ───────────────────────────────────────────
+   Four themes. `midnight` is the default and is the site exactly as it has
+   always looked — no rule in this file or in the generated block at the
+   bottom applies to it. A theme system that changes the default while adding
+   options to it is a redesign wearing a smaller hat.
+
+   The other three are built entirely out of the tokens below. The client
+   surface is written in ~1,300 LITERAL dark colours (`text-teal-300`,
+   `bg-white/[0.04]`), which is why flipping tokens alone produced pale type on
+   a white page the first time this was tried; every one of those literals is
+   repainted from a token by the generated block at the end of this file. See
+   prisma/gen-theme-overrides.ts.
+
+   Set before first paint by THEME_BOOTSTRAP — src/lib/theme.ts. */
+
+:root,
+:root[data-theme="midnight"] {
+  /* The default. These are the values the literals already are, stated as
+     tokens so anything NEW can be written against them and still look right
+     on the default theme. Nothing is repainted here. */
+  --ink: #eef2f8;
+  --wash: #ffffff;
+  --accent-text: #bce0ff;
+  --highlight-text: #92ead9;
+  --warn-text: #fde68a;
+  --danger-text: #fecdd3;
+  --violet-text: #ddd6fe;
+  --emerald-text: #a7f3d0;
+  /* How far the soft and muted text steps are mixed toward the ground.
+     Per theme, because the ratio a percentage produces depends on the pair
+     it is mixing — see prisma/verify-themes.ts, which measures it. */
+  --ink-soft-mix: 72%;
+  --ink-muted-mix: 52%;
+  --accent-wash: #59b0ff;
+  --highlight-wash: #28bda9;
+  --warn-wash: #fbbf24;
+  --danger-wash: #f43f5e;
+  --violet-wash: #a78bfa;
+  --emerald-wash: #34d399;
+}
+
+/* ── Daylight ─────────────────────────────────────────────────────────
+   A real light theme. The ground is not white: the cards are white, and they
+   need something to sit on or the page reads as an unstyled document.
+
+   Every text token is a 700-800 step rather than the 100-300 the dark theme
+   uses, which is the whole inversion — those pale steps are what became
+   invisible. The wash base flips from white to slate, so a `bg-white/[0.04]`
+   card that lifted off navy now sits INTO the page instead. */
+:root[data-theme="daylight"] {
+  --surface: #f2f6fb;
+  --raise: rgba(15, 23, 42, 0.035);
+  --hairline: rgba(15, 23, 42, 0.10);
+  --sheet: #ffffff;
+  --on-sheet: #0f172a;
+  --logo-ink: #102a43;
+  --logo-accent: #1769d2;
+  color-scheme: light;
+  --tint: #e9eff7;
+  --panel: #e8eef7;
+  --band-a: #e9f0fa;
+  --band-b: #dce8f6;
+  --band-c: #f4f8fd;
+  /* A scrim is the one dark thing a light theme keeps: its job is to push
+     the page back, and a pale scrim does not. Lighter than midnight's so
+     the dimmed page still reads as a page. */
+  --scrim: rgba(15, 23, 42, 0.55);
+
+  --ink: #0f172a;
+  --wash: #0f172a;
+  --accent-text: #1a58ad;
+  --highlight-text: #0a665d;
+  --warn-text: #92400e;
+  --danger-text: #9f1239;
+  --violet-text: #5b21b6;
+  --emerald-text: #065f46;
+  --ink-soft-mix: 72%;
+  --ink-muted-mix: 52%;
+  --accent-wash: #1f6fd6;
+  --highlight-wash: #0fa08e;
+  --warn-wash: #d97706;
+  --danger-wash: #e11d48;
+  --violet-wash: #7c3aed;
+  --emerald-wash: #059669;
+}
+
+/* ── Sepia ────────────────────────────────────────────────────────────
+   Warm paper. The point of it is long reading: a cream ground scatters less
+   than white, and the text is a warm near-black rather than a true one, which
+   is what stops it vibrating against the background.
+
+   The accents are pulled toward the warm end for the same reason. A cold blue
+   on cream looks like a mistake. */
+:root[data-theme="sepia"] {
+  --surface: #f5efe4;
+  --raise: rgba(58, 49, 40, 0.045);
+  --hairline: rgba(58, 49, 40, 0.14);
+  --sheet: #fffaf2;
+  --on-sheet: #3a3128;
+  --logo-ink: #3a3128;
+  --logo-accent: #14625a;
+  color-scheme: light;
+  --tint: #f0e7d7;
+  --panel: #efe5d4;
+  --band-a: #f1e8d8;
+  --band-b: #e8dcc6;
+  --band-c: #f7f1e7;
+  --scrim: rgba(58, 49, 40, 0.58);
+
+  --ink: #3a3128;
+  --wash: #3a3128;
+  --accent-text: #1f5673;
+  --highlight-text: #14625a;
+  --warn-text: #8a5a12;
+  --danger-text: #9c2b34;
+  --violet-text: #5c3f7a;
+  --emerald-text: #2f6045;
+  /* Higher than the others. A warm near-black on cream needs more of itself
+     to stay legible than slate on white does. */
+  --ink-soft-mix: 78%;
+  --ink-muted-mix: 60%;
+  --accent-wash: #2e7ba6;
+  --highlight-wash: #178a7c;
+  --warn-wash: #b47818;
+  --danger-wash: #c0453f;
+  --violet-wash: #7b5a9e;
+  --emerald-wash: #3f8560;
+}
+
+/* ── Contrast ─────────────────────────────────────────────────────────
+   Pure black, pure white, and one accent. Built for somebody who cannot read
+   the others rather than for somebody who prefers it.
+
+   The translucency is what has to go: a 4% white fill on navy is a card, and
+   on this theme it is nothing at all. So `--wash` is full white and the
+   generated rules' color-mix produces something with actual contrast, and the
+   block underneath forces borders solid. */
+:root[data-theme="contrast"] {
+  --surface: #000000;
+  --raise: rgba(255, 255, 255, 0.14);
+  --hairline: rgba(255, 255, 255, 0.55);
+  --sheet: #0a0a0a;
+  --on-sheet: #ffffff;
+  --logo-ink: #ffffff;
+  --logo-accent: #5ff0d8;
+  color-scheme: dark;
+  /* Every surface is black and every edge is the hairline. On this theme a
+     panel is told apart from the page by its border, not by its fill. */
+  --tint: #141414;
+  --panel: #0a0a0a;
+  --band-a: #000000;
+  --band-b: #0a0a0a;
+  --band-c: #000000;
+  --scrim: rgba(0, 0, 0, 0.88);
+
+  --ink: #ffffff;
+  --wash: #ffffff;
+  --accent-text: #7cc4ff;
+  --highlight-text: #5ff0d8;
+  --warn-text: #ffd400;
+  --danger-text: #ff9aa8;
+  --violet-text: #d7b8ff;
+  --emerald-text: #7dffbc;
+  /* Contrast barely mutes at all: a quieter grey is the thing this theme
+     exists to avoid. */
+  --ink-soft-mix: 88%;
+  --ink-muted-mix: 70%;
+  --accent-wash: #7cc4ff;
+  --highlight-wash: #5ff0d8;
+  --warn-wash: #ffd400;
+  --danger-wash: #ff9aa8;
+  --violet-wash: #d7b8ff;
+  --emerald-wash: #7dffbc;
+}
+
+/* Contrast means contrast. A hairline somebody cannot see is a border that
+   does not exist, so every themed edge goes solid and full-strength here —
+   this deliberately overrides the generated color-mix rules below, which is
+   why it is declared after them in specificity terms rather than in file
+   order (the generated block is scoped to :root[data-theme]:not(...), the
+   same weight, so source order decides — and this file ends with the
+   generated block, so these are re-stated at the very bottom of it. See
+   CONTRAST_HARDENING in prisma/gen-theme-overrides.ts). */
+
+/* The page ground, as a token rather than a literal.
+   Twenty-nine pages painted themselves `bg-[#070d1c]`, which is the dark
+   value frozen into the markup and the reason a theme switch could not work:
+   the tokens flipped and the grounds did not. */
+.bg-surface {
+  background-color: var(--surface);
+}
+
+/* Sticky bars that blur the page behind them. Tailwind's `/95` opacity
+   modifier only works on colours it generated, so these are declared rather
+   than composed — `bg-surface/95` would be a class name nothing matches, and
+   the bar would come out transparent with text floating over the content. */
+.bg-surface-95 {
+  background-color: color-mix(in srgb, var(--surface) 95%, transparent);
+}
+.bg-surface-85 {
+  background-color: color-mix(in srgb, var(--surface) 85%, transparent);
+}
+
+/* ── The semantic layer the themes actually run on ─────────────────────
+   The generated block at the foot of this file repaints ~1,300 literal
+   colours. These are the handful that are NOT literals: the ink scale, the
+   body, the form controls and the four component classes. They are written
+   once and driven by tokens, so a theme changes them by changing a value.
+
+   Scoped away from `midnight` like everything else, so the default theme is
+   byte-for-byte the site as it was.
+
+   Note this deliberately does NOT reuse `.theme-light`. That scope hardcodes
+   slate — it is the doctor portal's and the admin console's permanent
+   appearance — and sepia's ink is a warm near-black, not slate. Two different
+   jobs that happen to both be "not dark". */
+:root[data-theme]:not([data-theme="midnight"]) body {
+  color: var(--ink);
+  background: var(--surface);
+}
+
+:root[data-theme]:not([data-theme="midnight"]) .text-ink {
+  color: var(--ink);
+}
+/* 72% and 52% are the same steps the dark theme uses for soft and muted, so
+   the hierarchy between the three survives the flip rather than collapsing
+   into one weight. */
+:root[data-theme]:not([data-theme="midnight"]) .text-ink-soft {
+  color: color-mix(in srgb, var(--ink) var(--ink-soft-mix), transparent);
+}
+:root[data-theme]:not([data-theme="midnight"]) .text-ink-muted {
+  color: color-mix(in srgb, var(--ink) var(--ink-muted-mix), transparent);
+}
+:root[data-theme]:not([data-theme="midnight"]) .bg-ink {
+  background-color: var(--ink);
+}
+
+/* A form control with no background utility falls back to the browser's.
+   On a light theme that is white on white ground — survivable — but on
+   contrast it is white on black with white text in it. */
+:root[data-theme]:not([data-theme="midnight"]) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+:root[data-theme]:not([data-theme="midnight"]) textarea,
+:root[data-theme]:not([data-theme="midnight"]) select {
+  background-color: var(--sheet);
+  color: var(--ink);
+  border-color: var(--hairline);
+}
+
+/* The four component classes. All four were written for navy: a translucent
+   white fill and white type. On any other theme they are invisible, which is
+   what made the account menu in the report a pale-blue smear. */
+:root[data-theme]:not([data-theme="midnight"]) .btn-ghost {
+  border-color: var(--hairline);
+  background-color: var(--sheet);
+  color: color-mix(in srgb, var(--ink) 80%, transparent);
+}
+:root[data-theme]:not([data-theme="midnight"]) .btn-ghost:hover {
+  background-color: color-mix(in srgb, var(--wash) 8%, transparent);
+  color: var(--ink);
+}
+:root[data-theme]:not([data-theme="midnight"]) .btn-outline-white {
+  border-color: var(--hairline);
+  color: var(--ink);
+}
+:root[data-theme]:not([data-theme="midnight"]) .btn-outline-white:hover {
+  background-color: color-mix(in srgb, var(--wash) 8%, transparent);
+}
+:root[data-theme]:not([data-theme="midnight"]) .sheet {
+  background-color: var(--sheet);
+  border-color: var(--hairline);
+  color: var(--ink);
+}
+:root[data-theme]:not([data-theme="midnight"]) .chip {
+  background-color: color-mix(in srgb, var(--wash) 6%, transparent);
+  border-color: var(--hairline);
+  color: color-mix(in srgb, var(--ink) 80%, transparent);
+}
+:root[data-theme]:not([data-theme="midnight"]) .card,
+:root[data-theme]:not([data-theme="midnight"]) .card-soft {
+  background-color: var(--sheet);
+  border-color: var(--hairline);
+}
+
+/* ── Placeholders ─────────────────────────────────────────────────────
+   The generator skips `placeholder:` because a pseudo-element cannot be
+   expressed as a plain class rule, and it reported the skip rather than
+   silently dropping it. Handled here instead.
+
+   It matters more than it looks: a placeholder is the only label some fields
+   have, and `text-slate-400` on the contrast theme's black input is the
+   difference between an empty box and an empty box that says what goes in
+   it. Muted rather than full ink, because a placeholder that reads as
+   strongly as a value looks like a value already typed. */
+:root[data-theme]:not([data-theme="midnight"]) input:not(.pro-surface *)::placeholder,
+:root[data-theme]:not([data-theme="midnight"]) textarea:not(.pro-surface *)::placeholder {
+  color: color-mix(in srgb, var(--ink) var(--ink-muted-mix), transparent);
+  opacity: 1;
+}
+
+/* ── Islands that stay dark on purpose ────────────────────────────────
+   Some surfaces are dark because of what is UNDER them, not because of the
+   theme: the gradient that makes a caption readable over a photograph, a
+   modal scrim, a video poster. Turning those light on a light theme does not
+   make them lighter, it makes the caption vanish into the picture.
+
+   `.on-dark` marks one. Two things follow from it:
+
+   1. The generated block at the end of this file refuses to enter it, so the
+      `text-white` inside stays white instead of being repainted to the dark
+      `var(--ink)` a light theme sets. That repaint is what put dark text on
+      the dark Gold Collar card.
+
+   2. The tokens are re-declared to their midnight values HERE, so anything
+      token-driven inside — .text-ink, .sheet, .chip, a component written
+      against var(--hairline) — also stays dark-correct. Exclusion alone
+      would have fixed the literals and left the tokens wrong.
+
+   Use it only where the darkness is structural. A section that is merely
+   navy on the default theme is not one of these; give it --band or --panel
+   and let it change. */
+.on-dark {
+  --ink: #eef2f8;
+  --wash: #ffffff;
+  --sheet: #0d1526;
+  --panel: #0b1220;
+  --tint: #0f1a30;
+  --raise: rgba(255, 255, 255, 0.04);
+  --hairline: rgba(255, 255, 255, 0.12);
+  --accent-text: #bce0ff;
+  --highlight-text: #92ead9;
+  --warn-text: #fde68a;
+  --danger-text: #fecdd3;
+  --violet-text: #ddd6fe;
+  --emerald-text: #a7f3d0;
+  --ink-soft-mix: 72%;
+  --ink-muted-mix: 52%;
+  color-scheme: dark;
+}
+
+/* ── Hover, everywhere ────────────────────────────────────────────────
+   The reported bug: on a light theme a hover came out pale blue with pale
+   type on it, because `hover:bg-brand-400/[12%]` paints a 12% wash of a
+   LIGHT blue and `hover:text-brand-200` paints light-blue text on top. On
+   navy that is a subtle lift; on white it is one pale thing on another.
+
+   The generated block already repoints both at tokens. This is the rule that
+   makes the pair legible together: on a light ground a hover DARKENS, and the
+   text that sits in it goes to full ink rather than to a pale accent. */
+:root[data-theme="daylight"] [class*="hover:text-"]:hover,
+:root[data-theme="sepia"] [class*="hover:text-"]:hover {
+  color: var(--ink);
+}
+:root[data-theme="daylight"] [class*="hover:bg-"]:hover,
+:root[data-theme="sepia"] [class*="hover:bg-"]:hover {
+  background-color: color-mix(in srgb, var(--wash) 9%, transparent);
+}
+
+/* ── Contrast means contrast ──────────────────────────────────────────
+   Declared last so it beats the generated color-mix rules, which share its
+   specificity. A hairline nobody can see is a border that does not exist, and
+   a 4% fill is nothing at all — this theme exists for somebody who cannot
+   read the other three, so translucency is the first thing to go. */
+:root[data-theme="contrast"] [class*="border-white/"],
+:root[data-theme="contrast"] [class*="border-white\\/"] {
+  border-color: var(--hairline);
+}
+:root[data-theme="contrast"] [class*="ring-white/"] {
+  --tw-ring-color: var(--hairline);
+}
+:root[data-theme="contrast"] [class*="bg-white/"] {
+  background-color: var(--raise);
+}
+:root[data-theme="contrast"] a:focus-visible,
+:root[data-theme="contrast"] button:focus-visible,
+:root[data-theme="contrast"] input:focus-visible,
+:root[data-theme="contrast"] select:focus-visible,
+:root[data-theme="contrast"] textarea:focus-visible {
+  outline: 3px solid var(--warn-text);
+  outline-offset: 2px;
+}
+
 /* ── Light scope for the professional surfaces ─────────────────────────
    The client experience inverted the ink palette (ink is now near-white),
    but the doctor portal, admin console and the doctor-facing treatment and
@@ -71,6 +478,21 @@ body {
   color: #0f172a;
   background: #f8fafc;
 }
+
+/* A light island on a client page is a DEFAULT-theme decision: a treatment
+   page reads better on white than on navy. It is not a promise to stay white
+   after somebody picks the contrast theme, which is the one theme they picked
+   because white does not work for them.
+
+   So on any theme but the default, a `.theme-light` that is not part of the
+   professional console gives its ground back. The descendant rules above are
+   already outranked by the themed ones — only this block, at (0,1,0), needed
+   saying. */
+:root[data-theme]:not([data-theme="midnight"]) .theme-light:not(.pro-surface):not(.pro-surface *) {
+  color: var(--ink);
+  background: var(--surface);
+  color-scheme: inherit;
+}
 .theme-light .text-ink { color: #0f172a; }
 .theme-light .text-ink-soft { color: #334155; }
 .theme-light .text-ink-muted { color: #64748b; }
@@ -80,6 +502,87 @@ body {
 .theme-light select {
   background-color: #ffffff;
   color: #0f172a;
+}
+
+/* ── A section with an unanswered question in it ───────────────────────
+   Highlighting the field alone is not enough on a form that is six cards
+   long: the field may be a screen away from where the eye is when Save is
+   pressed. The card takes a rose ring and a tinted header, so the shape of
+   what is left to do is visible while scrolling past at speed.
+
+   Set imperatively by lib/formValidation.ts on the nearest ancestor marked
+   `data-form-section` — Card and Panel both carry it — and cleared on the
+   next attempt. Doing it through the DOM rather than through React state is
+   deliberate: the alternative is every field telling its parent what its
+   name is, which is a prop on forty call sites to solve a styling problem. */
+[data-form-section][data-invalid="true"] {
+  --tw-ring-color: rgb(253 164 175);
+  box-shadow:
+    0 0 0 1px rgb(253 164 175),
+    0 12px 32px -20px rgba(190, 18, 60, 0.35);
+  border-color: rgb(253 164 175);
+}
+[data-form-section][data-invalid="true"] > div:first-child {
+  background-color: rgb(255 241 242);
+}
+/* The field itself, whatever component drew it. `aria-invalid` is already
+   set by every field in ui.tsx, so this needs nothing new at the call site. */
+[aria-invalid="true"] {
+  border-color: rgb(253 164 175) !important;
+}
+[aria-invalid="true"]:focus {
+  --tw-ring-color: rgba(244, 63, 94, 0.15);
+  border-color: rgb(251 113 133) !important;
+}
+
+/* ── Selects, everywhere ───────────────────────────────────────────────
+   A native select is the one control that gives no feedback about whether
+   the user has answered it: an unanswered "Select a council" and a chosen
+   "Tamil Nadu Medical Council" render in identical grey, so a long form
+   offers no way to see at a glance which questions are still open.
+
+   So a select carrying a REAL value states it in brand blue and half a
+   weight heavier, while the placeholder row stays muted. `:has()` is what
+   makes this possible without a wrapper component or per-field state —
+   `option[value=""]:checked` is true only while the empty placeholder is
+   the selection.
+
+   Declared once here rather than at the ~40 call sites, which is the
+   difference between a rule and a habit. Everything below is scoped to
+   `select` alone, so no input or textarea inherits it. */
+select {
+  /* Selected rows in the open popup. Honoured by Firefox and by Chrome on
+     Windows and Linux; macOS draws its own popup and ignores it, which is
+     why the closed-state colour above is doing the real work. */
+  color-scheme: dark;
+}
+select option:checked {
+  background: #1f6fd6 linear-gradient(0deg, #1f6fd6 0%, #1f6fd6 100%);
+  color: #ffffff;
+  font-weight: 600;
+}
+/* Placeholder still showing: leave it quiet. */
+select:has(option[value=""]:checked) {
+  font-weight: 400;
+}
+/* A real answer, on the light surfaces (portal, admin, onboarding). */
+.theme-light select:not(:has(option[value=""]:checked)) {
+  color: #1b4a8c;
+  font-weight: 600;
+}
+.theme-light select:has(option[value=""]:checked) {
+  color: #64748b;
+}
+.theme-light select {
+  color-scheme: light;
+}
+/* And on the dark client surface, where brand-800 would vanish. A select
+   there sits on a translucent white fill, so the answer is lifted rather
+   than darkened. */
+:not(.theme-light) > select:not(:has(option[value=""]:checked)),
+:not(.theme-light) select:not(:has(option[value=""]:checked)) {
+  color: #bce0ff;
+  font-weight: 600;
 }
 
 /*
@@ -434,3 +937,178 @@ body {
   .toast-in  { animation: none; opacity: 1; }
   .toast-out { animation: none; opacity: 0; transition: opacity 150ms linear; }
 }
+
+/* THEME-OVERRIDES:START — generated by prisma/gen-theme-overrides.ts */
+/*
+ * Every dark-only colour literal the client surface uses, repainted from a
+ * token. DO NOT EDIT BY HAND — run:
+ *
+ *   npx tsx prisma/gen-theme-overrides.ts
+ *
+ * Scoped away from the default theme on purpose: `midnight` is the site as
+ * it has always looked and not one of these rules touches it.
+ *
+ * 161 rules, generated from the source.
+ */
+:root[data-theme]:not([data-theme="midnight"]) .bg-amber-300\/20:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--warn-wash) 20%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-amber-400\/10:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--warn-wash) 10%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-amber-400\/15:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--warn-wash) 15%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-amber-400\/20:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--warn-wash) 20%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-amber-400\/\[14\%\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--warn-wash) 14%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-amber-400\/\[18\%\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--warn-wash) 18%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-amber-500\/25:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--warn-wash) 25%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-brand-400\/10:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--accent-wash) 10%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-brand-400\/15:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--accent-wash) 15%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-brand-400\/\[12\%\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--accent-wash) 12%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-brand-400\/\[14\%\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--accent-wash) 14%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-brand-500\/20:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--accent-wash) 20%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-brand-500\/25:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--accent-wash) 25%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-brand-500\/\[0\.3\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--accent-wash) 30%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-brand-500\/\[12\%\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--accent-wash) 12%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-brand-600\/15:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--accent-wash) 15%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-brand-600\/25:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--accent-wash) 25%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-brand-600\/30:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--accent-wash) 30%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-emerald-400\/15:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--emerald-wash) 15%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-emerald-400\/\[15\%\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--emerald-wash) 15%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-emerald-500\/25:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--emerald-wash) 25%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-rose-500\/10:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--danger-wash) 10%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-rose-500\/\[0\.26\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--danger-wash) 26%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-rose-500\/\[12\%\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--danger-wash) 12%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-slate-100:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: var(--tint); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-slate-200:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: var(--tint); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-slate-50:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: var(--tint); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-teal-400\/15:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--highlight-wash) 15%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-teal-400\/20:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--highlight-wash) 20%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-teal-400\/25:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--highlight-wash) 25%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-teal-400\/\[12\%\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--highlight-wash) 12%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-teal-400\/\[14\%\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--highlight-wash) 14%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-teal-400\/\[15\%\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--highlight-wash) 15%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-teal-500\/15:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--highlight-wash) 15%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-teal-500\/20:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--highlight-wash) 20%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-teal-500\/90:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--highlight-wash) 90%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-teal-500\/\[0\.12\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--highlight-wash) 12%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-teal-500\/\[12\%\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--highlight-wash) 12%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-violet-600\/\[0\.16\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--violet-wash) 16%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-white:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: var(--sheet); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-white\/10:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--wash) 10%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-white\/15:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--wash) 15%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-white\/30:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--wash) 30%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-white\/35:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--wash) 35%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-white\/5:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--wash) 5%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-white\/70:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--wash) 70%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-white\/90:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--wash) 90%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-white\/\[0\.04\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--wash) 4%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-white\/\[0\.05\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--wash) 5%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-white\/\[0\.06\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--wash) 6%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-white\/\[0\.07\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--wash) 7%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .bg-white\/\[0\.12\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--wash) 12%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .border-amber-400\/30:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { border-color: color-mix(in srgb, var(--warn-wash) 30%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .border-rose-300\/40:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { border-color: color-mix(in srgb, var(--danger-wash) 40%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .border-rose-400\/25:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { border-color: color-mix(in srgb, var(--danger-wash) 25%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .border-rose-400\/50:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { border-color: color-mix(in srgb, var(--danger-wash) 50%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .border-slate-100:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { border-color: var(--hairline); }
+:root[data-theme]:not([data-theme="midnight"]) .border-slate-200:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { border-color: var(--hairline); }
+:root[data-theme]:not([data-theme="midnight"]) .border-slate-300:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { border-color: var(--hairline); }
+:root[data-theme]:not([data-theme="midnight"]) .border-teal-300\/30:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { border-color: color-mix(in srgb, var(--highlight-wash) 30%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .border-teal-300\/40:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { border-color: color-mix(in srgb, var(--highlight-wash) 40%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .border-white\/10:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { border-color: color-mix(in srgb, var(--wash) 10%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .border-white\/15:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { border-color: color-mix(in srgb, var(--wash) 15%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .border-white\/20:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { border-color: color-mix(in srgb, var(--wash) 20%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .disabled\:bg-slate-200:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):disabled { background-color: var(--tint); }
+:root[data-theme]:not([data-theme="midnight"]) .disabled\:text-slate-400:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):disabled { color: color-mix(in srgb, var(--ink) var(--ink-muted-mix), transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .divide-white\/10:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) > * + * { border-color: color-mix(in srgb, var(--wash) 10%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .focus\:ring-brand-300\/40:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):focus { --tw-ring-color: color-mix(in srgb, var(--accent-wash) 40%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .focus\:ring-brand-500\/15:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):focus { --tw-ring-color: color-mix(in srgb, var(--accent-wash) 15%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .focus\:ring-brand-500\/20:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):focus { --tw-ring-color: color-mix(in srgb, var(--accent-wash) 20%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .focus\:ring-brand-500\/25:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):focus { --tw-ring-color: color-mix(in srgb, var(--accent-wash) 25%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .focus\:ring-rose-500\/20:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):focus { --tw-ring-color: color-mix(in srgb, var(--danger-wash) 20%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .from-brand-50:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-gradient-from: var(--accent-wash); }
+:root[data-theme]:not([data-theme="midnight"]) .from-brand-50\/60:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-gradient-from: color-mix(in srgb, var(--accent-wash) 60%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .from-teal-200:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-gradient-from: var(--highlight-wash); }
+:root[data-theme]:not([data-theme="midnight"]) .from-teal-300:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-gradient-from: var(--highlight-wash); }
+:root[data-theme]:not([data-theme="midnight"]) .group:hover .group-hover\:bg-teal-400\/\[12\%\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { background-color: color-mix(in srgb, var(--highlight-wash) 12%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .group:hover .group-hover\:text-brand-200:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: var(--accent-text); }
+:root[data-theme]:not([data-theme="midnight"]) .group:hover .group-hover\:text-brand-300:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: var(--accent-text); }
+:root[data-theme]:not([data-theme="midnight"]) .group:hover .group-hover\:text-teal-300:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: var(--highlight-text); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:bg-brand-400\/\[12\%\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { background-color: color-mix(in srgb, var(--accent-wash) 12%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:bg-slate-200:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { background-color: var(--tint); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:bg-slate-50:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { background-color: var(--tint); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:bg-teal-400\/20:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { background-color: color-mix(in srgb, var(--highlight-wash) 20%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:bg-teal-400\/\[12\%\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { background-color: color-mix(in srgb, var(--highlight-wash) 12%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:bg-white:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { background-color: var(--sheet); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:bg-white\/10:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { background-color: color-mix(in srgb, var(--wash) 10%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:bg-white\/15:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { background-color: color-mix(in srgb, var(--wash) 15%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:bg-white\/60:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { background-color: color-mix(in srgb, var(--wash) 60%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:bg-white\/\[0\.04\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { background-color: color-mix(in srgb, var(--wash) 4%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:bg-white\/\[0\.06\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { background-color: color-mix(in srgb, var(--wash) 6%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:bg-white\/\[0\.07\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { background-color: color-mix(in srgb, var(--wash) 7%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:bg-white\/\[0\.09\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { background-color: color-mix(in srgb, var(--wash) 9%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:bg-white\/\[0\.1\]:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { background-color: color-mix(in srgb, var(--wash) 10%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:border-brand-300\/50:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { border-color: color-mix(in srgb, var(--accent-wash) 50%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:from-teal-200:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { --tw-gradient-from: var(--highlight-wash); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:ring-brand-300\/40:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { --tw-ring-color: color-mix(in srgb, var(--accent-wash) 40%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:ring-brand-500\/60:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { --tw-ring-color: color-mix(in srgb, var(--accent-wash) 60%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:ring-teal-300\/40:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { --tw-ring-color: color-mix(in srgb, var(--highlight-wash) 40%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:ring-teal-300\/50:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { --tw-ring-color: color-mix(in srgb, var(--highlight-wash) 50%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:ring-white\/40:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { --tw-ring-color: color-mix(in srgb, var(--wash) 40%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:text-brand-100:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { color: var(--accent-text); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:text-brand-200:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { color: var(--accent-text); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:text-rose-200:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { color: var(--danger-text); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:text-slate-800:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { color: var(--ink); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:text-teal-200:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { color: var(--highlight-text); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:text-white:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { color: var(--ink); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:text-white\/80:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { color: color-mix(in srgb, var(--ink) 80%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .hover\:to-brand-300:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *):hover { --tw-gradient-to: var(--accent-wash); }
+:root[data-theme]:not([data-theme="midnight"]) .ring-amber-300\/20:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-ring-color: color-mix(in srgb, var(--warn-wash) 20%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .ring-amber-300\/30:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-ring-color: color-mix(in srgb, var(--warn-wash) 30%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .ring-brand-300\/40:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-ring-color: color-mix(in srgb, var(--accent-wash) 40%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .ring-brand-300\/50:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-ring-color: color-mix(in srgb, var(--accent-wash) 50%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .ring-brand-400\/30:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-ring-color: color-mix(in srgb, var(--accent-wash) 30%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .ring-brand-500\/40:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-ring-color: color-mix(in srgb, var(--accent-wash) 40%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .ring-slate-200:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-ring-color: var(--hairline); }
+:root[data-theme]:not([data-theme="midnight"]) .ring-teal-300\/25:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-ring-color: color-mix(in srgb, var(--highlight-wash) 25%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .ring-white:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-ring-color: var(--wash); }
+:root[data-theme]:not([data-theme="midnight"]) .ring-white\/10:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-ring-color: color-mix(in srgb, var(--wash) 10%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .ring-white\/15:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-ring-color: color-mix(in srgb, var(--wash) 15%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .ring-white\/20:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-ring-color: color-mix(in srgb, var(--wash) 20%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .ring-white\/25:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-ring-color: color-mix(in srgb, var(--wash) 25%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-amber-100\/80:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--warn-text) 80%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-amber-200:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: var(--warn-text); }
+:root[data-theme]:not([data-theme="midnight"]) .text-amber-200\/90:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--warn-text) 90%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-amber-300:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: var(--warn-text); }
+:root[data-theme]:not([data-theme="midnight"]) .text-brand-100:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: var(--accent-text); }
+:root[data-theme]:not([data-theme="midnight"]) .text-brand-200:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: var(--accent-text); }
+:root[data-theme]:not([data-theme="midnight"]) .text-brand-200\/80:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--accent-text) 80%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-brand-300:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: var(--accent-text); }
+:root[data-theme]:not([data-theme="midnight"]) .text-brand-300\/70:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--accent-text) 70%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-rose-100:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: var(--danger-text); }
+:root[data-theme]:not([data-theme="midnight"]) .text-rose-200:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: var(--danger-text); }
+:root[data-theme]:not([data-theme="midnight"]) .text-rose-300\/80:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--danger-text) 80%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-slate-400:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--ink) var(--ink-muted-mix), transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-slate-500:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--ink) var(--ink-soft-mix), transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-slate-600:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--ink) var(--ink-soft-mix), transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-slate-700:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: var(--ink); }
+:root[data-theme]:not([data-theme="midnight"]) .text-slate-800:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: var(--ink); }
+:root[data-theme]:not([data-theme="midnight"]) .text-slate-900:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: var(--ink); }
+:root[data-theme]:not([data-theme="midnight"]) .text-teal-100:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: var(--highlight-text); }
+:root[data-theme]:not([data-theme="midnight"]) .text-teal-200:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: var(--highlight-text); }
+:root[data-theme]:not([data-theme="midnight"]) .text-teal-300:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: var(--highlight-text); }
+:root[data-theme]:not([data-theme="midnight"]) .text-teal-300\/70:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--highlight-text) 70%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-teal-300\/80:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--highlight-text) 80%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-white:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: var(--ink); }
+:root[data-theme]:not([data-theme="midnight"]) .text-white\/30:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--ink) 30%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-white\/35:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--ink) 35%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-white\/40:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--ink) 40%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-white\/45:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--ink) 45%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-white\/50:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--ink) 50%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-white\/55:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--ink) 55%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-white\/60:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--ink) 60%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-white\/70:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--ink) 70%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-white\/75:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--ink) 75%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-white\/80:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--ink) 80%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-white\/85:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--ink) 85%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .text-white\/90:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { color: color-mix(in srgb, var(--ink) 90%, transparent); }
+:root[data-theme]:not([data-theme="midnight"]) .to-brand-300:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-gradient-to: var(--accent-wash); }
+:root[data-theme]:not([data-theme="midnight"]) .to-teal-50:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-gradient-to: var(--highlight-wash); }
+:root[data-theme]:not([data-theme="midnight"]) .to-teal-50\/50:not(.on-dark, .on-dark *):not(.pro-surface, .pro-surface *) { --tw-gradient-to: color-mix(in srgb, var(--highlight-wash) 50%, transparent); }
+/* THEME-OVERRIDES:END */

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { ExpenseCategory } from "@prisma/client";
+import { ExpenseCategory, IncomeSource } from "@prisma/client";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
@@ -26,6 +26,9 @@ const CATEGORIES = [
   "UTILITIES",
   "MAINTENANCE",
   "TAX",
+  /// Stock bought FOR the dispensary — the other half of medicine sales.
+  "MEDICINES",
+  "LAUNDRY",
   "OTHER",
 ] as const;
 
@@ -43,6 +46,21 @@ const expenseSchema = z.object({
   spentOn: z.string().min(1, "When?"),
   clinicId: z.string().optional().default(""),
   note: z.string().trim().max(500).optional().default(""),
+  /**
+   * How many people a SALARY row covers.
+   *
+   * Ignored on every other category rather than rejected: a doctor who types
+   * a number and then changes the category should not be stopped by a field
+   * that is no longer on screen.
+   */
+  headcount: z
+    .union([z.number(), z.string()])
+    .optional()
+    .transform((v) => {
+      if (v === undefined || v === "") return null;
+      const n = Math.round(Number(v));
+      return Number.isFinite(n) && n > 0 && n < 2000 ? n : null;
+    }),
 });
 
 export async function saveExpense(input: unknown): Promise<ActionResult> {
@@ -67,6 +85,9 @@ export async function saveExpense(input: unknown): Promise<ActionResult> {
     spentOn,
     clinicId,
     note: d.note || null,
+    // Only meaningful on a salary row. Cleared otherwise so a category change
+    // cannot leave "6 people" attached to the electricity bill.
+    headcount: d.category === "SALARY" ? d.headcount : null,
   };
 
   try {
@@ -224,4 +245,96 @@ async function ownClinic(doctorId: string, clinicId: string): Promise<string | n
     select: { clinicId: true },
   });
   return link?.clinicId ?? null;
+}
+
+/* ------------------------------- Income ---------------------------------- */
+
+const INCOME_SOURCES = [
+  "PRODUCT",
+  "PACKAGE",
+  "RENTAL",
+  "PROFESSIONAL",
+  "MISCELLANEOUS",
+] as const;
+
+const incomeSchema = z.object({
+  id: z.string().min(1).optional(),
+  source: z.enum(INCOME_SOURCES).default("MISCELLANEOUS"),
+  label: z.string().trim().min(2, "What was it for?").max(160),
+  amountInr: z
+    .union([z.number(), z.string()])
+    .transform((v) => Math.round(Number(v)))
+    .refine((n) => Number.isFinite(n) && n > 0, "Enter an amount."),
+  receivedOn: z.string().min(1, "When?"),
+  clinicId: z.string().optional().default(""),
+  note: z.string().trim().max(500).optional().default(""),
+});
+
+/**
+ * Money in that was not a consultation, a medicine order or a machine use.
+ *
+ * -- The rule this action cannot enforce, and says so instead --------------
+ * Each rupee belongs in exactly one stream. A laser charge goes on the machine,
+ * a medicine sale on the order, a consultation on the appointment. Nothing
+ * here can tell whether an amount has already been counted somewhere else —
+ * only the person typing it knows — so the form says it at the point of entry
+ * rather than the server pretending to a certainty it does not have.
+ */
+export async function saveIncome(input: unknown): Promise<ActionResult> {
+  const owner = await getOwnDoctor();
+  if (!owner) return { ok: false, error: "Not permitted." };
+
+  const parsed = incomeSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Please check the form.", fields: fieldErrors(parsed.error) };
+  }
+  const d = parsed.data;
+
+  const receivedOn = new Date(d.receivedOn);
+  if (Number.isNaN(receivedOn.getTime())) return { ok: false, error: "That is not a date." };
+
+  const clinicId = await ownClinic(owner.doctorId, d.clinicId);
+
+  const data = {
+    source: d.source as IncomeSource,
+    label: d.label,
+    amountInr: d.amountInr,
+    receivedOn,
+    clinicId,
+    note: d.note || null,
+  };
+
+  try {
+    if (d.id) {
+      const res = await prisma.practiceIncome.updateMany({
+        where: { id: d.id, doctorId: owner.doctorId },
+        data,
+      });
+      if (res.count === 0) return { ok: false, error: "That entry is not yours." };
+    } else {
+      await prisma.practiceIncome.create({
+        data: { doctorId: owner.doctorId, ...data },
+      });
+    }
+  } catch {
+    return { ok: false, error: "Could not save that." };
+  }
+
+  revalidatePath("/doctor/portal/finance");
+  revalidatePath("/doctor/portal");
+  return { ok: true };
+}
+
+export async function removeIncome(id: string): Promise<ActionResult> {
+  const owner = await getOwnDoctor();
+  if (!owner) return { ok: false, error: "Not permitted." };
+
+  const res = await prisma.practiceIncome.deleteMany({
+    where: { id, doctorId: owner.doctorId },
+  });
+  if (res.count === 0) return { ok: false, error: "That entry is not yours." };
+
+  revalidatePath("/doctor/portal/finance");
+  revalidatePath("/doctor/portal");
+  return { ok: true };
 }

@@ -1371,10 +1371,10 @@ async function seedClientRecord(
     data: [
       { userId, code: "FIRSTSCAN", description: "First skin analysis, free", percentOff: 100, usedAt: new Date(now.getTime() - 412 * DAY), createdAt: new Date(now.getTime() - 414 * DAY) },
       { userId, code: "WELCOME200", description: "Rs 200 off your first order", amountOffInr: 200, usedAt: new Date(now.getTime() - 396 * DAY), createdAt: new Date(now.getTime() - 410 * DAY) },
-      { userId, code: "WHITECOLLAR10", description: "White Collar - 10% off every consultation", percentOff: 10, usedAt: new Date(now.getTime() - 268 * DAY), createdAt: new Date(now.getTime() - 400 * DAY) },
+      { userId, code: "WHITECOLLAR10", description: "Gold Collar - 10% off every consultation", percentOff: 10, usedAt: new Date(now.getTime() - 268 * DAY), createdAt: new Date(now.getTime() - 400 * DAY) },
       { userId, code: "SUMMERSKIN", description: "Summer skin week - 20% off a peel course", percentOff: 20, usedAt: new Date(now.getTime() - 131 * DAY), createdAt: new Date(now.getTime() - 140 * DAY) },
       { userId, code: "REFER500", description: "Rs 500 referral credit", amountOffInr: 500, usedAt: new Date(now.getTime() - 74 * DAY), createdAt: new Date(now.getTime() - 80 * DAY) },
-      { userId, code: "WHITECOLLAR15", description: "White Collar Annual - 15% off every consultation", percentOff: 15, usedAt: new Date(now.getTime() - 21 * DAY), createdAt: new Date(now.getTime() - 40 * DAY) },
+      { userId, code: "WHITECOLLAR15", description: "Gold Collar Annual - 15% off every consultation", percentOff: 15, usedAt: new Date(now.getTime() - 21 * DAY), createdAt: new Date(now.getTime() - 40 * DAY) },
       // Unused and still running, so the profile can show a live offer too.
       { userId, code: "MONSOON15", description: "Monsoon skin week - 15% off a peel course", percentOff: 15, expiresAt: new Date(now.getTime() + 26 * DAY), createdAt: new Date(now.getTime() - 9 * DAY) },
     ],

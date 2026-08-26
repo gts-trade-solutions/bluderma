@@ -8,6 +8,7 @@ import Link from "next/link";
 import { startDoctorSignup } from "@/lib/actions/doctorOnboarding";
 import GoogleButton from "@/components/auth/GoogleButton";
 import AuthDivider from "@/components/auth/AuthDivider";
+import { useFormValidation } from "@/hooks/useFormValidation";
 
 /**
  * Step 0 — the login.
@@ -20,18 +21,19 @@ import AuthDivider from "@/components/auth/AuthDivider";
 export default function AccountStep({ googleEnabled = false }: { googleEnabled?: boolean }) {
   const router = useRouter();
   const [pending, start] = useTransition();
+  const formCheck = useFormValidation();
   const [error, setError] = useState<string | null>(null);
   const [fields, setFields] = useState<Record<string, string>>({});
 
   return (
     <>
     <form
+      ref={formCheck.formRef}
+      noValidate
       className="space-y-5"
-      onSubmit={(e) => {
-        e.preventDefault();
+      onSubmit={formCheck.guard((fd, form) => {
         setError(null);
         setFields({});
-        const fd = new FormData(e.currentTarget);
         const email = String(fd.get("email") ?? "");
         const password = String(fd.get("password") ?? "");
 
@@ -56,8 +58,9 @@ export default function AccountStep({ googleEnabled = false }: { googleEnabled?:
           router.push("/doctor/portal");
           router.refresh();
         });
-      }}
+      })}
     >
+      {formCheck.summary}
       {error && (
         <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
           {error}

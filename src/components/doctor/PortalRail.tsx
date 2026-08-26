@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 
 import BrandLogo from "@/components/BrandLogo";
+import Avatar from "@/components/Avatar";
 import { GlyphIcon } from "./portalUi";
 
 /**
@@ -42,12 +43,15 @@ export default function PortalRail({
   doctorName,
   clinicName,
   status,
+  photo,
 }: {
   items: RailItem[];
   doctorName: string;
   clinicName: string | null;
   /** DRAFT | PENDING | APPROVED | REJECTED | SUSPENDED */
   status: string;
+  /** The practitioner's own portrait. Falls back to their initial. */
+  photo?: string | null;
 }) {
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
@@ -126,22 +130,28 @@ export default function PortalRail({
     </nav>
   );
 
-  const initial = doctorName.replace(/^Dr\.?\s+/i, "").trim().charAt(0).toUpperCase() || "D";
-
   const identity = (
     <div className="px-5 pb-5 pt-6">
       <span className="rail-label block">
         <BrandLogo href="/doctor" size={40} tone="light" />
       </span>
-      {/* A monogram and a hairline of teal — the small amount of ceremony that
-          separates "an internal tool" from "your practice". */}
-      <div
-        title={doctorName}
-        className="rail-wide mt-5 flex items-center gap-3 rounded-2xl bg-gradient-to-br from-white/[0.09] to-white/[0.03] px-3.5 py-3.5 ring-1 ring-white/10"
+      {/* The practitioner's own card, and a link to their profile.
+          It looked like a header and behaved like one, so every doctor who
+          clicked their own picture expecting to edit their details got
+          nothing — the single most-tried dead end in the portal. */}
+      <Link
+        href="/doctor/portal/profile"
+        title={`${doctorName} — open my profile`}
+        className="rail-wide mt-5 flex items-center gap-3 rounded-2xl bg-gradient-to-br from-white/[0.09] to-white/[0.03] px-3.5 py-3.5 ring-1 ring-white/10 transition hover:from-white/[0.14] hover:to-white/[0.06] hover:ring-white/20"
       >
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-teal-400 to-brand-500 font-display text-base font-bold text-[#0b1220]">
-          {initial}
-        </span>
+        {/* A doctor figure, not the first letter of the name. See Avatar.tsx. */}
+        <Avatar
+          src={photo}
+          alt={doctorName}
+          role="doctor"
+          size={40}
+          className="ring-1 ring-white/20"
+        />
         <div className="rail-label min-w-0 flex-1">
         <p className="truncate text-sm font-bold text-white">{doctorName}</p>
         <p className="mt-0.5 truncate text-[11px] text-white/45">
@@ -149,7 +159,7 @@ export default function PortalRail({
         </p>
         <StatusPill status={status} />
         </div>
-      </div>
+      </Link>
     </div>
   );
 

@@ -14,7 +14,7 @@ export default function ComingSoonTicker() {
   const items = Array.from({ length: 4 });
 
   return (
-    <div className="relative overflow-hidden border-y border-brand-800/40 bg-[#070d1c] py-2.5">
+    <div className="relative overflow-hidden border-y border-brand-800/40 bg-surface py-2.5">
       <div className="flex w-max animate-marquee items-center gap-10 motion-reduce:animate-none">
         {[0, 1].map((copy) => (
           <div key={copy} className="flex items-center gap-10" aria-hidden={copy === 1}>

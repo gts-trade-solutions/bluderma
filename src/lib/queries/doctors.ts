@@ -1,4 +1,4 @@
-import { ConsultMode, Prisma } from "@prisma/client";
+import { ConsultMode, Prisma, ReviewStatus } from "@prisma/client";
 import { cache } from "react";
 
 import { prisma } from "@/lib/prisma";
@@ -13,19 +13,63 @@ const doctorInclude = {
   focus: { select: { concern: { select: { key: true } } } },
   languages: { orderBy: { sortOrder: "asc" }, select: { name: true } },
   services: { orderBy: { sortOrder: "asc" }, select: { name: true } },
+  specialtyAreas: { orderBy: { sortOrder: "asc" }, select: { name: true } },
+  otherFocus: { orderBy: { sortOrder: "asc" }, select: { name: true } },
   modes: { select: { mode: true } },
+  /**
+   * The doctor's own published reviews.
+   *
+   * A star rating with no words is not worth quoting, so bodyless rows are
+   * excluded here exactly as they are in /api/reviews/published — they still
+   * count toward the aggregate, which is a different question.
+   *
+   * Three on the listing is enough to read while choosing; the full set is a
+   * page nobody has asked for yet.
+   */
+  reviewList: {
+    where: { status: ReviewStatus.PUBLISHED, body: { not: null } },
+    orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+    take: 3,
+    select: {
+      id: true,
+      rating: true,
+      title: true,
+      body: true,
+      publishedAt: true,
+      createdAt: true,
+      user: { select: { name: true } },
+    },
+  },
   clinics: {
     where: { isActive: true, clinic: { isActive: true } },
     orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }],
     select: {
       feeInr: true,
       isPrimary: true,
-      clinic: { select: { id: true, name: true, area: true, city: true } },
+      clinic: {
+        select: {
+          id: true,
+          name: true,
+          area: true,
+          city: true,
+          landmark: true,
+          lat: true,
+          lng: true,
+        },
+      },
     },
   },
 } satisfies Prisma.DoctorInclude;
 
 type DoctorRow = Prisma.DoctorGetPayload<{ include: typeof doctorInclude }>;
+
+/** "Priya Ramesh" -> "Priya R." Anything unusable becomes "A client". */
+function displayName(name: string | null): string {
+  const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "A client";
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`;
+}
 
 function toDTO(row: DoctorRow): DoctorDTO {
   return {
@@ -44,17 +88,30 @@ function toDTO(row: DoctorRow): DoctorDTO {
     fee: row.fee,
     languages: row.languages.map((l) => l.name),
     services: row.services.map((s) => s.name),
+    specialtyAreas: row.specialtyAreas.map((s) => s.name),
+    otherFocus: row.otherFocus.map((f) => f.name),
     modes: row.modes.map(
       (m) => (m.mode === ConsultMode.VIDEO ? "video" : "clinic") as ConsultModeDTO
     ),
     about: row.about,
     verified: row.verified,
     general: row.isGeneral || undefined,
+    reviewList: row.reviewList.map((r) => ({
+      id: r.id,
+      rating: r.rating,
+      title: r.title,
+      body: r.body,
+      author: displayName(r.user.name),
+      at: (r.publishedAt ?? r.createdAt).toISOString().slice(0, 10),
+    })),
     clinics: row.clinics.map((p) => ({
       id: p.clinic.id,
       name: p.clinic.name,
       area: p.clinic.area,
       city: p.clinic.city,
+      landmark: p.clinic.landmark,
+      lat: p.clinic.lat,
+      lng: p.clinic.lng,
       feeInr: p.feeInr,
       isPrimary: p.isPrimary,
     })),

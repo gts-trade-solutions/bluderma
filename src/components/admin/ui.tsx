@@ -39,7 +39,12 @@ export function Card({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white">
+    // data-form-section is what lets a failed validation outline the whole
+    // card rather than only the field inside it — see lib/formValidation.ts.
+    <section
+      data-form-section
+      className="rounded-2xl border border-slate-200 bg-white"
+    >
       {title && (
         <div className="border-b border-slate-100 px-6 py-4">
           <h2 className="font-bold text-ink">{title}</h2>
@@ -272,6 +277,7 @@ export function SelectField({
         id={id}
         name={name}
         required={required}
+        aria-invalid={error ? true : undefined}
         className={`${inputClass} ${error ? "border-rose-300" : ""}`}
       >
         {options.map((o) => (

@@ -78,9 +78,9 @@ export default function SimpleSteps({
                 />
                 <div
                   aria-hidden
-                  className="absolute inset-0 bg-gradient-to-t from-[#070d1c] via-[#070d1c]/30 to-transparent"
+                  className="absolute inset-0 bg-gradient-to-t from-[var(--surface)] via-[#070d1c]/30 to-transparent"
                 />
-                <span className="absolute left-4 top-4 grid h-9 w-9 place-items-center rounded-xl bg-[#04101f]/70 text-sm font-extrabold text-teal-300 ring-1 ring-inset ring-white/20 backdrop-blur">
+                <span className="absolute left-4 top-4 grid h-9 w-9 place-items-center rounded-xl bg-[var(--scrim)] text-sm font-extrabold text-teal-300 ring-1 ring-inset ring-white/20 backdrop-blur">
                   {s.n}
                 </span>
               </div>

@@ -44,7 +44,7 @@ export default function LocationButton({
       // the hero photograph, where a translucent pill disappears.
       <button
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex max-w-[10.5rem] items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-sm font-semibold text-[#070d1c] shadow-[0_2px_12px_-2px_rgba(0,0,0,0.35)] transition hover:bg-teal-100"
+        className="inline-flex max-w-[10.5rem] items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-sm font-semibold text-[var(--on-sheet)] shadow-[0_2px_12px_-2px_rgba(0,0,0,0.35)] transition hover:bg-teal-100"
         aria-label="Choose your location"
         aria-expanded={open}
       >
@@ -101,7 +101,7 @@ export default function LocationButton({
           <button
             onClick={detect}
             disabled={locating}
-            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-70"
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:on-dark bg-brand-700 disabled:opacity-70"
           >
             {locating ? (
               <Loader2 className="h-4 w-4 animate-spin" />

@@ -100,3 +100,24 @@ export const COMMON_FACILITIES = [
   "Card payment",
   "Valet parking",
 ];
+
+/**
+ * The years a medical registration could plausibly carry, newest first.
+ *
+ * Newest first because the overwhelming majority of practitioners joining a
+ * platform like this registered in the last twenty years, and a list that
+ * opens at 1945 makes every one of them scroll.
+ *
+ * The floor is 1945 rather than something rounder: it is comfortably before
+ * the earliest date any currently-practising Indian doctor could have
+ * registered, and a bound that cannot exclude a real answer is the only kind
+ * worth setting. The ceiling is this year — a registration cannot be in the
+ * future, and letting one be entered creates a "verified" record we could
+ * never verify.
+ */
+export const REGISTRATION_YEARS: number[] = (() => {
+  const now = new Date().getUTCFullYear();
+  const out: number[] = [];
+  for (let y = now; y >= 1945; y--) out.push(y);
+  return out;
+})();

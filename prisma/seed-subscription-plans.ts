@@ -1,5 +1,5 @@
 /**
- * White Collar — the two membership terms.
+ * Gold Collar — the two membership terms.
  *
  * Prices and benefits are editable in the admin afterwards; this only creates
  * the rows if they are missing, so a re-run never overwrites a decision
@@ -14,7 +14,7 @@ const prisma = new PrismaClient();
 const PLANS = [
   {
     slug: "white-collar-monthly",
-    name: "White Collar",
+    name: "Gold Collar",
     interval: SubscriptionInterval.MONTHLY,
     priceInr: 499,
     compareAtInr: null,
@@ -33,7 +33,7 @@ const PLANS = [
   },
   {
     slug: "white-collar-annual",
-    name: "White Collar Annual",
+    name: "Gold Collar Annual",
     interval: SubscriptionInterval.ANNUAL,
     priceInr: 4990,
     // Two months free against the monthly price, stated plainly rather than

@@ -155,7 +155,7 @@ export default function HeroCarousel({
 
   return (
     <section
-      className="relative isolate overflow-hidden bg-[#070d1c]"
+      className="relative isolate overflow-hidden bg-surface"
       aria-roledescription="carousel"
       aria-label="What BluDerma does"
       // NOT paused on hovering the hero. The hero fills the top of the page,
@@ -195,7 +195,7 @@ export default function HeroCarousel({
             <div className="absolute inset-0 bg-gradient-to-t from-[#070d1c] via-transparent to-transparent sm:hidden" />
           </div>
 
-          <div className="container-page relative pb-20 pt-28 sm:pb-24 sm:pt-32 lg:pb-32 lg:pt-40">
+          <div className="on-dark container-page relative pb-20 pt-28 sm:pb-24 sm:pt-32 lg:pb-32 lg:pt-40">
             <div className="max-w-2xl">
               <span className="inline-flex max-w-full items-center rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-teal-200 backdrop-blur sm:text-[11px] sm:tracking-[0.16em]">
                 {slide.eyebrow}

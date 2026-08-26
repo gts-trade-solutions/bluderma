@@ -47,7 +47,7 @@ export default async function PatientAftercarePage({
   return (
     <>
       <Navbar role="patient" menu={buildPatientMenu()} />
-      <main className="bg-[var(--surface)] pb-20 pt-8">
+      <main className="bg-surface pb-20 pt-8">
         <div className="container-page">
           <Link
             href="/patient/profile#aftercare"

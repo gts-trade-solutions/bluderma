@@ -4,6 +4,8 @@ import { useBackToClose } from "@/hooks/useBackToClose";
 
 import { useEffect, useState } from "react";
 import { submitEnquiry } from "@/lib/actions/enquiry";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import { focusField, validateForm } from "@/lib/formValidation";
 
 interface EnquiryModalProps {
   open: boolean;
@@ -50,6 +52,7 @@ export default function EnquiryModal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fields, setFields] = useState<Record<string, string>>({});
+  const formCheck = useFormValidation();
 
   useEffect(() => {
     if (open) {
@@ -80,8 +83,19 @@ export default function EnquiryModal({
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Catch the empty required fields here rather than letting the browser do
+    // it one bubble at a time — this modal asks for six things and the person
+    // filling it in should be told about all of them at once.
+    const check = validateForm(e.currentTarget);
+    if (!check.ok) {
+      setFields(check.fields);
+      focusField(e.currentTarget, check.problems[0].name);
+      return;
+    }
+
     setBusy(true);
     setError(null);
     setFields({});
@@ -101,6 +115,7 @@ export default function EnquiryModal({
     if (!res.ok) {
       setError(res.error ?? "Could not send your enquiry.");
       setFields(res.fields ?? {});
+      formCheck.showServerErrors(res.fields);
       setBusy(false);
       return;
     }
@@ -166,7 +181,13 @@ export default function EnquiryModal({
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4 p-6">
+          <form
+            ref={formCheck.formRef}
+            noValidate
+            onSubmit={handleSubmit}
+            className="space-y-4 p-6"
+          >
+            {formCheck.summary}
             {error && (
               <div
                 role="alert"

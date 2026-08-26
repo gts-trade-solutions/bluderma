@@ -8,6 +8,14 @@ export interface DoctorClinic {
   name: string;
   area: string;
   city: string;
+  /**
+   * "Opposite the Krishna temple". Optional here and required on the DTO,
+   * because the seeded demo doctors in this file predate the field and there
+   * is nothing to be gained by inventing landmarks for them.
+   */
+  landmark?: string | null;
+  lat?: number | null;
+  lng?: number | null;
   feeInr: number;
   isPrimary: boolean;
 }
@@ -28,6 +36,23 @@ export interface Doctor {
   fee: number;
   languages: string[];
   services: string[];
+  /** What the practitioner is known FOR. Optional: see DoctorClinic above. */
+  specialtyAreas?: string[];
+  /** Concerns they named themselves, which the analyzer does not match on. */
+  otherFocus?: string[];
+  /**
+   * Published reviews of this doctor. Optional here for the same reason the
+   * two fields above are: the seeded demo doctors in this file predate it, and
+   * inventing reviews for them is precisely what this codebase removed once.
+   */
+  reviewList?: {
+    id: string;
+    rating: number;
+    title: string | null;
+    body: string | null;
+    author: string;
+    at: string;
+  }[];
   modes: ConsultMode[];
   about: string;
   verified: boolean;

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Check, LoaderCircle } from "lucide-react";
 
 import { redeemGiftCard } from "@/lib/actions/giftCards";
+import { useFormValidation } from "@/hooks/useFormValidation";
 
 const field =
   "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none";
@@ -21,15 +22,15 @@ const labelClass =
 export default function RedeemForm() {
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
+  const formCheck = useFormValidation();
 
   return (
     <form
+      ref={formCheck.formRef}
+      noValidate
       className="space-y-3"
-      onSubmit={(e) => {
-        e.preventDefault();
+      onSubmit={formCheck.guard((fd, form) => {
         setResult(null);
-        const form = e.currentTarget;
-        const fd = new FormData(form);
         start(async () => {
           const res = await redeemGiftCard({
             code: String(fd.get("code") ?? ""),
@@ -51,8 +52,9 @@ export default function RedeemForm() {
             form.reset();
           }
         });
-      }}
+      })}
     >
+      {formCheck.summary}
       <label className="block">
         <span className={labelClass}>Card code</span>
         {/* Upper-cased as they type: these are read off a phone screen or a

@@ -7,6 +7,7 @@ import type {
   ConsultedDoctor,
   DiscountRecord,
   Prescription,
+  PaymentRecord,
   ProcedureRecord,
   Purchase,
   SkinReport,
@@ -50,10 +51,12 @@ export interface ProfilePageData {
   consultedDoctors: ConsultedDoctor[];
   prescriptions: Prescription[];
   purchases: Purchase[];
+  /** Everything they have actually paid for. See PaymentRecord. */
+  payments: PaymentRecord[];
   procedures: ProcedureRecord[];
   discounts: DiscountRecord[];
   /**
-   * The client's live White Collar term, if any.
+   * The client's live Gold Collar term, if any.
    *
    * Shown on their own profile and — via getDoctorAppointments — beside their
    * name in the doctor portal, which is the requirement: the treating doctor
@@ -85,7 +88,7 @@ export interface ProfilePageData {
     weight: number;
   }[];
 
-  /** Every White Collar tier, so the member page can be read in full here. */
+  /** Every Gold Collar tier, so the member page can be read in full here. */
   plans: {
     slug: string;
     name: string;
@@ -118,7 +121,7 @@ export interface ProfilePageData {
 
 export const getProfilePageData = cache(
   async (userId: string): Promise<ProfilePageData> => {
-    const [user, analyses, appts, rx, buys, grants, membership, plans, reasonMix] =
+    const [user, analyses, appts, rx, buys, pays, grants, membership, plans, reasonMix] =
       await Promise.all([
       prisma.user.findUniqueOrThrow({
         where: { id: userId },
@@ -136,11 +139,36 @@ export const getProfilePageData = cache(
       prisma.prescription.findMany({
         where: { userId },
         orderBy: { issuedAt: "desc" },
-        include: { doctor: { select: { name: true } } },
+        include: {
+          doctor: { select: { name: true } },
+          items: { orderBy: { sortOrder: "asc" } },
+        },
       }),
       prisma.purchase.findMany({
         where: { userId },
         orderBy: { orderedAt: "desc" },
+      }),
+      // Money. The admin console could see every payment and the person who
+      // made them could see none of them.
+      prisma.payment.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 40,
+        select: {
+          id: true,
+          purpose: true,
+          status: true,
+          amountInr: true,
+          refundedInr: true,
+          createdAt: true,
+          providerPaymentId: true,
+          appointment: {
+            select: {
+              scheduledAt: true,
+              doctor: { select: { name: true } },
+            },
+          },
+        },
       }),
       prisma.discountGrant.findMany({
         where: { userId, usedAt: { not: null } },
@@ -235,9 +263,59 @@ export const getProfilePageData = cache(
       issued: fmt(p.issuedAt),
       doctor: p.doctor?.name ?? "BluDerma doctor",
       fileUrl: p.fileUrl,
-      items: [p.title, ...(p.notes ? [p.notes] : [])],
+      // The lines as the doctor wrote them, each reading as an instruction
+      // rather than a name: "Tretinoin 0.025% — thin layer at night — 12
+      // weeks". Older prescriptions have no lines at all, and fall back to
+      // the title and note they were written as.
+      items: p.items.length
+        ? p.items.map((i) =>
+            [
+              [i.name, i.strength].filter(Boolean).join(" "),
+              i.dose,
+              i.duration,
+            ]
+              .filter(Boolean)
+              .join(" — ")
+          )
+        : [p.title, ...(p.notes ? [p.notes] : [])],
       validTill: "—",
     }));
+
+    const payments: PaymentRecord[] = pays.map((p) => {
+      const what =
+        p.purpose === "APPOINTMENT"
+          ? p.appointment?.doctor.name
+            ? `Consultation with ${p.appointment.doctor.name}`
+            : "Consultation"
+          : p.purpose === "SKIN_SCAN"
+            ? "Skin analysis"
+            : p.purpose === "SUBSCRIPTION"
+              ? "Gold Collar membership"
+              : "Gift card";
+
+      // Four states, told apart properly. A partial refund shown as "Refunded"
+      // is the kind of thing somebody rings about.
+      const status: PaymentRecord["status"] =
+        p.status === "REFUNDED" || (p.refundedInr ?? 0) >= p.amountInr
+          ? "Refunded"
+          : (p.refundedInr ?? 0) > 0
+            ? "Partly refunded"
+            : p.status === "PAID"
+              ? "Paid"
+              : p.status === "FAILED"
+                ? "Failed"
+                : "Pending";
+
+      return {
+        id: p.id,
+        date: fmt(p.createdAt),
+        what,
+        amountInr: p.amountInr,
+        refundedInr: p.refundedInr ?? 0,
+        status,
+        reference: p.providerPaymentId,
+      };
+    });
 
     const purchases: Purchase[] = buys.map((b) => ({
       id: b.id,
@@ -337,6 +415,7 @@ export const getProfilePageData = cache(
       consultedDoctors: Array.from(seen.values()),
       prescriptions,
       purchases,
+      payments,
       procedures,
       discounts,
       membership: membership

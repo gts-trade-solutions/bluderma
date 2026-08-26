@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/session";
+import { authorizeUpload } from "@/lib/uploadAuth";
 import {
   ALLOWED_IMAGE_TYPES,
   ALLOWED_VIDEO_TYPES,
@@ -19,50 +19,6 @@ const schema = z.object({
   size: z.number().int().positive(),
   folder: z.string().trim().max(60).default("uploads"),
 });
-
-/**
- * The only folders a doctor may write to.
- *
- * Presigned URLs grant real write access to the bucket, and this endpoint used
- * to be admin-only for that reason. Doctors now upload their own portrait,
- * registration document and clinic photographs during onboarding, so they need
- * it — but scoped. Without this allow-list a practitioner could overwrite
- * `treatments/` and change the catalogue imagery for the whole site.
- *
- * The key is built from the folder plus random bytes (see buildKey), so within
- * an allowed folder they can only ever create, never clobber.
- */
-const DOCTOR_FOLDERS = new Set(["doctors", "clinics", "cases", "credentials"]);
-
-/**
- * The only folder a patient may write to: photographs they attach to their own
- * booking. It is a private prefix, so nothing uploaded here is readable without
- * a signed URL — see /api/uploads/view.
- */
-const PATIENT_FOLDERS = new Set(["patients"]);
-
-/**
- * Admins upload anywhere. Doctors upload to their own folders.
- *
- * Deliberately keyed on the ROLE rather than on having an approved Doctor row:
- * the uploads happen during onboarding, before there is anything to approve.
- */
-async function authorizeUpload(
-  folder: string
-): Promise<{ ok: true; userId: string } | { ok: false; status: number; error: string }> {
-  const user = await getCurrentUser();
-  if (!user) return { ok: false, status: 403, error: "Not permitted." };
-  if (user.role === "ADMIN") return { ok: true, userId: user.id };
-  if (user.role === "DOCTOR" && DOCTOR_FOLDERS.has(folder)) {
-    return { ok: true, userId: user.id };
-  }
-  // Patients upload photographs of their own concern when booking. Scoped to
-  // one folder so a client can never write over catalogue or clinic imagery.
-  if (user.role === "PATIENT" && PATIENT_FOLDERS.has(folder)) {
-    return { ok: true, userId: user.id };
-  }
-  return { ok: false, status: 403, error: "Not permitted." };
-}
 
 export async function POST(req: Request) {
   if (!isConfigured()) {
@@ -90,7 +46,7 @@ export async function POST(req: Request) {
   const { filename, contentType, size, folder } = parsed.data;
 
   // Authorised against the folder, so it has to happen after the body parses.
-  const auth = await authorizeUpload(folder);
+  const auth = await authorizeUpload(folder, req);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -144,7 +100,7 @@ export async function PUT(req: Request) {
   // here is what stops a doctor registering an asset under someone else's
   // prefix by calling this half of the flow directly.
   const folder = d.key.split("/")[0] ?? "";
-  const auth = await authorizeUpload(folder);
+  const auth = await authorizeUpload(folder, req);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }

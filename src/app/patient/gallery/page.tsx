@@ -69,7 +69,7 @@ export default async function GalleryPage({
     <>
       <Navbar role="patient" menu={buildPatientMenu()} cta="know-you" />
 
-      <main className="bg-[var(--surface)] pb-20">
+      <main className="bg-surface pb-20">
         <section className="border-b border-white/10 bg-white/[0.04]">
           <div className="container-page py-9">
             <p className="section-eyebrow">Before and after</p>
@@ -93,7 +93,7 @@ export default async function GalleryPage({
                 className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition ${
                   active
                     ? "bg-white/[0.06] text-ink-soft ring-1 ring-inset ring-white/10"
-                    : "bg-white text-[#070d1c]"
+                    : "bg-white text-[var(--on-sheet)]"
                 }`}
               >
                 Everyone
@@ -104,7 +104,7 @@ export default async function GalleryPage({
                   href={`/patient/gallery?doctor=${encodeURIComponent(d.slug)}`}
                   className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition ${
                     active?.slug === d.slug
-                      ? "bg-white text-[#070d1c]"
+                      ? "bg-white text-[var(--on-sheet)]"
                       : "bg-white/[0.06] text-ink-soft ring-1 ring-inset ring-white/10"
                   }`}
                 >
@@ -134,7 +134,7 @@ export default async function GalleryPage({
                 <li key={c.id} className="card-soft overflow-hidden">
                   <div className="grid grid-cols-2 gap-px bg-white/10">
                     {(["before", "after"] as const).map((side) => (
-                      <figure key={side} className="relative aspect-[4/5] bg-[#0b1220]">
+                      <figure key={side} className="relative aspect-[4/5] bg-[var(--panel)]">
                         {/* Served through the consent-checking route, never as
                             a direct object URL. See the note at the top. */}
                         {/* eslint-disable-next-line @next/next/no-img-element */}

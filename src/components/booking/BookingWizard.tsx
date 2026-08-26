@@ -319,7 +319,14 @@ export default function BookingWizard({
                   on={c.id === clinicId}
                   onClick={() => go({ clinic: c.id, day: "", time: "", step: "when" })}
                   title={c.name}
-                  sub={`${c.area}, ${c.city}`}
+                  // The landmark is what a client will actually navigate by,
+                  // so it goes on the line they read while choosing rather
+                  // than only in the confirmation email.
+                  sub={
+                    c.landmark
+                      ? `${c.area}, ${c.city} · ${c.landmark}`
+                      : `${c.area}, ${c.city}`
+                  }
                   aside={c.feeInr > 0 ? `₹${c.feeInr.toLocaleString("en-IN")}` : "On enquiry"}
                 />
               ))}

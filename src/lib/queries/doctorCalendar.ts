@@ -10,7 +10,7 @@ import { membersAmong } from "@/lib/subscription/membership";
  * asking the database 42 times to render one screen is the difference between
  * a calendar that feels instant and one that does not.
  *
- * The White Collar badge is resolved for the whole page in a single IN query
+ * The Gold Collar badge is resolved for the whole page in a single IN query
  * (see membersAmong) instead of per row, for the same reason.
  *
  * TIMEZONE. Everything here follows the contract in queries/availability.ts:

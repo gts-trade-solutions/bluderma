@@ -51,7 +51,7 @@ const pick = (slugs: string[]) =>
 
 export default function RxSkinShowcase() {
   return (
-    <div className="overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-700 via-brand-600 to-teal-600 px-6 py-12 sm:px-10 sm:py-14">
+    <div className="overflow-hidden rounded-[2rem] bg-gradient-to-br on-dark from-brand-700 via-brand-600 to-teal-600 px-6 py-12 sm:px-10 sm:py-14">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-200">
         Rx Skin
       </p>
@@ -109,7 +109,7 @@ function TrackCard({
           className="object-top transition-transform duration-700 group-hover:scale-[1.04]"
         />
         <span className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#070d1c]/85 to-transparent" />
-        <span className="absolute left-5 top-5 inline-flex items-center gap-1.5 text-lg font-bold text-white">
+        <span className="on-dark absolute left-5 top-5 inline-flex items-center gap-1.5 text-lg font-bold text-white">
           {title}
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
         </span>

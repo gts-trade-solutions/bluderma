@@ -84,13 +84,20 @@ export async function uploadObject(input: {
   body: Buffer | Uint8Array;
   contentType: string;
 }): Promise<string> {
+  // A private object is delivered through a signed URL, and a signed URL with
+  // `Cache-Control: public` on it is one a shared proxy may keep after the
+  // signature has expired. Public delivery keeps the immutable year.
+  const cacheControl = isPrivateKey(input.key)
+    ? "private, no-store"
+    : "public, max-age=31536000, immutable";
+
   await s3().send(
     new PutObjectCommand({
       Bucket: process.env.S3_BUCKET!,
       Key: input.key,
       Body: input.body,
       ContentType: input.contentType,
-      CacheControl: "public, max-age=31536000, immutable",
+      CacheControl: cacheControl,
     })
   );
   return publicUrlFor(input.key);
@@ -117,7 +124,12 @@ export async function createPresignedUpload(input: {
  * URL. Mirrors PRIVATE_PREFIXES in prisma/setup-s3.ts — the bucket policy is
  * the thing that actually enforces it; this is how the app knows to sign.
  */
-export const PRIVATE_PREFIXES = ["credentials", "prescriptions", "patients"];
+export const PRIVATE_PREFIXES = [
+  "credentials",
+  "prescriptions",
+  "patients",
+  "vendor-licences",
+];
 
 export function isPrivateKey(key: string): boolean {
   return PRIVATE_PREFIXES.includes(key.split("/")[0] ?? "");

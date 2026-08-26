@@ -10,7 +10,7 @@ import { getMembership } from "@/lib/subscription/membership";
 import { isRazorpayConfigured } from "@/lib/payments/razorpay";
 
 export const metadata: Metadata = {
-  title: "White Collar membership",
+  title: "Gold Collar membership",
   description:
     "Discounts at every listed clinic, priority appointments and skin analyses included.",
 };
@@ -42,11 +42,11 @@ export default async function MembershipPage() {
   return (
     <>
       <Navbar role="patient" menu={buildPatientMenu()} />
-      <main className="min-h-screen bg-[#070d1c]">
+      <main className="min-h-screen bg-surface">
         <div className="container-page py-16 sm:py-24">
           <div className="mx-auto max-w-2xl text-center">
             <p className="section-eyebrow">Membership</p>
-            <h1 className="display mt-3 text-4xl sm:text-5xl">White Collar</h1>
+            <h1 className="display mt-3 text-4xl sm:text-5xl">Gold Collar</h1>
             <p className="mt-4 text-lg text-ink-soft">
               For people who treat their skin as ongoing care rather than a
               one-off. Better prices, first refusal on the times everyone wants,

@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import AppointmentDrawer from "./AppointmentDrawer";
+import GoldCollarBadge from "@/components/GoldCollarBadge";
 
 /**
  * Today's list, as a timeline rather than a table.
@@ -113,9 +114,7 @@ export default function DayList({
                       {r.patientName}
                     </span>
                     {r.isMember && (
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900 ring-1 ring-amber-300">
-                        WHITE COLLAR
-                      </span>
+                      <GoldCollarBadge />
                     )}
                     {r.isPriority && !r.isMember && (
                       <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-800">

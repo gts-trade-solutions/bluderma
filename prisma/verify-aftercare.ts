@@ -74,7 +74,12 @@ async function main() {
   const action = codeOnly("src/lib/actions/aftercare.ts");
   check(
     "the sheet snapshots the standard content",
-    /dos: STANDARD_AFTERCARE\.dos/.test(action),
+    // `standard` is standardFor(kind) — one action issues both the before and
+    // the after sheet now, so the constant is resolved once at the top rather
+    // than named at each field. Still a copy, which is the point.
+    /const standard = standardFor\(d\.kind\)/.test(action) &&
+      /dos: standard\.dos/.test(action) &&
+      /donts: standard\.donts/.test(action),
     "joining to the source would let a later edit rewrite an issued sheet"
   );
   check(
@@ -134,7 +139,7 @@ async function main() {
     made.push(first.id);
 
     await prisma.aftercareNote.upsert({
-      where: { doctorId_treatmentKey: { doctorId: doctor.id, treatmentKey: KEY } },
+      where: { doctorId_treatmentKey_kind: { doctorId: doctor.id, treatmentKey: KEY , kind: "POST" } },
       create: {
         doctorId: doctor.id,
         treatmentKey: KEY,
@@ -145,14 +150,14 @@ async function main() {
     });
 
     const note = await prisma.aftercareNote.findUnique({
-      where: { doctorId_treatmentKey: { doctorId: doctor.id, treatmentKey: KEY } },
+      where: { doctorId_treatmentKey_kind: { doctorId: doctor.id, treatmentKey: KEY , kind: "POST" } },
       select: { body: true },
     });
     check("the doctor's addition is remembered for next time", note?.body === "Original instruction");
 
     // The doctor revises their standing advice.
     await prisma.aftercareNote.update({
-      where: { doctorId_treatmentKey: { doctorId: doctor.id, treatmentKey: KEY } },
+      where: { doctorId_treatmentKey_kind: { doctorId: doctor.id, treatmentKey: KEY , kind: "POST" } },
       data: { body: "Revised instruction" },
     });
 
@@ -177,7 +182,7 @@ async function main() {
     });
     if (other) {
       const theirs = await prisma.aftercareNote.findUnique({
-        where: { doctorId_treatmentKey: { doctorId: other.id, treatmentKey: KEY } },
+        where: { doctorId_treatmentKey_kind: { doctorId: other.id, treatmentKey: KEY , kind: "POST" } },
       });
       check("another doctor does not inherit these notes", theirs === null);
     }

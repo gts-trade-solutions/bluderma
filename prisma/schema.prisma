@@ -82,6 +82,7 @@ model User {
   chartNotes         PatientNote[]
   giftCardsBought    GiftCard[]
   medicineOrders     MedicineOrder[]
+  pushSubscriptions  PushSubscription[]
 
   @@index([role])
   @@map("users")
@@ -531,24 +532,45 @@ model Doctor {
   /// Slots per day held back for White Collar members until 24h out.
   priorityHoldPerDay Int     @default(0)
 
+  // ── Where else they practise online ──────────────────────────────────
+  /// Whether they already consult through another marketplace or portal.
+  ///
+  /// NULL means unanswered, which is different from false. The onboarding
+  /// question is not compulsory and the form does not label it optional
+  /// either — it is simply skippable — so "no answer" has to be storable
+  /// and must never be read as "no".
+  ///
+  /// Not a gate on anything. It exists because a practitioner already
+  /// taking bookings elsewhere has a calendar we do not see, and knowing
+  /// that changes what we ask of them at approval.
+  listedElsewhere      Boolean?
+  /// Which ones, in their words. Only meaningful when the above is true.
+  listedElsewhereNames String?  @db.Text
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user         User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
-  focus        DoctorConcern[]
-  languages    DoctorLanguage[]
-  services     DoctorService[]
-  modes        DoctorMode[]
+  user          User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  focus         DoctorConcern[]
+  otherFocus    DoctorConcernOther[]
+  languages     DoctorLanguage[]
+  services      DoctorService[]
+  specialtyAreas DoctorSpecialtyArea[]
+  modes         DoctorMode[]
   availability DoctorAvailability[]
   timeOff      DoctorTimeOff[]
   appointments Appointment[]
   clinics      DoctorClinic[]
 
   patientPhotos   PatientPhoto[]
+  photoPins       PhotoAnnotation[]
   chartNotes      PatientNote[]
+  reroutesOut     AppointmentReroute[] @relation("RerouteFrom")
+  reroutesIn      AppointmentReroute[] @relation("RerouteTo")
   giftCardOffers  GiftCardOffer[]
   medicines       Medicine[]
   expenses        PracticeExpense[]
+  income          PracticeIncome[]
   assets          PracticeAsset[]
   treatmentPlans  TreatmentPlan[]
   galleryCases    DoctorGalleryCase[]
@@ -577,6 +599,50 @@ model DoctorConcern {
   @@id([doctorId, concernId])
   @@index([concernId])
   @@map("doctor_concerns")
+}
+
+/// A concern the practitioner named themselves, because the catalogue has no
+/// row for it.
+///
+/// Kept apart from DoctorConcern on purpose. Those point at real SkinConcern
+/// rows and are what the analyzer matches a client against; a free-text entry
+/// joining that index would put a doctor in front of people on the strength of
+/// a phrase nobody curated, and two doctors spelling the same thing
+/// differently would never be matched to the same client. So these are shown
+/// on the profile and are searchable, and they do not drive matching. When one
+/// of them turns up often enough, an admin promotes it to a real SkinConcern
+/// and it starts to.
+model DoctorConcernOther {
+  id        String @id @default(cuid())
+  doctorId  String
+  name      String
+  sortOrder Int    @default(0)
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@unique([doctorId, name])
+  @@map("doctor_concerns_other")
+}
+
+/// A sub-speciality: "hair restoration", "acne scarring", "paediatric
+/// dermatology".
+///
+/// A third axis, and genuinely distinct from the two beside it. `specialty` is
+/// the single qualification line on the card ("Dermatologist"). DoctorService
+/// is the procedures they perform. This is what they are known FOR — the
+/// answer to "who do you send a difficult case of X to", which is neither of
+/// the other two and is the thing a referring doctor and a searching client
+/// both actually look for.
+model DoctorSpecialtyArea {
+  id        String @id @default(cuid())
+  doctorId  String
+  name      String
+  sortOrder Int    @default(0)
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@unique([doctorId, name])
+  @@map("doctor_specialty_areas")
 }
 
 model DoctorLanguage {
@@ -779,9 +845,34 @@ model InstalmentPlan {
 /// This is a DRAFT, not a record. It is what appears pre-filled in the form;
 /// what the patient was actually given is snapshotted on AftercareSheet, so
 /// editing this never rewrites a document somebody is already holding.
+/// Which side of the treatment a sheet or a standing note belongs to.
+///
+/// -- Why one model carries both -------------------------------------------
+/// A pre-treatment sheet and an aftercare sheet are the same document with a
+/// different date on it: a procedure, a patient, a list of things to do and
+/// not do, a set of warnings, the doctor's own additions, and an
+/// acknowledgement. Splitting them into two models would have duplicated the
+/// snapshot rule, the acknowledgement, the issuing logic and the patient's
+/// reading screen, and the two copies would have drifted the first time
+/// either changed.
+///
+/// POST is the default because every row that existed before this column did
+/// was an aftercare sheet, and a default that rewrites history is a default
+/// that lies.
+enum SheetKind {
+  /// Issued BEFORE the appointment. What to stop taking, what to avoid, what
+  /// to bring, when to arrive. The half that was missing entirely.
+  PRE
+  POST
+}
+
 model AftercareNote {
-  id            String @id @default(cuid())
+  id            String    @id @default(cuid())
   doctorId      String
+  /// A doctor keeps separate standing notes for before and after the same
+  /// treatment: "stop retinol a week before" and "no retinol for a week
+  /// after" are different instructions that happen to name the same product.
+  kind          SheetKind @default(POST)
   /// Folded form of the treatment name, so "CO2 Laser" and "co2 laser " share
   /// one drawer. See treatmentKey() in lib/aftercare/standard.ts.
   treatmentKey  String
@@ -794,7 +885,7 @@ model AftercareNote {
 
   doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
 
-  @@unique([doctorId, treatmentKey])
+  @@unique([doctorId, treatmentKey, kind])
   @@map("aftercare_notes")
 }
 
@@ -809,6 +900,8 @@ model AftercareNote {
 model AftercareSheet {
   id String @id @default(cuid())
 
+  /// PRE or POST. See SheetKind.
+  kind          SheetKind @default(POST)
   doctorId      String
   /// Null when the sheet was issued to somebody with no account, which the
   /// booking flow allows. The name and id below are what the sheet carries.
@@ -825,8 +918,14 @@ model AftercareSheet {
   clinicContact   String?
 
   procedure     String
+  /// The date of the procedure itself. In the future on a PRE sheet and in
+  /// the past on a POST one, which is the whole difference between them.
   procedureDate DateTime
+  /// POST only: when to come back. Null on a PRE sheet.
   reviewOn      DateTime?
+  /// PRE only: what time to be at the clinic, when it differs from the
+  /// appointment — some procedures need numbing an hour ahead.
+  arriveAt      String?
 
   /// The content as issued. Json arrays of strings.
   intro            String  @db.Text
@@ -850,6 +949,7 @@ model AftercareSheet {
 
   @@index([patientUserId, issuedAt])
   @@index([doctorId, issuedAt])
+  @@index([kind, issuedAt])
   @@map("aftercare_sheets")
 }
 
@@ -1112,6 +1212,14 @@ model PracticeExpense {
   spentOn   DateTime
   note      String?         @db.Text
 
+  /// How many people this covers, on a SALARY row.
+  ///
+  /// Null everywhere else, and null on a salary row the practitioner did not
+  /// break down. It exists because "₹1,42,000 on salaries" is a number nobody
+  /// can act on and "₹1,42,000 across 6 people" is one they can: the second
+  /// invites the comparison with what those six are billing.
+  headcount Int?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1122,6 +1230,17 @@ model PracticeExpense {
   @@map("practice_expenses")
 }
 
+/// What a running cost was for.
+///
+/// Grouped for reading in lib/doctor/financeCore.ts rather than here: RENT,
+/// UTILITIES and LAUNDRY are one line on a practitioner's mental P&L
+/// ("the building"), but they are three different bills and merging them in
+/// the enum would make it impossible to answer "why did utilities jump".
+///
+/// OTHER is kept rather than renamed to MISCELLANEOUS. Existing rows carry it,
+/// and the label a practitioner reads is decided by categoryLabel(), which
+/// already says "Miscellaneous" — a migration that rewrites live data to
+/// change a word on a screen is a migration that can go wrong for nothing.
 enum ExpenseCategory {
   RENT
   SALARY
@@ -1130,7 +1249,64 @@ enum ExpenseCategory {
   UTILITIES
   MAINTENANCE
   TAX
+  /// Stock bought FOR the dispensary. The other half of medicine sales, and
+  /// the reason a practice can appear to make money on medicines while losing
+  /// it — the sales were counted and the purchase was not.
+  MEDICINES
+  /// Linen, gowns, towels. Small, relentless, and never once entered under
+  /// any of the categories above.
+  LAUNDRY
   OTHER
+}
+
+/// Where money came from, when it was not a consultation.
+///
+/// -- Why this exists -----------------------------------------------------
+/// The dashboard's revenue figure was appointments and nothing else, which
+/// meant a practice selling ten thousand rupees of retail skincare a month
+/// saw none of it, and the "net profit" underneath was computed from takings
+/// that were missing a stream. Three of the four streams were already in the
+/// database and simply never read: bookings on Appointment, medicine sales on
+/// MedicineOrder, procedure charges on AssetUsage. This is the fourth — the
+/// things that fit none of them.
+///
+/// -- What must NOT go in here --------------------------------------------
+/// Anything already counted somewhere else. A laser session charge belongs on
+/// AssetUsage, a medicine sale on MedicineOrder, a consultation on the
+/// appointment. Entering one of those here double-counts it, and a revenue
+/// figure that is quietly too high is worse than one that is honestly too low.
+/// The form says so at the point of entry.
+enum IncomeSource {
+  /// Retail skincare, sunscreen, supplements sold over the counter.
+  PRODUCT
+  /// A course of treatment paid for up front.
+  PACKAGE
+  /// A room, a chair or a machine let to another practitioner.
+  RENTAL
+  /// Talks, training, medico-legal work.
+  PROFESSIONAL
+  MISCELLANEOUS
+}
+
+model PracticeIncome {
+  id       String  @id @default(cuid())
+  doctorId String
+  clinicId String?
+
+  source     IncomeSource @default(MISCELLANEOUS)
+  label      String
+  amountInr  Int
+  receivedOn DateTime
+  note       String?      @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  doctor Doctor  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  clinic Clinic? @relation(fields: [clinicId], references: [id], onDelete: SetNull)
+
+  @@index([doctorId, receivedOn])
+  @@map("practice_income")
 }
 
 /// A machine or piece of equipment the practice bought.
@@ -1221,9 +1397,10 @@ model PatientPhoto {
   capturedAt DateTime @default(now())
   createdAt  DateTime @default(now())
 
-  patient     User          @relation(fields: [patientUserId], references: [id], onDelete: Cascade)
-  doctor      Doctor?       @relation(fields: [doctorId], references: [id], onDelete: SetNull)
+  patient     User              @relation(fields: [patientUserId], references: [id], onDelete: Cascade)
+  doctor      Doctor?           @relation(fields: [doctorId], references: [id], onDelete: SetNull)
   annotations PhotoMarkup[]
+  pins        PhotoAnnotation[]
 
   @@index([patientUserId, capturedAt])
   @@index([doctorId, capturedAt])
@@ -1270,6 +1447,58 @@ model PhotoMarkup {
   /// same image gets their own, rather than editing somebody else's reading.
   @@unique([photoId, doctorId])
   @@map("photo_markups")
+}
+
+/// A point on a photograph, with the treatment proposed for it.
+///
+/// -- Why this is not part of PhotoMarkup ----------------------------------
+/// PhotoMarkup is a clinical reading: freehand strokes round a lesion, one
+/// layer per doctor, kept beside the image so the original is never altered.
+/// This is a different thing entirely — it carries MONEY, and it is shown to
+/// the patient. Folding a price into the stroke JSON would put a figure a
+/// patient acts on inside an unqueryable blob that exists to record what a
+/// clinician saw.
+///
+/// -- The care taken with the price ----------------------------------------
+/// `priceInr` is indicative and the screen says so in those words. This
+/// platform has already deleted one feature for implying a financial
+/// commitment it could not stand behind (see FinancingRequest), and a number
+/// pinned to a photograph of somebody's own face is exactly the kind of thing
+/// read as a promise. Null is a first-class value and means "on assessment" —
+/// which is the honest answer for most of dermatology before anyone is in a
+/// chair.
+model PhotoAnnotation {
+  id       String @id @default(cuid())
+  photoId  String
+  doctorId String
+
+  /// Normalised 0-1 of the image's width and height, exactly as PhotoMarkup
+  /// stores its strokes — so a pin dropped on a phone lands in the same place
+  /// on a consulting-room monitor.
+  x Float
+  y Float
+
+  /// 1, 2, 3 — printed in the pin and beside the row, so the image and the
+  /// list can be read against each other.
+  label Int
+
+  treatment String
+  note      String? @db.Text
+
+  /// Whole INR. NULL means "on assessment" and is not the same as zero.
+  priceInr Int?
+  /// How many are expected. Null when it is not a course.
+  sessions Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  photo  PatientPhoto @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  doctor Doctor       @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([photoId, label])
+  @@index([doctorId, createdAt])
+  @@map("photo_annotations")
 }
 
 /// A doctor's own notes on one patient. The chart.
@@ -1420,7 +1649,13 @@ model Medicine {
   priceInr Int
   mrpInr   Int?
   /// Null means the practice does not track a count for this one.
+  ///
+  /// Maintained by StockMovement rather than written directly, so the number
+  /// on the shelf and the history that explains it can never disagree. See
+  /// applyStockMovement() in lib/actions/medicines.ts.
   stock    Int?
+  /// Warn at or below this. Null means never warn.
+  lowStockAt Int?
 
   /// Almost always true here, and stated rather than assumed: it changes what
   /// the patient is asked for at checkout.
@@ -1431,11 +1666,70 @@ model Medicine {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  doctor Doctor              @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  items  MedicineOrderItem[]
+  doctor    Doctor              @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  items     MedicineOrderItem[]
+  movements StockMovement[]
+  prescribed PrescriptionItem[]
 
   @@index([doctorId, isActive])
   @@map("medicines")
+}
+
+/// Why the count on the shelf changed.
+enum StockMoveReason {
+  /// A delivery came in.
+  RECEIVED
+  /// Handed to a patient in clinic.
+  DISPENSED
+  /// An online order took it.
+  ORDER
+  /// That order was cancelled and it came back.
+  ORDER_CANCELLED
+  /// A physical count did not match. Always carries a note.
+  CORRECTION
+  EXPIRED
+  DAMAGED
+}
+
+/// One change to the count of one medicine.
+///
+/// -- Why a ledger rather than a column ------------------------------------
+/// Medicine.stock was a bare integer that the order flow READ and never wrote:
+/// placeMedicineOrder checked "is there enough?" and then created the order
+/// without taking anything off the shelf. A practice with ten units could
+/// accept fifty orders and still show ten. The check existed, so the bug read
+/// as working software.
+///
+/// Fixing it as a decrement alone would have made the number right and left it
+/// unexplainable — a doctor who finds 8 where they expect 12 needs to know
+/// which four went and when. So every change is a row, `balance` is the level
+/// AFTER it, and Medicine.stock is the last balance. A count and its own
+/// audit trail, written in one transaction, so they cannot drift.
+model StockMovement {
+  id         String @id @default(cuid())
+  medicineId String
+
+  /// Signed. +12 received, -2 dispensed.
+  delta   Int
+  /// The level after this movement, so the history reads without re-summing.
+  balance Int
+
+  reason StockMoveReason
+  note   String?         @db.Text
+
+  /// The order that caused it, when one did.
+  orderId String?
+
+  /// Who did it. Null for a movement the order flow made on its own.
+  actorUserId String?
+
+  createdAt DateTime @default(now())
+
+  medicine Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+
+  @@index([medicineId, createdAt])
+  @@index([orderId])
+  @@map("stock_movements")
 }
 
 /// A patient ordering medicines their doctor listed.
@@ -1470,6 +1764,9 @@ model MedicineOrder {
 
   @@index([userId, createdAt])
   @@index([status, createdAt])
+  /// The dispensary screen and the revenue figure both read by doctor and
+  /// date, and neither had an index to read by.
+  @@index([doctorId, createdAt])
   @@map("medicine_orders")
 }
 
@@ -1823,6 +2120,7 @@ model Appointment {
   photos       AppointmentPhoto[]
 
   aftercareSheets AftercareSheet[]
+  reroutes        AppointmentReroute[]
 
   @@index([doctorId, scheduledAt])
   @@index([patientUserId, scheduledAt])
@@ -1830,6 +2128,63 @@ model Appointment {
   @@index([clinicId, scheduledAt])
   @@index([doctorId, approvalState])
   @@map("appointments")
+}
+
+/// Where a proposed hand-over has got to.
+enum RerouteState {
+  /// The doctor has asked; the patient has not answered.
+  PROPOSED
+  ACCEPTED
+  DECLINED
+  /// The proposing doctor withdrew it, or the appointment was cancelled.
+  WITHDRAWN
+}
+
+/// One practitioner asking another to take a booking.
+///
+/// -- Why the patient has to agree -----------------------------------------
+/// A client books a named doctor. Silently swapping that name because the
+/// doctor is away is not a scheduling change, it is a different consultation
+/// with a different person — and in aesthetics, where the choice of
+/// practitioner IS the product, it is the thing most likely to make somebody
+/// never come back.
+///
+/// So this is a PROPOSAL. The appointment does not move until the patient
+/// says yes; if they decline, or say nothing, it stays where it is and the
+/// original doctor deals with it. That is slower than reassigning and it is
+/// the only version that can be defended to the person in the chair.
+///
+/// -- Why it is a row and not two columns on Appointment -------------------
+/// A hand-over can be proposed, declined, and proposed again to somebody
+/// else. Columns would keep only the last attempt; this keeps the trail,
+/// which is what an admin needs when a patient rings to ask why they were
+/// moved twice.
+model AppointmentReroute {
+  id            String @id @default(cuid())
+  appointmentId String
+
+  fromDoctorId String
+  toDoctorId   String
+
+  /// Shown to the patient verbatim. They are being asked to accept a
+  /// different clinician; "the doctor is unavailable" with no more than that
+  /// is not enough to decide on.
+  reason String @db.Text
+
+  state RerouteState @default(PROPOSED)
+
+  proposedAt  DateTime  @default(now())
+  respondedAt DateTime?
+  /// Free text from the patient when they decline. Optional.
+  patientNote String?   @db.Text
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  fromDoctor  Doctor      @relation("RerouteFrom", fields: [fromDoctorId], references: [id], onDelete: Cascade)
+  toDoctor    Doctor      @relation("RerouteTo", fields: [toDoctorId], references: [id], onDelete: Cascade)
+
+  @@index([appointmentId, proposedAt])
+  @@index([toDoctorId, state])
+  @@map("appointment_reroutes")
 }
 
 enum EnquiryAudience {
@@ -2041,6 +2396,45 @@ model MediaAsset {
   @@map("media_assets")
 }
 
+/// A browser this person has allowed to show them notifications.
+///
+/// -- Why the endpoint is the identity -------------------------------------
+/// The Push API gives one endpoint URL per browser per site. It is the only
+/// stable handle there is: the same person on a phone and a laptop is two
+/// subscriptions, and clearing site data makes a third. So the unique is on
+/// the endpoint rather than on the user, and one user may have several.
+///
+/// -- Why dead subscriptions are deleted rather than kept ------------------
+/// A push service answers 404 or 410 when a subscription has gone — the
+/// browser was uninstalled, the permission revoked, the data cleared. Keeping
+/// the row would mean retrying it forever on every reminder run. The send job
+/// deletes on those two codes and only those two: a 500 from the push service
+/// is their problem, not evidence that this browser is gone.
+model PushSubscription {
+  id     String @id @default(cuid())
+  userId String
+
+  /// The push service URL. Unique per browser per site. Capped at 500 rather
+  /// than TEXT because MySQL cannot put a unique index on an unbounded column,
+  /// and no push endpoint in the wild comes close to that.
+  endpoint String @unique @db.VarChar(500)
+  /// The two keys the Web Push encryption needs.
+  p256dh   String @db.Text
+  auth     String @db.Text
+
+  /// For a person managing several devices in their settings.
+  userAgent String? @db.Text
+
+  createdAt  DateTime  @default(now())
+  /// Stamped on a successful send, so a stale device is visible.
+  lastSentAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("push_subscriptions")
+}
+
 model AuditLog {
   id        String   @id @default(cuid())
   userId    String?
@@ -2094,6 +2488,10 @@ model Prescription {
   id       String   @id @default(cuid())
   userId   String
   doctorId String?
+  /// The visit it came out of. Recorded rather than merely used to authorise
+  /// the write, so a patient's timeline can put the prescription against the
+  /// consultation that produced it.
+  appointmentId String?
   title    String
   notes    String?  @db.Text
   fileUrl  String?  @db.Text
@@ -2103,9 +2501,55 @@ model Prescription {
 
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   doctor Doctor? @relation(fields: [doctorId], references: [id], onDelete: SetNull)
+  items  PrescriptionItem[]
 
   @@index([userId, issuedAt])
+  @@index([appointmentId])
   @@map("prescriptions")
+}
+
+/// One line of a prescription.
+///
+/// -- Why it points at Medicine, and why that is optional -----------------
+/// A prescription used to be a title and a free-text note: "Tretinoin 0.025%
+/// nightly" typed from memory, every time, by a doctor who already keeps a
+/// list of exactly what they dispense. Picking off that list spells the name
+/// the same way twice, carries the strength and form without retyping them,
+/// and — the part that matters — lets the patient order the refill from the
+/// practice that prescribed it instead of a stranger.
+///
+/// `medicineId` is nullable because two ordinary things must keep working: a
+/// doctor prescribing something they do not stock, which is most of what a
+/// dermatologist writes, and a medicine later delisted. The name, strength and
+/// form are COPIED at the moment of issue for the same reason AftercareSheet
+/// copies its content — this is a clinical instruction the patient acts on,
+/// and re-pricing or renaming the catalogue must never change what they were
+/// told to take.
+model PrescriptionItem {
+  id             String  @id @default(cuid())
+  prescriptionId String
+  /// Null when written freehand, or once the medicine is delisted.
+  medicineId     String?
+
+  /// Snapshotted at issue. Never read back through the relation.
+  name     String
+  strength String?
+  form     String?
+
+  /// "One tablet twice a day, after food."
+  dose     String?
+  /// "14 days", "until the tube is finished".
+  duration String?
+  notes    String? @db.Text
+
+  sortOrder Int @default(0)
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  medicine     Medicine?    @relation(fields: [medicineId], references: [id], onDelete: SetNull)
+
+  @@index([prescriptionId, sortOrder])
+  @@index([medicineId])
+  @@map("prescription_items")
 }
 
 /// An online purchase made by the patient. `amountInr` is their own
@@ -2504,6 +2948,13 @@ model Clinic {
   addressLine2 String?
   /// Neighbourhood, e.g. "Anna Nagar". What clients actually navigate by.
   area         String
+  /// "Opposite the Krishna temple", "above Saravana Stores".
+  ///
+  /// In Indian cities this is how an address is actually given and how a
+  /// driver is actually directed — the door number frequently is not enough
+  /// and sometimes is not even displayed. Optional, because a clinic in a
+  /// named tower does not need one.
+  landmark     String?
   city         String
   state        String  @default("Tamil Nadu")
   pincode      String
@@ -2531,6 +2982,7 @@ model Clinic {
   appointments   Appointment[]
   giftCardOffers GiftCardOffer[]
   expenses       PracticeExpense[]
+  income         PracticeIncome[]
   assets         PracticeAsset[]
 
   @@index([isActive, city])
@@ -2562,14 +3014,23 @@ model ClinicPhoto {
   @@map("clinic_photos")
 }
 
-/// Parking, lift access, in-house pharmacy, lab. Free text rather than an
-/// enum because the list grows with the network and an admin should not need
-/// a migration to add "valet".
+/// Parking, lift access, in-house pharmacy, a fractional CO2 laser.
+///
+/// Still free text rather than an enum, because the list grows with the
+/// network and an admin should not need a migration to add "valet". What is
+/// new is `category`: the picker now offers a curated list grouped into
+/// access, comfort, clinical services and equipment, and storing which group
+/// a facility came from is what lets a clinic page show them grouped rather
+/// than as one undifferentiated run of thirty chips. Null for anything the
+/// practitioner typed themselves.
 model ClinicFacility {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   clinicId  String
   name      String
-  sortOrder Int    @default(0)
+  /// ACCESS | COMFORT | CLINICAL | EQUIPMENT | PAYMENT, or null for custom.
+  /// A string rather than an enum for the same reason `name` is.
+  category  String?
+  sortOrder Int     @default(0)
 
   clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 

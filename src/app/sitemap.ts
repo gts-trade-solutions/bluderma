@@ -39,6 +39,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     stat("/patient/before-after", 0.6),
     stat("/patient/know-yourself", 0.6),
     stat("/patient/rx-skin", 0.6),
+    // Public pages that were simply never added. Each is indexable, linked
+    // from the footer or the nav, and was reachable by a person and invisible
+    // to a crawler — which is the quiet way a page stops existing.
+    stat("/patient/gallery", 0.6),
+    stat("/patient/gift-cards", 0.5),
+    stat("/sell", 0.5),
     stat("/doctor", 0.8),
     stat("/terms", 0.2, "yearly"),
     stat("/privacy", 0.2, "yearly"),

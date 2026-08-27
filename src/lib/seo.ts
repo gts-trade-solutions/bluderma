@@ -207,3 +207,204 @@ export function breadcrumbLd(trail: { name: string; path: string }[]) {
     })),
   };
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   The half that was missing
+   ═══════════════════════════════════════════════════════════════════════
+
+   The helpers above were written and then only half-wired: the home page
+   emitted an organisation and a website, one nested treatment route emitted a
+   procedure, and everything else emitted nothing. `physicianLd` and `faqLd`
+   existed and were never called by anything.
+
+   That left the two biggest surfaces on the site invisible to structured
+   search — 23 treatment pages and 210 product pages — and the local-search
+   question this business actually lives on ("dermatologist near me")
+   unanswerable, because a clinic's address, hours and phone were never
+   published as a place.
+
+   ── Why this matters more than usual here ─────────────────────────────
+   Medical content is what Google calls YMYL — Your Money or Your Life — and
+   is held to a higher bar than ordinary pages. Two things carry that bar in
+   markup: saying WHO reviewed a clinical claim, and saying WHEN. Both are
+   below, and both are declined rather than faked where the data is missing:
+   a `reviewedBy` naming somebody who never read the page is worse than none.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+export interface ClinicPlace {
+  id: string;
+  name: string;
+  addressLine1: string;
+  area?: string | null;
+  city: string;
+  state?: string | null;
+  pincode?: string | null;
+  phone?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  slug?: string | null;
+}
+
+/**
+ * One clinic, as a place somebody can travel to.
+ *
+ * This is the entity that answers "dermatologist in Adyar" — a MedicalClinic
+ * with a postal address and, where we hold it, a geo point. Without it the
+ * site can describe treatments beautifully and still never appear in the
+ * search that has somebody standing on a street looking for a clinic.
+ *
+ * `geo` is emitted only from real coordinates. A clinic defaulted to 0,0 is
+ * in the Gulf of Guinea, and a map result in the wrong hemisphere is worse
+ * for a patient than no map result at all.
+ */
+export function medicalClinicLd(c: ClinicPlace) {
+  const hasGeo =
+    typeof c.latitude === "number" &&
+    typeof c.longitude === "number" &&
+    Number.isFinite(c.latitude) &&
+    Number.isFinite(c.longitude) &&
+    !(c.latitude === 0 && c.longitude === 0);
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "MedicalClinic",
+    "@id": `${siteUrl()}/#clinic-${c.id}`,
+    name: c.name,
+    medicalSpecialty: "Dermatology",
+    parentOrganization: { "@id": `${siteUrl()}/#organisation` },
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: c.addressLine1,
+      addressLocality: c.area || c.city,
+      addressRegion: c.state ?? undefined,
+      postalCode: c.pincode ?? undefined,
+      addressCountry: "IN",
+    },
+    ...(c.phone ? { telephone: c.phone } : {}),
+    ...(hasGeo
+      ? {
+          geo: {
+            "@type": "GeoCoordinates",
+            latitude: c.latitude,
+            longitude: c.longitude,
+          },
+        }
+      : {}),
+  };
+}
+
+export interface ProductFacts {
+  slug: string;
+  name: string;
+  brand?: string | null;
+  description?: string | null;
+  image?: string | null;
+  /** Whole rupees. Omitted entirely when we do not publish it. */
+  priceInr?: number | null;
+  inStock?: boolean;
+}
+
+/**
+ * A product, with its offer.
+ *
+ * 210 product pages carried no markup at all, so none of them could produce a
+ * rich result. The price is the delicate part: this catalogue is
+ * price-internal for most lines, and a Product without an Offer is valid
+ * while a Product with a WRONG offer is a penalty and a misled patient. So
+ * the offer is emitted only where there is a real published price, and its
+ * absence is silent rather than zero.
+ */
+export function productLd(p: ProductFacts) {
+  const url = absolute(`/products/${p.slug}`);
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "@id": `${url}#product`,
+    name: p.name,
+    url,
+    ...(p.brand ? { brand: { "@type": "Brand", name: p.brand } } : {}),
+    ...(p.description ? { description: p.description } : {}),
+    ...(p.image ? { image: p.image } : {}),
+    ...(typeof p.priceInr === "number" && p.priceInr > 0
+      ? {
+          offers: {
+            "@type": "Offer",
+            url,
+            price: String(p.priceInr),
+            priceCurrency: "INR",
+            availability: p.inStock
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
+          },
+        }
+      : {}),
+  };
+}
+
+/**
+ * A list of things, in the order the page shows them.
+ *
+ * Category and directory pages are how somebody browses rather than searches,
+ * and an ItemList is what lets a search engine carry that browse into its own
+ * results instead of treating the page as an undifferentiated wall of links.
+ */
+export function itemListLd(
+  name: string,
+  items: { name: string; url: string }[]
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name,
+    numberOfItems: items.length,
+    itemListElement: items.map((it, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: it.name,
+      url: it.url,
+    })),
+  };
+}
+
+/**
+ * A page making a clinical claim, and who stands behind it.
+ *
+ * `reviewedBy` and `lastReviewed` are the two properties Google's medical
+ * guidance actually looks for, and the reason this returns them
+ * conditionally: a page that names a reviewer who never read it is a false
+ * credential, which is precisely the failure the property exists to prevent.
+ * Where we have not recorded a reviewer, the page is still a MedicalWebPage
+ * and simply does not claim one.
+ */
+export function medicalWebPageLd(input: {
+  name: string;
+  url: string;
+  description?: string | null;
+  lastReviewed?: Date | string | null;
+  reviewedBy?: { name: string; title?: string | null } | null;
+}) {
+  const reviewed =
+    input.lastReviewed instanceof Date
+      ? input.lastReviewed.toISOString()
+      : input.lastReviewed ?? null;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "MedicalWebPage",
+    "@id": `${input.url}#page`,
+    name: input.name,
+    url: input.url,
+    ...(input.description ? { description: input.description } : {}),
+    ...(reviewed ? { lastReviewed: reviewed } : {}),
+    ...(input.reviewedBy
+      ? {
+          reviewedBy: {
+            "@type": "Person",
+            name: input.reviewedBy.name,
+            ...(input.reviewedBy.title ? { jobTitle: input.reviewedBy.title } : {}),
+          },
+        }
+      : {}),
+    isPartOf: { "@id": `${siteUrl()}/#website` },
+  };
+}

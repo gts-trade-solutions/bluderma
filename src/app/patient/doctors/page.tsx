@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import JsonLd from "@/components/JsonLd";
+import { prisma } from "@/lib/prisma";
+import { absolute, itemListLd, medicalClinicLd } from "@/lib/seo";
 import Link from "next/link";
 import { ArrowLeft, CreditCard, ShieldCheck, Stethoscope } from "lucide-react";
 
@@ -28,8 +31,65 @@ export default async function DoctorsPage() {
   // Real directory records; the DTO is already in the client Doctor shape.
   const doctors = (await getDoctors()) as unknown as Doctor[];
 
+  /* ── The search this business actually lives on ────────────────────────
+     "dermatologist in Adyar" is not answered by a treatment page, however
+     well written. It is answered by a PLACE: a clinic with a postal address,
+     a phone number and, where we hold it, a point on a map.
+
+     None of that was published. The organisation entity on the home page
+     nested its clinics, but a nested location inside a MedicalBusiness is
+     read as an attribute of the business, not as a place in its own right —
+     so every one of these clinics was invisible to local search.
+
+     Queried here rather than taken from the doctor DTO because that query
+     selects only what the cards render (area, city, coordinates) and a
+     PostalAddress needs the street line, the state and the pincode. */
+  const clinics = await prisma.clinic.findMany({
+    where: { isActive: true },
+    orderBy: { name: "asc" },
+    take: 60,
+    select: {
+      id: true,
+      name: true,
+      addressLine1: true,
+      area: true,
+      city: true,
+      state: true,
+      pincode: true,
+      phone: true,
+      lat: true,
+      lng: true,
+    },
+  });
+
   return (
     <>
+      {clinics.map((c) => (
+        <JsonLd
+          key={c.id}
+          data={medicalClinicLd({
+            id: c.id,
+            name: c.name,
+            addressLine1: c.addressLine1,
+            area: c.area,
+            city: c.city,
+            state: c.state,
+            pincode: c.pincode,
+            phone: c.phone,
+            latitude: c.lat,
+            longitude: c.lng,
+          })}
+        />
+      ))}
+      <JsonLd
+        data={itemListLd(
+          "Dermatologists on BluDerma",
+          doctors.map((d) => ({
+            name: d.name,
+            url: absolute("/patient/doctors"),
+          }))
+        )}
+      />
       <Navbar
         role="patient"
         menu={buildPatientMenu()}

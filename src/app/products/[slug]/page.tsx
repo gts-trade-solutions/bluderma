@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import JsonLd from "@/components/JsonLd";
+import { absolute, breadcrumbLd, productLd } from "@/lib/seo";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -60,6 +62,29 @@ export default async function ProductPage({
 
   return (
     <>
+      {/* Two hundred and ten product pages carried no markup at all.
+
+          Deliberately no `offers`: this catalogue is price-internal — the
+          schema field on Product is commented "never shown publicly" — and a
+          Product entity carrying a price the page does not show is both a
+          structured-data violation and a number a patient will quote at a
+          clinic that never agreed to it. productLd() omits the offer when no
+          price is passed, and none is passed here. */}
+      <JsonLd
+        data={productLd({
+          slug: product.slug,
+          name: product.name,
+          brand: product.brand,
+          description: product.tagline ?? product.description,
+          image: product.images[0]?.url ?? null,
+        })}
+      />
+      <JsonLd
+        data={breadcrumbLd([
+          { name: "Treatments", path: "/patient/explore" },
+          { name: product.name, path: `/products/${product.slug}` },
+        ])}
+      />
       <RoleAwareNavbar doctorMenu={doctorMenu} patientMenu={patientMenu} />
 
       <main className="theme-light bg-[var(--surface)]">

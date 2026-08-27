@@ -35,6 +35,15 @@ export interface TreatmentDTO {
   product: ProductSolutionDTO;
   seoTitle: string | null;
   seoDescription: string | null;
+  /**
+   * When this page's content last changed.
+   *
+   * Carried for `dateModified` and `lastReviewed` in the page's structured
+   * data. Freshness is one of the few signals that separates two otherwise
+   * equal medical pages, and an assistant deciding which source to cite has
+   * very little else to go on.
+   */
+  updatedAt: Date;
 }
 
 export interface CategoryDTO {

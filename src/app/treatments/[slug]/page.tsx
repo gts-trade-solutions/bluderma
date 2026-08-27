@@ -1,4 +1,11 @@
 import type { Metadata } from "next";
+import JsonLd from "@/components/JsonLd";
+import {
+  absolute,
+  breadcrumbLd,
+  medicalWebPageLd,
+  procedureLd,
+} from "@/lib/seo";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import RoleAwareNavbar from "@/components/RoleAwareNavbar";
@@ -69,8 +76,43 @@ export default async function TreatmentPage({
   const resultShots = images.filter((i) => i.kind === "RESULT");
   const rowImage = (i: number) => gallery[i]?.url ?? treatment.image;
 
+  const url = absolute(`/treatments/${treatment.slug}`);
+
   return (
     <div className="theme-light bg-white">
+      {/* This page had no structured data at all — twenty-three treatments,
+          every one of them the answer to a question somebody is typing into a
+          search box, and none of them legible as a procedure.
+
+          Three entities, and nothing more: what the procedure IS, where it
+          sits in the catalogue, and when the page was last touched. No price
+          and no rating, because the page shows neither and structured data
+          that claims what the page does not is the fastest way to lose the
+          rich result entirely. */}
+      <JsonLd
+        data={procedureLd({
+          name: treatment.name,
+          description: treatment.seoDescription ?? treatment.summary,
+          url,
+          category: treatment.category,
+        })}
+      />
+      <JsonLd
+        data={medicalWebPageLd({
+          name: treatment.name,
+          url,
+          description: treatment.seoDescription ?? treatment.summary,
+          lastReviewed: treatment.updatedAt,
+        })}
+      />
+      <JsonLd
+        data={breadcrumbLd([
+          { name: "Treatments", path: "/patient/explore" },
+          { name: treatment.category, path: `/patient/explore/${treatment.categorySlug}` },
+          { name: treatment.name, path: `/treatments/${treatment.slug}` },
+        ])}
+      />
+
       <RoleAwareNavbar doctorMenu={doctorMenu} patientMenu={patientMenu} />
 
       {/* Hero */}

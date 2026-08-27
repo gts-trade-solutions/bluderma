@@ -30,6 +30,7 @@ function toDTO(row: TreatmentRow): TreatmentDTO {
   return {
     slug: row.slug,
     name: row.name,
+    updatedAt: row.updatedAt,
     category: row.category.name,
     categorySlug: row.category.slug,
     tagline: row.tagline,

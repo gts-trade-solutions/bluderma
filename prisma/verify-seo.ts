@@ -77,7 +77,7 @@ check(
   /catch/.test(sitemapSrc),
   "an empty sitemap positively asserts there is nothing here"
 );
-check("robots points at the sitemap", /sitemap:\s*absolute/.test(robotsSrc));
+check("robots points at the sitemap", /sitemap:\s*\[?\s*absolute/.test(robotsSrc));
 for (const priv of ["/admin", "/doctor/portal", "/patient/profile", "/api/"]) {
   check(`robots keeps crawlers out of ${priv}`, robotsSrc.includes(`"${priv}"`));
 }
@@ -174,6 +174,132 @@ check("a physician is a Physician", rated["@type"] === "Physician");
 const faq = faqLd([{ question: "q", answer: "a" }]);
 check("an FAQ page is emitted as one", faq["@type"] === "FAQPage");
 check("each entry is a Question", faq.mainEntity[0]["@type"] === "Question");
+
+
+/* ------------------------------------------------------------------------
+   The half that was written and never wired
+   ---------------------------------------------------------------------
+   Every helper in lib/seo.ts passed its own unit check while two of them were
+   dead code and the two largest page families on the site emitted nothing at
+   all. A schema function that is correct and uncalled is worth exactly as
+   much as one that does not exist, so these checks are about REACH: is the
+   markup on the page, not is the object well formed.
+   --------------------------------------------------------------------- */
+
+const treatmentPage = read("src/app/treatments/[slug]/page.tsx");
+check(
+  "the treatment page emits a procedure",
+  treatmentPage.includes("procedureLd({"),
+  "23 pages, none of them legible as a procedure"
+);
+check("and says when it was last reviewed", treatmentPage.includes("medicalWebPageLd({"));
+check("and a breadcrumb", treatmentPage.includes("breadcrumbLd(["));
+check(
+  "and still claims no price or rating",
+  !/offers:|aggregateRating/.test(treatmentPage)
+);
+
+const productPage = read("src/app/products/[slug]/page.tsx");
+check(
+  "the product page emits a product",
+  productPage.includes("productLd({"),
+  "210 pages with no markup at all"
+);
+check(
+  "and passes no price, because this catalogue does not publish one",
+  !/priceInr:/.test(productPage),
+  "an Offer here would quote a figure the page deliberately hides"
+);
+check("the product page carries a breadcrumb", productPage.includes("breadcrumbLd(["));
+
+// The offer is conditional in the helper, not merely omitted at one call site.
+const seoLib = read("src/lib/seo.ts");
+check(
+  "productLd refuses to invent an offer",
+  /typeof p\.priceInr === "number" && p\.priceInr > 0/.test(seoLib)
+);
+check(
+  "and medicalClinicLd refuses to place a clinic at 0,0",
+  seoLib.includes("!(c.latitude === 0 && c.longitude === 0)"),
+  "a clinic defaulted to the null island is worse than one with no map at all"
+);
+check(
+  "a reviewer is named only where one is recorded",
+  /input\.reviewedBy\s*\?/.test(seoLib),
+  "naming a reviewer who never read the page is a false credential"
+);
+
+/* -- Local search: a clinic has to be a place ---------------------------- */
+const doctorsPage = read("src/app/patient/doctors/page.tsx");
+check(
+  "clinics are published as places, not as an attribute of the business",
+  doctorsPage.includes("medicalClinicLd({"),
+  "'dermatologist in Adyar' has nothing to match against"
+);
+check(
+  "with the street line, state and pincode a PostalAddress needs",
+  ["addressLine1: true", "state: true", "pincode: true"].every((f) =>
+    doctorsPage.includes(f)
+  )
+);
+check("and the directory is a list", doctorsPage.includes("itemListLd("));
+
+/* -- AI search: llms.txt ------------------------------------------------- */
+const llms = read("src/app/llms.txt/route.ts");
+check("llms.txt is served", llms.includes("text/plain"));
+check(
+  "it is generated from the database, not hand-maintained",
+  llms.includes("prisma.treatment.findMany"),
+  "a hand-written catalogue drifts from the real one"
+);
+check(
+  "it uses the same doctor predicate as the public directory",
+  llms.includes("PUBLIC_DOCTOR_WHERE"),
+  "a count that disagrees with the page it describes"
+);
+// The three things a model summarising this site gets wrong, each with a real
+// cost. They are corrected once, in the one file an assistant reads first.
+check("it refuses to let a price be quoted", /\*\*Prices\.\*\*/.test(llms));
+check(
+  "it states that BluDerma does not provide the treatment",
+  /does not provide treatment/i.test(llms) ||
+    /\*\*That BluDerma provides treatment\.\*\*/.test(llms)
+);
+check(
+  "and that the skin analysis is not a diagnosis",
+  /not a diagnosis|is not a diagnosis/i.test(llms),
+  "the one claim this product refuses to make in its own interface"
+);
+
+/* -- AI crawlers, named rather than left to the wildcard ----------------- */
+for (const bot of ["GPTBot", "ClaudeBot", "PerplexityBot", "Google-Extended"]) {
+  check(`${bot} is named in robots`, robotsSrc.includes(`"${bot}"`));
+}
+check(
+  "the assistants get the same exclusions as everyone else",
+  robotsSrc.includes("disallow: PRIVATE_PATHS"),
+  "an assistant that reads a portal and repeats it is a disclosure, not a crawl"
+);
+check(
+  "the private list is shared, not restated per agent",
+  (robotsSrc.match(/const PRIVATE_PATHS/g) ?? []).length === 1
+);
+// Deliberately NOT in the Sitemap directive: that field is defined as
+// pointing at a sitemap, and Search Console reports a parse error on anything
+// that is not XML. llms.txt is found at its well-known path instead.
+check(
+  "llms.txt is not passed off as an XML sitemap",
+  !/sitemap:\s*\[/.test(robotsSrc)
+);
+
+/* -- Sitemap coverage ---------------------------------------------------- */
+for (const path of ["/patient/gallery", "/patient/gift-cards", "/sell"]) {
+  check(`${path} is in the sitemap`, sitemapSrc.includes(`"${path}"`));
+}
+check(
+  "and nothing behind a login is",
+  !/"\/patient\/profile"|"\/doctor\/portal"/.test(sitemapSrc)
+);
 
 console.log(`\n${pass} passed, ${fails.length} failed`);
 if (fails.length) {

@@ -69,6 +69,9 @@ export default function TagPicker({
   const id = useId();
   const [selected, setSelected] = useState<string[]>(defaultSelected);
   const [query, setQuery] = useState("");
+  /** Whether the full list is open. Closed by default: the chips answer it
+   *  for most people, and 134 rows on arrival is its own kind of unusable. */
+  const [showAll, setShowAll] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -104,13 +107,27 @@ export default function TagPicker({
       if (v.startsWith(q) || a.startsWith(q)) starts.push(o);
       else if (v.includes(q) || a.includes(q)) contains.push(o);
     }
-    return [...starts, ...contains].slice(0, 10);
+    // Was 10. On a 134-language list that silently dropped most of what
+    // somebody had already narrowed down — type "an" and Kannada, Assamese
+    // and Romanian were all real answers that never appeared. The list
+    // scrolls; there is no reason to decide for them which ten matter.
+    return [...starts, ...contains].slice(0, 60);
     // `selected` is read through has(); listing it keeps the results honest
     // as chips are added and removed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, options, selected]);
 
   const chips = common.filter((c) => !has(c)).slice(0, 12);
+  /**
+   * Everything not already picked.
+   *
+   * The picker showed twelve "common" chips and a search box, so the other
+   * hundred-and-twenty were reachable only by somebody who already knew the
+   * name to type. A doctor who consults in Konkani had no way to find out it
+   * was on the list, and the honest reading of the screen was that it was
+   * not. A list this long needs a way to be READ, not only queried.
+   */
+  const rest = options.filter((o) => !has(o.value) && !common.includes(o.value));
   const exactAlready = results.some(
     (r) => r.value.toLowerCase() === query.trim().toLowerCase()
   );
@@ -241,6 +258,48 @@ export default function TagPicker({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {rest.length > 0 && query.trim().length === 0 && (
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={() => setShowAll((v) => !v)}
+            aria-expanded={showAll}
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold text-brand-700 transition hover:bg-brand-50"
+          >
+            <span
+              aria-hidden
+              className={`transition-transform ${showAll ? "rotate-90" : ""}`}
+            >
+              ›
+            </span>
+            {showAll
+              ? "Hide the full list"
+              : `Browse all ${options.length} — including ${rest[0].value}`}
+          </button>
+
+          {showAll && (
+            <ul className="mt-2 flex max-h-64 flex-wrap gap-1.5 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/60 p-2.5">
+              {rest.map((o) => (
+                <li key={o.value}>
+                  <button
+                    type="button"
+                    onClick={() => add(o.value)}
+                    className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-brand-50 hover:text-brand-800 hover:ring-brand-300"
+                  >
+                    + {o.value}
+                    {o.alias && o.alias !== o.value && (
+                      <span className="ml-1 font-normal text-slate-400">
+                        {o.alias}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 

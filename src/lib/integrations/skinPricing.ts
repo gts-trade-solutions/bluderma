@@ -41,7 +41,14 @@ export interface ScanPricing {
 const DEFAULTS: ScanPricing = {
   firstScanFree: true,
   priceInr: 99,
-  listPriceInr: 499,
+  // Equal to the charged price, so NO anchor is drawn and 99 is the only
+  // figure the site shows. It defaulted to 499, which meant a struck-through
+  // 499 appeared beside every price on a product that has never charged it —
+  // a "discount" against a number nobody was ever asked to pay.
+  //
+  // Still admin-editable: set skin.scan_list_price_inr above the charged
+  // price and the strike-through comes back everywhere at once.
+  listPriceInr: 99,
   allowRequests: true,
 };
 

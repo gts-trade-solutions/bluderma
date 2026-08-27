@@ -74,13 +74,20 @@ export default function FacilityPicker({
 
   return (
     <div>
+      {/* Doctors testing the form could not tell what this section was for.
+          The heading named the categories and the hint described the mood of
+          the thing rather than saying, in one line, what ticking a box DOES
+          and whether any of it is required. Both now do. */}
       <p className="text-sm font-semibold text-slate-800">
-        Facilities, services and equipment
+        What this clinic has
       </p>
-      <p className="mt-1 text-xs text-slate-500">
-        Everything a client would want to know before they arrive, and
-        everything you have in the building. The equipment list is the part
-        people read hardest, so it is worth going through properly.
+      <p className="mt-1 text-xs leading-relaxed text-slate-500">
+        Tick anything you have. It appears on your public profile, and
+        patients filter searches by it &mdash; parking and wheelchair access
+        are the two most used.{" "}
+        <span className="font-semibold text-slate-600">
+          All of it is optional. You can skip this and add it later.
+        </span>
       </p>
 
       {/* What is submitted. */}

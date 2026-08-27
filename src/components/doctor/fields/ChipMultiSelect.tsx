@@ -44,6 +44,8 @@ export default function ChipMultiSelect({
   const [selected, setSelected] = useState<string[]>(defaultSelected);
   const [query, setQuery] = useState("");
   const [describing, setDescribing] = useState(false);
+  /** Whether the full catalogue is open. See VISIBLE below. */
+  const [showAll, setShowAll] = useState(false);
   const [description, setDescription] = useState("");
   const [matching, setMatching] = useState(false);
   const [matched, setMatched] = useState<string[] | null>(null);
@@ -73,10 +75,22 @@ export default function ChipMultiSelect({
     q.length >= 2
       ? vocabulary
           .filter((v) => v.toLowerCase().includes(q) && !has(v))
-          .slice(0, 8)
+          // Was 8. A doctor who has already typed three letters has done the
+          // narrowing; cutting their own search short is not help.
+          .slice(0, 40)
       : [];
 
-  const unpicked = suggestions.filter((s) => !has(s)).slice(0, 15);
+  const unpicked = suggestions.filter((s) => !has(s));
+  /**
+   * How many are offered before the list has to be opened.
+   *
+   * It was a hard `.slice(0, 15)` with no way past it, so on a catalogue of
+   * 23 the last eight treatments existed only for somebody who guessed their
+   * exact name. The screen said "Commonly offered" and looked complete, which
+   * is the worst version of a truncated list: nothing tells you it is short.
+   */
+  const VISIBLE = 12;
+  const shown = showAll ? unpicked : unpicked.slice(0, VISIBLE);
 
   useEffect(() => {
     if (matched && liveRef.current) {
@@ -176,10 +190,10 @@ export default function ChipMultiSelect({
       {unpicked.length > 0 && q.length < 2 && (
         <div className="mt-3">
           <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-            Commonly offered
+            {showAll ? `All ${unpicked.length} treatments` : "Commonly offered"}
           </p>
           <ul className="mt-1.5 flex flex-wrap gap-1.5">
-            {unpicked.map((s) => (
+            {shown.map((s) => (
               <li key={s}>
                 <button
                   type="button"
@@ -191,6 +205,19 @@ export default function ChipMultiSelect({
               </li>
             ))}
           </ul>
+
+          {unpicked.length > VISIBLE && (
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              aria-expanded={showAll}
+              className="mt-2 text-xs font-bold text-brand-700 transition hover:underline"
+            >
+              {showAll
+                ? "Show fewer"
+                : `Show all ${unpicked.length} treatments`}
+            </button>
+          )}
         </div>
       )}
 

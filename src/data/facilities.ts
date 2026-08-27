@@ -41,8 +41,8 @@ export interface FacilityGroup {
 export const FACILITY_GROUPS: FacilityGroup[] = [
   {
     category: "ACCESS",
-    label: "Getting there and getting in",
-    hint: "The things somebody checks before they set out.",
+    label: "Parking and access",
+    hint: "How a patient reaches you and gets inside. All optional.",
     items: [
       "Free parking",
       "Paid parking",
@@ -61,8 +61,8 @@ export const FACILITY_GROUPS: FacilityGroup[] = [
   },
   {
     category: "COMFORT",
-    label: "While they are with you",
-    hint: "What the wait and the visit are like.",
+    label: "Waiting area and comfort",
+    hint: "What the wait is like. All optional.",
     items: [
       "Air conditioned",
       "Separate waiting area",
@@ -80,8 +80,8 @@ export const FACILITY_GROUPS: FacilityGroup[] = [
   },
   {
     category: "CLINICAL",
-    label: "Services on site",
-    hint: "What a patient can have done without going anywhere else.",
+    label: "Services at this clinic",
+    hint: "What a patient can have done here without going elsewhere.",
     items: [
       "In-house pharmacy",
       "Sample collection for labs",
@@ -102,8 +102,8 @@ export const FACILITY_GROUPS: FacilityGroup[] = [
   },
   {
     category: "EQUIPMENT",
-    label: "Equipment in the clinic",
-    hint: "The section nobody thinks to type, and the one clients read hardest. Name what you actually have on site.",
+    label: "Machines and equipment",
+    hint: "The lasers and devices you have on site. Patients read this one hardest.",
     items: [
       "Fractional CO2 laser",
       "Er:YAG laser",
@@ -139,8 +139,8 @@ export const FACILITY_GROUPS: FacilityGroup[] = [
   },
   {
     category: "PAYMENT",
-    label: "Paying",
-    hint: "How people can settle the bill.",
+    label: "Payment options",
+    hint: "How a patient can pay you.",
     items: [
       "Card payment",
       "UPI",

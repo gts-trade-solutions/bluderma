@@ -30,6 +30,7 @@ import GalleryConsent from "@/components/patient/GalleryConsent";
 import MyPhotos from "@/components/patient/MyPhotos";
 import NearbyClinics from "@/components/patient/NearbyClinics";
 import { requireUser } from "@/lib/session";
+import { isDemoAccount } from "@/lib/demo";
 import { getProfilePageData } from "@/lib/queries/profileData";
 import GoldCollarBadge from "@/components/GoldCollarBadge";
 import {
@@ -73,6 +74,21 @@ const money = (n: number) => `₹${n.toLocaleString("en-IN")}`;
  */
 export default async function ProfilePage() {
   const user = await requireUser("/patient/profile");
+
+  /* ── The wallet is an illustration, so only a demo account sees it ──────
+     There is no Wallet table. No ledger, no way to earn a rupee of it and no
+     way to spend one. DEMO_WALLET was rendering for EVERY signed-in client:
+     a brand-new account with nought reports and nought appointments was shown
+     a balance of Rs 2,450, a lifetime cashback total, and movement rows
+     naming a doctor they had never seen and a serum they had never bought.
+
+     A figure somebody cannot spend is not a placeholder, whatever it is
+     labelled. It is money the site told them they had.
+
+     Hidden rather than zeroed for real accounts: "Rs 0" still asserts there
+     is a wallet to fill, and there is not one yet. When the table lands, this
+     flag goes and the section returns for everybody. */
+  const showWallet = isDemoAccount(user.email);
 
   // Read here rather than through profileData: these are the one thing on this
   // page the client can edit, so they must not sit behind the same cache() as
@@ -251,7 +267,16 @@ export default async function ProfilePage() {
     // client can spend, and it sat sixth — below five clinical records, which
     // on a phone is most of a screen's worth of scrolling before a balance
     // they did not know they had.
-    { id: "wallet", label: "My wallet", icon: "wallet", badge: money(DEMO_WALLET.balanceInr) },
+    ...(showWallet
+      ? [
+          {
+            id: "wallet",
+            label: "My wallet",
+            icon: "wallet" as const,
+            badge: money(DEMO_WALLET.balanceInr),
+          },
+        ]
+      : []),
     ...(GALLERY.length ? [{ id: "photos", label: "Before & after", icon: "treatment", badge: GALLERY_WAITING ? String(GALLERY_WAITING) : undefined }] : []),
     { id: "my-photos", label: "My photos", icon: "report", badge: MY_PHOTOS.length ? String(MY_PHOTOS.length) : undefined },
     ...(MY_CARDS.length ? [{ id: "gift-cards", label: "Gift cards", icon: "wallet", badge: String(MY_CARDS.length) }] : []),
@@ -337,7 +362,12 @@ export default async function ProfilePage() {
                 The balance is the one number on this page a client can spend,
                 and it lived six sections down. It is a link, not a panel: the
                 whole record is still below, this just makes sure nobody has
-                to go looking for their own credit. */}
+                to go looking for their own credit.
+
+                Behind `showWallet`: see the note where it is defined. There
+                is no wallet table, so a real client is shown no balance at
+                all rather than an illustrated one. */}
+            {showWallet && (
             <Link
               href="#wallet"
               className="group mt-6 flex flex-wrap items-center gap-x-6 gap-y-4 rounded-2xl bg-gradient-to-r on-dark from-brand-800/80 via-brand-900/70 to-teal-800/70 px-5 py-4 ring-1 ring-inset ring-teal-300/25 transition hover:ring-teal-300/50"
@@ -375,6 +405,7 @@ export default async function ProfilePage() {
                 <ArrowRight className="h-4 w-4" />
               </span>
             </Link>
+            )}
 
             {upcoming.length > 0 && (
               <div className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl bg-teal-400/[12%] px-5 py-4 ring-1 ring-inset ring-teal-300/25">
@@ -403,6 +434,7 @@ export default async function ProfilePage() {
 
           <div className="min-w-0 space-y-14">
             {/* ── 1. Wallet ───────────────────────────────────────── */}
+            {showWallet && (
             <Section
               id="wallet"
               icon={Percent}
@@ -463,6 +495,7 @@ export default async function ProfilePage() {
                 ))}
               </div>
             </Section>
+            )}
 
             {/* ── 2. Reports ──────────────────────────────────────── */}
             <Section

@@ -396,6 +396,52 @@ const fmt = (d: Date | string) =>
   check("non-strings inside the list are dropped", perksOf(["a", 3, null, "b"]).length === 2);
 }
 
+/* -- Illustrated data never reaches a real client -----------------------
+   The wallet had no table behind it and rendered for EVERY signed-in client:
+   a brand-new account with nought reports and nought appointments was shown a
+   balance of Rs 2,450, a lifetime cashback total, and movement rows naming a
+   doctor they had never seen and a serum they had never bought.
+
+   A figure somebody cannot spend is not a placeholder, whatever it is
+   labelled next to. So the rule is checked from both ends: the page must
+   gate it, and the gate must default to hiding. */
+const profilePage = read("src/app/patient/profile/page.tsx");
+const demoLib = read("src/lib/demo.ts");
+
+check(
+  "the wallet is gated on the account being a demo one",
+  profilePage.includes("const showWallet = isDemoAccount(user.email)"),
+  "every client sees a balance they cannot spend"
+);
+check(
+  "and every place it renders is behind that gate",
+  (profilePage.match(/showWallet && \(/g) ?? []).length >= 2 &&
+    profilePage.includes("...(showWallet"),
+  "the nav entry, the hero band and the panel each render it separately"
+);
+check(
+  "no demo constant is read outside the gate",
+  (profilePage.match(/DEMO_WALLET/g) ?? []).length > 0 &&
+    !/DEMO_[A-Z_]+/.test(profilePage.replace(/DEMO_WALLET/g, "")),
+  "another illustrated constant has been added"
+);
+check(
+  "an unknown or missing email is NOT a demo account",
+  demoLib.includes("if (!email) return false"),
+  "getting this wrong in that direction shows a paying client invented money"
+);
+check(
+  "the demo domains cannot be registered by a real person",
+  demoLib.includes("bluderma.local"),
+  "a reachable domain means somebody could claim a demo account"
+);
+check(
+  "the seed and the predicate name the same accounts",
+  ["demo.doctor@bluderma.local", "demo.client@bluderma.local"].every(
+    (e) => demoLib.includes(e) && read("prisma/seed-demo-doctor.ts").includes(e)
+  )
+);
+
 console.log(`\n${pass} passed, ${fails.length} failed`);
 if (fails.length) {
   fails.forEach((f) => console.log(`  FAIL  ${f}`));

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ReviewStatus } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { NOT_DEMO_USER } from "@/lib/demo";
 
 /**
  * Client reviews that have actually been left and actually been published.
@@ -36,6 +37,12 @@ export async function GET() {
       status: ReviewStatus.PUBLISHED,
       // A star rating on its own says nothing worth quoting.
       body: { not: null },
+      // Every published review in the seeded database was written by a demo
+      // account. The per-doctor reads are already safe because they hang off
+      // PUBLIC_DOCTOR_WHERE, but this feed is site-wide and had nothing
+      // scoping it — so a real client was reading eighteen testimonials, all
+      // of them written by people who do not exist.
+      ...NOT_DEMO_USER,
     },
     orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
     take: 6,

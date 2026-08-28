@@ -36,6 +36,26 @@ const DEMO_EMAILS = new Set([
 const DEMO_DOMAIN = "demo.bluderma.local";
 
 /**
+ * The suffixes, for the places that must filter in SQL rather than in code.
+ *
+ * `.local` is reserved for link-local naming and cannot be registered or
+ * receive mail, so no real person can hold one of these by accident or on
+ * purpose. That is what makes an endsWith filter safe here: it cannot catch
+ * a genuine practitioner or client.
+ *
+ * `@bluderma.local` deliberately also catches the dr.test@ account, which is
+ * not a demo but is just as much not a real doctor.
+ */
+export const DEMO_EMAIL_SUFFIXES = ["@bluderma.local", `@${DEMO_DOMAIN}`];
+
+/** A Prisma fragment excluding demo authors from a public read. */
+export const NOT_DEMO_USER = {
+  NOT: DEMO_EMAIL_SUFFIXES.map((suffix) => ({
+    user: { is: { email: { endsWith: suffix } } },
+  })),
+};
+
+/**
  * True only for a seeded demonstration account.
  *
  * Defaults to FALSE for anything it cannot identify — a missing email, a

@@ -442,6 +442,53 @@ check(
   )
 );
 
+/* -- Seeded people do not appear to real ones ---------------------------
+   The wallet was the reported symptom. Auditing the rest of the surface
+   found three more, all of them the same shape — seeded rows that pass every
+   "is this published" test because a convincing demo has to:
+
+     - the demo practitioner was APPROVED and active, so "Dr. Nithya Raghavan"
+       was listed in the public directory and could have been BOOKED;
+     - all 18 published reviews were written by seeded patients, and the
+       site-wide feed had nothing scoping it;
+     - both gallery cases belonged to the demo doctor.
+
+   The directory and the gallery are fixed by one predicate. The review feed
+   needed its own, because it is the only public read that does not hang off
+   a doctor. */
+const access = read("src/lib/queries/doctorAccess.ts");
+
+check(
+  "the public directory excludes seeded practitioners",
+  access.includes("DEMO_EMAIL_SUFFIXES"),
+  "a demo doctor listed beside the real ones is bookable"
+);
+check(
+  "and negates at the doctor level, so an unlinked doctor still lists",
+  /NOT: DEMO_EMAIL_SUFFIXES\.map/.test(access),
+  "a `user: { is: { NOT } }` form drops every doctor with no user record"
+);
+check(
+  "the site-wide review feed excludes seeded authors",
+  read("src/app/api/reviews/published/route.ts").includes("NOT_DEMO_USER"),
+  "every published review in a seeded database was written by a demo account"
+);
+check(
+  "the gallery hangs off the same doctor predicate",
+  read("src/app/patient/gallery/page.tsx").includes("PUBLIC_DOCTOR_WHERE")
+);
+check(
+  "one list of suffixes, shared",
+  demoLib.includes("export const DEMO_EMAIL_SUFFIXES") &&
+    !/const DEMO_EMAIL_SUFFIXES = \[/.test(access),
+  "two copies drift, and the drift is invisible"
+);
+check(
+  "the suffixes are unregistrable domains",
+  demoLib.includes('"@bluderma.local"') && demoLib.includes("DEMO_DOMAIN"),
+  "an endsWith filter on a real domain would hide real people"
+);
+
 console.log(`\n${pass} passed, ${fails.length} failed`);
 if (fails.length) {
   fails.forEach((f) => console.log(`  FAIL  ${f}`));

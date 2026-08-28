@@ -138,7 +138,26 @@ async function live() {
   await prisma.$disconnect();
 
   check("the charged price is configured", priceRow?.value === "99", priceRow?.value ?? "unset");
-  check("the anchor is configured above it", Number(listRow?.value) > 99, listRow?.value ?? "unset");
+  // Not "above it". An anchor EQUAL to the charged price is the correct
+  // setting when there is no discount running — it collapses the strike-
+  // through everywhere, which is what "quote 99, not 499" means. What must
+  // never happen is an anchor BELOW the charged price: that renders as a
+  // crossed-out number smaller than the one being asked for, which reads as
+  // a price rise.
+  const listInr = Number(listRow?.value ?? 0);
+  check(
+    "the anchor never sits below the charged price",
+    listInr >= 99,
+    listRow?.value ?? "unset"
+  );
+  // And the code has to act on that: the hook returns null for the anchor
+  // unless it is strictly above the charged price, which is what stops a
+  // "discount" from the same number to the same number being drawn.
+  check(
+    "an anchor that is not above the price is collapsed to null",
+    /listPriceInr > status\.offer\.priceInr/.test(read("src/hooks/useSkinAccess.ts")),
+    `configured anchor ${listInr}, charged 99`
+  );
 
   if (!user) {
     fails.push("no demo client to sign in as");

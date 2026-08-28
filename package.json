@@ -28,7 +28,8 @@
     "verify:care": "tsx prisma/verify-pre-post-care.ts",
     "verify:phase5": "tsx prisma/verify-phase5.ts",
     "theme:gen": "tsx prisma/gen-theme-overrides.ts",
-    "verify:themes": "tsx prisma/verify-themes.ts"
+    "verify:themes": "tsx prisma/verify-themes.ts",
+    "audit:demo": "tsx prisma/audit-demo-data.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

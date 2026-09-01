@@ -281,7 +281,53 @@ live()
 
   .catch((e) => fails.push(`live check threw: ${e.message ?? e}`))
   .then(() => {
-    console.log(`\n${pass} passed, ${fails.length} failed`);
+    /* -- The button that refused to charge, then refused to scan -------------
+   Reported from production: a client with no scans left presses "Buy another
+   scan for Rs 99" and is told "You have no analyses remaining."
+
+   Two predicates answering the same question differently. getScanOffer said
+   `free` when no CONSUMED row existed; reserve() seeds a free scan only when
+   NO row exists in any state. Anybody holding a row in some other state — a
+   purchase begun and never settled, an admin grant pending payment — was
+   "never scanned" to the first and "nothing to claim" to the second. The
+   purchase route read `free`, took no money, handed off to the scan, and the
+   scan refused. A loop with no way out: the same button both declines to
+   charge them and declines to let them through. */
+const pricing = read("src/lib/integrations/skinPricing.ts");
+check(
+  "the free test matches what reserve() can actually honour",
+  pricing.includes("everHad === 0"),
+  "counting only consumed rows lets a client fall between the two"
+);
+check(
+  "and counts a live reservation as nothing left to pay",
+  pricing.includes("reservedCount > 0")
+);
+check(
+  "the old consumed-only test is gone",
+  !pricing.includes("scansUsed === 0 && creditsAvailable === 0")
+);
+check(
+  "everHad counts rows in every state, which is seedFreeIfNew's condition",
+  pricing.includes("prisma.skinEntitlement.count({ where: { userId } })") &&
+    read("src/lib/integrations/skinEntitlement.ts").includes(
+      "const everHad = await prisma.skinEntitlement.count({ where: { userId } })"
+    )
+);
+
+/* -- A discount badge that was always on ------------------------------- */
+check(
+  "the saving is only claimed where there is one",
+  landing.includes("{firstScanFree ? (") &&
+    landing.includes("anchor > priceInr ? ("),
+  "100% off was rendered unconditionally beside the Rs 99 being charged"
+);
+check(
+  "and the figure is computed, not asserted",
+  landing.includes("Math.round(((anchor - priceInr) / anchor) * 100)")
+);
+
+console.log(`\n${pass} passed, ${fails.length} failed`);
     if (fails.length) {
       fails.forEach((f) => console.log(`  FAIL  ${f}`));
       process.exit(1);

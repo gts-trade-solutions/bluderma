@@ -157,9 +157,21 @@ export default function SkinAnalyzerLanding() {
                 </div>
               </div>
 
+              {/* The saving, where there IS one.
+                  This was rendered unconditionally — three lines under a
+                  comment promising it "is only claimed where it is true" —
+                  so a returning client being charged Rs 99 was shown "100%
+                  off" beside the figure they were about to pay. 100% off is
+                  free; anything else is a different number or no badge. */}
+              {firstScanFree ? (
               <span className="rotate-[-6deg] rounded-xl bg-gradient-to-r from-teal-300 to-brand-400 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wide text-[#04121f] shadow-[0_0_24px_-4px_rgba(84,215,194,0.9)]">
                 100% off
               </span>
+              ) : anchor !== null && priceInr !== null && anchor > priceInr ? (
+                <span className="rotate-[-6deg] rounded-xl bg-gradient-to-r from-teal-300 to-brand-400 px-3 py-1.5 text-[13px] font-black uppercase tracking-wide text-[#04121f]">
+                  {Math.round(((anchor - priceInr) / anchor) * 100)}% off
+                </span>
+              ) : null}
             </div>
 
             {/* The real analyzer launcher, in the hero where visitors actually

@@ -108,21 +108,43 @@ export interface ScanOffer {
 export async function getScanOffer(userId: string): Promise<ScanOffer> {
   const pricing = await getScanPricing();
 
-  const [creditsAvailable, scansUsed] = await Promise.all([
+  const [creditsAvailable, scansUsed, reservedCount, everHad] = await Promise.all([
     prisma.skinEntitlement.count({
       where: { userId, state: "available" },
     }),
     prisma.skinEntitlement.count({
       where: { userId, state: "consumed" },
     }),
+    prisma.skinEntitlement.count({
+      where: { userId, state: "reserved" },
+    }),
+    // Any row, in any state. This is the condition seedFreeIfNew uses, and
+    // matching it here is the whole point — see below.
+    prisma.skinEntitlement.count({ where: { userId } }),
   ]);
 
   return {
-    // Holding a credit — free, granted or already paid for — means nothing
-    // more to pay right now.
+    /* Nothing more to pay right now.
+     *
+     * This has to mean exactly what reserve() can honour, or the two disagree
+     * and a client gets stuck in a loop they cannot leave: the purchase route
+     * reads `free` and takes no money, the scan then calls reserve(), reserve
+     * finds nothing to claim, and they are told "You have no analyses
+     * remaining" by the same button that just refused to charge them.
+     *
+     * The old second clause was `scansUsed === 0`, counting only CONSUMED
+     * rows. reserve() seeds a free scan on a different condition — no
+     * entitlement rows AT ALL — so anybody holding a row in some other state
+     * (a purchase begun and never settled, an admin grant pending payment)
+     * counted as "never scanned" here and as "nothing to claim" there.
+     *
+     * `everHad === 0` is that same condition, so the two now agree by
+     * construction rather than by coincidence. A reservation counts too:
+     * reserve() hands an existing one straight back. */
     free:
       creditsAvailable > 0 ||
-      (pricing.firstScanFree && scansUsed === 0 && creditsAvailable === 0),
+      reservedCount > 0 ||
+      (pricing.firstScanFree && everHad === 0),
     priceInr: pricing.priceInr,
     listPriceInr: pricing.listPriceInr,
     creditsAvailable,

@@ -267,7 +267,7 @@ export async function getAppointmentDetail(doctorId: string, appointmentId: stri
      Loaded by ID rather than "their most recent", because attaching is a
      choice: somebody with four analyses picked one to show, and showing them
      the newest instead quietly overrules that. */
-  const [member, scans, history, profile, intake, attachedAnalysis] =
+  const [member, scans, history, profile, intake, patientPhotos, attachedScan, attachedAnalysis] =
     await Promise.all([
     prisma.subscription
       .findFirst({
@@ -318,11 +318,56 @@ export async function getAppointmentDetail(doctorId: string, appointmentId: stri
       orderBy: { createdAt: "desc" },
       select: { id: true, createdAt: true, answers: true, summary: true },
     }),
+    /* The report the patient chose for THIS visit, from whichever table it
+       lives in.
+
+       Both `skinScanId` and `skinAnalysisId` were selected here, declared in
+       the drawer's props, and never read. SkinScan is what the live analyser
+       writes; SkinAnalysis is the older in-app one. Reading only one of them
+       would have left half the attachments invisible, which is the same bug
+       the profile's "My reports 0" came from.
+
+       Scoped to the patient as well as the id — both arrived through a
+       booking form, and re-checking ownership here costs nothing. */
+    /* Photographs the patient holds, as opposed to ones bolted onto this
+       booking.
+
+       The drawer only ever showed `appt.photos` — AppointmentPhoto, written
+       when somebody attaches images during booking. Anything uploaded from
+       the profile lands in PatientPhoto instead, and there were four of those
+       in this database against nought of the former. So "the doctor cannot
+       see the patient's photos" was true wherever the doctor actually looks
+       before a visit; the chart shows them, the appointment does not.
+
+       Limited to the patient's OWN uploads and this doctor's own clinical
+       shots. A photograph another practitioner took at another clinic is
+       theirs, and the chart already draws that line for annotations. */
+    prisma.patientPhoto.findMany({
+      where: {
+        patientUserId: appt.patientUserId,
+        OR: [{ doctorId: null }, { doctorId }],
+      },
+      orderBy: { capturedAt: "desc" },
+      take: 12,
+      select: { id: true, url: true, angle: true, capturedAt: true, doctorId: true },
+    }),
+    appt.skinScanId
+      ? prisma.skinScan.findFirst({
+          where: { id: appt.skinScanId, userId: appt.patientUserId },
+          select: {
+            id: true,
+            createdAt: true,
+            summary: true,
+            issues: {
+              orderBy: { score: "desc" },
+              take: 6,
+              select: { issueType: true, score: true, severityBand: true },
+            },
+          },
+        })
+      : null,
     appt.skinAnalysisId
       ? prisma.skinAnalysis.findFirst({
-          // Scoped to the patient as well as the id. The id reached the
-          // database through a booking form, and re-checking ownership here
-          // costs nothing.
           where: { id: appt.skinAnalysisId, userId: appt.patientUserId },
           select: {
             id: true,
@@ -333,15 +378,50 @@ export async function getAppointmentDetail(doctorId: string, appointmentId: stri
             scores: {
               orderBy: { score: "desc" },
               take: 6,
-              select: {
-                score: true,
-                concern: { select: { label: true } },
-              },
+              select: { score: true, concern: { select: { label: true } } },
             },
           },
         })
       : null,
   ]);
+
+  /* One shape, whichever table it came from. The drawer should not have to
+     know that this product has two analysers, and a doctor certainly should
+     not. */
+  const attached = attachedScan
+    ? (() => {
+        const sum = (attachedScan.summary ?? {}) as {
+          overall?: number | null;
+          skin_type?: string | null;
+          skin_age?: number | null;
+        };
+        return {
+          id: attachedScan.id,
+          createdAt: attachedScan.createdAt,
+          overall: typeof sum.overall === "number" ? Math.round(sum.overall) : null,
+          skinType: sum.skin_type ?? null,
+          estimatedAge: typeof sum.skin_age === "number" ? Math.round(sum.skin_age) : null,
+          concerns: attachedScan.issues.map((i) => ({
+            label: i.issueType.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()),
+            score: i.score === null ? null : Math.round(i.score),
+            band: i.severityBand,
+          })),
+        };
+      })()
+    : attachedAnalysis
+      ? {
+          id: attachedAnalysis.id,
+          createdAt: attachedAnalysis.createdAt,
+          overall: attachedAnalysis.overall,
+          skinType: attachedAnalysis.skinType,
+          estimatedAge: attachedAnalysis.estimatedAge,
+          concerns: attachedAnalysis.scores.map((sc) => ({
+            label: sc.concern.label,
+            score: sc.score,
+            band: null as string | null,
+          })),
+        }
+      : null;
 
   return {
     appointment: appt,
@@ -350,6 +430,7 @@ export async function getAppointmentDetail(doctorId: string, appointmentId: stri
     history,
     profile,
     intake,
-    attachedAnalysis,
+    patientPhotos,
+    attached,
   };
 }

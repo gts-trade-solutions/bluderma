@@ -354,12 +354,21 @@ const cal = read("src/lib/queries/doctorCalendar.ts");
 const attachUi = read("src/components/doctor/AppointmentDrawer.tsx");
 
 check(
-  "the doctor's query loads the attached analysis",
-  cal.includes("prisma.skinAnalysis.findFirst")
+  "the doctor's query loads the attached report from BOTH analyser tables",
+  cal.includes("prisma.skinScan.findFirst") &&
+    cal.includes("prisma.skinAnalysis.findFirst")
+);
+// SkinScan is what the live analyser writes; SkinAnalysis is the older in-app
+// one. Reading either alone leaves half the attachments invisible — the same
+// split that made the profile say "My reports 0" beside a working report.
+check(
+  "and normalises them into one shape the drawer can render",
+  cal.includes("const attached = attachedScan")
 );
 check(
   "by the id the patient attached, not their most recent",
-  cal.includes("where: { id: appt.skinAnalysisId, userId: appt.patientUserId }")
+  cal.includes("where: { id: appt.skinScanId, userId: appt.patientUserId }") &&
+    cal.includes("where: { id: appt.skinAnalysisId, userId: appt.patientUserId }")
 );
 check(
   "and re-checks it belongs to that patient",
@@ -382,7 +391,7 @@ check(
 
 check(
   "the drawer renders it",
-  attachUi.includes("detail.attachedAnalysis && (")
+  attachUi.includes("detail.attached && (")
 );
 check(
   "marked as the patient's choice for this visit, not just a recent scan",
@@ -391,6 +400,49 @@ check(
 check(
   "and still says it is not a diagnosis",
   /Not a diagnosis/i.test(attachUi)
+);
+
+/* -- "My reports 0" beside a working report -----------------------------
+   Two analyser tables. SkinScan is what the live analyser writes through
+   /api/skin/callback, and it is what /patient/skin-analysis/[id] resolves.
+   getMyAnalyses read SkinAnalysis, the older in-app one.
+
+   So a client could run a scan, open the report, see their score and their
+   twelve concerns — and their profile would say "My reports 0" and offer to
+   run their first analysis. The ids it did return could never have loaded at
+   that route even when the count was non-zero. */
+const patientQ = read("src/lib/queries/patient.ts");
+check(
+  "My reports reads the table the report route resolves",
+  patientQ.includes("prisma.skinScan.findMany")
+);
+check(
+  "and not the legacy one, whose ids that route cannot load",
+  !/getMyAnalyses[\s\S]{0,600}prisma\.skinAnalysis\.findMany/.test(patientQ)
+);
+check(
+  "a score of zero is kept, not treated as missing",
+  patientQ.includes('typeof summary.overall === "number"')
+);
+
+/* -- The doctor's photo record ------------------------------------------
+   The drawer showed only `appt.photos` — AppointmentPhoto, written when
+   images are attached during booking. Anything uploaded from the profile
+   lands in PatientPhoto, and there were four of those against nought of the
+   former. The chart showed them; the appointment, where a doctor actually
+   looks before the door opens, did not. */
+check(
+  "the appointment loads the patient's own photo record",
+  cal.includes("prisma.patientPhoto.findMany")
+);
+check(
+  "limited to their uploads and this doctor's own shots",
+  cal.includes("OR: [{ doctorId: null }, { doctorId }]")
+);
+check("and the drawer renders them", attachUi.includes("detail.patientPhotos.length > 0"));
+check(
+  "through the signed-view route, since the prefix is private",
+  attachUi.includes("/api/uploads/view?url=${encodeURIComponent(ph.url)}")
 );
 
 console.log(`\n${pass} passed, ${fails.length} failed`);

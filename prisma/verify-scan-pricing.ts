@@ -318,13 +318,22 @@ check(
 /* -- A discount badge that was always on ------------------------------- */
 check(
   "the saving is only claimed where there is one",
-  landing.includes("{firstScanFree ? (") &&
-    landing.includes("anchor > priceInr ? ("),
+  landing.includes("const hasDiscount =") && landing.includes("{hasDiscount && ("),
   "100% off was rendered unconditionally beside the Rs 99 being charged"
 );
 check(
+  "and it compares the anchor against what is actually charged",
+  landing.includes("anchor > payNowInr"),
+  "comparing against the list price ignores a free first scan"
+);
+check(
+  "the strike-through hangs off the same comparison as the badge",
+  (landing.match(/hasDiscount/g) ?? []).length >= 3,
+  "deciding them separately is how 99 came to be crossed out beside 99"
+);
+check(
   "and the figure is computed, not asserted",
-  landing.includes("Math.round(((anchor - priceInr) / anchor) * 100)")
+  landing.includes("Math.round(((anchor - payNowInr) / anchor) * 100)")
 );
 
 console.log(`\n${pass} passed, ${fails.length} failed`);

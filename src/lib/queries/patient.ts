@@ -160,35 +160,78 @@ export interface AnalysisSummaryDTO {
   topConcerns: { key: string; label: string; score: number }[];
 }
 
+/**
+ * Every skin report this client has, newest first.
+ *
+ * ── Why this reads SkinScan and not SkinAnalysis ─────────────────────────
+ * There are two tables. `SkinAnalysis` is the older in-app analyser;
+ * `SkinScan` is what the live analyser writes back through
+ * /api/skin/callback, and it is the table `/patient/skin-analysis/[id]`
+ * reads to render a report.
+ *
+ * This function read the OTHER one. So a client could run a scan, open the
+ * report, see their score and their twelve concerns — and their profile
+ * would say "My reports 0" and offer to run their first analysis. Worse, the
+ * profile links each row to `/patient/skin-analysis/{id}/report`, which
+ * resolves a SkinScan id; the ids this returned could never have loaded
+ * there even when the count was non-zero.
+ *
+ * Legacy SkinAnalysis rows are deliberately not merged in. They have no
+ * report page — that route has only ever resolved scans — so listing them
+ * would produce rows that 404 when tapped. Every such row in this database
+ * belongs to a seeded account.
+ *
+ * ── The shape is unchanged ───────────────────────────────────────────────
+ * The analyser returns its headline figures in a summary JSON rather than in
+ * columns, so they are read out of it here and mapped onto the same DTO the
+ * page already renders. Callers do not change.
+ */
 export const getMyAnalyses = cache(
   async (userId: string, limit = 10): Promise<AnalysisSummaryDTO[]> => {
-    const rows = await prisma.skinAnalysis.findMany({
-      where: { userId },
+    const rows = await prisma.skinScan.findMany({
+      where: { userId, status: "done" },
       orderBy: { createdAt: "desc" },
       take: limit,
-      include: {
-        scores: {
-          where: { topRank: { not: null } },
-          orderBy: { topRank: "asc" },
-          include: { concern: { select: { key: true, label: true } } },
+      select: {
+        id: true,
+        createdAt: true,
+        summary: true,
+        issues: {
+          orderBy: { score: "desc" },
+          take: 4,
+          select: { issueType: true, score: true },
         },
       },
     });
 
-    return rows.map((r) => ({
-      id: r.id,
-      overall: r.overall,
-      skinType: r.skinType,
-      estimatedAge: r.estimatedAge,
-      createdAt: r.createdAt.toISOString(),
-      topConcerns: r.scores.map((s) => ({
-        key: s.concern.key,
-        label: s.concern.label,
-        score: s.score,
-      })),
-    }));
+    return rows.map((r) => {
+      const summary = (r.summary ?? {}) as {
+        overall?: number | null;
+        skin_type?: string | null;
+        skin_age?: number | null;
+      };
+      return {
+        id: r.id,
+        // A score of 0 is a real reading; only a missing one falls back.
+        overall: typeof summary.overall === "number" ? Math.round(summary.overall) : 0,
+        skinType: summary.skin_type ?? "—",
+        estimatedAge: typeof summary.skin_age === "number" ? Math.round(summary.skin_age) : 0,
+        createdAt: r.createdAt.toISOString(),
+        topConcerns: r.issues.map((i) => ({
+          key: i.issueType,
+          label: concernLabel(i.issueType),
+          score: i.score === null ? 0 : Math.round(i.score),
+        })),
+      };
+    });
   }
 );
+
+/** "dark_circles" -> "Dark circles". The analyser names issues in snake_case. */
+function concernLabel(issueType: string): string {
+  const words = issueType.replace(/_/g, " ").trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
 
 /** Full score set for one analysis — used by the compare view. */
 export const getAnalysisScores = cache(

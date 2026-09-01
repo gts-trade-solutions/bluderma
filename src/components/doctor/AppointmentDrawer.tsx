@@ -94,15 +94,24 @@ interface Detail {
     summary: unknown;
     issues: { issueType: string; score: number | null; severityBand: string | null }[];
   }[];
-  /** The report the patient deliberately attached to THIS booking. */
-  attachedAnalysis: {
+  /** The report the patient deliberately attached to THIS booking, from
+   *  whichever of the two analyser tables it lives in. */
+  attached: {
     id: string;
     createdAt: string;
-    overall: number;
-    skinType: string;
-    estimatedAge: number;
-    scores: { score: number; concern: { label: string } }[];
+    overall: number | null;
+    skinType: string | null;
+    estimatedAge: number | null;
+    concerns: { label: string; score: number | null; band: string | null }[];
   } | null;
+  /** Photographs the patient holds, as opposed to ones attached at booking. */
+  patientPhotos: {
+    id: string;
+    url: string;
+    angle: string | null;
+    capturedAt: string;
+    doctorId: string | null;
+  }[];
   history: { id: string; scheduledAt: string; status: string; mode: string }[];
   profile: {
     fullName: string | null;
@@ -450,31 +459,78 @@ function Body({ detail, onDone }: { detail: Detail; onDone: () => void }) {
           ones the patient chose to put in front of this doctor for this
           visit. The distinction was invisible before — this section did not
           exist at all, and the id sat in the props unread. */}
-      {detail.attachedAnalysis && (
+      {/* The patient's own photo record.
+          Distinct from the block above, which is only what was bolted onto
+          this booking. These live in PatientPhoto and were visible in the
+          chart but nowhere in the appointment — which is where a doctor
+          looks before the door opens. Served through the signed-view route
+          because the bucket prefix is private. */}
+      {detail.patientPhotos.length > 0 && (
+        <Section title={`Their photo record (${detail.patientPhotos.length})`}>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {detail.patientPhotos.map((ph) => (
+              <a
+                key={ph.id}
+                href={`/doctor/portal/patients/${detail.appointment.patientUserId}`}
+                className="group relative aspect-square overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200 transition hover:ring-brand-400"
+                title={`${ph.angle ?? "Photograph"} — ${fmtDate(ph.capturedAt)}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`/api/uploads/view?url=${encodeURIComponent(ph.url)}`}
+                  alt={ph.angle ?? "Patient photograph"}
+                  className="h-full w-full object-cover"
+                />
+                {ph.doctorId === null && (
+                  <span className="absolute bottom-1 left-1 rounded bg-slate-900/70 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
+                    theirs
+                  </span>
+                )}
+              </a>
+            ))}
+          </div>
+          <p className="text-[11px] leading-relaxed text-slate-500">
+            Marked &ldquo;theirs&rdquo; where the patient uploaded it. Open the
+            chart to annotate or compare.
+          </p>
+        </Section>
+      )}
+
+      {detail.attached && (
         <Section title="Attached by the patient for this visit">
           <div className="rounded-lg border border-brand-200 bg-brand-50/60 p-3">
             <div className="flex flex-wrap items-baseline justify-between gap-x-3">
               <p className="text-sm font-bold text-slate-900">
-                Overall {detail.attachedAnalysis.overall}/100
+                {detail.attached.overall !== null
+                  ? `Overall ${detail.attached.overall}/100`
+                  : "Skin report"}
               </p>
               <p className="text-xs text-slate-500">
-                {fmtDate(detail.attachedAnalysis.createdAt)}
+                {fmtDate(detail.attached.createdAt)}
               </p>
             </div>
-            <p className="mt-0.5 text-xs text-slate-600">
-              {detail.attachedAnalysis.skinType} skin · estimated age{" "}
-              {detail.attachedAnalysis.estimatedAge}
-            </p>
-            {detail.attachedAnalysis.scores.length > 0 && (
+            {(detail.attached.skinType || detail.attached.estimatedAge !== null) && (
+              <p className="mt-0.5 text-xs text-slate-600">
+                {[
+                  detail.attached.skinType ? `${detail.attached.skinType} skin` : null,
+                  detail.attached.estimatedAge !== null
+                    ? `estimated age ${detail.attached.estimatedAge}`
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            )}
+            {detail.attached.concerns.length > 0 && (
               <ul className="mt-2 space-y-1">
-                {detail.attachedAnalysis.scores.map((sc) => (
+                {detail.attached.concerns.map((c) => (
                   <li
-                    key={sc.concern.label}
+                    key={c.label}
                     className="flex items-baseline justify-between gap-3 text-sm"
                   >
-                    <span className="text-slate-700">{sc.concern.label}</span>
+                    <span className="text-slate-700">{c.label}</span>
                     <span className="shrink-0 text-xs font-semibold text-slate-500">
-                      {sc.score}
+                      {c.band ?? (c.score !== null ? c.score : "—")}
                     </span>
                   </li>
                 ))}

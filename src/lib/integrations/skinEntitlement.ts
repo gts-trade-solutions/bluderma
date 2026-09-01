@@ -22,10 +22,34 @@ export type SkinAccessState =
   | { status: "reserved"; grantId: string }
   | { status: "none" };
 
+/**
+ * Hand back reservations whose TTL has passed.
+ *
+ * This used to set state "released", which quietly cost people the scan they
+ * had never had. A reservation is a grant held aside for a handoff, and the
+ * TTL exists to RETURN it when the handoff does not finish — a tab closed, a
+ * selfie never taken, the analyzer failing. "released" is not a state anything
+ * can spend: it is not "available", so the credit is gone, and yet it counts
+ * as an entitlement row, so seedFreeIfNew sees somebody who has "had one" and
+ * declines to seed another.
+ *
+ * The result was an account that had run no analysis at all being told "You've
+ * used your available scan. Another is ₹99", with My Reports one click away
+ * saying "No scans yet". Four real accounts were sitting in exactly that
+ * state, having simply opened the analyzer and not finished within 30 minutes.
+ *
+ * So the row goes back to "available" — the state it was in before it was
+ * reserved. `releasedAt` is still stamped, so the lapse is still legible.
+ */
 async function releaseExpired(userId: string): Promise<void> {
   await prisma.skinEntitlement.updateMany({
     where: { userId, state: "reserved", expiresAt: { lt: new Date() } },
-    data: { state: "released", releasedAt: new Date() },
+    data: {
+      state: "available",
+      releasedAt: new Date(),
+      reservedAt: null,
+      expiresAt: null,
+    },
   });
 }
 

@@ -252,9 +252,9 @@ check("and nothing passes a sample prop", !/\bsample=\{|\n\s+sample\n/.test(page
   const block = page.slice(at, next > -1 ? next : undefined);
   check("the wallet is still deliberately unbadged", !/\bsample\b/.test(block));
   check(
-    "and its figures are still traceably mock",
-    /DEMO_WALLET/.test(block),
-    "if the wallet is real now, the note at the top of the page must change too"
+    "the figures come from one binding, not from DEMO_WALLET directly",
+    /wallet\.balanceInr/.test(block) && !/DEMO_WALLET\./.test(block),
+    "reading the demo constant inside the panel is how it reached real clients"
   );
 }
 
@@ -409,15 +409,30 @@ const profilePage = read("src/app/patient/profile/page.tsx");
 const demoLib = read("src/lib/demo.ts");
 
 check(
-  "the wallet is gated on the account being a demo one",
-  profilePage.includes("const showWallet = isDemoAccount(user.email)"),
-  "every client sees a balance they cannot spend"
+  "only a demo account gets the illustrated figures",
+  profilePage.includes("const walletIsDemo = isDemoAccount(user.email)") &&
+    profilePage.includes("? DEMO_WALLET"),
+  "every client would see a balance they cannot spend"
 );
 check(
-  "and every place it renders is behind that gate",
-  (profilePage.match(/showWallet && \(/g) ?? []).length >= 2 &&
-    profilePage.includes("...(showWallet"),
-  "the nav entry, the hero band and the panel each render it separately"
+  "a real account gets a real zero, not a placeholder",
+  /balanceInr: 0,[\s\S]{0,200}lifetimeCashbackInr: 0,/.test(profilePage) &&
+    /movements: \[\] as/.test(profilePage)
+);
+check(
+  "and there is no way to add money to it",
+  !/top ?-?up|add money|recharge/i.test(profilePage),
+  "credit comes from cashback and refunds; selling it is a different product"
+);
+check(
+  "the hero band is drawn only when there is a balance",
+  profilePage.includes("{wallet.balanceInr > 0 && ("),
+  "a full-width band announcing zero credit is an advert for nothing"
+);
+check(
+  "an empty wallet says so rather than showing invented rows",
+  profilePage.includes("wallet.movements.length === 0") &&
+    profilePage.includes("Nothing here yet")
 );
 check(
   "no demo constant is read outside the gate",

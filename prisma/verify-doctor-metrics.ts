@@ -66,11 +66,36 @@ async function main() {
   const now = clinicWallClock();
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 
-  // A day earlier this month that has already passed, and one still to come.
-  const past = new Date(monthStart.getTime() + DAY);
-  past.setUTCHours(10, 0, 0, 0);
+  /* A moment earlier this month that has genuinely passed, and one still to
+     come.
+
+     `past` was `monthStart + 1 DAY`, which is not in the past on the 1st or
+     2nd of a month — it resolves to TOMORROW. The "past, confirmed, never
+     completed" fixture then counted as scheduled revenue instead of
+     unresolved, and this file failed on two days out of every month for a
+     reason that had nothing to do with the code under test.
+
+     Clamped to this month's first minute because the metrics window is the
+     calendar month: a fixture dated into last month is invisible to it. */
+  const HOUR = 60 * 60 * 1000;
+  const past = new Date(
+    Math.max(monthStart.getTime() + 60_000, Date.now() - 3 * HOUR)
+  );
+  // Keep it out of the last hours of the day: the busiest-hours fixture below
+  // has to place a HEAVIER hour after this one, and there has to be an hour
+  // left to place it in.
+  while (past.getUTCHours() > 21 && past.getTime() - HOUR > monthStart.getTime()) {
+    past.setTime(past.getTime() - HOUR);
+  }
   const future = new Date(Date.now() + 3 * DAY);
   future.setUTCHours(11, 0, 0, 0);
+
+  /* Three distinct days inside the month, for the busiest-hours fixture
+     further down. That check only cares which HOUR each booking falls in —
+     whether the day has passed is irrelevant to it, and requiring three PAST
+     days inside the month would be impossible on the 1st. */
+  const dayInMonth = new Date(monthStart.getTime() + DAY);
+  dayInMonth.setUTCHours(10, 0, 0, 0);
 
   const user = await prisma.user.findFirstOrThrow({ where: { role: "PATIENT" } });
 
@@ -237,9 +262,23 @@ async function main() {
   // precisely so a volume sort and a clock sort disagree.
   await prisma.appointment.createMany({
     data: [
-      appt({ scheduledAt: hourAt(past, 15), feeAtBooking: 100 }),
-      appt({ scheduledAt: hourAt(new Date(past.getTime() + DAY), 9), feeAtBooking: 100 }),
-      appt({ scheduledAt: hourAt(new Date(past.getTime() + 2 * DAY), 9), feeAtBooking: 100 }),
+      // One hour LATER than everything above, and heavier than it.
+      //
+      // The hours were hardcoded to 09:00 and 15:00, which only worked while
+      // `past` was pinned to 10:00. Now that `past` follows the clock, the
+      // heavy hour has to follow it too — otherwise the seven appointments
+      // above land at an hour earlier than 09:00 and the earliest hour is
+      // also the busiest, which is the one thing the check below exists to
+      // rule out.
+      ...Array.from({ length: 8 }, (_, i) =>
+        appt({
+          scheduledAt: hourAt(
+            new Date(dayInMonth.getTime() + i * DAY),
+            past.getUTCHours() + 1
+          ),
+          feeAtBooking: 100,
+        })
+      ),
     ],
   });
   const withHours = await getDashboardMetrics(doctor.id);

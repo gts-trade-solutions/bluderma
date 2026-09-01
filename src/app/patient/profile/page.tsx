@@ -66,11 +66,12 @@ const money = (n: number) => `₹${n.toLocaleString("en-IN")}`;
  * with an honest empty state instead of invented rows, so the `Sample` badge
  * that marked them has gone with them.
  *
- * The wallet is still DEMO_WALLET and carries no badge, by request. That makes
- * it the one figure on this page a client could act on and be wrong about, so
- * it is the next thing to put behind a table. verify-profile-data asserts both
- * halves of that: the badge stays off, and the numbers stay traceably mock, so
- * whoever wires it up gets a failing test pointing here.
+ * The wallet is now three too, in the sense that matters: a real client sees a
+ * real zero rather than an illustrated balance of Rs 2,450 they could not
+ * spend. There is still no Wallet table, so the section is UI waiting on one —
+ * it shows nothing earned, nothing spent, and offers no way to add money,
+ * because credit here comes from cashback and refunds rather than from a
+ * client's card. A demo account keeps the illustration.
  */
 export default async function ProfilePage() {
   const user = await requireUser("/patient/profile");
@@ -88,7 +89,30 @@ export default async function ProfilePage() {
      Hidden rather than zeroed for real accounts: "Rs 0" still asserts there
      is a wallet to fill, and there is not one yet. When the table lands, this
      flag goes and the section returns for everybody. */
-  const showWallet = isDemoAccount(user.email);
+  /* ── One wallet, two sets of numbers ───────────────────────────────────
+     The section is shown to everybody now, because a client should be able
+     to see that they have a wallet and what is in it. What differs is where
+     the figures come from.
+
+     A demo account keeps the illustrated balance and its movement history,
+     which is what the demo is for. Everybody else gets zero — a real zero,
+     not a placeholder: there is no Wallet table yet, so nothing has been
+     earned and nothing can have been spent.
+
+     No top-up. Credit here comes from cashback, referrals and refunds, and
+     none of those exist yet; a button offering to add money to a balance the
+     system cannot hold would be the same lie as the invented balance, with a
+     payment form attached. */
+  const walletIsDemo = isDemoAccount(user.email);
+  const wallet = walletIsDemo
+    ? DEMO_WALLET
+    : {
+        balanceInr: 0,
+        lifetimeCashbackInr: 0,
+        expiringInr: 0,
+        expiringOn: "",
+        movements: [] as typeof DEMO_WALLET.movements,
+      };
 
   // Read here rather than through profileData: these are the one thing on this
   // page the client can edit, so they must not sit behind the same cache() as
@@ -267,16 +291,12 @@ export default async function ProfilePage() {
     // client can spend, and it sat sixth — below five clinical records, which
     // on a phone is most of a screen's worth of scrolling before a balance
     // they did not know they had.
-    ...(showWallet
-      ? [
-          {
-            id: "wallet",
-            label: "My wallet",
-            icon: "wallet" as const,
-            badge: money(DEMO_WALLET.balanceInr),
-          },
-        ]
-      : []),
+    {
+      id: "wallet",
+      label: "My wallet",
+      icon: "wallet",
+      badge: money(wallet.balanceInr),
+    },
     ...(GALLERY.length ? [{ id: "photos", label: "Before & after", icon: "treatment", badge: GALLERY_WAITING ? String(GALLERY_WAITING) : undefined }] : []),
     { id: "my-photos", label: "My photos", icon: "report", badge: MY_PHOTOS.length ? String(MY_PHOTOS.length) : undefined },
     ...(MY_CARDS.length ? [{ id: "gift-cards", label: "Gift cards", icon: "wallet", badge: String(MY_CARDS.length) }] : []),
@@ -364,10 +384,12 @@ export default async function ProfilePage() {
                 whole record is still below, this just makes sure nobody has
                 to go looking for their own credit.
 
-                Behind `showWallet`: see the note where it is defined. There
-                is no wallet table, so a real client is shown no balance at
-                all rather than an illustrated one. */}
-            {showWallet && (
+                Only drawn when there is a balance. A full-width band
+                announcing zero credit is an advert for nothing, and it would
+                push the clinical records further down the page to do it. The
+                wallet section itself is always below, and says zero plainly
+                where somebody has gone looking for it. */}
+            {wallet.balanceInr > 0 && (
             <Link
               href="#wallet"
               className="group mt-6 flex flex-wrap items-center gap-x-6 gap-y-4 rounded-2xl bg-gradient-to-r on-dark from-brand-800/80 via-brand-900/70 to-teal-800/70 px-5 py-4 ring-1 ring-inset ring-teal-300/25 transition hover:ring-teal-300/50"
@@ -434,7 +456,6 @@ export default async function ProfilePage() {
 
           <div className="min-w-0 space-y-14">
             {/* ── 1. Wallet ───────────────────────────────────────── */}
-            {showWallet && (
             <Section
               id="wallet"
               icon={Percent}
@@ -448,15 +469,18 @@ export default async function ProfilePage() {
                     Balance
                   </p>
                   <p className="display mt-1.5 text-4xl text-white">
-                    {money(DEMO_WALLET.balanceInr)}
+                    {money(wallet.balanceInr)}
                   </p>
-                  <p className="mt-2 text-sm text-white/70">
-                    {money(DEMO_WALLET.expiringInr)} of this expires on{" "}
-                    {DEMO_WALLET.expiringOn}.
-                  </p>
+                  {wallet.expiringInr > 0 && (
+                    <p className="mt-2 text-sm text-white/70">
+                      {money(wallet.expiringInr)} of this expires on{" "}
+                      {wallet.expiringOn}.
+                    </p>
+                  )}
                   <p className="mt-4 text-xs text-white/55">
-                    Applied automatically at checkout. It never expires except
-                    where a credit says so above.
+                    {wallet.balanceInr > 0
+                      ? "Applied automatically at checkout. It never expires except where a credit says so above."
+                      : "Credit is applied automatically at checkout. Nothing to apply yet."}
                   </p>
                 </div>
                 <div className="card-soft flex flex-col justify-center p-5">
@@ -464,7 +488,7 @@ export default async function ProfilePage() {
                     Earned with us
                   </p>
                   <p className="display-sm mt-1.5 text-2xl text-ink">
-                    {money(DEMO_WALLET.lifetimeCashbackInr)}
+                    {money(wallet.lifetimeCashbackInr)}
                   </p>
                   <p className="mt-1 text-xs text-ink-muted">
                     Cashback and credit since you joined.
@@ -472,8 +496,25 @@ export default async function ProfilePage() {
                 </div>
               </div>
 
+              {/* No top-up button, deliberately. Credit here comes from
+                  cashback, referrals and refunds — every one of them
+                  something the platform gives, not something a client buys.
+                  Offering to sell credit would make this a stored-value
+                  product, which is a different thing with different rules. */}
+              {wallet.movements.length === 0 ? (
+                <div className="card-soft mt-3 px-5 py-8 text-center">
+                  <p className="text-sm font-semibold text-ink">
+                    Nothing here yet
+                  </p>
+                  <p className="mx-auto mt-1.5 max-w-sm text-xs leading-relaxed text-ink-muted">
+                    Cashback on treatments and orders, credit for referring a
+                    friend, and refunds all land here. Whatever you build up is
+                    taken off your next bill automatically.
+                  </p>
+                </div>
+              ) : (
               <div className="card-soft mt-3 divide-y divide-white/10 overflow-hidden">
-                {DEMO_WALLET.movements.map((mv) => (
+                {wallet.movements.map((mv) => (
                   <Row
                     key={mv.id}
                     title={mv.label}
@@ -494,8 +535,8 @@ export default async function ProfilePage() {
                   />
                 ))}
               </div>
+              )}
             </Section>
-            )}
 
             {/* ── 2. Reports ──────────────────────────────────────── */}
             <Section

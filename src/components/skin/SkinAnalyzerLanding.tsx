@@ -70,6 +70,24 @@ export default function SkinAnalyzerLanding() {
   // running, so the "100% off" flash is only claimed where it is true.
   const anchor = listPriceInr ?? priceInr;
 
+  // What this visitor is actually charged right now: nothing on a free first
+  // scan, the list price otherwise.
+  //
+  // Both the strike-through and the badge hang off this one comparison, which
+  // is the point. They used to be decided separately, and the anchor only
+  // asked whether it was non-null — so with the list price and the charged
+  // price both set to 99 the hero drew "USUALLY ~~99~~ → YOUR NEXT SCAN 99":
+  // the same figure twice, one of them crossed out, next to a badge promising
+  // 100% off a scan about to take 99. A discount needs two different numbers,
+  // and where there are not two, there is nothing to cross out and nothing to
+  // announce.
+  const payNowInr = firstScanFree ? 0 : priceInr;
+  const hasDiscount =
+    anchor !== null && payNowInr !== null && anchor > payNowInr;
+  const discountPct = hasDiscount
+    ? Math.round(((anchor - payNowInr) / anchor) * 100)
+    : 0;
+
   // purchase moved into useSkinAccess so the hub card and this page cannot
   // drift apart. `purchase` below is the same function.
 
@@ -120,7 +138,7 @@ export default function SkinAnalyzerLanding() {
                 to be stat tiles. */}
             <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-4">
               <div className="flex items-center gap-4">
-                {anchor !== null && (
+                {hasDiscount && (
                   <div>
                     <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/35">
                       {firstScanFree ? "Every scan" : "Usually"}
@@ -163,15 +181,11 @@ export default function SkinAnalyzerLanding() {
                   so a returning client being charged Rs 99 was shown "100%
                   off" beside the figure they were about to pay. 100% off is
                   free; anything else is a different number or no badge. */}
-              {firstScanFree ? (
-              <span className="rotate-[-6deg] rounded-xl bg-gradient-to-r from-teal-300 to-brand-400 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wide text-[#04121f] shadow-[0_0_24px_-4px_rgba(84,215,194,0.9)]">
-                100% off
-              </span>
-              ) : anchor !== null && priceInr !== null && anchor > priceInr ? (
-                <span className="rotate-[-6deg] rounded-xl bg-gradient-to-r from-teal-300 to-brand-400 px-3 py-1.5 text-[13px] font-black uppercase tracking-wide text-[#04121f]">
-                  {Math.round(((anchor - priceInr) / anchor) * 100)}% off
+              {hasDiscount && (
+                <span className="rotate-[-6deg] rounded-xl bg-gradient-to-r from-teal-300 to-brand-400 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wide text-[#04121f] shadow-[0_0_24px_-4px_rgba(84,215,194,0.9)]">
+                  {discountPct}% off
                 </span>
-              ) : null}
+              )}
             </div>
 
             {/* The real analyzer launcher, in the hero where visitors actually

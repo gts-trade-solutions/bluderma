@@ -256,7 +256,19 @@ export async function getAppointmentDetail(doctorId: string, appointmentId: stri
     };
   }
 
-  const [member, scans, history, profile, intake] = await Promise.all([
+  /* ── The report the patient chose for THIS visit ──────────────────────
+     `skinAnalysisId` was written at booking, selected in this query, and
+     declared in the drawer's props — and never once read. The in-app
+     analyser writes SkinAnalysis; the only scan the doctor was shown came
+     from SkinScan, a different table filled by the external callback. So a
+     patient could run an analysis, deliberately attach it to their booking,
+     and the doctor would open the appointment and see nothing.
+
+     Loaded by ID rather than "their most recent", because attaching is a
+     choice: somebody with four analyses picked one to show, and showing them
+     the newest instead quietly overrules that. */
+  const [member, scans, history, profile, intake, attachedAnalysis] =
+    await Promise.all([
     prisma.subscription
       .findFirst({
         where: {
@@ -306,7 +318,38 @@ export async function getAppointmentDetail(doctorId: string, appointmentId: stri
       orderBy: { createdAt: "desc" },
       select: { id: true, createdAt: true, answers: true, summary: true },
     }),
+    appt.skinAnalysisId
+      ? prisma.skinAnalysis.findFirst({
+          // Scoped to the patient as well as the id. The id reached the
+          // database through a booking form, and re-checking ownership here
+          // costs nothing.
+          where: { id: appt.skinAnalysisId, userId: appt.patientUserId },
+          select: {
+            id: true,
+            createdAt: true,
+            overall: true,
+            skinType: true,
+            estimatedAge: true,
+            scores: {
+              orderBy: { score: "desc" },
+              take: 6,
+              select: {
+                score: true,
+                concern: { select: { label: true } },
+              },
+            },
+          },
+        })
+      : null,
   ]);
 
-  return { appointment: appt, member, scans, history, profile, intake };
+  return {
+    appointment: appt,
+    member,
+    scans,
+    history,
+    profile,
+    intake,
+    attachedAnalysis,
+  };
 }

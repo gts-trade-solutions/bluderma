@@ -343,6 +343,56 @@ check(
 const preview = read("src/components/doctor/PortalPreview.tsx");
 check("the week preview scrolls rather than squeezes", /overflow-x-auto/.test(preview));
 
+/* -- The report a patient attaches has to reach the doctor ---------------
+   `skinAnalysisId` was written at booking, selected in the doctor's query,
+   and declared in the drawer's props — and never read. The in-app analyser
+   writes SkinAnalysis; the only scan the drawer showed came from SkinScan,
+   a different table. So somebody could run an analysis, deliberately attach
+   it to their booking, and the doctor would open the appointment and see
+   nothing at all. */
+const cal = read("src/lib/queries/doctorCalendar.ts");
+const attachUi = read("src/components/doctor/AppointmentDrawer.tsx");
+
+check(
+  "the doctor's query loads the attached analysis",
+  cal.includes("prisma.skinAnalysis.findFirst")
+);
+check(
+  "by the id the patient attached, not their most recent",
+  cal.includes("where: { id: appt.skinAnalysisId, userId: appt.patientUserId }")
+);
+check(
+  "and re-checks it belongs to that patient",
+  /id: appt\.skinAnalysisId, userId: appt\.patientUserId/.test(cal)
+);
+
+// The off-by-one that this actually shipped with once: the query was inserted
+// into the Promise.all BEFORE the intake query while being destructured last,
+// so `attachedAnalysis` received the intake record and vice versa. Both
+// compiled. Position in the array must match position in the destructure.
+{
+  const destructure = cal.indexOf("attachedAnalysis]");
+  const queryPos = cal.indexOf("prisma.skinAnalysis.findFirst");
+  const intakePos = cal.indexOf("prisma.intakeResponse.findFirst");
+  check(
+    "and sits last in the array, matching where it is destructured",
+    destructure > -1 && queryPos > intakePos
+  );
+}
+
+check(
+  "the drawer renders it",
+  attachUi.includes("detail.attachedAnalysis && (")
+);
+check(
+  "marked as the patient's choice for this visit, not just a recent scan",
+  attachUi.includes("Attached by the patient for this visit")
+);
+check(
+  "and still says it is not a diagnosis",
+  /Not a diagnosis/i.test(attachUi)
+);
+
 console.log(`\n${pass} passed, ${fails.length} failed`);
 if (fails.length) {
   fails.forEach((f) => console.log(`  FAIL  ${f}`));

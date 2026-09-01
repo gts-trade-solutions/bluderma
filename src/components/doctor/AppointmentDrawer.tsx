@@ -94,6 +94,15 @@ interface Detail {
     summary: unknown;
     issues: { issueType: string; score: number | null; severityBand: string | null }[];
   }[];
+  /** The report the patient deliberately attached to THIS booking. */
+  attachedAnalysis: {
+    id: string;
+    createdAt: string;
+    overall: number;
+    skinType: string;
+    estimatedAge: number;
+    scores: { score: number; concern: { label: string } }[];
+  } | null;
   history: { id: string; scheduledAt: string; status: string; mode: string }[];
   profile: {
     fullName: string | null;
@@ -434,6 +443,50 @@ function Body({ detail, onDone }: { detail: Detail; onDone: () => void }) {
           </p>
         )}
       </Section>
+
+      {/* ── The report they attached ────────────────────────────────────
+          Shown ABOVE the recent scans, and labelled differently, because it
+          is a different fact: these are not the newest numbers, they are the
+          ones the patient chose to put in front of this doctor for this
+          visit. The distinction was invisible before — this section did not
+          exist at all, and the id sat in the props unread. */}
+      {detail.attachedAnalysis && (
+        <Section title="Attached by the patient for this visit">
+          <div className="rounded-lg border border-brand-200 bg-brand-50/60 p-3">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+              <p className="text-sm font-bold text-slate-900">
+                Overall {detail.attachedAnalysis.overall}/100
+              </p>
+              <p className="text-xs text-slate-500">
+                {fmtDate(detail.attachedAnalysis.createdAt)}
+              </p>
+            </div>
+            <p className="mt-0.5 text-xs text-slate-600">
+              {detail.attachedAnalysis.skinType} skin · estimated age{" "}
+              {detail.attachedAnalysis.estimatedAge}
+            </p>
+            {detail.attachedAnalysis.scores.length > 0 && (
+              <ul className="mt-2 space-y-1">
+                {detail.attachedAnalysis.scores.map((sc) => (
+                  <li
+                    key={sc.concern.label}
+                    className="flex items-baseline justify-between gap-3 text-sm"
+                  >
+                    <span className="text-slate-700">{sc.concern.label}</span>
+                    <span className="shrink-0 text-xs font-semibold text-slate-500">
+                      {sc.score}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+              Scored from a photograph. Not a diagnosis — it says what to look
+              at, not what it is.
+            </p>
+          </div>
+        </Section>
+      )}
 
       {/* ── Clinical context ─────────────────────────────────────────── */}
       {detail.scans.length > 0 && (

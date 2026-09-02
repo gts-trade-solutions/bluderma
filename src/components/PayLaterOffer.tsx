@@ -195,10 +195,16 @@ export default function PayLaterOffer({
             id="paylater-title"
             className="mt-4 font-display text-[1.9rem] font-extrabold italic leading-[0.98] tracking-[-0.035em] text-white sm:text-[2.4rem]"
           >
-            Treatment now.
+            Start treatment now.
             <br />
+            {/* "Paid for over time" was doing the work of a phrase nobody
+                uses. "Pay later" is what the feature is called everywhere
+                else in the product — in the profile nav, in the section
+                heading — and it is what somebody would say out loud. A
+                headline that needs a second read is a headline that gets
+                skipped. */}
             <span className="bg-gradient-to-r from-teal-200 to-brand-300 bg-clip-text text-transparent">
-              Paid for over time.
+              Pay later.
             </span>
           </h2>
 

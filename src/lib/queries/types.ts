@@ -110,6 +110,8 @@ export interface DoctorDTO {
   experienceYears: number;
   clinic: string;
   location: string;
+  /** Country of the primary clinic. Drives the directory's Domestic/International tabs. */
+  country: string;
   image: string;
   fee: number;
   languages: string[];

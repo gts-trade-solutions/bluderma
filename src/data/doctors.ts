@@ -32,6 +32,8 @@ export interface Doctor {
   experienceYears: number;
   clinic: string;
   location: string;
+  /** Country of the primary clinic. Drives the Domestic/International tabs. */
+  country?: string;
   image: string;
   fee: number;
   languages: string[];

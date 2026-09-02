@@ -262,7 +262,11 @@ async function main() {
   // precisely so a volume sort and a clock sort disagree.
   await prisma.appointment.createMany({
     data: [
-      // One hour LATER than everything above, and heavier than it.
+      // TWO hours later than everything above, and heavier than it.
+      //
+      // Two, not one, because the check below also requires a quiet hour with
+      // a count of zero BETWEEN the busy ones — the chart is meant to keep the
+      // gaps rather than compress them away. Adjacent hours leave no gap.
       //
       // The hours were hardcoded to 09:00 and 15:00, which only worked while
       // `past` was pinned to 10:00. Now that `past` follows the clock, the
@@ -274,7 +278,7 @@ async function main() {
         appt({
           scheduledAt: hourAt(
             new Date(dayInMonth.getTime() + i * DAY),
-            past.getUTCHours() + 1
+            past.getUTCHours() + 2
           ),
           feeAtBooking: 100,
         })

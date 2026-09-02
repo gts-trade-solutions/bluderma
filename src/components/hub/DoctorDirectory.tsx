@@ -36,29 +36,93 @@ import {
 export default function DoctorDirectory({ doctors }: { doctors: Doctor[] }) {
   const router = useRouter();
   const [city, setCity] = useState("All cities");
+  const [scope, setScope] = useState<"domestic" | "international">("domestic");
   // One batched request for the whole grid rather than one per card. Doctor.id
   // is the public slug here (see toDTO in lib/queries/doctors).
   const { availability, loaded: availabilityLoaded } = useDoctorAvailability(
     doctors.map((d) => d.id)
   );
 
-  const cities = useMemo(
-    () => ["All cities", ...Array.from(new Set(doctors.map((d) => d.location)))],
+  /* ── Two questions, asked in order ─────────────────────────────────────
+     One flat row of city chips put Chennai, Kanchipuram and Mumbai beside
+     each other with no way to say "anywhere abroad" — and no way to grow,
+     because the moment a clinic opens overseas its CITY appears in the same
+     row as an Indian one and means something different.
+
+     So the first choice is where in the world, and the second narrows it:
+     Domestic lists Indian cities, International lists countries. A country is
+     the right grain abroad — somebody looking for a clinic in Dubai is
+     choosing a country first, and the city list for one overseas clinic is
+     noise. */
+  const HOME_COUNTRY = "India";
+
+  const domestic = useMemo(
+    () => doctors.filter((d) => (d.country ?? HOME_COUNTRY) === HOME_COUNTRY),
+    [doctors]
+  );
+  const international = useMemo(
+    () => doctors.filter((d) => (d.country ?? HOME_COUNTRY) !== HOME_COUNTRY),
     [doctors]
   );
 
+  const inScope = scope === "domestic" ? domestic : international;
+
+  // Cities at home, countries abroad. Sorted, so the row does not reshuffle
+  // when a practitioner is added.
+  const options = useMemo(() => {
+    const raw =
+      scope === "domestic"
+        ? inScope.map((d) => d.location)
+        : inScope.map((d) => d.country ?? "");
+    return [
+      scope === "domestic" ? "All cities" : "All countries",
+      ...Array.from(new Set(raw.filter(Boolean))).sort((a, b) =>
+        a.localeCompare(b)
+      ),
+    ];
+  }, [inScope, scope]);
+
   const list = useMemo(
     () =>
-      city === "All cities"
-        ? doctors
-        : doctors.filter((d) => d.location === city),
-    [city, doctors]
+      city === "All cities" || city === "All countries"
+        ? inScope
+        : inScope.filter((d) =>
+            scope === "domestic" ? d.location === city : d.country === city
+          ),
+    [city, inScope, scope]
   );
 
   return (
     <div>
+      {/* Where in the world. Two options, always both shown: hiding
+          International when nothing is listed there answers the question by
+          omission, and somebody wondering whether we cover Dubai deserves to
+          be told rather than left to guess. */}
+      <div className="mb-3 inline-flex rounded-full bg-white/[0.04] p-1 ring-1 ring-white/10">
+        {(["domestic", "international"] as const).map((s) => (
+          <button
+            key={s}
+            onClick={() => {
+              setScope(s);
+              setCity(s === "domestic" ? "All cities" : "All countries");
+            }}
+            aria-pressed={scope === s}
+            className={`rounded-full px-5 py-2 text-sm font-bold capitalize transition ${
+              scope === s
+                ? "bg-white text-[var(--on-sheet)]"
+                : "text-ink-soft hover:text-brand-200"
+            }`}
+          >
+            {s}
+            <span className="ml-1.5 text-xs font-semibold opacity-60">
+              {s === "domestic" ? domestic.length : international.length}
+            </span>
+          </button>
+        ))}
+      </div>
+
       <div className="mb-5 flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-        {cities.map((c) => (
+        {options.map((c) => (
           <button
             key={c}
             onClick={() => setCity(c)}
@@ -72,6 +136,14 @@ export default function DoctorDirectory({ doctors }: { doctors: Doctor[] }) {
           </button>
         ))}
       </div>
+
+      {list.length === 0 && (
+        <p className="rounded-2xl bg-white/[0.04] px-5 py-8 text-center text-sm text-ink-muted ring-1 ring-white/10">
+          {scope === "international"
+            ? "No clinics outside India are listed yet."
+            : "No clinics listed here yet."}
+        </p>
+      )}
 
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {list.map((d) => (

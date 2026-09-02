@@ -2957,6 +2957,14 @@ model Clinic {
   landmark     String?
   city         String
   state        String  @default("Tamil Nadu")
+  /// Where the clinic is, as a country name.
+  ///
+  /// Added for the directory's Domestic / International split: without it
+  /// every clinic was an undifferentiated city chip, and there was no way to
+  /// tell an Indian city from an overseas one. Defaults to India because
+  /// every clinic listed when this was added was Indian, and a default that
+  /// silently marked them all "unknown" would empty the domestic tab.
+  country      String  @default("India")
   pincode      String
   /// Set when the address has been geocoded, for "clinics near me".
   lat          Float?

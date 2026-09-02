@@ -1,6 +1,7 @@
 "use client";
 
 import { withToast } from "@/components/Toast";
+import PhoneField from "./PhoneField";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSession, signIn } from "next-auth/react";
@@ -164,15 +165,13 @@ export default function RegisterForm({ googleEnabled = false }: { googleEnabled?
           error={fields.email}
           disabled={busy}
         />
-        <Field
-          label="Phone"
-          type="tel"
-          name="phone"
-          autoComplete="tel"
-          placeholder="+91 98765 43210"
-          hint="Optional: used only for appointment reminders."
+        {/* A country code, chosen rather than typed. The placeholder used to
+            carry "+91" and hope; a number stored without one cannot be
+            dialled when a reminder goes out. */}
+        <PhoneField
           value={form.phone}
-          onChange={set("phone")}
+          onChange={(next) => setForm((f) => ({ ...f, phone: next }))}
+          hint="Optional: used only for appointment reminders."
           error={fields.phone}
           disabled={busy}
         />

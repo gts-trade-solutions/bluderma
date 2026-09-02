@@ -52,6 +52,7 @@ const doctorInclude = {
           name: true,
           area: true,
           city: true,
+          country: true,
           landmark: true,
           lat: true,
           lng: true,
@@ -84,6 +85,13 @@ function toDTO(row: DoctorRow): DoctorDTO {
     experienceYears: row.experienceYears,
     clinic: row.clinic,
     location: row.location,
+    /* Country, for the directory's Domestic / International split.
+       Taken from the practitioner's PRIMARY clinic — the clinics list is
+       ordered isPrimary first — because `location` is free text on the doctor
+       row and cannot be trusted to name a country. Falls back to India, which
+       is where every clinic listed when this was added is; a doctor with no
+       clinic yet should not vanish from both tabs. */
+    country: row.clinics[0]?.clinic.country ?? "India",
     image: row.image,
     fee: row.fee,
     languages: row.languages.map((l) => l.name),

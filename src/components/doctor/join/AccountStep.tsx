@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import PhoneField from "@/components/auth/PhoneField";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
@@ -24,6 +25,9 @@ export default function AccountStep({ googleEnabled = false }: { googleEnabled?:
   const formCheck = useFormValidation();
   const [error, setError] = useState<string | null>(null);
   const [fields, setFields] = useState<Record<string, string>>({});
+  // PhoneField is controlled; its hidden input carries the full number to
+  // the server action, so the rest of this form stays uncontrolled.
+  const [phone, setPhone] = useState("");
 
   return (
     <>
@@ -77,12 +81,15 @@ export default function AccountStep({ googleEnabled = false }: { googleEnabled?:
           autoComplete="email"
           required
         />
-        <Field
+        {/* Same control as the client sign-up. A practitioner's number is the
+            one we ring about their listing, and a bare ten digits with no
+            country is not dialable. */}
+        <PhoneField
           name="phone"
           label="Mobile"
-          type="tel"
+          value={phone}
+          onChange={setPhone}
           error={fields.phone}
-          autoComplete="tel"
           hint="We only use this to reach you about your listing."
           required
         />

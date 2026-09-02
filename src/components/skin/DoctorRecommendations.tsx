@@ -43,6 +43,9 @@ function toDoctorDTO(d: RecommendedDoctor): DoctorDTO {
     experienceYears: 0,
     clinic: d.clinic ?? d.name,
     location: d.location ?? "",
+    // The recommendation row carries no clinic, so the country falls back
+    // the same way the directory query does.
+    country: "India",
     image: d.image ?? "/brand/clinic-avatar.svg",
     fee: 0,
     languages: [],

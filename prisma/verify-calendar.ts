@@ -75,12 +75,23 @@ async function main() {
     `${blocks.size} of ${CLINIC_COLOR_KEYS.length}`
   );
 
-  // The point of the change: -50 on white is about four percent of a hue,
-  // which is not readable at a glance, which is the whole job.
+  /* The point of the change: a tint of a hue is not the hue. -50 was about
+     four percent of one and -100 not much more -- enough to tell two blocks
+     apart if you compared them deliberately, not enough to read a day at a
+     glance, which is the whole job.
+
+     Pinned to "saturated", not to a step: 500 for most, 600 for amber and
+     orange whose 500 cannot carry white type above AA. What must hold is that
+     the fill is strong AND the text on it is white -- a saturated fill with
+     dark type is the same unreadable block in a louder colour. */
   check(
-    "fills are strong enough to read across a desk",
-    CLINIC_COLOR_KEYS.every((k) => /bg-\w+-100\b/.test(swatchFor(k).block)),
-    "-50 on a white grid cannot be told apart without comparing deliberately"
+    "fills are saturated, not tinted",
+    CLINIC_COLOR_KEYS.every((k) => /bg-[a-z]+-(500|600)(?![0-9])/.test(swatchFor(k).block)),
+    "a -50 or -100 fill on a white grid cannot be told apart at a glance"
+  );
+  check(
+    "and every one carries white type",
+    CLINIC_COLOR_KEYS.every((k) => /text-white/.test(swatchFor(k).block))
   );
   check(
     "and the edge is stronger still",
@@ -166,7 +177,47 @@ main()
   .catch((e) => fails.push(`threw: ${e.message ?? e}`))
   .finally(async () => {
     await prisma.$disconnect();
-    console.log(`\n${pass} passed, ${fails.length} failed`);
+    /* -- The keys Google Calendar trained everyone to press ------------------
+   Asked for Google Calendar as the benchmark. Most of the geometry was
+   already there — a minute-positioned grid, overlap lanes, a now line — so
+   what was missing was the part that makes it feel fast: the keyboard, and
+   opening where the day actually is. */
+const cal = read("src/components/doctor/DoctorCalendar.tsx");
+
+check("D, W and M switch view", /key === "d"/.test(cal) && /key === "w"/.test(cal) && /key === "m"/.test(cal));
+check("T jumps to today", /key === "t"/.test(cal));
+check("the arrows step", cal.includes('e.key === "ArrowLeft"') && cal.includes('e.key === "ArrowRight"'));
+check(
+  "typing is never swallowed",
+  cal.includes('["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName)') &&
+    cal.includes("el.isContentEditable"),
+  "a doctor filling a field who presses d must not have the view change"
+);
+check(
+  "and a modifier chord is left to the browser",
+  cal.includes("if (e.metaKey || e.ctrlKey || e.altKey) return;"),
+  "Ctrl+D has to keep bookmarking"
+);
+check("the shortcut is discoverable on the control", cal.includes("(press ${v[0].toUpperCase()})"));
+
+/* -- It opens where the day is ------------------------------------------ */
+check(
+  "the grid scrolls to the current hour",
+  cal.includes("nowMinuteOfDay()") && cal.includes("el.scrollTo"),
+  "it opened at 07:00 every time, so the afternoon was always a scroll away"
+);
+check(
+  "using clinic wall-clock, not the browser's",
+  cal.includes("Date.now() + 330 * 60_000"),
+  "reading local hours puts the grid five and a half hours out abroad"
+);
+check(
+  "and does not drag the page with it",
+  !/\.scrollIntoView\(/.test(cal),
+  "scrollIntoView would scroll the portal under the calendar too"
+);
+
+console.log(`\n${pass} passed, ${fails.length} failed`);
     if (fails.length) {
       fails.forEach((f) => console.log(`  FAIL  ${f}`));
       process.exit(1);

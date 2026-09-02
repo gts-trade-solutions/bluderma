@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import type {
@@ -75,6 +75,20 @@ function todaySeed(): string {
   return new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
 }
 
+/**
+ * Minutes since midnight, clinic wall-clock.
+ *
+ * The same +330 shift todaySeed uses, for the same reason: this app pins
+ * clinic time to UTC and converts nowhere, so reading the browser's local
+ * hours would put the grid five and a half hours out for anybody abroad. Not
+ * imported from lib/queries/availability — that module reaches the database
+ * and this is a client component.
+ */
+function nowMinuteOfDay(): number {
+  const t = new Date(Date.now() + 330 * 60_000);
+  return t.getUTCHours() * 60 + t.getUTCMinutes();
+}
+
 function timeLabel(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
@@ -137,6 +151,46 @@ export default function DoctorCalendar({
         : new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + dir, 1));
     go({ date: toSeed(d) });
   };
+
+  /* ── The keys Google Calendar trained everyone to press ────────────────
+     D / W / M switch view, T jumps to today, and the arrows step. A doctor
+     scanning next week does it dozens of times a day, and reaching for a
+     mouse target each time is the difference between checking the diary and
+     not bothering.
+
+     Ignored while typing: an editable target means the person is filling in a
+     field, and swallowing their "d" to change the view is the kind of bug
+     that makes somebody stop using the keyboard entirely. Modifier chords are
+     left alone too, so Ctrl+D still bookmarks. */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = e.target as HTMLElement | null;
+      if (
+        el &&
+        (el.isContentEditable ||
+          ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName))
+      ) {
+        return;
+      }
+
+      const key = e.key.toLowerCase();
+      if (key === "d") go({ view: "day" });
+      else if (key === "w") go({ view: "week" });
+      else if (key === "m") go({ view: "month" });
+      else if (key === "t") go({ date: today });
+      else if (e.key === "ArrowLeft") step(-1);
+      else if (e.key === "ArrowRight") step(1);
+      else return;
+
+      e.preventDefault();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // `go` and `step` close over the current view and anchor, which is exactly
+    // what these need — a stale closure here would step the wrong unit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, anchor, today, params]);
 
   const heading =
     view === "day"
@@ -207,6 +261,7 @@ export default function DoctorCalendar({
           {(["month", "week", "day"] as CalendarView[]).map((v) => (
             <button
               key={v}
+              title={`${v[0].toUpperCase() + v.slice(1)} view (press ${v[0].toUpperCase()})`}
               onClick={() => go({ view: v })}
               aria-pressed={view === v}
               className={`rounded-lg px-4 py-2 text-sm font-bold capitalize transition ${
@@ -450,6 +505,18 @@ function TimeGrid({
   today: string;
   onOpen: (id: string) => void;
 }) {
+  /* Open on the current hour, not on 07:00. See the note at the scroller. */
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const minute = nowMinuteOfDay();
+    // Put the current hour a third of the way down rather than at the very
+    // top, so what is coming next is on screen alongside it.
+    const target = (minute - DAY_START_HOUR * 60) * PX_PER_MIN - el.clientHeight / 3;
+    el.scrollTo({ top: Math.max(0, target) });
+  }, []);
+
   const hours = Array.from(
     { length: DAY_END_HOUR - DAY_START_HOUR + 1 },
     (_, i) => DAY_START_HOUR + i
@@ -509,8 +576,14 @@ function TimeGrid({
         })}
       </div>
 
-      {/* Scrolling body — a full working day is taller than most screens. */}
-      <div className="max-h-[70vh] overflow-y-auto">
+      {/* Scrolling body — a full working day is taller than most screens.
+
+          It opened at 07:00 every time, so a doctor looking at their
+          afternoon scrolled to it on every single load. Google Calendar opens
+          on the current hour and that is why it feels like it already knows
+          where you are. `scrollTo` rather than `scrollIntoView` because the
+          latter would also scroll the page under it. */}
+      <div ref={scrollerRef} className="max-h-[70vh] overflow-y-auto">
         <div
           className="relative grid"
           style={{

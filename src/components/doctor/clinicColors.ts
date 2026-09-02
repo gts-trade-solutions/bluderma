@@ -37,7 +37,7 @@ export interface ClinicSwatch {
 
 const SWATCHES: Record<string, ClinicSwatch> = {
   blue: {
-    block: "bg-blue-100 border-blue-300 text-blue-900 hover:bg-blue-200",
+    block: "bg-blue-500 border-blue-600 text-white hover:bg-blue-600",
     dot: "bg-blue-500",
     pill: "bg-blue-100 text-blue-800",
     edge: "border-l-blue-600",
@@ -45,7 +45,7 @@ const SWATCHES: Record<string, ClinicSwatch> = {
     ring: "ring-blue-400",
   },
   teal: {
-    block: "bg-teal-100 border-teal-300 text-teal-900 hover:bg-teal-200",
+    block: "bg-teal-500 border-teal-600 text-white hover:bg-teal-600",
     dot: "bg-teal-500",
     pill: "bg-teal-100 text-teal-800",
     edge: "border-l-teal-600",
@@ -53,7 +53,7 @@ const SWATCHES: Record<string, ClinicSwatch> = {
     ring: "ring-teal-400",
   },
   violet: {
-    block: "bg-violet-100 border-violet-300 text-violet-900 hover:bg-violet-200",
+    block: "bg-violet-500 border-violet-600 text-white hover:bg-violet-600",
     dot: "bg-violet-500",
     pill: "bg-violet-100 text-violet-800",
     edge: "border-l-violet-600",
@@ -61,7 +61,7 @@ const SWATCHES: Record<string, ClinicSwatch> = {
     ring: "ring-violet-400",
   },
   emerald: {
-    block: "bg-emerald-100 border-emerald-300 text-emerald-900 hover:bg-emerald-200",
+    block: "bg-emerald-500 border-emerald-600 text-white hover:bg-emerald-600",
     dot: "bg-emerald-500",
     pill: "bg-emerald-100 text-emerald-800",
     edge: "border-l-emerald-600",
@@ -69,7 +69,7 @@ const SWATCHES: Record<string, ClinicSwatch> = {
     ring: "ring-emerald-400",
   },
   amber: {
-    block: "bg-amber-100 border-amber-300 text-amber-900 hover:bg-amber-200",
+    block: "bg-amber-600 border-amber-700 text-white hover:bg-amber-700",
     dot: "bg-amber-500",
     pill: "bg-amber-100 text-amber-800",
     edge: "border-l-amber-600",
@@ -77,7 +77,7 @@ const SWATCHES: Record<string, ClinicSwatch> = {
     ring: "ring-amber-400",
   },
   rose: {
-    block: "bg-rose-100 border-rose-300 text-rose-900 hover:bg-rose-200",
+    block: "bg-rose-500 border-rose-600 text-white hover:bg-rose-600",
     dot: "bg-rose-500",
     pill: "bg-rose-100 text-rose-800",
     edge: "border-l-rose-600",
@@ -85,7 +85,7 @@ const SWATCHES: Record<string, ClinicSwatch> = {
     ring: "ring-rose-400",
   },
   indigo: {
-    block: "bg-indigo-100 border-indigo-300 text-indigo-900 hover:bg-indigo-200",
+    block: "bg-indigo-500 border-indigo-600 text-white hover:bg-indigo-600",
     dot: "bg-indigo-500",
     pill: "bg-indigo-100 text-indigo-800",
     edge: "border-l-indigo-600",
@@ -93,7 +93,7 @@ const SWATCHES: Record<string, ClinicSwatch> = {
     ring: "ring-indigo-400",
   },
   orange: {
-    block: "bg-orange-100 border-orange-300 text-orange-900 hover:bg-orange-200",
+    block: "bg-orange-600 border-orange-700 text-white hover:bg-orange-700",
     dot: "bg-orange-500",
     pill: "bg-orange-100 text-orange-800",
     edge: "border-l-orange-600",
@@ -101,7 +101,7 @@ const SWATCHES: Record<string, ClinicSwatch> = {
     ring: "ring-orange-400",
   },
   sky: {
-    block: "bg-sky-100 border-sky-300 text-sky-900 hover:bg-sky-200",
+    block: "bg-sky-500 border-sky-600 text-white hover:bg-sky-600",
     dot: "bg-sky-500",
     pill: "bg-sky-100 text-sky-800",
     edge: "border-l-sky-600",
@@ -110,7 +110,7 @@ const SWATCHES: Record<string, ClinicSwatch> = {
   },
   /** Bookings with no clinic — pre-multi-clinic rows. Deliberately colourless. */
   slate: {
-    block: "bg-slate-100 border-slate-300 text-slate-800 hover:bg-slate-200",
+    block: "bg-slate-500 border-slate-600 text-white hover:bg-slate-600",
     dot: "bg-slate-400",
     pill: "bg-slate-100 text-slate-700",
     edge: "border-l-slate-500",

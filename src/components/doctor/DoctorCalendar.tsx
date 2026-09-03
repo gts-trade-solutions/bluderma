@@ -15,6 +15,7 @@ import {
   stateOf,
 } from "./visitStatus";
 import AppointmentDrawer from "./AppointmentDrawer";
+import CalendarRail from "./CalendarRail";
 import GoldCollarBadge from "@/components/GoldCollarBadge";
 
 /**
@@ -192,6 +193,22 @@ export default function DoctorCalendar({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, anchor, today, params]);
 
+  /* How many bookings each day holds, for the mini month's dots. Built from
+     the same byDay map the grid renders, so the rail can never disagree with
+     what opening a day actually shows. */
+  const dayCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    byDay.forEach((list, seed) => m.set(seed, list.length));
+    return m;
+  }, [byDay]);
+
+  const stepMonth = (dir: 1 | -1) => {
+    const d = new Date(
+      Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + dir, 1)
+    );
+    go({ date: toSeed(d) });
+  };
+
   const heading =
     view === "day"
       ? `${WEEKDAYS[anchor.getUTCDay()]} ${anchor.getUTCDate()} ${MONTHS[anchor.getUTCMonth()]} ${anchor.getUTCFullYear()}`
@@ -226,28 +243,31 @@ export default function DoctorCalendar({
           three-way toggle onto one 360px row leaves every target too small
           to hit and the date truncated to nothing. */}
       <div className="rounded-2xl bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/80 sm:p-3.5">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="min-w-0 truncate font-display text-base font-bold tracking-[-0.01em] text-slate-900 sm:text-lg">
+        <div className="flex items-center gap-3">
+          <h2 className="order-last min-w-0 flex-1 truncate font-display text-base font-bold tracking-[-0.01em] text-slate-900 sm:text-lg">
             {heading}
           </h2>
 
-          <div className="flex shrink-0 items-center gap-1.5">
+          <div className="order-first flex shrink-0 items-center gap-1.5">
+            <button
+              onClick={() => go({ date: today })}
+              className="rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+              title="Today (press T)"
+            >
+              Today
+            </button>
             <button
               onClick={() => step(-1)}
               aria-label="Previous"
+              title="Previous (left arrow)"
               className="grid h-10 w-10 place-items-center rounded-xl text-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
             >
               ‹
             </button>
             <button
-              onClick={() => go({ date: today })}
-              className="rounded-xl px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-100"
-            >
-              Today
-            </button>
-            <button
               onClick={() => step(1)}
               aria-label="Next"
+              title="Next (right arrow)"
               className="grid h-10 w-10 place-items-center rounded-xl text-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
             >
               ›
@@ -277,42 +297,6 @@ export default function DoctorCalendar({
       </div>
 
       {/* ── Clinic filter ──────────────────────────────────────────────── */}
-      {clinics.length > 1 && (
-        // One scrolling row rather than a wrapping block: a doctor with five
-        // locations was pushing the calendar itself off the first screen.
-        <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 no-scrollbar">
-          <button
-            onClick={() => go({ clinic: null })}
-            className={`shrink-0 rounded-full border px-3 py-2 text-xs font-semibold transition ${
-              !activeClinicId
-                ? "border-slate-900 bg-slate-900 text-white"
-                : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-            }`}
-          >
-            All locations
-          </button>
-          {clinics.map((c) => {
-            const sw = swatchFor(c.colorKey);
-            const on = activeClinicId === c.id;
-            return (
-              <button
-                key={c.id}
-                onClick={() => go({ clinic: c.id })}
-                className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-semibold transition ${
-                  on
-                    ? "border-slate-900 bg-slate-900 text-white"
-                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                <span className={`h-2 w-2 rounded-full ${sw.dot}`} />
-                {c.name.replace(/^BluDerma\s+/, "")}
-                <span className="font-normal opacity-70">· {c.area}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
       {/* ── What the markings mean ─────────────────────────────────────── */}
       {/* Colour on this calendar means WHICH CLINIC, which is a good use of it
           and not one to give up. State therefore rides on a ring and a
@@ -339,11 +323,31 @@ export default function DoctorCalendar({
       )}
 
       {/* ── The grid ───────────────────────────────────────────────────── */}
+      {/* ── Rail beside grid ───────────────────────────────────────────
+          The layout every calendar this sits beside uses: a small month and
+          the locations on the left, the working surface on the right. Below
+          xl the rail is hidden and the grid takes the full width — a 7x6 mini
+          month next to a day column leaves neither readable on a phone. */}
+      <div className="flex gap-5">
+        <CalendarRail
+          anchor={anchor}
+          today={today}
+          counts={dayCounts}
+          clinics={clinics}
+          activeClinicId={activeClinicId ?? null}
+          onPick={(seed) => go({ view: "day", date: seed })}
+          onStepMonth={stepMonth}
+          onClinic={(id) => go({ clinic: id ?? null })}
+        />
+
+        <div className="min-w-0 flex-1 space-y-4">
       {view === "month" && (
         <MonthGrid anchor={anchor} byDay={byDay} today={today} onOpen={setOpenId} onDay={(s) => go({ view: "day", date: s })} />
       )}
       {view === "week" && <TimeGrid days={weekDays(anchor)} byDay={byDay} today={today} onOpen={setOpenId} />}
       {view === "day" && <TimeGrid days={[anchor]} byDay={byDay} today={today} onOpen={setOpenId} />}
+        </div>
+      </div>
 
       {openId && <AppointmentDrawer appointmentId={openId} onClose={() => setOpenId(null)} />}
     </div>
@@ -611,17 +615,30 @@ function TimeGrid({
               <div
                 key={seed}
                 className={`relative border-r border-slate-100 last:border-r-0 ${
-                  seed === today ? "bg-brand-50/30" : ""
+                  seed === today ? "bg-blue-50/50" : ""
                 }`}
               >
                 {hours.map((h) => (
-                  <div
-                    key={h}
-                    // The hour rule is 0px tall and sits under the blocks, so
-                    // it can never intercept a click meant for a booking.
-                    className="pointer-events-none absolute inset-x-0 border-t border-slate-100"
-                    style={{ top: (h * 60 - DAY_START_HOUR * 60) * PX_PER_MIN }}
-                  />
+                  <div key={h}>
+                    {/* The hour rule is 0px tall and sits under the blocks, so
+                        it can never intercept a click meant for a booking. */}
+                    <div
+                      className="pointer-events-none absolute inset-x-0 border-t border-slate-200"
+                      style={{ top: (h * 60 - DAY_START_HOUR * 60) * PX_PER_MIN }}
+                    />
+                    {/* And the half hour, dashed and fainter.
+                        Every calendar a doctor already uses draws this, and it
+                        is not decoration: a 30-minute consultation is the
+                        commonest length here, so without a mark at the half
+                        hour the eye has to measure the gap to the next rule to
+                        tell 10:00 from 10:30. */}
+                    <div
+                      className="pointer-events-none absolute inset-x-0 border-t border-dashed border-slate-100"
+                      style={{
+                        top: (h * 60 + 30 - DAY_START_HOUR * 60) * PX_PER_MIN,
+                      }}
+                    />
+                  </div>
                 ))}
                 <NowLine seed={seed} today={today} />
                 {layOut(list).map(({ a, lane, lanes }) => (

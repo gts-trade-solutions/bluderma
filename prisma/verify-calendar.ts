@@ -217,6 +217,54 @@ check(
   "scrollIntoView would scroll the portal under the calendar too"
 );
 
+/* -- The layout every calendar a doctor already uses -------------------- */
+const rail = read("src/components/doctor/CalendarRail.tsx");
+
+check("there is a rail beside the grid", cal.includes("<CalendarRail"));
+check(
+  "carrying a mini month",
+  rail.includes("MINI_WEEKDAYS") && rail.includes("daysInMonth"),
+  "the grid says what is happening now; the mini month says where you are in it"
+);
+check(
+  "whose dots come from the same data the grid renders",
+  cal.includes("byDay.forEach((list, seed) => m.set(seed, list.length))"),
+  "a rail counting separately can disagree with what opening the day shows"
+);
+check(
+  "and the location filter, off the toolbar",
+  rail.includes("All locations") && !cal.includes("All locations"),
+  "five locations in a chip row pushed the calendar itself off the screen"
+);
+check(
+  "the rail stands down where it cannot fit",
+  rail.includes("hidden") && rail.includes("xl:block"),
+  "a 7x6 mini month beside a day column leaves neither readable on a phone"
+);
+
+/* -- Density: the marks that make a grid read as a calendar ------------- */
+check(
+  "the half hour is marked",
+  cal.includes("border-dashed") && cal.includes("h * 60 + 30"),
+  "a 30-minute consultation is the commonest length here"
+);
+check(
+  "the hour rule is stronger than the half",
+  cal.includes("border-t border-slate-200") && cal.includes("border-dashed border-slate-100")
+);
+check(
+  "neither can swallow a click meant for a booking",
+  (cal.match(/pointer-events-none absolute inset-x-0 border-t/g) ?? []).length >= 2
+);
+
+/* -- Toolbar order ------------------------------------------------------ */
+check(
+  "the controls sit together, ahead of the date",
+  cal.includes('order-first flex shrink-0 items-center') && cal.includes("order-last"),
+  "the heading is read; the buttons are pressed, and they should not be split"
+);
+check("Today is a button, not a hidden shortcut", cal.includes('title="Today (press T)"'));
+
 console.log(`\n${pass} passed, ${fails.length} failed`);
     if (fails.length) {
       fails.forEach((f) => console.log(`  FAIL  ${f}`));

@@ -51,11 +51,27 @@ import {
  * edges gives the container a resolved box either way.
  */
 
+/* ── The palette ───────────────────────────────────────────────────────
+   Bright and distinguishable, because these charts are read at a glance
+   between patients rather than studied.
+
+   EMPTY was #e2e8f0 — the same near-white the grid lines are drawn in. On
+   the seats chart that meant the unbooked half of every bar read as
+   background rather than as a quantity, so a doctor could not see the thing
+   the chart exists to show: how much of the week is still sellable. It is a
+   warm amber now. Unbooked time is not neutral, it is money not yet earned,
+   and it should look like something worth acting on.
+
+   Every fill below carries white or near-black type in its label, and each
+   pair was checked rather than assumed. */
 const BRAND = "#1f6fd6";
 const BRAND_LIGHT = "#8ecdff";
 const TEAL = "#0fa08e";
 const AMBER = "#f59e0b";
-const EMPTY = "#e2e8f0";
+/** Unbooked capacity. Amber, not grey — see the note above. */
+const EMPTY = "#fcd34d";
+/** Grid lines and axes only. Never a data series. */
+const GRID = "#e2e8f0";
 
 function useChart(): boolean {
   const [mounted, setMounted] = useState(false);
@@ -320,7 +336,7 @@ export function SeatWeekChart({
           <XAxis
             dataKey="tick"
             tickLine={false}
-            axisLine={{ stroke: "#e2e8f0" }}
+            axisLine={{ stroke: GRID }}
             tick={{ fill: "#475569", fontSize: 11, fontWeight: 600 }}
           />
           <YAxis
@@ -424,7 +440,7 @@ export function UtilisationChart({
           <XAxis
             dataKey="day"
             tickLine={false}
-            axisLine={{ stroke: "#e2e8f0" }}
+            axisLine={{ stroke: GRID }}
             tick={{ fill: "#475569", fontSize: 11, fontWeight: 600 }}
           />
           <YAxis
@@ -518,7 +534,7 @@ export function HoursChart({
           <XAxis
             dataKey="label"
             tickLine={false}
-            axisLine={{ stroke: "#e2e8f0" }}
+            axisLine={{ stroke: GRID }}
             interval="preserveStartEnd"
             minTickGap={4}
             // A full working day is a dozen-odd ticks; "09:00" five times over
@@ -601,7 +617,7 @@ export function UpliftChart({
           <XAxis
             dataKey="label"
             tickLine={false}
-            axisLine={{ stroke: "#e2e8f0" }}
+            axisLine={{ stroke: GRID }}
             tick={{ fill: "#475569", fontSize: narrow ? 11 : 12, fontWeight: 600 }}
           />
           <YAxis
@@ -744,7 +760,7 @@ export function RankedBars({
                 key={d.key}
                 // A "not recorded" bucket is deliberately grey — it is an
                 // absence of data, not a category of demand.
-                fill={d.fill ?? (d.muted ? "#cbd5e1" : BRAND)}
+                fill={d.fill ?? (d.muted ? EMPTY : BRAND)}
               />
             ))}
             <LabelList

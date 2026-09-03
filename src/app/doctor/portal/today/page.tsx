@@ -165,8 +165,11 @@ export default async function DoctorTodayPage() {
       )}
 
       <div className="mb-7 grid gap-4 sm:grid-cols-3">
+        {/* "Upcoming" and "Completed" on their own are adjectives with no
+            noun. A doctor scanning this row is counting consultations, so the
+            tiles say so. */}
         <StatTile
-          label="Upcoming"
+          label="Upcoming consultations"
           value={upcoming}
           hint="Confirmed and pending"
           accent="brand"
@@ -174,7 +177,7 @@ export default async function DoctorTodayPage() {
           index={0}
         />
         <StatTile
-          label="Completed"
+          label="Consultations completed"
           value={completed}
           hint="All time"
           accent="teal"
@@ -182,7 +185,7 @@ export default async function DoctorTodayPage() {
           index={1}
         />
         <StatTile
-          label={clinics === 1 ? "Location" : "Locations"}
+          label={clinics === 1 ? "Clinic location" : "Clinic locations"}
           value={clinics}
           hint="Manage hours and fees"
           href="/doctor/portal/practice"

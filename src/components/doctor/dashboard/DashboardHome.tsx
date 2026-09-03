@@ -623,7 +623,10 @@ export default async function DashboardHome({
               Booked
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-sm bg-slate-200" />
+              {/* Amber, matching the bar. It was slate-200 — the same
+                  near-white as the grid lines — so the legend agreed with a
+                  chart nobody could read. */}
+              <span className="h-2.5 w-2.5 rounded-sm bg-amber-300" />
               Still open
             </span>
             <span className="text-slate-400">

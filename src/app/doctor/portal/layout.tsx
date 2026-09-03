@@ -98,7 +98,7 @@ export default async function DoctorPortalLayout({
       locked: setup ? notYet : undefined,
     },
     {
-      label: "Requests",
+      label: "Confirm requests",
       href: "/doctor/portal/requests",
       icon: "inbox",
       badge: awaitingCount || undefined,
@@ -147,7 +147,7 @@ export default async function DoctorPortalLayout({
       locked: setup ? notYet : undefined,
     },
     {
-      label: "Plans",
+      label: "Treatment programs",
       href: "/doctor/portal/plans",
       icon: "pulse",
       locked: setup ? notYet : undefined,

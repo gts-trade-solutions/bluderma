@@ -556,6 +556,22 @@ select {
      why the closed-state colour above is doing the real work. */
   color-scheme: dark;
 }
+/* ── The OPEN list ─────────────────────────────────────────────────────
+   The rules above colour the CLOSED control: a real answer in pale blue on
+   the dark client surface, so an unanswered question is visible at a glance.
+   Those colours then cascade into the <option> rows — and a browser draws
+   the popup on its own ground, which on Windows Chrome is white. Pale blue
+   on white is the "dull blue" the whole list rendered in: technically the
+   answer colour, practically unreadable.
+
+   So the rows state their own pair rather than inheriting one. Token-driven,
+   so the popup follows whichever theme is on instead of pinning a colour
+   that is right for exactly one of the four. */
+select option {
+  background-color: var(--sheet);
+  color: var(--ink);
+  font-weight: 500;
+}
 select option:checked {
   background: #1f6fd6 linear-gradient(0deg, #1f6fd6 0%, #1f6fd6 100%);
   color: #ffffff;

@@ -681,6 +681,23 @@ check(
   `${midTokens["--logo-ink"]} / ${midTokens["--logo-accent"]}`
 );
 
+// ── The open select list ─────────────────────────────────────────────
+// The closed control states a real answer in pale blue so an unanswered
+// question is visible on a long form. Those colours cascade into the <option>
+// rows, and the browser draws the popup on its own ground — white, on Windows
+// Chrome — so the whole list rendered pale blue on white and was unreadable.
+check(
+  "the open list states its own colours rather than inheriting the control's",
+  /select option \{[^}]*background-color: var\(--sheet\)[^}]*color: var\(--ink\)/s.test(css),
+  "pale blue on the browser's white popup is the dull unreadable list"
+);
+for (const theme of THEMES) {
+  const t = tokensFor(theme);
+  const at = (k: string) => t[k] ?? midTokens[k];
+  const r = contrast(at("--ink"), at("--sheet"));
+  check(`${theme}: a dropdown row is readable`, r >= AA, `${r.toFixed(2)}:1`);
+}
+
 console.log(`\n${pass} passed, ${fails.length} failed`);
 if (fails.length) {
   console.log("\nFailures:");

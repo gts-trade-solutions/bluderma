@@ -93,25 +93,19 @@ export default function PhoneField({
             setIso(e.target.value);
             emit(e.target.value, local);
           }}
-          className="shrink-0 border-r border-[var(--hairline)] bg-transparent py-2.5 pl-3 pr-1.5 text-sm font-semibold outline-none"
+          className="w-[8.5rem] shrink-0 truncate border-r border-[var(--hairline)] bg-transparent py-2.5 pl-3 pr-1 text-sm font-semibold outline-none sm:w-[10rem]"
         >
+          {/* The full name is in the list because that is where somebody
+              reads it — and because typing "ind" in an open native select
+              jumps by option text. The closed control shows whichever option
+              is selected, so the name is kept short enough not to crowd out
+              the number beside it. */}
           {COUNTRIES.map((c) => (
             <option key={c.iso} value={c.iso}>
               {flagOf(c.iso)} {c.name} +{c.dial}
             </option>
           ))}
         </select>
-
-        {/* The chosen flag and code, repeated outside the select because a
-            native select shows its option text at whatever width it likes and
-            on a phone truncates it to nothing useful. */}
-        <span
-          aria-hidden
-          className="pointer-events-none flex shrink-0 items-center gap-1 border-r border-[var(--hairline)] px-2 text-sm font-semibold tabular-nums"
-        >
-          <span className="text-base leading-none">{flagOf(country.iso)}</span>
-          +{country.dial}
-        </span>
 
         <input
           type="tel"

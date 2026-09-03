@@ -37,13 +37,19 @@ export const registerSchema = z
     // self-selectable — admin is never accepted from the request.
     accountType: z.enum(["doctor", "patient"]).default("patient"),
     email: emailSchema,
+    /* Required, not optional.
+       It was `.or(z.literal(""))`, and the field said "Optional" beside it.
+       But the number is what a clinic rings when a slot moves and what a
+       reminder is sent to — the two things this product promises a client —
+       so an account without one cannot be served properly. Enforced here as
+       well as in the form: a `required` attribute is a suggestion the browser
+       makes, and this endpoint takes JSON from anywhere. */
     phone: z
       .string()
       .trim()
-      .max(20)
-      .regex(/^[0-9+\-()\s]*$/, "Enter a valid phone number.")
-      .optional()
-      .or(z.literal("")),
+      .min(6, "Enter your phone number.")
+      .max(20, "That number looks too long.")
+      .regex(/^\+?[0-9\-()\s]+$/, "Enter a valid phone number."),
     password: passwordSchema,
     confirmPassword: z.string(),
   })

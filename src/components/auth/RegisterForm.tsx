@@ -171,7 +171,8 @@ export default function RegisterForm({ googleEnabled = false }: { googleEnabled?
         <PhoneField
           value={form.phone}
           onChange={(next) => setForm((f) => ({ ...f, phone: next }))}
-          hint="Optional: used only for appointment reminders."
+          required
+          hint="For appointment reminders and anything urgent about a visit."
           error={fields.phone}
           disabled={busy}
         />

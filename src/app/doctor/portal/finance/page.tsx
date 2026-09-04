@@ -10,6 +10,7 @@ import {
   type ClinicOption,
 } from "@/components/doctor/FinanceForms";
 import MachineCard from "@/components/doctor/MachineCard";
+import Fold from "@/components/doctor/dashboard/Fold";
 import { getOwnDoctor } from "@/lib/doctor/guard";
 import { prisma } from "@/lib/prisma";
 import ClinicPerformance from "@/components/doctor/ClinicPerformance";
@@ -372,6 +373,17 @@ export default async function FinancePage() {
         </Panel>
       </div>
 
+      {/* ── The two entry forms ──────────────────────────────────────────
+          Folded. Reading this page happens daily; recording a bag of cotton
+          wool happens on a Friday, and two full-width forms sitting between
+          the takings and the equipment made the daily read longer for the
+          sake of the weekly one. */}
+      <Fold
+        storageKey="finance-entry"
+        title="Record something"
+        sub="A running cost, or income that is not a booking."
+        summary="Add a cost — rent, salaries, stock — or other income like retail and room rental."
+      >
       {/* ── The two entry forms ──────────────────────────────────────── */}
       <div className="mb-4 grid gap-4 lg:grid-cols-2">
         <Panel
@@ -473,13 +485,26 @@ export default async function FinancePage() {
           )}
         </Panel>
       </div>
+      </Fold>
 
+      {/* ── Equipment ────────────────────────────────────────────────────
+          The second half of this page, and a monthly question rather than a
+          daily one: a laser's recovery does not move between Tuesday and
+          Wednesday. Shut, it says how many machines and how much is still to
+          come back, which is the whole answer most of the time. */}
+      <Fold
+        storageKey="finance-equipment"
+        title="Equipment"
+        sub="What each machine cost, how much of it has come back, and which of them is actually earning."
+        summary={
+          recoveries.length === 0
+            ? "No machines recorded yet."
+            : `${recoveries.length} machine${recoveries.length === 1 ? "" : "s"} · ${money(
+                recoveries.reduce((n, r) => n + r.remainingInr, 0)
+              )} still to come back`
+        }
+      >
       {/* ── Equipment ────────────────────────────────────────────────── */}
-      <div className="mt-8">
-        <PageHead
-          title="Equipment"
-          sub="What each machine cost, how much of it has come back, and which of them is actually earning."
-        />
         <p className="-mt-2 mb-3 max-w-3xl text-[13px] leading-relaxed text-graphite-500">
           Every figure below is counted from uses you have recorded, never
           estimated. The only projection is the &ldquo;months to go&rdquo; line,
@@ -536,7 +561,7 @@ export default async function FinancePage() {
             <AssetForm clinics={clinics} />
           </div>
         </Panel>
-      </div>
+      </Fold>
     </>
   );
 }

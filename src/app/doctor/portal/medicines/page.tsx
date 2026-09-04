@@ -135,6 +135,11 @@ export default async function MedicinesPage({
     }),
   ]);
 
+  // Everything ever written, so an empty window can say what lies outside it.
+  const writtenAllTime = await prisma.prescription.count({
+    where: { doctorId: owner.doctorId },
+  });
+
   const prescriptions: PrescriptionRow[] = written.map((w) => ({
     id: w.id,
     title: w.title,
@@ -197,7 +202,11 @@ export default async function MedicinesPage({
             </>
           }
         >
-          <PrescriptionHistory rows={prescriptions} active={since} />
+          <PrescriptionHistory
+            rows={prescriptions}
+            active={since}
+            olderCount={Math.max(0, writtenAllTime - prescriptions.length)}
+          />
         </Panel>
       </div>
 

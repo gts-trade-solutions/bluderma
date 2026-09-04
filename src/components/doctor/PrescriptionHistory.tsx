@@ -93,9 +93,12 @@ export function valueOfPrescription(row: PrescriptionRow): number {
 export default function PrescriptionHistory({
   rows,
   active,
+  /** How many exist outside the chosen window. Lets an empty result say so. */
+  olderCount = 0,
 }: {
   rows: PrescriptionRow[];
   active: PrescriptionWindow;
+  olderCount?: number;
 }) {
   const items = rows.reduce((n, r) => n + r.items.length, 0);
   const fromShelf = rows.reduce(
@@ -136,7 +139,15 @@ export default function PrescriptionHistory({
         <Figure
           label="Value from your shelf"
           value={money(value)}
-          hint="If these are filled here"
+          // ₹0 with lines written means every one was typed by hand, which is
+          // a fact about how they were written, not an empty month. Saying so
+          // is what turns a figure that looks broken into one that can be
+          // acted on.
+          hint={
+            items > 0 && fromShelf === 0
+              ? "Nothing was picked off your list"
+              : "If these are filled here"
+          }
           tone="gold"
         />
         <Figure
@@ -148,10 +159,29 @@ export default function PrescriptionHistory({
       </div>
 
       {rows.length === 0 ? (
-        <p className="rounded-[10px] border border-dashed border-graphite-300 bg-white px-5 py-10 text-center text-sm text-graphite-600">
-          Nothing prescribed in this window. Write one from a booking in Today
-          or Calendar and it appears here.
-        </p>
+        /* An empty window with a full history behind it is the commonest way
+           this screen lies: "nothing prescribed" reads as "you have never
+           prescribed anything". Say which it is, and offer the way through. */
+        <div className="rounded-[10px] border border-dashed border-graphite-300 bg-white px-5 py-10 text-center">
+          <p className="text-sm font-semibold text-graphite-800">
+            {olderCount > 0
+              ? `Nothing in this window — but you have written ${olderCount} before it.`
+              : "Nothing prescribed yet."}
+          </p>
+          {olderCount > 0 ? (
+            <Link
+              href="/doctor/portal/medicines?since=all#written"
+              scroll={false}
+              className="mt-2 inline-block rounded-lg bg-graphite-900 px-3.5 py-1.5 text-[13px] font-bold text-white transition hover:bg-graphite-800"
+            >
+              Show everything
+            </Link>
+          ) : (
+            <p className="mt-1 text-sm text-graphite-600">
+              Write one from a booking in Today or Calendar and it appears here.
+            </p>
+          )}
+        </div>
       ) : (
         <ul className="space-y-2.5">
           {rows.map((r) => {

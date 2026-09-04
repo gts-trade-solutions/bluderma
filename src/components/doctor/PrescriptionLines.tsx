@@ -199,6 +199,28 @@ export default function PrescriptionLines() {
                 />
               </div>
 
+              {/* ── You already stock this ────────────────────────────
+                  A line typed by hand is a line the patient cannot reorder
+                  from this practice and that carries no price, so it counts
+                  for nothing on the prescriptions screen. Most of them are
+                  not deliberate: the doctor types the name because typing is
+                  faster than opening a list of forty. So the list comes to
+                  them — matched on what they have already typed, offered,
+                  never applied on their behalf. */}
+              {!l.medicineId && suggestFor(l.name, medicines) && (
+                <button
+                  type="button"
+                  onClick={() => pick(l.key, suggestFor(l.name, medicines)!.id)}
+                  className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg border border-azure-200 bg-azure-50 px-2.5 py-1 text-[11px] font-bold text-azure-800 transition hover:bg-azure-100"
+                >
+                  You stock {suggestFor(l.name, medicines)!.name}
+                  {suggestFor(l.name, medicines)!.strength
+                    ? ` ${suggestFor(l.name, medicines)!.strength}`
+                    : ""}{" "}
+                  — use it, so they can reorder from you
+                </button>
+              )}
+
               {/* Said here rather than after the fact. A doctor prescribing
                   something they have run out of should find out while they
                   can still say so to the patient in front of them. */}
@@ -229,5 +251,27 @@ export default function PrescriptionLines() {
         + Add another medicine
       </button>
     </div>
+  );
+}
+
+/**
+ * The shelf item a typed line is probably meant to be.
+ *
+ * Deliberately dim: a case-insensitive prefix or containment match on the
+ * name, and nothing cleverer. A fuzzy matcher that offers "Clindamycin" when
+ * the doctor typed "Clobetasol" is worse than no matcher at all — this is a
+ * prescription, and a suggestion that is wrong more than rarely is one nobody
+ * will read before clicking.
+ *
+ * Null until there are three characters, or every line suggests something the
+ * moment it is touched.
+ */
+function suggestFor(typed: string, medicines: Medicine[]): Medicine | null {
+  const q = typed.trim().toLowerCase();
+  if (q.length < 3) return null;
+  return (
+    medicines.find((m) => m.name.toLowerCase().startsWith(q)) ??
+    medicines.find((m) => m.name.toLowerCase().includes(q)) ??
+    null
   );
 }

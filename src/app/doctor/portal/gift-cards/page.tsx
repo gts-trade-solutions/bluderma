@@ -113,22 +113,23 @@ export default async function GiftCardsPage() {
     <>
       <PageHead
         title="Gift cards"
+        mark="cards"
         sub="Credit somebody buys for somebody else, spendable at your practice."
       />
 
       {/* The three figures a practice actually wants from this screen. */}
       <div className="mb-5 grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-3">
-        <Tile label="On sale" value={String(live)} bar="border-teal-500"
+        <Tile label="On sale" value={String(live)} bar="border-mint-500"
               hint={pending > 0 ? `${pending} awaiting review` : "Offers patients can buy"} />
-        <Tile label="Cards sold" value={String(rows.length)} bar="border-brand-500"
+        <Tile label="Cards sold" value={String(rows.length)} bar="border-azure-500"
               hint="Paid for, and in somebody's hands" />
-        <Tile label="Still to honour" value={money(outstanding)} bar="border-amber-500"
+        <Tile label="Still to honour" value={money(outstanding)} bar="border-gold-500"
               hint="Face value people are holding" />
         {/* Only when something actually has been. With the counter screen
             gone there is no way for this to move, so a permanent zero would
             read as a broken tile rather than an honest one. */}
         {takenSoFar > 0 && (
-          <Tile label="Redeemed so far" value={money(takenSoFar)} bar="border-violet-500"
+          <Tile label="Redeemed so far" value={money(takenSoFar)} bar="border-graphite-500"
                 hint="Treatment already given against a card" />
         )}
       </div>
@@ -167,7 +168,7 @@ export default async function GiftCardsPage() {
                 <Empty title="Nothing yet" body="Create an offer and send it for review." />
               </div>
             ) : (
-              <ul className="-mx-5 -my-5 divide-y divide-slate-100">
+              <ul className="-mx-5 -my-5 divide-y divide-graphite-100">
                 {offers.map((o) => (
                   <OfferRow
                     key={o.id}
@@ -204,7 +205,7 @@ export default async function GiftCardsPage() {
                 />
               </div>
             ) : (
-              <ul className="divide-y divide-slate-100">
+              <ul className="divide-y divide-graphite-100">
                 {rows.map((r) => (
                   <SoldCard key={r.id} row={r} />
                 ))}
@@ -230,15 +231,15 @@ function Tile({
 }) {
   return (
     <div
-      className={`rounded-2xl border-t-[3px] bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_12px_32px_-24px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/80 sm:p-4 ${bar}`}
+      className={`rounded-[10px] border-t-[3px] bg-white p-3 shadow-flat ring-1 ring-graphite-200 sm:p-4 ${bar}`}
     >
-      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 sm:text-[11px]">
+      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-graphite-500 sm:text-[11px]">
         {label}
       </p>
-      <p className="mt-1 font-display text-[20px] font-extrabold leading-none tracking-[-0.03em] tabular-nums text-slate-900 sm:text-[26px]">
+      <p className="mt-1 font-display text-[20px] font-extrabold leading-none tracking-[-0.03em] tabular-nums text-graphite-900 sm:text-[26px]">
         {value}
       </p>
-      <p className="mt-1.5 text-[11px] leading-snug text-slate-500">{hint}</p>
+      <p className="mt-1.5 text-[11px] leading-snug text-graphite-500">{hint}</p>
     </div>
   );
 }

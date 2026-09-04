@@ -45,22 +45,22 @@ export default function ShareLink({ slug, name }: { slug: string; name: string }
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5 ring-1 ring-inset ring-slate-200">
-        <span className="truncate font-mono text-xs text-slate-600">{pretty}</span>
+      <div className="flex items-center gap-2 rounded-xl bg-graphite-50 px-3 py-2.5 ring-1 ring-inset ring-graphite-200">
+        <span className="truncate font-mono text-xs text-graphite-600">{pretty}</span>
       </div>
 
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
           onClick={copy}
-          className="inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-brand-700"
+          className="inline-flex items-center gap-1.5 rounded-full bg-azure-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-azure-700"
         >
           {copied ? "Copied" : "Copy link"}
         </button>
         <button
           type="button"
           onClick={whatsapp}
-          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
+          className="inline-flex items-center gap-1.5 rounded-full border border-graphite-200 bg-white px-4 py-2 text-xs font-bold text-graphite-700 transition hover:bg-graphite-50"
         >
           Share on WhatsApp
         </button>
@@ -68,7 +68,7 @@ export default function ShareLink({ slug, name }: { slug: string; name: string }
           href={path}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold text-slate-500 transition hover:text-slate-800"
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold text-graphite-500 transition hover:text-graphite-800"
         >
           Preview →
         </a>

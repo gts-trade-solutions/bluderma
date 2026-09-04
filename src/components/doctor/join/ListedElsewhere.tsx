@@ -63,11 +63,11 @@ export default function ListedElsewhere({
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5">
-      <p className="font-bold text-slate-900">
+    <div className="rounded-[10px] border border-graphite-200 bg-white p-5">
+      <p className="font-bold text-graphite-900">
         Are you listed on any other consultation platform?
       </p>
-      <p className="mt-1 text-sm leading-relaxed text-slate-600">
+      <p className="mt-1 text-sm leading-relaxed text-graphite-600">
         Another online clinic, a doctor marketplace, an aggregator. It has no
         bearing on whether we approve you — we ask because a calendar we cannot
         see is the commonest cause of a clash in the first month, and knowing
@@ -102,7 +102,7 @@ export default function ListedElsewhere({
               setNames("");
               persist(null, "");
             }}
-            className="text-xs font-semibold text-slate-500 transition hover:text-slate-800"
+            className="text-xs font-semibold text-graphite-500 transition hover:text-graphite-800"
           >
             Clear
           </button>
@@ -113,7 +113,7 @@ export default function ListedElsewhere({
         <div className="mt-3.5">
           <label
             htmlFor="listed-names"
-            className="block text-sm font-semibold text-slate-800"
+            className="block text-sm font-semibold text-graphite-800"
           >
             Which ones?
           </label>
@@ -124,18 +124,18 @@ export default function ListedElsewhere({
             onBlur={() => persist(true, names)}
             maxLength={300}
             placeholder="Practo, Apollo 24|7, my own website…"
-            className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+            className="mt-1.5 w-full rounded-xl border border-graphite-200 bg-white px-3.5 py-2.5 text-sm text-graphite-900 outline-none transition focus:border-azure-400 focus:ring-2 focus:ring-azure-100"
           />
         </div>
       )}
 
       <p className="mt-2 h-4 text-xs">
         {error ? (
-          <span className="text-rose-600">{error}</span>
+          <span className="text-coral-600">{error}</span>
         ) : pending ? (
-          <span className="text-slate-400">Saving…</span>
+          <span className="text-graphite-500">Saving…</span>
         ) : saved ? (
-          <span className="text-teal-700">Saved.</span>
+          <span className="text-mint-800">Saved.</span>
         ) : null}
       </p>
     </div>
@@ -158,8 +158,8 @@ function Choice({
       onClick={onClick}
       className={`rounded-full px-4 py-1.5 text-sm font-bold ring-1 transition ${
         selected
-          ? "bg-brand-600 text-white ring-brand-600"
-          : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-50 hover:ring-slate-300"
+          ? "bg-azure-600 text-white ring-azure-600"
+          : "bg-white text-graphite-700 ring-graphite-200 hover:bg-graphite-50 hover:ring-graphite-300"
       }`}
     >
       {children}

@@ -139,9 +139,9 @@ export default async function OnboardingHome({
             {doctor.rejectionReason}
           </Notice>
           {blocking.length > 0 && (
-            <ul className="mt-4 space-y-1.5 rounded-2xl bg-white p-5 ring-1 ring-slate-200/80">
+            <ul className="mt-4 space-y-1.5 rounded-[10px] bg-white p-5 ring-1 ring-graphite-200">
               {blocking.map((g) => (
-                <li key={g.key} className="text-sm text-slate-700">
+                <li key={g.key} className="text-sm text-graphite-700">
                   ·{" "}
                   <Link href={stepHref(g.step)} className="font-semibold underline hover:no-underline">
                     {g.label}
@@ -155,10 +155,10 @@ export default async function OnboardingHome({
 
       <div className="mb-7">
         <div className="flex items-end justify-between gap-4">
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand-600">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-azure-600">
             Step {step} of {JOIN_STEPS.length - 1}
           </p>
-          <p className="text-xs font-semibold text-slate-500">
+          <p className="text-xs font-semibold text-graphite-500">
             {blocking.length === 0
               ? "Everything we need is here"
               : `${done} of ${JOIN_STEPS.length - 1} done`}
@@ -166,17 +166,17 @@ export default async function OnboardingHome({
         </div>
         {/* Same gradient rail the standalone wizard used — full class strings,
             because Tailwind never sees an interpolated one. */}
-        <div className="mt-2 h-1 overflow-hidden rounded-full bg-slate-100">
+        <div className="mt-2 h-1 overflow-hidden rounded-full bg-graphite-100">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-brand-500 to-teal-500 transition-all duration-500"
+            className="h-full rounded-full bg-gradient-to-r from-azure-500 to-mint-500 transition-all duration-500"
             style={{ width: `${pct}%` }}
           />
         </div>
 
-        <h1 className="mt-6 font-display text-2xl font-bold tracking-[-0.02em] text-slate-900 sm:text-3xl">
+        <h1 className="mt-6 font-display text-2xl font-bold tracking-[-0.02em] text-graphite-900 sm:text-3xl">
           {meta.title}
         </h1>
-        <p className="mt-2 text-sm leading-relaxed text-slate-600">{meta.sub}</p>
+        <p className="mt-2 text-sm leading-relaxed text-graphite-600">{meta.sub}</p>
       </div>
 
       {step === 1 && (

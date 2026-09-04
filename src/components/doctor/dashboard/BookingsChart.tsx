@@ -38,9 +38,16 @@ import {
  * and the chart flickers or throws.
  */
 
-const BRAND = "#328ff0";
-const BRAND_DEEP = "#1f6fd6";
-const TEAL = "#0fa08e";
+/* The brand five. See the palette note in Charts.tsx.
+ *
+ * Blue bars, a red trend line and a gold bar for today. The trend used to be
+ * mint, which put a green line over blue bars — two cool colours a metre from
+ * the eye read as one texture, and the line is the part worth watching. Red
+ * against blue is the pairing every finance chart uses for exactly that
+ * reason, and gold picks today out of ninety bars without a label. */
+const BRAND = "#3e8ccb";
+const TREND = "#f15256";
+const TODAY = "#ffc80b";
 
 /** "₹12k", "₹1.4L" — an axis has no room for ₹1,42,500. */
 function compact(n: number): string {
@@ -91,7 +98,7 @@ export default function BookingsChart({
 
   const total = data.reduce((sum, d) => sum + d.value, 0);
   if (!mounted) {
-    return <div className="min-h-[210px] w-full flex-1 animate-pulse rounded-xl bg-slate-100 sm:min-h-[260px]" />;
+    return <div className="min-h-[210px] w-full flex-1 animate-pulse rounded-xl bg-graphite-100 sm:min-h-[260px]" />;
   }
 
   // Nothing booked is a real answer, and a flat line at zero reads as a broken
@@ -103,12 +110,12 @@ export default function BookingsChart({
           {Array.from({ length: 16 }, (_, i) => (
             <span
               key={i}
-              className="flex-1 rounded-t bg-slate-100"
+              className="flex-1 rounded-t bg-graphite-100"
               style={{ height: `${10 + (i % 5) * 4}%` }}
             />
           ))}
         </div>
-        <p className="text-center text-xs text-slate-400">
+        <p className="text-center text-xs text-graphite-500">
           Nothing booked in this period yet — this fills in as clients book.
         </p>
       </div>
@@ -139,14 +146,14 @@ export default function BookingsChart({
     <div className="flex flex-1 flex-col">
       {/* Written key rather than recharts' own <Legend>, which cannot say
           "7-day average" without also repeating the dataKey. */}
-      <div className="mb-2 flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-[11px] font-semibold text-slate-500">
+      <div className="mb-2 flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-[11px] font-semibold text-graphite-500">
         <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm bg-brand-500" />
+          <span className="h-2.5 w-2.5 rounded-sm bg-azure-500" />
           Booked each {grain === "week" ? "week" : "day"}
         </span>
         {showTrend && (
           <span className="flex items-center gap-1.5">
-            <span className="h-0.5 w-4 rounded-full bg-teal-500" />
+            <span className="h-0.5 w-4 rounded-full bg-coral-500" />
             {window}-{grain} average
           </span>
         )}
@@ -159,39 +166,39 @@ export default function BookingsChart({
         <div className="absolute inset-0">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chart} margin={{ top: 6, right: 6, bottom: 0, left: -4 }}>
-            <CartesianGrid vertical={false} stroke="#eef2f7" />
+            <CartesianGrid vertical={false} stroke="#ededed" />
             <XAxis
               dataKey="tick"
               tickLine={false}
-              axisLine={{ stroke: "#e2e8f0" }}
+              axisLine={{ stroke: "#ededed" }}
               // Enough gap that "5 Aug" never collides with "6 Aug" on a
               // phone; recharts drops the labels between rather than
               // overprinting them.
               interval="preserveStartEnd"
               minTickGap={24}
-              tick={{ fill: "#64748b", fontSize: 11 }}
+              tick={{ fill: "#5c5c5c", fontSize: 11 }}
             />
             <YAxis
               width={52}
               tickLine={false}
               axisLine={false}
               tickFormatter={compact}
-              tick={{ fill: "#94a3b8", fontSize: 10 }}
+              tick={{ fill: "#7a7a7a", fontSize: 10 }}
             />
             <Tooltip
               cursor={{ fill: "rgba(15,23,42,0.04)" }}
               contentStyle={{
                 borderRadius: 12,
-                border: "1px solid rgb(226 232 240)",
+                border: "1px solid #dcdcdc",
                 fontSize: 12,
                 padding: "8px 12px",
                 boxShadow: "0 12px 32px -20px rgba(15,23,42,0.4)",
               }}
-              labelStyle={{ fontWeight: 700, color: "#0f172a", marginBottom: 2 }}
+              labelStyle={{ fontWeight: 700, color: "#2f2f2f", marginBottom: 2 }}
               // Recharts colours a tooltip row with its series fill. The trend
               // line is teal and legible, but keeping both rows in ink means
               // no row can ever be paler than the panel it sits on.
-              itemStyle={{ color: "#0f172a", fontWeight: 600, padding: "1px 0" }}
+              itemStyle={{ color: "#2f2f2f", fontWeight: 600, padding: "1px 0" }}
               labelFormatter={(_l, payload) => {
                 const row = payload?.[0]?.payload as { date?: string } | undefined;
                 if (!row?.date) return "";
@@ -214,14 +221,14 @@ export default function BookingsChart({
             />
             <Bar dataKey="value" radius={[3, 3, 0, 0]} isAnimationActive={false} maxBarSize={40}>
               {chart.map((d) => (
-                <Cell key={d.date} fill={d.isToday ? BRAND_DEEP : BRAND} />
+                <Cell key={d.date} fill={d.isToday ? TODAY : BRAND} />
               ))}
             </Bar>
             {showTrend && (
               <Line
                 type="monotone"
                 dataKey="trend"
-                stroke={TEAL}
+                stroke={TREND}
                 strokeWidth={2.5}
                 dot={false}
                 connectNulls

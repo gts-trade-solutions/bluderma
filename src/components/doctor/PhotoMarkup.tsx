@@ -138,7 +138,7 @@ export default function PhotoMarkupEditor({
     <div className="space-y-3">
       <div
         ref={wrapRef}
-        className="relative aspect-[4/5] w-full touch-none overflow-hidden rounded-2xl bg-slate-900 select-none"
+        className="relative aspect-[4/5] w-full touch-none overflow-hidden rounded-[10px] bg-graphite-900 select-none"
         onPointerDown={(e) => {
           if (!show) return;
           const p = pointAt(e);
@@ -187,7 +187,7 @@ export default function PhotoMarkupEditor({
             aria-pressed={ink === c.hex}
             onClick={() => setInk(c.hex)}
             className={`h-8 w-8 rounded-full border-2 transition ${
-              ink === c.hex ? "border-slate-900 scale-110" : "border-slate-200"
+              ink === c.hex ? "border-graphite-900 scale-110" : "border-graphite-200"
             }`}
             style={{ backgroundColor: c.hex }}
           />
@@ -197,7 +197,7 @@ export default function PhotoMarkupEditor({
           type="button"
           disabled={strokes.length === 0}
           onClick={() => setStrokes((p) => p.slice(0, -1))}
-          className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-200 disabled:opacity-40"
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-graphite-100 px-3 py-1.5 text-xs font-bold text-graphite-700 transition hover:bg-graphite-200 disabled:opacity-40"
         >
           <Undo2 className="h-3.5 w-3.5" /> Undo
         </button>
@@ -205,7 +205,7 @@ export default function PhotoMarkupEditor({
           type="button"
           disabled={strokes.length === 0}
           onClick={() => setStrokes([])}
-          className="inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-slate-500 transition hover:text-rose-600 disabled:opacity-40"
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-graphite-500 transition hover:text-coral-600 disabled:opacity-40"
         >
           <Eraser className="h-3.5 w-3.5" /> Clear
         </button>
@@ -213,12 +213,12 @@ export default function PhotoMarkupEditor({
         {/* Hiding the marks is not a nicety: the reason to draw on a
             photograph is to point at the skin, and you have to be able to see
             the skin. */}
-        <label className="ml-auto inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+        <label className="ml-auto inline-flex items-center gap-2 text-xs font-semibold text-graphite-600">
           <input
             type="checkbox"
             checked={show}
             onChange={(e) => setShow(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300"
+            className="h-4 w-4 rounded border-graphite-300"
           />
           Show marks
         </label>
@@ -232,10 +232,10 @@ export default function PhotoMarkupEditor({
           setSaved(false);
         }}
         placeholder="What you are pointing at."
-        className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none"
+        className="w-full rounded-xl border border-graphite-200 px-3.5 py-2.5 text-sm text-graphite-900 placeholder:text-graphite-500 focus:border-azure-400 focus:outline-none"
       />
 
-      {error && <p className="text-xs font-semibold text-rose-600">{error}</p>}
+      {error && <p className="text-xs font-semibold text-coral-600">{error}</p>}
 
       <div className="flex items-center gap-3">
         <button
@@ -249,7 +249,7 @@ export default function PhotoMarkupEditor({
               else setSaved(true);
             })
           }
-          className="inline-flex min-h-10 items-center gap-2 rounded-full bg-slate-900 px-5 py-2 text-sm font-bold text-white transition hover:bg-slate-700 disabled:opacity-60"
+          className="inline-flex min-h-10 items-center gap-2 rounded-full bg-graphite-900 px-5 py-2 text-sm font-bold text-white transition hover:bg-graphite-700 disabled:opacity-60"
         >
           {pending ? (
             <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -259,9 +259,9 @@ export default function PhotoMarkupEditor({
           Save marks
         </button>
         {saved && (
-          <span className="text-xs font-semibold text-teal-700">Saved</span>
+          <span className="text-xs font-semibold text-mint-800">Saved</span>
         )}
-        <span className="text-xs text-slate-400">
+        <span className="text-xs text-graphite-500">
           {strokes.length} mark{strokes.length === 1 ? "" : "s"} · the photograph
           itself is never changed
         </span>

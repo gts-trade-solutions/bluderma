@@ -61,7 +61,7 @@ export default function LocationPicker({
       <div>
         <label
           htmlFor={id}
-          className="block text-sm font-semibold text-slate-800"
+          className="block text-sm font-semibold text-graphite-800"
         >
           Landmark
         </label>
@@ -72,9 +72,9 @@ export default function LocationPicker({
           onChange={(e) => setLandmark(e.target.value)}
           placeholder="Opposite the Krishna temple, above Saravana Stores"
           maxLength={160}
-          className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-500/15"
+          className="mt-1.5 w-full rounded-xl border border-graphite-200 bg-white px-3.5 py-2.5 text-graphite-900 outline-none transition focus:border-azure-400 focus:ring-4 focus:ring-azure-500/15"
         />
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-graphite-500">
           How you would describe the way there on the phone. This is what most
           people navigate by, and it is shown right under your address.
         </p>
@@ -88,10 +88,10 @@ export default function LocationPicker({
         <button
           type="button"
           onClick={() => setShowMap(true)}
-          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+          className="inline-flex items-center gap-2 rounded-full border border-graphite-200 bg-white px-3.5 py-2 text-xs font-bold text-graphite-700 transition hover:border-azure-300 hover:text-azure-700"
         >
           <PinIcon /> Pin it on the map
-          <span className="font-normal text-slate-400">
+          <span className="font-normal text-graphite-500">
             so &ldquo;clinics near me&rdquo; can find you
           </span>
         </button>
@@ -277,13 +277,13 @@ function MapPane({
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-3">
+    <div className="rounded-[10px] border border-graphite-200 bg-white p-3">
       <div className="mb-2.5 flex flex-wrap items-center gap-2">
         <button
           type="button"
           disabled={busy}
           onClick={useMyLocation}
-          className="rounded-full bg-brand-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-brand-700 disabled:opacity-50"
+          className="rounded-full bg-azure-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-azure-700 disabled:opacity-50"
         >
           {busy ? "Working…" : "Use my current location"}
         </button>
@@ -291,7 +291,7 @@ function MapPane({
           type="button"
           disabled={busy}
           onClick={findAddress}
-          className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+          className="rounded-full border border-graphite-200 px-3 py-1.5 text-xs font-bold text-graphite-700 transition hover:bg-graphite-50 disabled:opacity-50"
         >
           Find the address above
         </button>
@@ -306,7 +306,7 @@ function MapPane({
               onClear();
               setStatus("Pin removed.");
             }}
-            className="text-xs font-semibold text-rose-600 hover:text-rose-800"
+            className="text-xs font-semibold text-coral-600 hover:text-coral-800"
           >
             Remove pin
           </button>
@@ -314,7 +314,7 @@ function MapPane({
         <button
           type="button"
           onClick={onHide}
-          className="ml-auto text-xs font-semibold text-slate-500 hover:text-slate-800"
+          className="ml-auto text-xs font-semibold text-graphite-500 hover:text-graphite-800"
         >
           Hide map
         </button>
@@ -322,12 +322,12 @@ function MapPane({
 
       <div
         ref={holder}
-        className="h-64 w-full overflow-hidden rounded-xl bg-slate-100"
+        className="h-64 w-full overflow-hidden rounded-xl bg-graphite-100"
         // Leaflet's own controls sit above form fields otherwise.
         style={{ zIndex: 0 }}
       />
 
-      <p className="mt-2 text-xs text-slate-500">
+      <p className="mt-2 text-xs text-graphite-500">
         {lat !== null && lng !== null ? (
           <>
             Pinned at {lat.toFixed(5)}, {lng.toFixed(5)}. Tap the map or drag

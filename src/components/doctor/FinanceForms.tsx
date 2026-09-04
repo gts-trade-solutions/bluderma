@@ -59,9 +59,9 @@ const CATEGORY_HINT: Record<string, string> = {
 const money = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 
 const field =
-  "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-brand-400 focus:outline-none";
+  "w-full rounded-xl border border-graphite-200 bg-white px-3.5 py-2.5 text-sm text-graphite-900 focus:border-azure-400 focus:outline-none";
 const labelClass =
-  "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500";
+  "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-graphite-500";
 
 /** Recording a running cost. */
 export function ExpenseForm({ clinics }: { clinics: ClinicOption[] }) {
@@ -123,7 +123,7 @@ export function ExpenseForm({ clinics }: { clinics: ClinicOption[] }) {
             ))}
           </select>
           {CATEGORY_HINT[category] && (
-            <span className="mt-1.5 block text-xs leading-snug text-slate-500">
+            <span className="mt-1.5 block text-xs leading-snug text-graphite-500">
               {CATEGORY_HINT[category]}
             </span>
           )}
@@ -151,7 +151,7 @@ export function ExpenseForm({ clinics }: { clinics: ClinicOption[] }) {
               placeholder="6"
               className={field}
             />
-            <span className="mt-1.5 block text-xs text-slate-500">
+            <span className="mt-1.5 block text-xs text-graphite-500">
               Receptionist, nurses, technicians, housekeeping — whoever this
               payment is for.
             </span>
@@ -176,7 +176,7 @@ export function ExpenseForm({ clinics }: { clinics: ClinicOption[] }) {
       </div>
 
       {error && (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700">
+        <p className="rounded-xl border border-coral-200 bg-coral-50 px-4 py-2.5 text-sm text-coral-700">
           {error}
         </p>
       )}
@@ -184,7 +184,7 @@ export function ExpenseForm({ clinics }: { clinics: ClinicOption[] }) {
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex min-h-11 items-center gap-2 rounded-full bg-gradient-to-r from-brand-600 to-teal-600 px-6 py-2.5 text-sm font-extrabold text-white transition hover:from-brand-700 hover:to-teal-700 disabled:opacity-60"
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-gold-500 px-6 py-2.5 text-sm font-extrabold text-graphite-900 shadow-flat transition hover:bg-gold-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-graphite-900 focus-visible:ring-offset-2"
       >
         {pending && <LoaderCircle className="h-4 w-4 animate-spin" />}
         Add it
@@ -269,7 +269,7 @@ export function AssetForm({ clinics }: { clinics: ClinicOption[] }) {
       </div>
 
       {error && (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700">
+        <p className="rounded-xl border border-coral-200 bg-coral-50 px-4 py-2.5 text-sm text-coral-700">
           {error}
         </p>
       )}
@@ -277,7 +277,7 @@ export function AssetForm({ clinics }: { clinics: ClinicOption[] }) {
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex min-h-11 items-center gap-2 rounded-full bg-slate-900 px-6 py-2.5 text-sm font-extrabold text-white transition hover:bg-slate-700 disabled:opacity-60"
+        className="inline-flex min-h-11 items-center gap-2 rounded-full bg-graphite-900 px-6 py-2.5 text-sm font-extrabold text-white transition hover:bg-graphite-700 disabled:opacity-60"
       >
         {pending && <LoaderCircle className="h-4 w-4 animate-spin" />}
         Add the machine
@@ -360,7 +360,7 @@ export function IncomeForm({ clinics }: { clinics: ClinicOption[] }) {
     >
       {v.summary}
 
-      <p className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs leading-relaxed text-amber-900">
+      <p className="rounded-xl border border-gold-200 bg-gold-50 px-3.5 py-2.5 text-xs leading-relaxed text-gold-900">
         <strong className="font-bold">Only what is not counted already.</strong>{" "}
         Consultations come from your bookings, medicine sales from your orders,
         and procedure charges from the machine they were done on. Putting one of
@@ -391,7 +391,7 @@ export function IncomeForm({ clinics }: { clinics: ClinicOption[] }) {
             ))}
           </select>
           {INCOME_HINT[source] && (
-            <span className="mt-1.5 block text-xs leading-snug text-slate-500">
+            <span className="mt-1.5 block text-xs leading-snug text-graphite-500">
               {INCOME_HINT[source]}
             </span>
           )}
@@ -419,7 +419,7 @@ export function IncomeForm({ clinics }: { clinics: ClinicOption[] }) {
       </div>
 
       {error && (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700">
+        <p className="rounded-xl border border-coral-200 bg-coral-50 px-4 py-2.5 text-sm text-coral-700">
           {error}
         </p>
       )}
@@ -427,7 +427,7 @@ export function IncomeForm({ clinics }: { clinics: ClinicOption[] }) {
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex min-h-11 items-center gap-2 rounded-full bg-slate-900 px-6 py-2.5 text-sm font-extrabold text-white transition hover:bg-slate-700 disabled:opacity-60"
+        className="inline-flex min-h-11 items-center gap-2 rounded-full bg-graphite-900 px-6 py-2.5 text-sm font-extrabold text-white transition hover:bg-graphite-700 disabled:opacity-60"
       >
         {pending && <LoaderCircle className="h-4 w-4 animate-spin" />}
         Record it
@@ -443,14 +443,14 @@ export function IncomeRowItem({ row }: { row: IncomeRow }) {
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
       <div className="min-w-0">
-        <p className="truncate text-sm font-semibold text-slate-900">{row.label}</p>
-        <p className="text-xs text-slate-500">
+        <p className="truncate text-sm font-semibold text-graphite-900">{row.label}</p>
+        <p className="text-xs text-graphite-500">
           {INCOME_LABEL[row.source] ?? row.source} · {row.receivedOn}
           {row.clinicName ? ` · ${row.clinicName}` : ""}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-3">
-        <span className="text-sm font-bold tabular-nums text-teal-700">
+        <span className="text-sm font-bold tabular-nums text-mint-800">
           {money(row.amountInr)}
         </span>
         <button
@@ -458,7 +458,7 @@ export function IncomeRowItem({ row }: { row: IncomeRow }) {
           aria-label="Remove this entry"
           disabled={pending}
           onClick={() => start(async () => void (await removeIncome(row.id)))}
-          className="text-slate-300 transition hover:text-rose-600 disabled:opacity-60"
+          className="text-graphite-400 transition hover:text-coral-600 disabled:opacity-60"
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -474,14 +474,14 @@ export function ExpenseRowItem({ row }: { row: ExpenseRow }) {
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
       <div className="min-w-0">
-        <p className="truncate text-sm font-semibold text-slate-900">{row.label}</p>
-        <p className="text-xs text-slate-500">
+        <p className="truncate text-sm font-semibold text-graphite-900">{row.label}</p>
+        <p className="text-xs text-graphite-500">
           {categoryLabel(row.category)} · {row.spentOn}
           {row.clinicName ? ` · ${row.clinicName}` : ""}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-3">
-        <span className="text-sm font-bold tabular-nums text-slate-900">
+        <span className="text-sm font-bold tabular-nums text-graphite-900">
           {money(row.amountInr)}
         </span>
         <button
@@ -489,7 +489,7 @@ export function ExpenseRowItem({ row }: { row: ExpenseRow }) {
           aria-label="Remove this entry"
           disabled={pending}
           onClick={() => start(async () => void (await deleteExpense(row.id)))}
-          className="text-slate-300 transition hover:text-rose-600 disabled:opacity-60"
+          className="text-graphite-400 transition hover:text-coral-600 disabled:opacity-60"
         >
           <Trash2 className="h-4 w-4" />
         </button>

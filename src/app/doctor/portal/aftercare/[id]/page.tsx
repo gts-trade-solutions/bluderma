@@ -40,7 +40,7 @@ export default async function DoctorAftercareSheetPage({
     <div className="pb-10">
       <Link
         href="/doctor/portal/aftercare"
-        className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition hover:text-slate-900 print:hidden"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-graphite-500 transition hover:text-graphite-900 print:hidden"
       >
         <ArrowLeft className="h-4 w-4" /> All sheets
       </Link>

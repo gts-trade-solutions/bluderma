@@ -15,11 +15,11 @@ const FLOW: Record<string, { label: string; next: MedicineOrderStatus | null }> 
 };
 
 const TONE: Record<string, string> = {
-  PLACED: "bg-amber-100 text-amber-800",
-  CONFIRMED: "bg-brand-100 text-brand-800",
-  DISPATCHED: "bg-violet-100 text-violet-800",
-  DELIVERED: "bg-teal-100 text-teal-800",
-  CANCELLED: "bg-slate-100 text-slate-500",
+  PLACED: "bg-gold-100 text-gold-900",
+  CONFIRMED: "bg-azure-100 text-azure-800",
+  DISPATCHED: "bg-graphite-100 text-graphite-800",
+  DELIVERED: "bg-mint-100 text-mint-800",
+  CANCELLED: "bg-graphite-100 text-graphite-500",
 };
 
 /**
@@ -63,20 +63,20 @@ export default function OrderRow({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-bold text-slate-900">{patient}</p>
-            <span className="font-mono text-[11px] text-slate-400">{reference}</span>
+            <p className="text-sm font-bold text-graphite-900">{patient}</p>
+            <span className="font-mono text-[11px] text-graphite-500">{reference}</span>
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${TONE[status]}`}
             >
               {flow.label}
             </span>
           </div>
-          <p className="mt-0.5 text-xs text-slate-500">
+          <p className="mt-0.5 text-xs text-graphite-500">
             {placed}
             {patientId ? ` · ${patientId}` : ""} · {total}
           </p>
-          <p className="mt-1 text-xs text-slate-600">{items.join(", ")}</p>
-          <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
+          <p className="mt-1 text-xs text-graphite-600">{items.join(", ")}</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-graphite-500">
             {deliverTo}
             {phone ? ` · ${phone}` : ""}
           </p>
@@ -86,7 +86,7 @@ export default function OrderRow({
               href={`/api/uploads/view?url=${encodeURIComponent(prescriptionUrl)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 underline underline-offset-2"
+              className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-semibold text-azure-700 underline underline-offset-2"
             >
               <FileText className="h-3.5 w-3.5" /> The prescription
             </a>
@@ -104,7 +104,7 @@ export default function OrderRow({
                   if (!res.ok) setError(res.error ?? "Could not update that.");
                 })
               }
-              className="rounded-full bg-slate-900 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-slate-700 disabled:opacity-60"
+              className="rounded-full bg-graphite-900 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-graphite-700 disabled:opacity-60"
             >
               Mark {FLOW[flow.next].label.toLowerCase()}
             </button>
@@ -120,14 +120,14 @@ export default function OrderRow({
                     if (!res.ok) setError(res.error ?? "Could not cancel that.");
                   })
                 }
-                className="text-xs font-semibold text-slate-400 transition hover:text-rose-600 disabled:opacity-60"
+                className="text-xs font-semibold text-graphite-500 transition hover:text-coral-600 disabled:opacity-60"
               >
                 Cancel
               </button>
             )}
         </div>
       </div>
-      {error && <p className="mt-2 text-xs font-semibold text-rose-600">{error}</p>}
+      {error && <p className="mt-2 text-xs font-semibold text-coral-600">{error}</p>}
     </li>
   );
 }

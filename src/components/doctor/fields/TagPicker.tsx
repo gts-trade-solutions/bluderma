@@ -139,7 +139,7 @@ export default function TagPicker({
         className="mb-1.5 block text-sm font-semibold text-ink"
       >
         {label}
-        {required && <span className="text-brand-500"> *</span>}
+        {required && <span className="text-azure-600"> *</span>}
       </label>
       {hint && <p className="mb-2.5 text-xs text-ink-muted">{hint}</p>}
 
@@ -168,13 +168,13 @@ export default function TagPicker({
         <ul className="mb-3 flex flex-wrap gap-1.5">
           {selected.map((s) => (
             <li key={s}>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 py-1 pl-3 pr-1.5 text-xs font-semibold text-brand-800 ring-1 ring-brand-200">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-azure-50 py-1 pl-3 pr-1.5 text-xs font-semibold text-azure-800 ring-1 ring-azure-200">
                 {s}
                 <button
                   type="button"
                   aria-label={`Remove ${s}`}
                   onClick={() => remove(s)}
-                  className="grid h-5 w-5 place-items-center rounded-full text-brand-500 transition hover:bg-brand-100 hover:text-brand-900"
+                  className="grid h-5 w-5 place-items-center rounded-full text-azure-600 transition hover:bg-azure-100 hover:text-azure-900"
                 >
                   ×
                 </button>
@@ -202,7 +202,7 @@ export default function TagPicker({
           }
         }}
         placeholder={placeholder}
-        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+        className="w-full rounded-xl border border-graphite-200 bg-white px-3.5 py-2.5 text-sm text-graphite-900 outline-none transition placeholder:text-graphite-500 focus:border-azure-400 focus:ring-2 focus:ring-azure-100"
       />
 
       {query.trim().length > 0 && (
@@ -212,11 +212,11 @@ export default function TagPicker({
               <button
                 type="button"
                 onClick={() => add(r.value)}
-                className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50 hover:ring-slate-300"
+                className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-graphite-700 ring-1 ring-graphite-200 transition hover:bg-graphite-50 hover:ring-graphite-300"
               >
                 + {r.value}
                 {r.note && (
-                  <span className="ml-1.5 font-normal text-slate-400">
+                  <span className="ml-1.5 font-normal text-graphite-500">
                     {r.note}
                   </span>
                 )}
@@ -231,7 +231,7 @@ export default function TagPicker({
               <button
                 type="button"
                 onClick={() => add(query)}
-                className="rounded-full bg-brand-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-brand-700"
+                className="rounded-full bg-azure-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-azure-700"
               >
                 + Add &ldquo;{query.trim()}&rdquo;
               </button>
@@ -242,7 +242,7 @@ export default function TagPicker({
 
       {chips.length > 0 && query.trim().length === 0 && (
         <div className="mt-3">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-graphite-500">
             Common
           </p>
           <ul className="mt-1.5 flex flex-wrap gap-1.5">
@@ -251,7 +251,7 @@ export default function TagPicker({
                 <button
                   type="button"
                   onClick={() => add(c)}
-                  className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50 hover:ring-slate-300"
+                  className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-graphite-700 ring-1 ring-graphite-200 transition hover:bg-graphite-50 hover:ring-graphite-300"
                 >
                   + {c}
                 </button>
@@ -267,7 +267,7 @@ export default function TagPicker({
             type="button"
             onClick={() => setShowAll((v) => !v)}
             aria-expanded={showAll}
-            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold text-brand-700 transition hover:bg-brand-50"
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold text-azure-700 transition hover:bg-azure-50"
           >
             <span
               aria-hidden
@@ -281,17 +281,17 @@ export default function TagPicker({
           </button>
 
           {showAll && (
-            <ul className="mt-2 flex max-h-64 flex-wrap gap-1.5 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/60 p-2.5">
+            <ul className="mt-2 flex max-h-64 flex-wrap gap-1.5 overflow-y-auto rounded-xl border border-graphite-200 bg-graphite-50/60 p-2.5">
               {rest.map((o) => (
                 <li key={o.value}>
                   <button
                     type="button"
                     onClick={() => add(o.value)}
-                    className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-brand-50 hover:text-brand-800 hover:ring-brand-300"
+                    className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-graphite-700 ring-1 ring-graphite-200 transition hover:bg-azure-50 hover:text-azure-800 hover:ring-azure-300"
                   >
                     + {o.value}
                     {o.alias && o.alias !== o.value && (
-                      <span className="ml-1 font-normal text-slate-400">
+                      <span className="ml-1 font-normal text-graphite-500">
                         {o.alias}
                       </span>
                     )}

@@ -24,7 +24,7 @@ export default async function InsightStrip({
   return (
     <section className="mb-5">
       <div className="mb-2.5 flex items-center gap-2">
-        <h2 className="font-display text-[15px] font-bold text-slate-900 sm:text-base">
+        <h2 className="font-display text-[15px] font-bold text-graphite-900 sm:text-base">
           Worth a look
         </h2>
         <Tag tone={source === "ai" ? "teal" : "slate"}>
@@ -41,7 +41,7 @@ export default async function InsightStrip({
           return (
             <li
               key={item.title}
-              className="portal-enter flex items-start gap-2.5 rounded-2xl bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_12px_32px_-24px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/80 sm:gap-3 sm:p-4"
+              className="portal-enter flex items-start gap-2.5 rounded-[10px] bg-white p-3 shadow-flat ring-1 ring-graphite-200 sm:gap-3 sm:p-4"
             >
               <span
                 className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg sm:h-9 sm:w-9 ${skin}`}
@@ -50,18 +50,18 @@ export default async function InsightStrip({
               </span>
               <div className="min-w-0 flex-1">
                 {item.metric && (
-                  <p className="font-display text-lg font-bold leading-none tabular-nums text-slate-900 sm:text-xl">
+                  <p className="font-display text-lg font-bold leading-none tabular-nums text-graphite-900 sm:text-xl">
                     {item.metric}
                   </p>
                 )}
                 <p
-                  className={`text-[13px] font-bold leading-snug text-slate-900 sm:text-sm ${
+                  className={`text-[13px] font-bold leading-snug text-graphite-900 sm:text-sm ${
                     item.metric ? "mt-1" : ""
                   }`}
                 >
                   {item.title}
                 </p>
-                <p className="mt-1 text-[11px] leading-relaxed text-slate-500 sm:text-xs">
+                <p className="mt-1 text-[11px] leading-relaxed text-graphite-500 sm:text-xs">
                   {item.body}
                 </p>
               </div>
@@ -77,10 +77,10 @@ export default async function InsightStrip({
 export function InsightStripSkeleton() {
   return (
     <section className="mb-7">
-      <div className="mb-3 h-5 w-32 animate-pulse rounded bg-slate-200" />
+      <div className="mb-3 h-5 w-32 animate-pulse rounded bg-graphite-200" />
       <ul className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
-          <li key={i} className="h-24 animate-pulse rounded-2xl bg-slate-100" />
+          <li key={i} className="h-24 animate-pulse rounded-[10px] bg-graphite-100" />
         ))}
       </ul>
     </section>
@@ -89,12 +89,12 @@ export function InsightStripSkeleton() {
 
 /** Full class strings — Tailwind never sees an interpolated one. */
 const INSIGHT_SKINS: Record<string, string> = {
-  calendar: "bg-brand-50 text-brand-700",
-  money: "bg-teal-50 text-teal-700",
-  people: "bg-violet-50 text-violet-700",
-  star: "bg-amber-50 text-amber-700",
-  clock: "bg-rose-50 text-rose-700",
-  spark: "bg-slate-100 text-slate-600",
+  calendar: "bg-azure-50 text-azure-700",
+  money: "bg-mint-50 text-mint-800",
+  people: "bg-graphite-50 text-graphite-700",
+  star: "bg-gold-50 text-gold-800",
+  clock: "bg-coral-50 text-coral-700",
+  spark: "bg-graphite-100 text-graphite-600",
 };
 
 /** Small hand-rolled glyphs — the portal does not use lucide. */

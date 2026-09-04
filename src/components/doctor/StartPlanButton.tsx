@@ -39,7 +39,7 @@ export default function StartPlanButton({
           if (res.ok && res.planId) router.push(`/doctor/portal/plans/${res.planId}`);
         })
       }
-      className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full bg-slate-900 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-slate-700 disabled:opacity-60"
+      className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full bg-graphite-900 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-graphite-700 disabled:opacity-60"
     >
       {pending ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
       Review

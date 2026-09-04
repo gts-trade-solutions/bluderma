@@ -49,7 +49,7 @@ export default async function PlanPage({ params }: { params: { id: string } }) {
     <div className="pb-10">
       <Link
         href="/doctor/portal/plans"
-        className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition hover:text-slate-900"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-graphite-500 transition hover:text-graphite-900"
       >
         <ArrowLeft className="h-4 w-4" /> All plans
       </Link>
@@ -106,16 +106,16 @@ export default async function PlanPage({ params }: { params: { id: string } }) {
                 {plan.scan.issues.map((i) => (
                   <li key={i.issueType}>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-sm font-semibold capitalize text-slate-700">
+                      <span className="text-sm font-semibold capitalize text-graphite-700">
                         {humanIssue(i.issueType)}
                       </span>
-                      <span className="text-sm font-bold tabular-nums text-slate-900">
+                      <span className="text-sm font-bold tabular-nums text-graphite-900">
                         {i.score === null ? "—" : Math.round(i.score)}
                       </span>
                     </div>
-                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-graphite-100">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-brand-500 to-teal-500"
+                        className="h-full rounded-full bg-azure-500"
                         style={{ width: `${Math.min(Math.max(i.score ?? 0, 0), 100)}%` }}
                       />
                     </div>
@@ -123,7 +123,7 @@ export default async function PlanPage({ params }: { params: { id: string } }) {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-graphite-500">
                 This plan was started without an analysis.
               </p>
             )}

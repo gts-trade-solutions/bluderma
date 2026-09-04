@@ -25,7 +25,7 @@ export default function SubmitApplication({ disabled }: { disabled: boolean }) {
       >
         {pending ? "Sending…" : "Submit for review"}
       </button>
-      {error && <p className="mt-2 text-sm text-rose-600">{error}</p>}
+      {error && <p className="mt-2 text-sm text-coral-600">{error}</p>}
     </div>
   );
 }

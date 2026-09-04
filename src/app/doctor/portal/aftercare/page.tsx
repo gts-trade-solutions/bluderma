@@ -106,6 +106,7 @@ export default async function AftercarePage() {
     <>
       <PageHead
         title="Pre and post treatment"
+        mark="treatment"
         sub="What a patient has to do before they come, and what to do afterwards. Issued to a named patient and kept as a record of what was said on the day."
       />
 
@@ -178,23 +179,23 @@ export default async function AftercarePage() {
               />
             </div>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-graphite-100">
               {sheets.map((s) => (
                 <li key={s.id}>
                   <Link
                     href={`/doctor/portal/aftercare/${s.id}`}
-                    className="block px-4 py-3.5 transition hover:bg-slate-50 sm:px-5"
+                    className="block px-4 py-3.5 transition hover:bg-graphite-50 sm:px-5"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="flex min-w-0 items-center gap-1.5 text-sm font-bold text-slate-900">
+                      <p className="flex min-w-0 items-center gap-1.5 text-sm font-bold text-graphite-900">
                         {/* Which side, at a glance. Two sheets for one patient
                             on one day is the normal case, and without this
                             they are indistinguishable in the list. */}
                         <span
                           className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide ${
                             s.kind === "PRE"
-                              ? "bg-violet-100 text-violet-800"
-                              : "bg-brand-100 text-brand-800"
+                              ? "bg-graphite-100 text-graphite-800"
+                              : "bg-azure-100 text-azure-800"
                           }`}
                         >
                           {s.kind === "PRE" ? "Before" : "After"}
@@ -205,16 +206,16 @@ export default async function AftercarePage() {
                           Never inferred from a page view: the sheet asks them
                           to say so, and only they can. */}
                       {s.acknowledgedAt ? (
-                        <span className="shrink-0 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-teal-700">
+                        <span className="shrink-0 rounded-full bg-mint-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-mint-800">
                           Confirmed
                         </span>
                       ) : (
-                        <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                        <span className="shrink-0 rounded-full bg-graphite-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-graphite-500">
                           Not confirmed
                         </span>
                       )}
                     </div>
-                    <p className="mt-0.5 truncate text-xs text-slate-500">
+                    <p className="mt-0.5 truncate text-xs text-graphite-500">
                       {s.procedure} ·{" "}
                       {s.procedureDate.toLocaleDateString("en-IN", {
                         day: "numeric",
@@ -224,7 +225,7 @@ export default async function AftercarePage() {
                       {s.patientPublicId ? ` · ${s.patientPublicId}` : ""}
                     </p>
                     {s.doctorNotes && (
-                      <p className="mt-1 line-clamp-1 text-[11px] text-slate-400">
+                      <p className="mt-1 line-clamp-1 text-[11px] text-graphite-500">
                         Your notes: {s.doctorNotes}
                       </p>
                     )}

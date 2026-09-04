@@ -67,6 +67,7 @@ export default async function GalleryPage() {
     <>
       <PageHead
         title="Before and after"
+        mark="after"
         sub="Your own cases, shown on your public profile. Every one needs the patient's agreement first."
       />
 
@@ -108,7 +109,7 @@ export default async function GalleryPage() {
               <Empty title="Nothing here yet" body="Add a case on the left." />
             </div>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-graphite-100">
               {cases.map((c) => (
                 <GalleryCaseRow
                   key={c.id}

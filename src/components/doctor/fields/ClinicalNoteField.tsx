@@ -212,7 +212,7 @@ export default function ClinicalNoteField({
   return (
     <div>
       <div className="mb-1.5 flex flex-wrap items-end justify-between gap-2">
-        <label className="text-sm font-semibold text-slate-800">{label}</label>
+        <label className="text-sm font-semibold text-graphite-800">{label}</label>
 
         {aiEnabled && (
           <div className="flex flex-wrap items-center gap-1.5">
@@ -223,8 +223,8 @@ export default function ClinicalNoteField({
               aria-pressed={recording}
               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ring-1 transition disabled:opacity-50 ${
                 recording
-                  ? "bg-rose-600 text-white ring-rose-600"
-                  : "bg-brand-50 text-brand-800 ring-brand-200 hover:bg-brand-100"
+                  ? "bg-coral-600 text-white ring-coral-600"
+                  : "bg-azure-50 text-azure-800 ring-azure-200 hover:bg-azure-100"
               }`}
             >
               <MicIcon pulsing={recording} />
@@ -239,13 +239,38 @@ export default function ClinicalNoteField({
               type="button"
               onClick={rephrase}
               disabled={busy || recording}
-              className="rounded-full px-2.5 py-1 text-[11px] font-bold text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-full px-2.5 py-1 text-[11px] font-bold text-graphite-600 ring-1 ring-graphite-200 transition hover:bg-graphite-50 disabled:opacity-50"
             >
               {phase.kind === "rephrasing" ? "Formatting…" : "Tidy for the patient"}
             </button>
           </div>
         )}
       </div>
+
+      {/* ── The route from speech to a sheet ────────────────────────────
+          Four steps, named, because the field looked like a textarea with
+          two mystery buttons over it: nobody presses "Tidy for the patient"
+          if they do not already know that what comes back is a suggestion
+          they have to accept. Spelling the sequence out is also the honest
+          version of it — the model writes a draft, a human approves it, and
+          the patient only ever reads what the doctor pressed Issue on. */}
+      {aiEnabled && (
+        <ol className="mb-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[10.5px] font-semibold text-graphite-500">
+          {["Say it", "Tidy it", "Check both", "Issue"].map((step, i) => (
+            <li key={step} className="flex items-center gap-1.5">
+              {i > 0 && (
+                <span aria-hidden className="text-graphite-300">
+                  →
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1 rounded-full bg-graphite-100 px-2 py-0.5">
+                <span className="font-bold text-graphite-700">{i + 1}</span>
+                {step}
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
 
       <textarea
         ref={ref}
@@ -259,13 +284,13 @@ export default function ClinicalNoteField({
             : "Anything specific to this patient.")
         }
         aria-invalid={error ? true : undefined}
-        className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 ${
-          error ? "border-rose-300" : "border-slate-200"
+        className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-graphite-900 outline-none transition placeholder:text-graphite-500 focus:border-azure-400 focus:ring-2 focus:ring-azure-100 ${
+          error ? "border-coral-300" : "border-graphite-200"
         }`}
       />
 
       {recording && (
-        <p className="mt-1.5 text-xs font-semibold text-rose-600" aria-live="polite">
+        <p className="mt-1.5 text-xs font-semibold text-coral-600" aria-live="polite">
           Recording. Speak normally — say what you want the patient to do, and
           press Stop.
         </p>
@@ -274,32 +299,32 @@ export default function ClinicalNoteField({
       {/* ── The confirmation ─────────────────────────────────────────── */}
       {phase.kind === "review" && (
         <div
-          className="mt-3 rounded-xl border-2 border-brand-200 bg-brand-50/50 p-3.5"
+          className="mt-3 rounded-xl border-2 border-azure-200 bg-azure-50/50 p-3.5"
           aria-live="polite"
         >
-          <p className="text-sm font-bold text-brand-900">
+          <p className="text-sm font-bold text-azure-900">
             Check this before it goes out
           </p>
-          <p className="mt-1 text-xs leading-relaxed text-brand-800/80">
+          <p className="mt-1 text-xs leading-relaxed text-azure-800/80">
             Formatted from your own words for a patient to read. Nothing has
             been added — if you see an instruction you did not give, use your
             version instead and tell us.
           </p>
 
           <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
-            <div className="rounded-lg bg-white p-3 ring-1 ring-slate-200">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+            <div className="rounded-lg bg-white p-3 ring-1 ring-graphite-200">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-graphite-500">
                 What you said
               </p>
-              <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-slate-600">
+              <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-graphite-600">
                 {phase.original}
               </p>
             </div>
-            <div className="rounded-lg bg-white p-3 ring-1 ring-brand-200">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-brand-600">
+            <div className="rounded-lg bg-white p-3 ring-1 ring-azure-200">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-azure-600">
                 For the patient
               </p>
-              <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-slate-800">
+              <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-graphite-800">
                 {phase.suggestion}
               </p>
             </div>
@@ -313,30 +338,30 @@ export default function ClinicalNoteField({
                 setPhase({ kind: "idle" });
                 ref.current?.focus();
               }}
-              className="rounded-full bg-brand-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-brand-700"
+              className="rounded-full bg-azure-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-azure-700"
             >
               Use this
             </button>
             <button
               type="button"
               onClick={() => setPhase({ kind: "idle" })}
-              className="rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50"
+              className="rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-graphite-600 ring-1 ring-graphite-200 transition hover:bg-graphite-50"
             >
               Keep mine
             </button>
-            <span className="text-[11px] text-slate-500">
+            <span className="text-[11px] text-graphite-500">
               You can edit either one afterwards.
             </span>
           </div>
         </div>
       )}
 
-      {problem && <p className="mt-2 text-xs text-amber-700">{problem}</p>}
+      {problem && <p className="mt-2 text-xs text-gold-800">{problem}</p>}
 
       {error ? (
-        <p className="mt-1.5 text-xs font-medium text-rose-600">{error}</p>
+        <p className="mt-1.5 text-xs font-medium text-coral-600">{error}</p>
       ) : hint ? (
-        <p className="mt-1.5 text-xs text-slate-500">{hint}</p>
+        <p className="mt-1.5 text-xs text-graphite-500">{hint}</p>
       ) : null}
     </div>
   );

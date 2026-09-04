@@ -92,6 +92,7 @@ export default async function PlansPage() {
     <>
       <PageHead
         title="Treatment plans"
+        mark="plans"
         sub="A course of treatment you propose for one patient, in writing, that they can read and think about at home."
       />
 
@@ -118,13 +119,13 @@ export default async function PlansPage() {
         ].map((s) => (
           <li
             key={s.n}
-            className="rounded-2xl bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_12px_32px_-24px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/80"
+            className="rounded-[10px] bg-white p-4 shadow-flat ring-1 ring-graphite-200"
           >
-            <span className="grid h-6 w-6 place-items-center rounded-full bg-violet-100 text-[11px] font-black text-violet-800">
+            <span className="grid h-6 w-6 place-items-center rounded-full bg-graphite-100 text-[11px] font-black text-graphite-800">
               {s.n}
             </span>
-            <p className="mt-2 text-sm font-bold text-slate-900">{s.t}</p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-500">{s.b}</p>
+            <p className="mt-2 text-sm font-bold text-graphite-900">{s.t}</p>
+            <p className="mt-1 text-xs leading-relaxed text-graphite-500">{s.b}</p>
           </li>
         ))}
       </ol>
@@ -146,15 +147,15 @@ export default async function PlansPage() {
               />
             </div>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-graphite-100">
               {candidates.map((c) => (
                 <li key={c.userId} className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-slate-900">{c.name}</p>
+                    <p className="truncate text-sm font-bold text-graphite-900">{c.name}</p>
                     {/* Said either way. "No analysis" is not a problem to be
                         solved before starting — it only changes whether the
                         first draft is pre-filled. */}
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-graphite-500">
                       {c.scannedOn
                         ? `Scanned ${c.scannedOn} — the draft starts from it`
                         : "No analysis yet — you will start from blank"}
@@ -183,28 +184,28 @@ export default async function PlansPage() {
               />
             </div>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-graphite-100">
               {plans.map((p) => {
                 const accepted = p.items.filter((i) => i.state === "ACCEPTED").length;
                 const waiting = p.items.filter((i) => i.state === "SUGGESTED").length;
                 return (
                   <li key={p.id}>
-                    <Link href={`/doctor/portal/plans/${p.id}`} className="block px-4 py-3.5 transition hover:bg-slate-50 sm:px-5">
+                    <Link href={`/doctor/portal/plans/${p.id}`} className="block px-4 py-3.5 transition hover:bg-graphite-50 sm:px-5">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="min-w-0 text-sm font-bold text-slate-900">
+                        <p className="min-w-0 text-sm font-bold text-graphite-900">
                           {p.patient.name ?? "Client"}
                         </p>
                         {p.sharedAt ? (
-                          <span className="shrink-0 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-teal-700">
+                          <span className="shrink-0 rounded-full bg-mint-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-mint-800">
                             Shared
                           </span>
                         ) : (
-                          <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">
+                          <span className="shrink-0 rounded-full bg-gold-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gold-800">
                             Draft
                           </span>
                         )}
                       </div>
-                      <p className="mt-0.5 text-xs text-slate-500">
+                      <p className="mt-0.5 text-xs text-graphite-500">
                         {accepted} in the plan
                         {waiting > 0 && ` · ${waiting} still to review`}
                         {p.patient.publicId ? ` · ${p.patient.publicId}` : ""}

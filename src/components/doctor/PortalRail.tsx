@@ -26,6 +26,19 @@ export interface RailItem {
   label: string;
   href: string;
   icon: string;
+  /**
+   * The group this link belongs to, printed above the first item carrying it.
+   *
+   * Thirteen links in one undifferentiated column is a list somebody reads
+   * top to bottom every time rather than aims at, and it is why "Money" and
+   * "Gift cards" — two things a doctor does once a week — sat between two
+   * they do hourly. The headings cost one line each and turn the rail into
+   * four short lists.
+   *
+   * Hidden when the rail is collapsed: a 4.5rem rail has no room for words,
+   * and the gap between groups still separates them.
+   */
+  section?: string;
   /** Matched exactly rather than by prefix — /doctor/portal is every page. */
   exact?: boolean;
   badge?: number;
@@ -75,16 +88,38 @@ export default function PortalRail({
     item.exact ? pathname === item.href : pathname.startsWith(item.href);
 
   const nav = (
-    <nav className="flex flex-1 flex-col gap-1 px-3">
-      {items.map((item) => {
+    /*
+     * `min-h-0` is the whole fix for a rail that could not be scrolled.
+     *
+     * A flex child defaults to `min-height: auto`, which means it refuses to
+     * shrink below its content — so `flex-1` + `overflow-y-auto` grew the nav
+     * to the height of thirteen links, overflowed the fixed aside, and clipped
+     * everything past it with no scrollbar to reach the rest. On a 768px
+     * laptop that hid Money, inventory, gift cards, practice and profile
+     * outright: they were on the page, below the fold of an element that had
+     * no fold.
+     */
+    <nav className="thin-scroll flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-1">
+      {items.map((item, i) => {
         const active = isActive(item);
+        // The heading prints once, above the first item of its group.
+        const heading =
+          item.section && item.section !== items[i - 1]?.section ? (
+            <p
+              key={`${item.section}-head`}
+              className="rail-label px-3 pb-1 pt-4 text-[10px] font-bold uppercase tracking-[0.14em] text-white/30 first:pt-1"
+            >
+              {item.section}
+            </p>
+          ) : null;
         if (item.locked) {
           return (
+            <div key={item.href}>
+              {heading}
             <span
-              key={item.href}
               title={item.locked}
               aria-disabled="true"
-              className="rail-wide flex cursor-default items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/25"
+              className="rail-wide flex cursor-default items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-white/25"
             >
               <span className="text-white/20">
                 <GlyphIcon name={item.icon} />
@@ -94,16 +129,18 @@ export default function PortalRail({
                 <GlyphIcon name="lock" />
               </span>
             </span>
+            </div>
           );
         }
         return (
+          <div key={item.href}>
+            {heading}
           <Link
-            key={item.href}
             href={item.href}
             title={item.label}
-            className={`rail-wide group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
+            className={`rail-wide group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition ${
               active
-                ? "bg-gradient-to-r from-white/[0.12] to-white/[0.04] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+                ? "bg-white/[0.10] text-white"
                 : "text-white/55 hover:bg-white/[0.05] hover:text-white/90"
             }`}
           >
@@ -111,29 +148,30 @@ export default function PortalRail({
                 it reads at a glance without competing with the badge. */}
             <span
               aria-hidden
-              className={`absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-teal-400 transition-opacity ${
+              className={`absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-gold-500 transition-opacity ${
                 active ? "opacity-100" : "opacity-0"
               }`}
             />
-            <span className={active ? "text-teal-300" : "text-white/45 group-hover:text-white/70"}>
+            <span className={active ? "text-gold-500" : "text-white/45 group-hover:text-white/70"}>
               <GlyphIcon name={item.icon} />
             </span>
             <span className="rail-label min-w-0 flex-1 truncate">{item.label}</span>
             {item.badge ? (
-              <span className="rail-badge grid h-5 min-w-[20px] shrink-0 place-items-center rounded-full bg-amber-400 px-1 text-[11px] font-bold text-[#0b1220]">
+              <span className="rail-badge grid h-5 min-w-[20px] shrink-0 place-items-center rounded-full bg-gold-500 px-1 text-[11px] font-bold text-graphite-900">
                 {item.badge}
               </span>
             ) : null}
           </Link>
+          </div>
         );
       })}
     </nav>
   );
 
   const identity = (
-    <div className="px-5 pb-5 pt-6">
+    <div className="px-4 pb-3 pt-4">
       <span className="rail-label block">
-        <BrandLogo href="/doctor" size={40} tone="light" />
+        <BrandLogo href="/doctor/portal" size={34} tone="light" />
       </span>
       {/* The practitioner's own card, and a link to their profile.
           It looked like a header and behaved like one, so every doctor who
@@ -142,14 +180,14 @@ export default function PortalRail({
       <Link
         href="/doctor/portal/profile"
         title={`${doctorName} — open my profile`}
-        className="rail-wide mt-5 flex items-center gap-3 rounded-2xl bg-gradient-to-br from-white/[0.09] to-white/[0.03] px-3.5 py-3.5 ring-1 ring-white/10 transition hover:from-white/[0.14] hover:to-white/[0.06] hover:ring-white/20"
+        className="rail-wide mt-3 flex items-center gap-3 rounded-[10px] bg-white/[0.07] px-3 py-2.5 ring-1 ring-white/10 transition hover:bg-white/[0.12] hover:ring-white/20"
       >
         {/* A doctor figure, not the first letter of the name. See Avatar.tsx. */}
         <Avatar
           src={photo}
           alt={doctorName}
           role="doctor"
-          size={40}
+          size={34}
           className="ring-1 ring-white/20"
         />
         <div className="rail-label min-w-0 flex-1">
@@ -168,7 +206,7 @@ export default function PortalRail({
       <button
         onClick={() => signOut({ callbackUrl: "/doctor" })}
         title="Sign out"
-        className="rail-wide flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/50 transition hover:bg-white/[0.05] hover:text-white/85"
+        className="rail-wide flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-white/50 transition hover:bg-white/[0.05] hover:text-white/85"
       >
         <span aria-hidden className="text-white/40">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
@@ -183,7 +221,7 @@ export default function PortalRail({
   return (
     <>
       {/* ── Desktop rail ──────────────────────────────────────────────── */}
-      <aside className="portal-rail on-dark fixed inset-y-0 left-0 z-40 hidden flex-col bg-[#0b1220] lg:flex">
+      <aside className="portal-rail on-dark fixed inset-y-0 left-0 z-40 hidden flex-col bg-graphite-900 lg:flex">
         {identity}
         {nav}
         <CollapseToggle />
@@ -191,7 +229,7 @@ export default function PortalRail({
       </aside>
 
       {/* ── Mobile bar ────────────────────────────────────────────────── */}
-      <div className="on-dark sticky top-0 z-40 flex h-14 items-center gap-3 bg-[#0b1220] px-4 lg:hidden">
+      <div className="on-dark sticky top-0 z-40 flex h-14 items-center gap-3 bg-graphite-900 px-4 lg:hidden">
         <button
           onClick={() => setOpen(true)}
           aria-label="Open menu"
@@ -201,12 +239,12 @@ export default function PortalRail({
             <path d="M4 7h16M4 12h16M4 17h16" />
           </svg>
         </button>
-        <BrandLogo href="/doctor" size={34} tone="light" />
+        <BrandLogo href="/doctor/portal" size={34} tone="light" />
         <span className="ml-auto truncate text-xs font-semibold text-white/50">
           {doctorName}
         </span>
         {items.some((i) => i.badge) && (
-          <span className="grid h-5 min-w-[20px] place-items-center rounded-full bg-amber-400 px-1 text-[11px] font-bold text-[#0b1220]">
+          <span className="grid h-5 min-w-[20px] place-items-center rounded-full bg-gold-400 px-1 text-[11px] font-bold text-graphite-900">
             {items.reduce((n, i) => n + (i.badge ?? 0), 0)}
           </span>
         )}
@@ -218,9 +256,9 @@ export default function PortalRail({
           <button
             aria-label="Close menu"
             onClick={() => setOpen(false)}
-            className="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]"
+            className="absolute inset-0 bg-graphite-950/50 backdrop-blur-[2px]"
           />
-          <aside className="on-dark relative flex h-full w-72 max-w-[85vw] flex-col bg-[#0b1220] shadow-2xl">
+          <aside className="on-dark relative flex h-full w-72 max-w-[85vw] flex-col bg-graphite-900 shadow-2xl">
             {identity}
             {nav}
             {footer}
@@ -274,7 +312,7 @@ function CollapseToggle() {
         onClick={toggle}
         title={collapsed ? "Expand the menu" : "Collapse the menu"}
         aria-label={collapsed ? "Expand the menu" : "Collapse the menu"}
-        className="rail-wide flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/40 transition hover:bg-white/[0.05] hover:text-white/80"
+        className="rail-wide flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-white/40 transition hover:bg-white/[0.05] hover:text-white/80"
       >
         <span aria-hidden className="shrink-0">
           <svg
@@ -298,16 +336,16 @@ function CollapseToggle() {
 function StatusPill({ status }: { status: string }) {
   if (status === "APPROVED") {
     return (
-      <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-teal-400/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-300">
-        <span className="h-1.5 w-1.5 rounded-full bg-teal-400" />
+      <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-mint-500/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-mint-300">
+        <span className="h-1.5 w-1.5 rounded-full bg-mint-400" />
         Live
       </span>
     );
   }
   const copy: Record<string, { label: string; skin: string }> = {
-    DRAFT: { label: "Draft", skin: "bg-amber-400/15 text-amber-300" },
-    PENDING: { label: "In review", skin: "bg-blue-400/15 text-blue-300" },
-    REJECTED: { label: "Needs changes", skin: "bg-rose-400/15 text-rose-300" },
+    DRAFT: { label: "Draft", skin: "bg-gold-500/20 text-gold-300" },
+    PENDING: { label: "In review", skin: "bg-azure-500/20 text-azure-300" },
+    REJECTED: { label: "Needs changes", skin: "bg-coral-500/20 text-coral-300" },
     SUSPENDED: { label: "Paused", skin: "bg-white/10 text-white/60" },
   };
   const c = copy[status] ?? copy.PENDING;

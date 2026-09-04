@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Empty, PageHead, Panel } from "@/components/doctor/portalUi";
 import StartPlanButton from "@/components/doctor/StartPlanButton";
+import PrePostCareSection from "@/components/doctor/PrePostCareSection";
 import { getOwnDoctor } from "@/lib/doctor/guard";
 import { prisma } from "@/lib/prisma";
 
@@ -31,7 +32,12 @@ const DATE = (d: Date) =>
  * you agree with, add your own, then share it — is not guessable from a
  * button called Start.
  */
-export default async function PlansPage() {
+export default async function PlansPage({
+  searchParams,
+}: {
+  searchParams?: { tab?: string };
+}) {
+  const care = searchParams?.tab === "care";
   const owner = await getOwnDoctor();
   if (!owner) {
     return <Empty title="No practice linked" body="This account has no practice record yet." />;
@@ -91,11 +97,55 @@ export default async function PlansPage() {
   return (
     <>
       <PageHead
-        title="Treatment plans"
-        mark="plans"
-        sub="A course of treatment you propose for one patient, in writing, that they can read and think about at home."
+        title="Treatment programs"
+        mark="programs"
+        sub={
+          care
+            ? "What a patient has to do before they come, and what to do afterwards. Issued to a named patient and kept as a record of what was said on the day."
+            : "A course of treatment you propose for one patient, in writing, that they can read and think about at home."
+        }
       />
 
+      {/* ── One job, two halves ──────────────────────────────────────────
+          Pre and post care used to be its own entry in the rail, two clicks
+          from the plan it belongs to. Deciding a course of treatment and
+          telling somebody how to prepare for it are the same conversation on
+          the same afternoon, so they are the same screen now.
+
+          Links rather than a control, so each half is a URL a doctor can
+          keep, and the old /doctor/portal/aftercare route redirects to the
+          second one. */}
+      <div className="mb-5 flex flex-wrap items-center gap-1.5">
+        {[
+          { key: "plans", label: "Programs", href: "/doctor/portal/plans" },
+          {
+            key: "care",
+            label: "Pre & post care",
+            href: "/doctor/portal/plans?tab=care",
+          },
+        ].map((t) => {
+          const on = care ? t.key === "care" : t.key === "plans";
+          return (
+            <Link
+              key={t.key}
+              href={t.href}
+              aria-current={on ? "page" : undefined}
+              className={`rounded-lg px-3.5 py-2 text-[13px] font-bold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-azure-500 ${
+                on
+                  ? "bg-graphite-900 text-white shadow-flat"
+                  : "bg-graphite-100 text-graphite-700 hover:bg-graphite-200"
+              }`}
+            >
+              {t.label}
+            </Link>
+          );
+        })}
+      </div>
+
+      {care && <PrePostCareSection />}
+
+      {!care && (
+        <>
       {/* What it is and how it goes, before the buttons. The sequence is not
           guessable from a control called Start, and a doctor who cannot guess
           it does not press it. */}
@@ -218,6 +268,8 @@ export default async function PlansPage() {
           )}
         </Panel>
       </div>
+        </>
+      )}
     </>
   );
 }

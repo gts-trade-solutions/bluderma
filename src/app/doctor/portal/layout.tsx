@@ -159,20 +159,13 @@ export default async function DoctorPortalLayout({
       locked: setup ? notYet : undefined,
     },
     {
+      // Pre and post care lives inside this screen now, on its own tab:
+      // planning a course of treatment and telling somebody how to prepare
+      // for it are one job. /doctor/portal/aftercare redirects there.
       section: "Clinical",
       label: "Treatment programs",
       href: "/doctor/portal/plans",
       icon: "pulse",
-      locked: setup ? notYet : undefined,
-    },
-    {
-      // Both halves live here now, so the label names both. "Aftercare"
-      // described the screen accurately right up until it stopped being
-      // only that.
-      section: "Clinical",
-      label: "Pre & post care",
-      href: "/doctor/portal/aftercare",
-      icon: "sheet",
       locked: setup ? notYet : undefined,
     },
     {

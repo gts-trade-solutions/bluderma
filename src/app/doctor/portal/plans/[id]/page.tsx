@@ -4,9 +4,11 @@ import { ArrowLeft } from "lucide-react";
 
 import { PageHead, Panel } from "@/components/doctor/portalUi";
 import PlanEditor, { type PlanItem } from "@/components/doctor/PlanEditor";
+import PatientBrief from "@/components/doctor/PatientBrief";
 import { getOwnDoctor } from "@/lib/doctor/guard";
 import { prisma } from "@/lib/prisma";
 import { humanIssue } from "@/lib/integrations/treatmentPlanCore";
+import { getPatientBrief } from "@/lib/queries/patientBrief";
 
 export const metadata = { title: "Treatment plan" };
 export const dynamic = "force-dynamic";
@@ -21,6 +23,7 @@ export default async function PlanPage({ params }: { params: { id: string } }) {
     select: {
       id: true,
       sharedAt: true,
+      patientUserId: true,
       patient: { select: { name: true, publicId: true } },
       items: { orderBy: { sortOrder: "asc" } },
       scan: {
@@ -36,6 +39,12 @@ export default async function PlanPage({ params }: { params: { id: string } }) {
     },
   });
   if (!plan) notFound();
+
+  /* Who this is for. The screen showed a name and a list of suggestions and
+     nothing else about the person — see PatientBrief for why that made the
+     plan unplannable. Fetched after the plan so a patient nobody can read
+     never costs a query. */
+  const brief = await getPatientBrief(owner.doctorId, plan.patientUserId);
 
   const items: PlanItem[] = plan.items.map((i) => ({
     id: i.id,
@@ -55,11 +64,12 @@ export default async function PlanPage({ params }: { params: { id: string } }) {
       </Link>
 
       <PageHead
-        title={plan.patient.name ?? "Client"}
+        title={`${plan.patient.name ?? "Client"}'s program`}
+        mark="program"
         sub={
-          plan.patient.publicId
-            ? `Treatment plan · ${plan.patient.publicId}`
-            : "Treatment plan"
+          plan.sharedAt
+            ? "Shared with them — they can read this in their profile. Anything you change from here is visible to them."
+            : "A draft. Nothing here reaches the patient until you share it."
         }
       />
 
@@ -83,6 +93,25 @@ export default async function PlanPage({ params }: { params: { id: string } }) {
           </div>
         </Panel>
 
+        <div className="space-y-4">
+        <Panel
+          title="Who this is for"
+          sub="Everything that should change what you propose"
+          icon="user"
+          accent="brand"
+          index={1}
+        >
+          <div className="p-4 sm:p-5">
+            {brief ? (
+              <PatientBrief brief={brief} />
+            ) : (
+              <p className="text-sm text-graphite-600">
+                This patient&apos;s account is no longer available.
+              </p>
+            )}
+          </div>
+        </Panel>
+
         <Panel
           title="What the analysis measured"
           sub={
@@ -96,7 +125,7 @@ export default async function PlanPage({ params }: { params: { id: string } }) {
           }
           icon="pulse"
           accent="violet"
-          index={1}
+          index={2}
         >
           <div className="p-4 sm:p-5">
             {/* The numbers the suggestions were drawn from, so a doctor can
@@ -129,6 +158,7 @@ export default async function PlanPage({ params }: { params: { id: string } }) {
             )}
           </div>
         </Panel>
+        </div>
       </div>
     </div>
   );

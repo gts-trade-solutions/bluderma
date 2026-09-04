@@ -42,6 +42,7 @@ interface ClinicView {
   isPrimary: boolean;
   clinic: {
     id: string;
+    publicId: string | null;
     name: string;
     addressLine1: string;
     addressLine2: string | null;
@@ -122,7 +123,7 @@ export default function ClinicsStep({
         >
           <button
             onClick={() => setAdding(true)}
-            className="w-full rounded-2xl border-2 border-dashed border-slate-300 bg-white px-4 py-5 text-sm font-bold text-slate-600 transition hover:border-brand-400 hover:text-brand-700"
+            className="w-full rounded-[10px] border-2 border-dashed border-graphite-300 bg-white px-4 py-5 text-sm font-bold text-graphite-600 transition hover:border-azure-400 hover:text-azure-700"
           >
             + Add another location
           </button>
@@ -130,7 +131,7 @@ export default function ClinicsStep({
       )}
 
       {mode === "join" && doctor.clinics.length > 0 && !adding && !editing && (
-        <div className="flex items-center gap-3 border-t border-slate-100 pt-5">
+        <div className="flex items-center gap-3 border-t border-graphite-100 pt-5">
           <Hint text="Saves your locations and opens the hours step, where you set when you see clients at each one.">
             <Link href={nextHref} className="btn-primary">
               Save and continue
@@ -161,42 +162,81 @@ function ClinicCard({
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  /* The card is a summary; the address opens the rest of it. A practitioner
+     checking "is this the right branch" wants the photographs and the full
+     address, and printing all of that for every location turned a page about
+     three clinics into three screens. */
+  const [open, setOpen] = useState(false);
   const sw = swatchFor(c.clinic.colorKey);
-  const exterior = c.clinic.photos.find((p) => p.kind === "EXTERIOR");
-  const interior = c.clinic.photos.find((p) => p.kind === "INTERIOR");
+  const exterior = c.clinic.photos.filter((p) => p.kind === "EXTERIOR");
+  const interior = c.clinic.photos.filter((p) => p.kind === "INTERIOR");
+  const others = c.clinic.photos.filter(
+    (p) => p.kind !== "EXTERIOR" && p.kind !== "INTERIOR"
+  );
   const shared = c.clinic._count.doctors > 1;
+  const mapQuery = encodeURIComponent(
+    c.clinic.lat !== null && c.clinic.lng !== null
+      ? `${c.clinic.lat},${c.clinic.lng}`
+      : `${c.clinic.name}, ${c.clinic.addressLine1}, ${c.clinic.area}, ${c.clinic.city} ${c.clinic.pincode}`
+  );
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+    <div className="rounded-[10px] border border-graphite-200 bg-white p-4">
       <div className="flex flex-wrap items-start gap-3">
         <span className={`mt-1.5 h-3 w-3 shrink-0 rounded-full ${sw.dot}`} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-bold text-slate-900">{c.clinic.name}</h3>
+            <h3 className="font-bold text-graphite-900">{c.clinic.name}</h3>
+            {/* The id a receptionist reads down a phone. Monospace and
+                select-all: its whole job is being copied or quoted. */}
+            {c.clinic.publicId && (
+              <span className="select-all font-mono text-[10.5px] font-semibold tracking-wide text-graphite-500">
+                {c.clinic.publicId}
+              </span>
+            )}
             {c.isPrimary && (
-              <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-bold text-brand-800">
+              <span className="rounded-full bg-azure-100 px-2 py-0.5 text-[10px] font-bold text-azure-800">
                 MAIN
               </span>
             )}
             {shared && (
               <Hint text={`${c.clinic._count.doctors} practitioners hold hours here. The address, photographs and facilities are shared, so only an admin can change them.`}>
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                <span className="rounded-full bg-graphite-100 px-2 py-0.5 text-[10px] font-bold text-graphite-600">
                   SHARED · {c.clinic._count.doctors}
                 </span>
               </Hint>
             )}
           </div>
-          <p className="mt-0.5 text-sm text-slate-600">
-            {c.clinic.addressLine1}
-            {c.clinic.addressLine2 ? `, ${c.clinic.addressLine2}` : ""},{" "}
-            {c.clinic.area}, {c.clinic.city} {c.clinic.pincode}
-          </p>
-          {c.clinic.landmark && (
-            <p className="mt-0.5 text-sm italic text-slate-500">
-              {c.clinic.landmark}
-            </p>
-          )}
-          <p className="mt-1 flex flex-wrap gap-x-3 text-xs text-slate-500">
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            className="group/addr mt-0.5 flex w-full items-start gap-1.5 rounded-md text-left"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm text-graphite-700 underline-offset-2 group-hover/addr:text-azure-700 group-hover/addr:underline">
+                {c.clinic.addressLine1}
+                {c.clinic.addressLine2 ? `, ${c.clinic.addressLine2}` : ""},{" "}
+                {c.clinic.area}, {c.clinic.city} {c.clinic.pincode}
+              </span>
+              {c.clinic.landmark && (
+                <span className="mt-0.5 block text-sm italic text-graphite-500">
+                  {c.clinic.landmark}
+                </span>
+              )}
+            </span>
+            <span
+              aria-hidden
+              className={`mt-1 shrink-0 text-graphite-500 transition-transform ${
+                open ? "rotate-180" : ""
+              }`}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </span>
+          </button>
+          <p className="mt-1 flex flex-wrap gap-x-3 text-xs text-graphite-500">
             <span>
               {c.feeInr > 0
                 ? `₹${c.feeInr.toLocaleString("en-IN")} consultation`
@@ -204,9 +244,9 @@ function ClinicCard({
             </span>
             {c.clinic.phone && <span>{c.clinic.phone}</span>}
             <span>
-              {[exterior && "exterior", interior && "interior"]
-                .filter(Boolean)
-                .join(" + ") || "no photos yet"}
+              {c.clinic.photos.length > 0
+                ? `${c.clinic.photos.length} photo${c.clinic.photos.length === 1 ? "" : "s"}`
+                : "no photos yet"}
             </span>
             {c.clinic.lat !== null && <span>pinned on the map</span>}
             {c.clinic.facilities.length > 0 && (
@@ -228,7 +268,7 @@ function ClinicCard({
           >
             <button
               onClick={onEdit}
-              className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+              className="rounded-full border border-graphite-200 px-3 py-1.5 text-xs font-bold text-graphite-600 transition hover:bg-graphite-50"
             >
               Edit
             </button>
@@ -244,7 +284,7 @@ function ClinicCard({
                     else setError(res.error ?? "Could not remove that.");
                   })
                 }
-                className="rounded-full px-3 py-1.5 text-xs font-bold text-rose-600 transition hover:bg-rose-50 disabled:opacity-50"
+                className="rounded-full px-3 py-1.5 text-xs font-bold text-coral-600 transition hover:bg-coral-50 disabled:opacity-50"
               >
                 Remove
               </button>
@@ -252,7 +292,93 @@ function ClinicCard({
           )}
         </div>
       </div>
-      {error && <p className="mt-2 text-sm text-rose-600">{error}</p>}
+      {/* ── The whole location, once asked for ─────────────────────────
+          Photographs first: "is this the right place" is answered by a
+          picture faster than by an address, and a practitioner with three
+          branches is checking exactly that. */}
+      {open && (
+        <div className="mt-3 border-t border-graphite-200 pt-3">
+          {c.clinic.photos.length > 0 ? (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+              {[...exterior, ...interior, ...others].map((ph) => (
+                <figure
+                  key={ph.url}
+                  className="overflow-hidden rounded-lg border border-graphite-200 bg-graphite-50"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={ph.url}
+                    alt={`${c.clinic.name} — ${ph.kind.toLowerCase()}`}
+                    loading="lazy"
+                    className="h-28 w-full object-cover sm:h-32"
+                  />
+                  <figcaption className="px-2 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-graphite-500">
+                    {ph.kind.toLowerCase()}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-lg border border-dashed border-graphite-300 px-3 py-4 text-center text-xs text-graphite-600">
+              No photographs of this location yet. Add an exterior shot and an
+              interior one in Edit — clients pick a clinic by looking at it.
+            </p>
+          )}
+
+          <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+            <Detail label="Address">
+              {c.clinic.addressLine1}
+              {c.clinic.addressLine2 ? `, ${c.clinic.addressLine2}` : ""}
+              <br />
+              {c.clinic.area}, {c.clinic.city} {c.clinic.pincode}
+              <br />
+              {c.clinic.state}
+            </Detail>
+            {c.clinic.landmark && (
+              <Detail label="Landmark">{c.clinic.landmark}</Detail>
+            )}
+            {c.clinic.phone && <Detail label="Phone">{c.clinic.phone}</Detail>}
+            <Detail label="Consultation fee">
+              {c.feeInr > 0
+                ? `₹${c.feeInr.toLocaleString("en-IN")}`
+                : "On enquiry"}
+            </Detail>
+            <Detail label="On the map">
+              {c.clinic.lat !== null && c.clinic.lng !== null
+                ? "Pinned"
+                : "Not pinned yet"}
+              {" · "}
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-azure-700 underline-offset-2 hover:underline"
+              >
+                Open in Maps
+              </a>
+            </Detail>
+          </dl>
+        </div>
+      )}
+
+      {error && <p className="mt-2 text-sm text-coral-600">{error}</p>}
+    </div>
+  );
+}
+
+function Detail({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <dt className="text-[10px] font-bold uppercase tracking-[0.12em] text-graphite-500">
+        {label}
+      </dt>
+      <dd className="mt-0.5 leading-relaxed text-graphite-800">{children}</dd>
     </div>
   );
 }
@@ -272,8 +398,8 @@ function FacilitySummary({
   return (
     <ul className="mt-2 space-y-0.5">
       {[...groups.entries()].map(([cat, names]) => (
-        <li key={cat} className="text-xs text-slate-500">
-          <span className="font-semibold text-slate-600">
+        <li key={cat} className="text-xs text-graphite-500">
+          <span className="font-semibold text-graphite-600">
             {cat === "OTHER"
               ? "Also here"
               : (CATEGORY_LABEL[cat as keyof typeof CATEGORY_LABEL] ?? cat)}
@@ -363,7 +489,7 @@ function ClinicForm({
       <form
         ref={v.formRef}
         noValidate
-        className="space-y-5 rounded-2xl border-2 border-brand-300 bg-brand-50/40 p-5"
+        className="space-y-5 rounded-[10px] border-2 border-azure-300 bg-azure-50/40 p-5"
         onSubmit={v.guard(submit)}
       >
         {v.summary}
@@ -378,26 +504,26 @@ function ClinicForm({
         <input type="hidden" name="pincode" value={joining.pincode} />
 
         {error && (
-          <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          <p className="rounded-xl border border-coral-200 bg-coral-50 px-4 py-3 text-sm text-coral-800">
             {error}
           </p>
         )}
 
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-widest text-brand-700">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-azure-700">
             Joining an existing location
           </p>
-          <h3 className="mt-1 text-lg font-bold text-slate-900">
+          <h3 className="mt-1 text-lg font-bold text-graphite-900">
             {joining.name}
           </h3>
-          <p className="mt-0.5 text-sm text-slate-600">
+          <p className="mt-0.5 text-sm text-graphite-600">
             {joining.addressLine1}, {joining.area}, {joining.city}{" "}
             {joining.pincode}
           </p>
           {joining.landmark && (
-            <p className="text-sm italic text-slate-500">{joining.landmark}</p>
+            <p className="text-sm italic text-graphite-500">{joining.landmark}</p>
           )}
-          <p className="mt-2 text-xs leading-relaxed text-slate-600">
+          <p className="mt-2 text-xs leading-relaxed text-graphite-600">
             {joining.doctorCount === 1
               ? "One practitioner already holds hours here."
               : `${joining.doctorCount} practitioners already hold hours here.`}{" "}
@@ -417,16 +543,16 @@ function ClinicForm({
           required
         />
 
-        <label className="flex items-center gap-2.5 text-sm text-slate-700">
+        <label className="flex items-center gap-2.5 text-sm text-graphite-700">
           <input
             type="checkbox"
             name="isPrimary"
-            className="h-4 w-4 rounded border-slate-300"
+            className="h-4 w-4 rounded border-graphite-300"
           />
           This is my main location
         </label>
 
-        <div className="flex flex-wrap items-center gap-3 border-t border-brand-100 pt-4">
+        <div className="flex flex-wrap items-center gap-3 border-t border-azure-100 pt-4">
           <Hint text="Adds you to this clinic. It keeps the same clinic record, so clients see one place rather than two copies of it.">
             <button
               type="submit"
@@ -452,25 +578,25 @@ function ClinicForm({
     <form
       ref={v.formRef}
       noValidate
-      className="space-y-5 rounded-2xl border border-brand-200 bg-white p-5"
+      className="space-y-5 rounded-[10px] border border-azure-200 bg-white p-5"
       onSubmit={v.guard(submit)}
     >
       {v.summary}
       <input type="hidden" name="clinicId" value={c?.id ?? ""} />
 
       {error && (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+        <p className="rounded-xl border border-coral-200 bg-coral-50 px-4 py-3 text-sm text-coral-800">
           {error}
         </p>
       )}
 
       {shared && (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <p className="text-sm font-bold text-slate-800">
+        <div className="rounded-xl border border-graphite-200 bg-graphite-50 px-4 py-3">
+          <p className="text-sm font-bold text-graphite-800">
             This location is shared with {c!._count.doctors - 1} other
             practitioner{c!._count.doctors - 1 === 1 ? "" : "s"}
           </p>
-          <p className="mt-1 text-xs leading-relaxed text-slate-600">
+          <p className="mt-1 text-xs leading-relaxed text-graphite-600">
             The address, landmark, photographs and facilities belong to the
             premises rather than to any one practice, so they are read-only
             here — a change would alter them for everybody without their
@@ -549,8 +675,8 @@ function ClinicForm({
       {shared ? (
         c?.landmark ? (
           <div>
-            <p className="text-sm font-semibold text-slate-800">Landmark</p>
-            <p className="mt-1 text-sm italic text-slate-600">{c.landmark}</p>
+            <p className="text-sm font-semibold text-graphite-800">Landmark</p>
+            <p className="mt-1 text-sm italic text-graphite-600">{c.landmark}</p>
           </div>
         ) : null
       ) : (
@@ -590,17 +716,17 @@ function ClinicForm({
         </>
       )}
 
-      <label className="flex items-center gap-2.5 text-sm text-slate-700">
+      <label className="flex items-center gap-2.5 text-sm text-graphite-700">
         <input
           type="checkbox"
           name="isPrimary"
           defaultChecked={existing?.isPrimary ?? true}
-          className="h-4 w-4 rounded border-slate-300"
+          className="h-4 w-4 rounded border-graphite-300"
         />
         This is my main location
       </label>
 
-      <div className="flex items-center gap-3 border-t border-slate-100 pt-4">
+      <div className="flex items-center gap-3 border-t border-graphite-100 pt-4">
         <Hint
           text={
             existing
@@ -642,13 +768,13 @@ function MatchList({
   onDismiss: () => void;
 }) {
   return (
-    <div className="rounded-xl border-2 border-brand-200 bg-brand-50/60 p-4">
-      <p className="text-sm font-bold text-brand-900">
+    <div className="rounded-xl border-2 border-azure-200 bg-azure-50/60 p-4">
+      <p className="text-sm font-bold text-azure-900">
         {matches.length === 1
           ? "This clinic may already be on BluDerma"
           : "One of these may be your clinic"}
       </p>
-      <p className="mt-1 text-xs leading-relaxed text-brand-800/80">
+      <p className="mt-1 text-xs leading-relaxed text-azure-800/80">
         Joining an existing location keeps one record instead of two, so
         clients see one clinic rather than duplicates of it, and the address
         and photographs are already done. Ignore this if none of them is yours.
@@ -658,17 +784,17 @@ function MatchList({
         {matches.map((m) => (
           <li
             key={m.id}
-            className="flex flex-wrap items-start gap-3 rounded-lg bg-white p-3 ring-1 ring-brand-200/70"
+            className="flex flex-wrap items-start gap-3 rounded-lg bg-white p-3 ring-1 ring-azure-200/70"
           >
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-slate-900">{m.name}</p>
-              <p className="text-xs text-slate-600">
+              <p className="text-sm font-bold text-graphite-900">{m.name}</p>
+              <p className="text-xs text-graphite-600">
                 {m.addressLine1}, {m.area}, {m.city} {m.pincode}
               </p>
               {m.landmark && (
-                <p className="text-xs italic text-slate-500">{m.landmark}</p>
+                <p className="text-xs italic text-graphite-500">{m.landmark}</p>
               )}
-              <p className="mt-1 text-[11px] font-semibold text-brand-700">
+              <p className="mt-1 text-[11px] font-semibold text-azure-700">
                 {m.reason} ·{" "}
                 {m.doctorCount === 1
                   ? "1 practitioner here"
@@ -678,7 +804,7 @@ function MatchList({
             <button
               type="button"
               onClick={() => onJoin(m)}
-              className="shrink-0 rounded-full bg-brand-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-brand-700"
+              className="shrink-0 rounded-full bg-azure-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-azure-700"
             >
               This is mine
             </button>
@@ -689,7 +815,7 @@ function MatchList({
       <button
         type="button"
         onClick={onDismiss}
-        className="mt-2.5 text-xs font-semibold text-brand-700 hover:underline"
+        className="mt-2.5 text-xs font-semibold text-azure-700 hover:underline"
       >
         None of these — mine is a different clinic
       </button>
@@ -777,7 +903,7 @@ function Text({
     <div>
       <label
         htmlFor={name}
-        className="block text-sm font-semibold text-slate-800"
+        className="block text-sm font-semibold text-graphite-800"
       >
         {label}
       </label>
@@ -786,19 +912,19 @@ function Text({
         name={name}
         readOnly={readOnly}
         aria-invalid={error ? true : undefined}
-        className={`mt-1.5 w-full rounded-xl border px-3.5 py-2.5 text-slate-900 outline-none transition focus:ring-4 ${
+        className={`mt-1.5 w-full rounded-xl border px-3.5 py-2.5 text-graphite-900 outline-none transition focus:ring-4 ${
           readOnly
-            ? "border-slate-200 bg-slate-50 text-slate-500"
+            ? "border-graphite-200 bg-graphite-50 text-graphite-500"
             : error
-              ? "border-rose-300 bg-white focus:border-rose-400 focus:ring-rose-500/15"
-              : "border-slate-200 bg-white focus:border-brand-400 focus:ring-brand-500/15"
+              ? "border-coral-300 bg-white focus:border-coral-400 focus:ring-coral-500/15"
+              : "border-graphite-200 bg-white focus:border-azure-400 focus:ring-azure-500/15"
         }`}
         {...rest}
       />
       {error ? (
-        <p className="mt-1 text-sm text-rose-600">{error}</p>
+        <p className="mt-1 text-sm text-coral-600">{error}</p>
       ) : hint ? (
-        <p className="mt-1 text-xs text-slate-500">{hint}</p>
+        <p className="mt-1 text-xs text-graphite-500">{hint}</p>
       ) : null}
     </div>
   );

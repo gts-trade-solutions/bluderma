@@ -6,6 +6,7 @@ import { Empty, PageHead, Panel } from "@/components/doctor/portalUi";
 import { getOwnDoctor } from "@/lib/doctor/guard";
 import { prisma } from "@/lib/prisma";
 import PatientChart, { type ChartPhoto } from "@/components/doctor/PatientChart";
+import CareSheetList, { type CareSheet } from "@/components/doctor/CareSheetList";
 import {
   getPatientTimeline,
   summarise,
@@ -20,15 +21,15 @@ const stamp = (d: Date) =>
 
 /** Full literal strings: Tailwind scans source text, so interpolation loses the colour. */
 const TONE: Record<TimelineKind, { dot: string; label: string }> = {
-  booked: { dot: "bg-brand-500", label: "Booked" },
-  cancelled: { dot: "bg-rose-500", label: "Cancelled" },
-  "no-show": { dot: "bg-rose-600", label: "No-show" },
-  completed: { dot: "bg-teal-500", label: "Seen" },
-  rescheduled: { dot: "bg-amber-500", label: "Moved" },
-  scan: { dot: "bg-violet-500", label: "Analysis" },
-  plan: { dot: "bg-violet-500", label: "Plan" },
-  aftercare: { dot: "bg-teal-600", label: "Aftercare" },
-  review: { dot: "bg-amber-400", label: "Review" },
+  booked: { dot: "bg-azure-500", label: "Booked" },
+  cancelled: { dot: "bg-coral-500", label: "Cancelled" },
+  "no-show": { dot: "bg-coral-600", label: "No-show" },
+  completed: { dot: "bg-mint-500", label: "Seen" },
+  rescheduled: { dot: "bg-gold-500", label: "Moved" },
+  scan: { dot: "bg-graphite-500", label: "Analysis" },
+  plan: { dot: "bg-graphite-500", label: "Plan" },
+  aftercare: { dot: "bg-mint-600", label: "Aftercare" },
+  review: { dot: "bg-gold-400", label: "Review" },
 };
 
 /**
@@ -53,7 +54,7 @@ export default async function PatientPage({ params }: { params: { id: string } }
   });
   if (!seen) notFound();
 
-  const [patient, timeline, photos, notes] = await Promise.all([
+  const [patient, timeline, photos, notes, sheets] = await Promise.all([
     prisma.user.findUnique({
       where: { id: params.id },
       select: { name: true, publicId: true },
@@ -101,7 +102,54 @@ export default async function PatientPage({ params }: { params: { id: string } }
       take: 50,
       select: { id: true, body: true, createdAt: true },
     }),
+    /* ── What this patient was actually told ─────────────────────────
+       The timeline records that a sheet was issued; this is the sheet. See
+       CareSheetList for why the difference matters at the next visit.
+
+       Scoped to this doctor: a sheet another practitioner issued is their
+       clinical record, and the chart already draws that line for photographs
+       and notes. */
+    prisma.aftercareSheet.findMany({
+      where: { doctorId: owner.doctorId, patientUserId: params.id },
+      orderBy: { issuedAt: "desc" },
+      take: 20,
+      select: {
+        id: true,
+        kind: true,
+        procedure: true,
+        issuedAt: true,
+        procedureDate: true,
+        reviewOn: true,
+        arriveAt: true,
+        acknowledgedAt: true,
+        intro: true,
+        dos: true,
+        donts: true,
+        warnings: true,
+        doctorNotes: true,
+      },
+    }),
   ]);
+
+  /** The Json columns are `string[]` by contract; anything else is dropped. */
+  const lines = (v: unknown): string[] =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+
+  const careSheets: CareSheet[] = sheets.map((x) => ({
+    id: x.id,
+    kind: x.kind === "PRE" ? "PRE" : "POST",
+    procedure: x.procedure,
+    issuedOn: stamp(x.issuedAt),
+    procedureOn: stamp(x.procedureDate),
+    reviewOn: x.reviewOn ? stamp(x.reviewOn) : null,
+    arriveAt: x.arriveAt,
+    acknowledged: x.acknowledgedAt !== null,
+    intro: x.intro,
+    dos: lines(x.dos),
+    donts: lines(x.donts),
+    warnings: lines(x.warnings),
+    doctorNotes: x.doctorNotes,
+  }));
 
   const { events, truncated, totalBookings } = timeline;
 
@@ -126,7 +174,7 @@ export default async function PatientPage({ params }: { params: { id: string } }
     <div className="pb-10">
       <Link
         href="/doctor/portal/calendar"
-        className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition hover:text-slate-900"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-graphite-500 transition hover:text-graphite-900"
       >
         <ArrowLeft className="h-4 w-4" /> Back
       </Link>
@@ -142,17 +190,17 @@ export default async function PatientPage({ params }: { params: { id: string } }
 
       <div className="mb-5 grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
         {/* The counted total, not the number that fitted on screen. */}
-        <Tile label="Booked" value={String(totalBookings)} bar="border-brand-500" />
-        <Tile label="Seen" value={String(s.completed)} bar="border-teal-500" />
-        <Tile label="Cancelled" value={String(s.cancellations)} bar="border-amber-500" />
-        <Tile label="No-shows" value={String(s.noShows)} bar="border-rose-500" />
+        <Tile label="Booked" value={String(totalBookings)} bar="border-azure-500" />
+        <Tile label="Seen" value={String(s.completed)} bar="border-mint-500" />
+        <Tile label="Cancelled" value={String(s.cancellations)} bar="border-gold-500" />
+        <Tile label="No-shows" value={String(s.noShows)} bar="border-coral-500" />
       </div>
 
       {/* Only when there is something worth saying. A rate under five bookings
           is not a pattern, and printing one next to somebody's name invites a
           judgement the data cannot support. */}
       {s.flag && (
-        <p className="mb-5 rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900 ring-1 ring-inset ring-amber-200">
+        <p className="mb-5 rounded-xl bg-gold-50 px-4 py-3 text-sm font-semibold text-gold-900 ring-1 ring-inset ring-gold-200">
           {s.flag}
         </p>
       )}
@@ -179,6 +227,27 @@ export default async function PatientPage({ params }: { params: { id: string } }
         </Panel>
       </div>
 
+      {careSheets.length > 0 && (
+        <div className="mb-4">
+          <Panel
+            title="Pre & post care issued"
+            sub={`${careSheets.length} sheet${careSheets.length === 1 ? "" : "s"}, newest first`}
+            icon="sheet"
+            accent="teal"
+            index={1}
+            padded={false}
+            note={
+              <>
+                Exactly what this patient was sent, as it was sent. Editing a
+                template later never changes a sheet already issued.
+              </>
+            }
+          >
+            <CareSheetList sheets={careSheets} />
+          </Panel>
+        </div>
+      )}
+
       <Panel
         title="History"
         sub={
@@ -195,7 +264,7 @@ export default async function PatientPage({ params }: { params: { id: string } }
             <Empty title="Nothing recorded yet" body="Activity appears here as it happens." />
           </div>
         ) : (
-          <ol className="divide-y divide-slate-100">
+          <ol className="divide-y divide-graphite-100">
             {events.map((e) => {
               const tone = TONE[e.kind];
               return (
@@ -206,15 +275,15 @@ export default async function PatientPage({ params }: { params: { id: string } }
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                      <p className="text-sm font-semibold text-slate-900">
+                      <p className="text-sm font-semibold text-graphite-900">
                         {e.summary}
                       </p>
-                      <time className="shrink-0 text-xs tabular-nums text-slate-400">
+                      <time className="shrink-0 text-xs tabular-nums text-graphite-500">
                         {stamp(e.at)}
                       </time>
                     </div>
                     {e.detail && (
-                      <p className="mt-0.5 text-xs text-slate-500">{e.detail}</p>
+                      <p className="mt-0.5 text-xs text-graphite-500">{e.detail}</p>
                     )}
                   </div>
                 </li>
@@ -230,12 +299,12 @@ export default async function PatientPage({ params }: { params: { id: string } }
 function Tile({ label, value, bar }: { label: string; value: string; bar: string }) {
   return (
     <div
-      className={`rounded-2xl border-t-[3px] bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_12px_32px_-24px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/80 sm:p-4 ${bar}`}
+      className={`rounded-[10px] border-t-[3px] bg-white p-3 shadow-flat ring-1 ring-graphite-200 sm:p-4 ${bar}`}
     >
-      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 sm:text-[11px]">
+      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-graphite-500 sm:text-[11px]">
         {label}
       </p>
-      <p className="mt-1 font-display text-[22px] font-extrabold leading-none tabular-nums text-slate-900 sm:text-[28px]">
+      <p className="mt-1 font-display text-[22px] font-extrabold leading-none tabular-nums text-graphite-900 sm:text-[28px]">
         {value}
       </p>
     </div>

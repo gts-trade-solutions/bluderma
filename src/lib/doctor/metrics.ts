@@ -248,6 +248,25 @@ export interface DashboardMetrics {
   };
   /** Seats open in the next seven days, and what they are worth. */
   seats: SeatOutlook;
+
+  /**
+   * What today comes to if every remaining seat fills.
+   *
+   * The one forward figure on a page otherwise made of periods. See the note
+   * where it is computed for why the booked and open halves stay separate.
+   */
+  todayPotential: {
+    /** Real fees on today's diary, cancellations excluded. */
+    bookedInr: number;
+    bookedCount: number;
+    /** Seats still on sale today. */
+    openSeats: number;
+    /** openSeats x the average booking value. */
+    openValue: number;
+    total: number;
+    /** False on a day the practice does not work — nothing to fill. */
+    isWorkingDay: boolean;
+  };
   /**
    * Bookings by start hour, in CLOCK order across the whole working span.
    *
@@ -633,7 +652,8 @@ export async function getDashboardMetrics(
             notIn: [AppointmentStatus.CANCELLED, AppointmentStatus.NO_SHOW],
           },
         },
-        select: { scheduledAt: true },
+        // The fees ride along for today's potential — see `todayPotential`.
+        select: { scheduledAt: true, feeAtBooking: true, visitFee: true },
       }),
       prisma.doctorTimeOff.findMany({
         // Any block that overlaps the window at all, including one that
@@ -850,6 +870,41 @@ export async function getDashboardMetrics(
         : null,
   };
 
+  /* ── What today is worth ─────────────────────────────────────────────
+     Everything else on this page is a period: this month, last quarter, the
+     week ahead. None of them answer the question a practitioner opening the
+     dashboard at nine in the morning actually has, which is what today comes
+     to if the rest of it fills.
+
+     Three parts, and each is printed rather than blended, because a single
+     number would hide which half is already certain:
+
+       booked   the real fee on every visit in today's diary, cancellations
+                and no-shows excluded. Already agreed, not yet all earned.
+       open     seats still on sale today, priced at `perSeat` — the average
+                of real bookings, not the list fee (see above).
+       total    the two added: the ceiling for today.
+
+     The whole day counts, not the remainder of it: a morning already seen is
+     still today's money, and a figure that shrank as the day went on would
+     read as the practice losing income by opening. */
+  const todaySeed = weekFrom.toISOString().slice(0, 10);
+  const todayRows = weekAheadRows.filter(
+    (a) => a.scheduledAt.toISOString().slice(0, 10) === todaySeed
+  );
+  const todayBookedInr = todayRows.reduce((sum, a) => sum + valueOf(a), 0);
+  const todayOpenSeats = seatDays[0]?.empty ?? 0;
+  const todayOpenValue = todayOpenSeats * perSeat;
+
+  const todayPotential = {
+    bookedInr: todayBookedInr,
+    bookedCount: todayRows.length,
+    openSeats: todayOpenSeats,
+    openValue: todayOpenValue,
+    total: todayBookedInr + todayOpenValue,
+    isWorkingDay: (seatDays[0]?.seats ?? 0) > 0,
+  };
+
   // ── Busiest hours ───────────────────────────────────────────────────────
   const hourMap = new Map<number, number>();
   for (const a of recent) {
@@ -1041,6 +1096,7 @@ export async function getDashboardMetrics(
         : null,
     },
     seats,
+    todayPotential,
     busiestHours,
     nextToday,
     cancellations,

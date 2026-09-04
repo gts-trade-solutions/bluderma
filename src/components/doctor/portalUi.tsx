@@ -493,6 +493,9 @@ const PATHS: Record<string, string> = {
     "M4 13h4l1.5 3h5L16 13h4M5 5h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z",
   clinic: "M4 20V9l8-5 8 5v11M9 20v-6h6v6M12 8v3M10.5 9.5h3",
   user: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM5 20a7 7 0 0 1 14 0",
+  // Two figures: the list, as against `user`, which is one person's profile.
+  users:
+    "M10 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM3 20a7 7 0 0 1 14 0M16.5 4.4a3.5 3.5 0 0 1 0 6.6M21 20v-.6a5 5 0 0 0-3-4.6",
   link: "M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1",
   star: "M12 3l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 18.3 5.9 21.6l1.4-6.8L2.2 10.1l6.9-.8z",
   clock: "M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z",

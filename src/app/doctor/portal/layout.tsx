@@ -140,6 +140,15 @@ export default async function DoctorPortalLayout({
       locked: setup ? notYet : undefined,
     },
     {
+      // The way in to every patient screen — chart, photographs, care sheets,
+      // prescriptions. All of it existed and none of it was listed.
+      section: "Clinical",
+      label: "Patients",
+      href: "/doctor/portal/patients",
+      icon: "users",
+      locked: setup ? notYet : undefined,
+    },
+    {
       // "Medicines" described the list; "Prescriptions" describes what the
       // doctor does there, which is what a nav label is for. The ℞ mark is
       // the one symbol every clinician reads without reading.

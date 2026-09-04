@@ -148,19 +148,19 @@ export default async function DoctorTodayPage() {
       {awaiting > 0 && (
         <Link
           href="/doctor/portal/requests"
-          className="mb-6 flex items-center gap-4 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 transition hover:bg-amber-100"
+          className="mb-6 flex items-center gap-4 rounded-[10px] border border-gold-200 bg-gold-50 px-5 py-4 transition hover:bg-gold-100"
         >
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-amber-500 text-sm font-bold text-white">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gold-500 text-sm font-bold text-white">
             {awaiting}
           </span>
-          <span className="min-w-0 flex-1 text-sm text-amber-900">
+          <span className="min-w-0 flex-1 text-sm text-gold-900">
             <strong className="font-bold">
               {awaiting === 1 ? "One booking needs" : `${awaiting} bookings need`} your
               confirmation.
             </strong>{" "}
             The {awaiting === 1 ? "slot is" : "slots are"} held until you decide.
           </span>
-          <span className="shrink-0 text-sm font-bold text-amber-800">Review →</span>
+          <span className="shrink-0 text-sm font-bold text-gold-900">Review →</span>
         </Link>
       )}
 

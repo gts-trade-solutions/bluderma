@@ -18,6 +18,8 @@ export const CLINIC_LIST_SELECT = {
     clinic: {
       select: {
         id: true,
+        // The quotable reference for these premises. See lib/publicId.ts.
+        publicId: true,
         name: true,
         addressLine1: true,
         addressLine2: true,

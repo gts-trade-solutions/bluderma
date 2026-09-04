@@ -9,6 +9,7 @@ import PayLaterOffer from "@/components/PayLaterOffer";
 import ThemeFab from "@/components/ThemeFab";
 import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
 import AuthProvider from "@/components/AuthProvider";
+import DoctorOnlyGuard from "@/components/auth/DoctorOnlyGuard";
 import { baseOpenGraph, siteUrl } from "@/lib/seo";
 import "./globals.css";
 
@@ -139,6 +140,11 @@ export default function RootLayout({
       </head>
       <body>
         <AuthProvider>
+          {/* A practitioner account stays on the practitioner side. The
+              middleware does this for anything that reaches the server; this
+              covers the back button and the router's own cache, which do not.
+              See DoctorOnlyGuard. */}
+          <DoctorOnlyGuard />
           {children}
           {/* Inside AuthProvider so it can greet by name, and in Suspense
               because it reads search params, which opts a route into

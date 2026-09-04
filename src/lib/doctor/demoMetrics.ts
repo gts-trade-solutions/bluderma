@@ -281,6 +281,18 @@ export function buildDemoBundle(
         ? { label: emptiest.label, empty: emptiest.empty }
         : null,
     },
+    /* Today's ceiling, in the same shape the real metrics build it. The demo
+       day is a working one with a few seats left, because a tour that shows
+       "nothing left to fill" teaches nothing about the tile. */
+    todayPotential: {
+      bookedInr: (seatDays[0]?.booked ?? 0) * averageValue,
+      bookedCount: seatDays[0]?.booked ?? 0,
+      openSeats: seatDays[0]?.empty ?? 0,
+      openValue: (seatDays[0]?.empty ?? 0) * averageValue,
+      total:
+        ((seatDays[0]?.booked ?? 0) + (seatDays[0]?.empty ?? 0)) * averageValue,
+      isWorkingDay: (seatDays[0]?.seats ?? 0) > 0,
+    },
     busiestHours: [9, 10, 11, 12, 16, 17, 18, 19].map((hour) => ({
       hour,
       label: `${String(hour).padStart(2, "0")}:00`,

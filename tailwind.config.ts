@@ -1,5 +1,8 @@
 import type { Config } from "tailwindcss";
 
+// The five brand colours, written down once. See the note in that file.
+import { AZURE, CORAL, GOLD, GRAPHITE, MINT } from "./src/lib/brandPalette";
+
 const config: Config = {
   content: [
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
@@ -51,6 +54,31 @@ const config: Config = {
           soft: "rgba(255,255,255,0.72)",
           muted: "rgba(255,255,255,0.52)",
         },
+
+        /*
+         * ── The doctor portal's palette ────────────────────────────────
+         * Five colours, sampled pixel-for-pixel from the mark the client
+         * supplied: azure #3E8CCB, coral #F15256, mint #58BE9F, gold
+         * #FFC80B and the graphite #2F2F2F they sit on.
+         *
+         * They are NEW families rather than a remap of `brand` and `teal`,
+         * and that is deliberate. Those two are worn by every page of the
+         * public site; moving them to recolour the portal would repaint a
+         * hundred screens nobody asked about. The portal uses these names
+         * and only these names, so the two surfaces can now diverge on
+         * purpose instead of by accident.
+         *
+         * Scales are hand-tuned rather than generated: the base sits at
+         * -500 in each, the -600/-700 steps are the ones that carry white
+         * text at AA, and the -50/-100 steps are the fills that carry
+         * -800 text at AA. Anything picked outside those pairs has not
+         * been checked.
+         */
+        azure: AZURE,
+        coral: CORAL,
+        mint: MINT,
+        gold: GOLD,
+        graphite: GRAPHITE,
       },
       fontFamily: {
         // The tail of these stacks is the ONLY fallback now — globals.css no
@@ -69,6 +97,27 @@ const config: Config = {
         // Bricolage Grotesque. Falls through to the body face if the display
         // font ever fails to load, so a heading degrades to the wrong family
         // rather than to Times.
+        /*
+         * Poppins, and only inside the doctor portal.
+         *
+         * It is the reference's own face, and the reason the reference's
+         * headings read the way they do: a geometric with a tall x-height
+         * that holds up at 800 weight and stays legible at 10px, which is
+         * most of a clinic dashboard. globals.css binds it to
+         * `.portal-canvas`, so the public site keeps Bricolage and nothing
+         * outside /doctor/portal changes typeface.
+         */
+        portal: [
+          "var(--font-portal)",
+          "var(--font-sans)",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "Helvetica",
+          "Arial",
+          "sans-serif",
+        ],
         display: [
           "var(--font-display)",
           "var(--font-sans)",
@@ -84,6 +133,17 @@ const config: Config = {
       boxShadow: {
         card: "0 10px 30px -12px rgba(16, 42, 71, 0.18)",
         soft: "0 4px 20px -6px rgba(16, 42, 71, 0.12)",
+        /*
+         * The portal's two shadows, and there are only two on purpose.
+         *
+         * The reference builds its whole depth out of one near-flat drop —
+         * `rgba(99,99,99,0.2) 0 2px 8px` — and reads crisper for it. What
+         * this replaced was a stack of 20-40px blurs at -20px offsets on
+         * every panel, which is what made a screenful of cards read as
+         * soft mush rather than as a set of surfaces.
+         */
+        flat: "0 2px 8px 0 rgba(99, 99, 99, 0.16)",
+        "flat-lg": "0 4px 16px 0 rgba(47, 47, 47, 0.14)",
       },
       keyframes: {
         "fade-in": {

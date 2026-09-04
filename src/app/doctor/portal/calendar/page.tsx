@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 // A calendar showing yesterday's state is worse than no calendar.
 export const dynamic = "force-dynamic";
 
-const VIEWS: CalendarView[] = ["month", "week", "day"];
+const VIEWS: CalendarView[] = ["month", "week", "day", "agenda"];
 
 /** Today in clinic wall-clock terms — see the contract in availability.ts. */
 function clinicToday(): Date {
@@ -71,7 +71,8 @@ export default async function CalendarPage({
   return (
     <>
       <PageHead
-        title="Calendar"
+        title="Your calendar"
+        mark="calendar"
         sub={
           data.clinics.length > 1
             ? `Your list across ${data.clinics.length} locations. Colours mark the clinic; a booking anywhere blocks the same time everywhere.`

@@ -122,14 +122,14 @@ export default function GalleryComposer({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block">
-          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-graphite-500">
             Which patient
           </span>
           <select
             name="patientUserId"
             required
             defaultValue=""
-            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-brand-400 focus:outline-none"
+            className="w-full rounded-xl border border-graphite-200 bg-white px-3.5 py-2.5 text-sm text-graphite-900 focus:border-azure-400 focus:outline-none"
           >
             <option value="" disabled>
               Choose someone you have seen
@@ -142,18 +142,18 @@ export default function GalleryComposer({
           </select>
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-graphite-500">
             Treatment
           </span>
           <input
             name="treatmentName"
             required
             placeholder="Acne scar resurfacing"
-            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-brand-400 focus:outline-none"
+            className="w-full rounded-xl border border-graphite-200 bg-white px-3.5 py-2.5 text-sm text-graphite-900 focus:border-azure-400 focus:outline-none"
           />
         </label>
         <label className="block sm:col-span-2">
-          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-graphite-500">
             What a viewer needs to know
           </span>
           {/* Sessions and timescale, because a pair with neither invites the
@@ -161,35 +161,35 @@ export default function GalleryComposer({
           <input
             name="detail"
             placeholder="4 sessions over 3 months"
-            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-brand-400 focus:outline-none"
+            className="w-full rounded-xl border border-graphite-200 bg-white px-3.5 py-2.5 text-sm text-graphite-900 focus:border-azure-400 focus:outline-none"
           />
         </label>
         <label className="block sm:col-span-2">
-          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-graphite-500">
             Caption{" "}
             <span className="normal-case tracking-normal">(optional)</span>
           </span>
           <input
             name="caption"
             placeholder="Anything else worth saying about this case"
-            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-brand-400 focus:outline-none"
+            className="w-full rounded-xl border border-graphite-200 bg-white px-3.5 py-2.5 text-sm text-graphite-900 focus:border-azure-400 focus:outline-none"
           />
         </label>
       </div>
 
-      <p className="rounded-xl bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-900 ring-1 ring-inset ring-amber-200">
+      <p className="rounded-xl bg-gold-50 px-4 py-3 text-xs leading-relaxed text-gold-900 ring-1 ring-inset ring-gold-200">
         The patient will be asked to agree before this can be shown. They see
         these exact images, and they can withdraw at any time, which takes them
         down immediately.
       </p>
 
       {error && (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700">
+        <p className="rounded-xl border border-coral-200 bg-coral-50 px-4 py-2.5 text-sm text-coral-700">
           {error}
         </p>
       )}
       {done && (
-        <p className="inline-flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-4 py-2.5 text-sm font-semibold text-teal-700">
+        <p className="inline-flex items-center gap-2 rounded-xl border border-mint-200 bg-mint-50 px-4 py-2.5 text-sm font-semibold text-mint-800">
           <Check className="h-4 w-4" /> Sent to the patient to agree.
         </p>
       )}
@@ -197,13 +197,13 @@ export default function GalleryComposer({
       <button
         type="submit"
         disabled={!ready || pending}
-        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-600 to-teal-600 px-6 py-3 text-sm font-extrabold text-white transition hover:from-brand-700 hover:to-teal-700 disabled:opacity-50"
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-gold-500 px-6 py-2.5 text-sm font-extrabold text-graphite-900 shadow-flat transition hover:bg-gold-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-graphite-900 focus-visible:ring-offset-2"
       >
         {pending && <LoaderCircle className="h-4 w-4 animate-spin" />}
         Ask the patient
       </button>
       {!ready && (
-        <span className="ml-3 text-xs text-slate-400">Both images first.</span>
+        <span className="ml-3 text-xs text-graphite-500">Both images first.</span>
       )}
     </form>
   );
@@ -226,10 +226,10 @@ function Slot({
 
   return (
     <div>
-      <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+      <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-graphite-500">
         {label}
       </p>
-      <div className="relative aspect-[4/5] overflow-hidden rounded-xl border-2 border-dashed border-slate-300 bg-slate-50">
+      <div className="relative aspect-[4/5] overflow-hidden rounded-xl border-2 border-dashed border-graphite-300 bg-graphite-50">
         {value ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -242,7 +242,7 @@ function Slot({
               type="button"
               onClick={onClear}
               aria-label={`Remove the ${label.toLowerCase()} image`}
-              className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-slate-900/70 text-white transition hover:bg-slate-900"
+              className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-graphite-900/70 text-white transition hover:bg-graphite-900"
             >
               <X className="h-4 w-4" />
             </button>
@@ -252,7 +252,7 @@ function Slot({
             type="button"
             onClick={() => ref.current?.click()}
             disabled={busy}
-            className="grid h-full w-full place-items-center gap-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            className="grid h-full w-full place-items-center gap-2 text-graphite-500 transition hover:bg-graphite-100 hover:text-graphite-600"
           >
             {busy ? (
               <LoaderCircle className="h-6 w-6 animate-spin" />

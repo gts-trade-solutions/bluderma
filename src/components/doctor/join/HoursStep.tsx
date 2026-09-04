@@ -45,9 +45,9 @@ export default function HoursStep({
 }) {
   if (doctor.clinics.length === 0) {
     return (
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
-        <p className="font-bold text-amber-900">Add a location first</p>
-        <p className="mt-1 text-sm text-amber-800">
+      <div className="rounded-[10px] border border-gold-200 bg-gold-50 p-6">
+        <p className="font-bold text-gold-900">Add a location first</p>
+        <p className="mt-1 text-sm text-gold-900">
           Hours belong to a clinic, so there is nothing to set them against yet.
         </p>
         <Link href={backHref} className="btn-primary mt-4 inline-flex">
@@ -68,7 +68,7 @@ export default function HoursStep({
       ))}
 
       {mode === "join" && (
-        <div className="flex items-center gap-3 border-t border-slate-100 pt-5">
+        <div className="flex items-center gap-3 border-t border-graphite-100 pt-5">
           <Link
             href={nextHref}
             className={`btn-primary ${
@@ -81,7 +81,7 @@ export default function HoursStep({
             Back
           </Link>
           {doctor.availability.length === 0 && (
-            <p className="text-sm text-slate-500">Add at least one session to continue.</p>
+            <p className="text-sm text-graphite-500">Add at least one session to continue.</p>
           )}
         </div>
       )}
@@ -111,20 +111,20 @@ function ClinicHours({
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5">
+    <section className="rounded-[10px] border border-graphite-200 bg-white p-5">
       <div className="flex items-center gap-2.5">
         <span className={`h-3 w-3 rounded-full ${sw.dot}`} />
-        <h3 className="font-bold text-slate-900">{clinic.name}</h3>
-        <span className="text-sm text-slate-500">{clinic.area}</span>
+        <h3 className="font-bold text-graphite-900">{clinic.name}</h3>
+        <span className="text-sm text-graphite-500">{clinic.area}</span>
       </div>
 
       {windows.length === 0 ? (
-        <p className="mt-3 text-sm text-slate-500">No hours set here yet.</p>
+        <p className="mt-3 text-sm text-graphite-500">No hours set here yet.</p>
       ) : (
         <ul className="mt-4 space-y-1.5">
           {WEEKDAYS.filter((d) => byDay.has(d.value)).map((d) => (
             <li key={d.value} className="flex flex-wrap items-baseline gap-2 text-sm">
-              <span className="w-24 shrink-0 font-semibold text-slate-700">
+              <span className="w-24 shrink-0 font-semibold text-graphite-700">
                 {WEEKDAY_LABEL[d.value]}
               </span>
               {byDay
@@ -133,10 +133,10 @@ function ClinicHours({
                 .map((w) => (
                   <span
                     key={w.id}
-                    className="group inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700"
+                    className="group inline-flex items-center gap-1.5 rounded-full bg-graphite-100 px-2.5 py-1 text-xs font-semibold text-graphite-700"
                   >
                     {w.startTime}–{w.endTime}
-                    <span className="font-normal text-slate-400">{w.slotMinutes}m</span>
+                    <span className="font-normal text-graphite-500">{w.slotMinutes}m</span>
                     <button
                       onClick={() =>
                         start(async () => {
@@ -145,7 +145,7 @@ function ClinicHours({
                         })
                       }
                       aria-label="Remove this session"
-                      className="text-slate-400 transition hover:text-rose-600"
+                      className="text-graphite-500 transition hover:text-coral-600"
                     >
                       ✕
                     </button>
@@ -160,7 +160,7 @@ function ClinicHours({
         <form
           ref={formCheck.formRef}
           noValidate
-          className="mt-4 space-y-4 rounded-xl border border-slate-200 p-4"
+          className="mt-4 space-y-4 rounded-xl border border-graphite-200 p-4"
           onSubmit={formCheck.guard((fd, form) => {
             setError(null);
             start(async () => {
@@ -178,12 +178,12 @@ function ClinicHours({
           <input type="hidden" name="clinicId" value={clinic.id} />
 
           <div>
-            <p className="text-sm font-semibold text-slate-800">Days</p>
+            <p className="text-sm font-semibold text-graphite-800">Days</p>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {WEEKDAYS.map((d) => (
                 <label
                   key={d.value}
-                  className="cursor-pointer select-none rounded-full border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600 transition has-[:checked]:border-brand-600 has-[:checked]:bg-brand-600 has-[:checked]:text-white"
+                  className="cursor-pointer select-none rounded-full border border-graphite-200 px-3 py-1.5 text-sm font-semibold text-graphite-600 transition has-[:checked]:border-azure-600 has-[:checked]:bg-azure-600 has-[:checked]:text-white"
                 >
                   <input type="checkbox" name="days" value={d.value} className="sr-only" />
                   {d.label}
@@ -194,33 +194,33 @@ function ClinicHours({
 
           <div className="grid gap-3 sm:grid-cols-3">
             <div>
-              <label className="block text-sm font-semibold text-slate-800">From</label>
+              <label className="block text-sm font-semibold text-graphite-800">From</label>
               <input
                 type="time"
                 name="startTime"
                 required
                 defaultValue="09:30"
-                className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2"
+                className="mt-1.5 w-full rounded-xl border border-graphite-200 px-3 py-2"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-800">To</label>
+              <label className="block text-sm font-semibold text-graphite-800">To</label>
               <input
                 type="time"
                 name="endTime"
                 required
                 defaultValue="13:00"
-                className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2"
+                className="mt-1.5 w-full rounded-xl border border-graphite-200 px-3 py-2"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-800">
+              <label className="block text-sm font-semibold text-graphite-800">
                 Slot length
               </label>
               <select
                 name="slotMinutes"
                 defaultValue="30"
-                className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2"
+                className="mt-1.5 w-full rounded-xl border border-graphite-200 px-3 py-2"
               >
                 {[10, 15, 20, 30, 45, 60].map((m) => (
                   <option key={m} value={m}>
@@ -231,13 +231,13 @@ function ClinicHours({
             </div>
           </div>
 
-          {error && <p className="text-sm text-rose-600">{error}</p>}
+          {error && <p className="text-sm text-coral-600">{error}</p>}
 
           <div className="flex gap-2">
             <button
               type="submit"
               disabled={pending}
-              className="rounded-full bg-brand-600 px-5 py-2 text-sm font-bold text-white transition hover:bg-brand-700 disabled:opacity-50"
+              className="rounded-full bg-azure-600 px-5 py-2 text-sm font-bold text-white transition hover:bg-azure-700 disabled:opacity-50"
             >
               {pending ? "Adding…" : "Add session"}
             </button>
@@ -245,7 +245,7 @@ function ClinicHours({
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-full px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-800"
+                className="rounded-full px-4 py-2 text-sm font-semibold text-graphite-500 hover:text-graphite-800"
               >
                 Done
               </button>
@@ -255,7 +255,7 @@ function ClinicHours({
       ) : (
         <button
           onClick={() => setOpen(true)}
-          className="mt-4 text-sm font-bold text-brand-700 hover:underline"
+          className="mt-4 text-sm font-bold text-azure-700 hover:underline"
         >
           + Add another session here
         </button>

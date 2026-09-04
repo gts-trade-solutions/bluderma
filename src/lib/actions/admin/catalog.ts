@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { BulletKind, Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { newTreatmentId } from "@/lib/publicId";
 import { audit } from "@/lib/admin/audit";
 import { requireAdminUser } from "@/lib/admin/guard";
 import {
@@ -169,7 +170,9 @@ export async function saveTreatment(
       const row = await prisma.$transaction(async (tx) => {
         const saved = id
           ? await tx.treatment.update({ where: { id }, data })
-          : await tx.treatment.create({ data });
+          : await tx.treatment.create({
+              data: { ...data, publicId: newTreatmentId() },
+            });
 
         await tx.treatmentBullet.deleteMany({ where: { treatmentId: saved.id } });
         const rows = bulletRows(saved.id);

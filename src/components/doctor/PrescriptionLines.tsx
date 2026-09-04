@@ -60,7 +60,7 @@ const blank = (key: string): Line => ({
 });
 
 const field =
-  "w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100";
+  "w-full rounded-lg border border-graphite-200 bg-white px-2.5 py-1.5 text-sm text-graphite-900 outline-none transition placeholder:text-graphite-500 focus:border-azure-400 focus:ring-2 focus:ring-azure-100";
 
 export default function PrescriptionLines() {
   const [lines, setLines] = useState<Line[]>([blank("l0")]);
@@ -110,7 +110,7 @@ export default function PrescriptionLines() {
 
   return (
     <div className="space-y-2">
-      <p className="text-sm font-semibold text-slate-800">What to take</p>
+      <p className="text-sm font-semibold text-graphite-800">What to take</p>
 
       <ul className="space-y-2">
         {lines.map((l, i) => {
@@ -123,7 +123,7 @@ export default function PrescriptionLines() {
             linked.stock <= linked.lowStockAt;
 
           return (
-            <li key={l.key} className="rounded-xl border border-slate-200 p-2.5">
+            <li key={l.key} className="rounded-xl border border-graphite-200 p-2.5">
               {/* What is submitted. Parallel arrays, one input per column, so
                   a plain form post carries them without JSON in a hidden
                   field — which stops matching the form it came from the first
@@ -153,7 +153,7 @@ export default function PrescriptionLines() {
                     ))}
                   </select>
                 ) : (
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-graphite-500">
                     {loaded
                       ? "Nothing in your dispensary yet. Type each line, or add your list under Prescriptions."
                       : "Loading your list…"}
@@ -165,7 +165,7 @@ export default function PrescriptionLines() {
                     type="button"
                     onClick={() => setLines((ls) => ls.filter((x) => x.key !== l.key))}
                     aria-label={`Remove line ${i + 1}`}
-                    className="justify-self-start rounded-lg px-2 py-1 text-xs font-semibold text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                    className="justify-self-start rounded-lg px-2 py-1 text-xs font-semibold text-graphite-500 transition hover:bg-coral-50 hover:text-coral-600"
                   >
                     Remove
                   </button>
@@ -199,17 +199,39 @@ export default function PrescriptionLines() {
                 />
               </div>
 
+              {/* ── You already stock this ────────────────────────────
+                  A line typed by hand is a line the patient cannot reorder
+                  from this practice and that carries no price, so it counts
+                  for nothing on the prescriptions screen. Most of them are
+                  not deliberate: the doctor types the name because typing is
+                  faster than opening a list of forty. So the list comes to
+                  them — matched on what they have already typed, offered,
+                  never applied on their behalf. */}
+              {!l.medicineId && suggestFor(l.name, medicines) && (
+                <button
+                  type="button"
+                  onClick={() => pick(l.key, suggestFor(l.name, medicines)!.id)}
+                  className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg border border-azure-200 bg-azure-50 px-2.5 py-1 text-[11px] font-bold text-azure-800 transition hover:bg-azure-100"
+                >
+                  You stock {suggestFor(l.name, medicines)!.name}
+                  {suggestFor(l.name, medicines)!.strength
+                    ? ` ${suggestFor(l.name, medicines)!.strength}`
+                    : ""}{" "}
+                  — use it, so they can reorder from you
+                </button>
+              )}
+
               {/* Said here rather than after the fact. A doctor prescribing
                   something they have run out of should find out while they
                   can still say so to the patient in front of them. */}
               {out && (
-                <p className="mt-1.5 text-[11px] font-semibold text-rose-600">
+                <p className="mt-1.5 text-[11px] font-semibold text-coral-600">
                   You have none of this left. The patient can still be
                   prescribed it — they just cannot order it from you today.
                 </p>
               )}
               {!out && low && (
-                <p className="mt-1.5 text-[11px] font-semibold text-amber-700">
+                <p className="mt-1.5 text-[11px] font-semibold text-gold-800">
                   Running low — {linked!.stock} left.
                 </p>
               )}
@@ -224,10 +246,32 @@ export default function PrescriptionLines() {
           setLines((ls) => [...ls, blank(`l${seq}`)]);
           setSeq((n) => n + 1);
         }}
-        className="text-xs font-bold text-brand-700 transition hover:underline"
+        className="text-xs font-bold text-azure-700 transition hover:underline"
       >
         + Add another medicine
       </button>
     </div>
+  );
+}
+
+/**
+ * The shelf item a typed line is probably meant to be.
+ *
+ * Deliberately dim: a case-insensitive prefix or containment match on the
+ * name, and nothing cleverer. A fuzzy matcher that offers "Clindamycin" when
+ * the doctor typed "Clobetasol" is worse than no matcher at all — this is a
+ * prescription, and a suggestion that is wrong more than rarely is one nobody
+ * will read before clicking.
+ *
+ * Null until there are three characters, or every line suggests something the
+ * moment it is touched.
+ */
+function suggestFor(typed: string, medicines: Medicine[]): Medicine | null {
+  const q = typed.trim().toLowerCase();
+  if (q.length < 3) return null;
+  return (
+    medicines.find((m) => m.name.toLowerCase().startsWith(q)) ??
+    medicines.find((m) => m.name.toLowerCase().includes(q)) ??
+    null
   );
 }

@@ -4,9 +4,11 @@ import { ArrowLeft } from "lucide-react";
 
 import { PageHead, Panel } from "@/components/doctor/portalUi";
 import PlanEditor, { type PlanItem } from "@/components/doctor/PlanEditor";
+import PatientBrief from "@/components/doctor/PatientBrief";
 import { getOwnDoctor } from "@/lib/doctor/guard";
 import { prisma } from "@/lib/prisma";
 import { humanIssue } from "@/lib/integrations/treatmentPlanCore";
+import { getPatientBrief } from "@/lib/queries/patientBrief";
 
 export const metadata = { title: "Treatment plan" };
 export const dynamic = "force-dynamic";
@@ -21,6 +23,7 @@ export default async function PlanPage({ params }: { params: { id: string } }) {
     select: {
       id: true,
       sharedAt: true,
+      patientUserId: true,
       patient: { select: { name: true, publicId: true } },
       items: { orderBy: { sortOrder: "asc" } },
       scan: {
@@ -37,6 +40,12 @@ export default async function PlanPage({ params }: { params: { id: string } }) {
   });
   if (!plan) notFound();
 
+  /* Who this is for. The screen showed a name and a list of suggestions and
+     nothing else about the person — see PatientBrief for why that made the
+     plan unplannable. Fetched after the plan so a patient nobody can read
+     never costs a query. */
+  const brief = await getPatientBrief(owner.doctorId, plan.patientUserId);
+
   const items: PlanItem[] = plan.items.map((i) => ({
     id: i.id,
     treatment: i.treatment,
@@ -49,17 +58,18 @@ export default async function PlanPage({ params }: { params: { id: string } }) {
     <div className="pb-10">
       <Link
         href="/doctor/portal/plans"
-        className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition hover:text-slate-900"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-graphite-500 transition hover:text-graphite-900"
       >
         <ArrowLeft className="h-4 w-4" /> All plans
       </Link>
 
       <PageHead
-        title={plan.patient.name ?? "Client"}
+        title={`${plan.patient.name ?? "Client"}'s program`}
+        mark="program"
         sub={
-          plan.patient.publicId
-            ? `Treatment plan · ${plan.patient.publicId}`
-            : "Treatment plan"
+          plan.sharedAt
+            ? "Shared with them — they can read this in their profile. Anything you change from here is visible to them."
+            : "A draft. Nothing here reaches the patient until you share it."
         }
       />
 
@@ -83,6 +93,25 @@ export default async function PlanPage({ params }: { params: { id: string } }) {
           </div>
         </Panel>
 
+        <div className="space-y-4">
+        <Panel
+          title="Who this is for"
+          sub="Everything that should change what you propose"
+          icon="user"
+          accent="brand"
+          index={1}
+        >
+          <div className="p-4 sm:p-5">
+            {brief ? (
+              <PatientBrief brief={brief} />
+            ) : (
+              <p className="text-sm text-graphite-600">
+                This patient&apos;s account is no longer available.
+              </p>
+            )}
+          </div>
+        </Panel>
+
         <Panel
           title="What the analysis measured"
           sub={
@@ -96,7 +125,7 @@ export default async function PlanPage({ params }: { params: { id: string } }) {
           }
           icon="pulse"
           accent="violet"
-          index={1}
+          index={2}
         >
           <div className="p-4 sm:p-5">
             {/* The numbers the suggestions were drawn from, so a doctor can
@@ -106,16 +135,16 @@ export default async function PlanPage({ params }: { params: { id: string } }) {
                 {plan.scan.issues.map((i) => (
                   <li key={i.issueType}>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-sm font-semibold capitalize text-slate-700">
+                      <span className="text-sm font-semibold capitalize text-graphite-700">
                         {humanIssue(i.issueType)}
                       </span>
-                      <span className="text-sm font-bold tabular-nums text-slate-900">
+                      <span className="text-sm font-bold tabular-nums text-graphite-900">
                         {i.score === null ? "—" : Math.round(i.score)}
                       </span>
                     </div>
-                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-graphite-100">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-brand-500 to-teal-500"
+                        className="h-full rounded-full bg-azure-500"
                         style={{ width: `${Math.min(Math.max(i.score ?? 0, 0), 100)}%` }}
                       />
                     </div>
@@ -123,12 +152,13 @@ export default async function PlanPage({ params }: { params: { id: string } }) {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-graphite-500">
                 This plan was started without an analysis.
               </p>
             )}
           </div>
         </Panel>
+        </div>
       </div>
     </div>
   );

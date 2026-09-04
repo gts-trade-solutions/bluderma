@@ -109,6 +109,7 @@ export default async function InventoryPage() {
     <>
       <PageHead
         title="My inventory"
+        mark="inventory"
         sub="What you hold, what is running out, and every change to the count. Separate from Prescriptions, which is what you give a patient."
         action={
           <Link href="/doctor/portal/medicines" className={portalBtnQuiet}>
@@ -140,13 +141,13 @@ export default async function InventoryPage() {
       </div>
 
       {(out.length > 0 || low.length > 0) && (
-        <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-          <p className="text-sm font-bold text-amber-900">
+        <div className="mb-4 rounded-[10px] border border-gold-200 bg-gold-50 p-4">
+          <p className="text-sm font-bold text-gold-900">
             {out.length > 0
               ? `${out.length} ${out.length === 1 ? "item has" : "items have"} run out`
               : `${low.length} ${low.length === 1 ? "item is" : "items are"} running low`}
           </p>
-          <p className="mt-1 text-xs leading-relaxed text-amber-800">
+          <p className="mt-1 text-xs leading-relaxed text-gold-900">
             {[...out, ...low].map((m) => m.name).join(", ")}.{" "}
             {out.length > 0 &&
               "A patient cannot order anything at zero, and prescribing it will warn you. "}
@@ -185,7 +186,7 @@ export default async function InventoryPage() {
               />
             </div>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-graphite-100">
               {ordered.map((m) => (
                 <MedicineRow key={m.id} row={{ ...m }} />
               ))}
@@ -215,17 +216,17 @@ export default async function InventoryPage() {
               />
             </div>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-graphite-100">
               {movements.map((mv) => (
                 <li
                   key={mv.id}
                   className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-900">
+                    <p className="truncate text-sm font-semibold text-graphite-900">
                       {mv.medicine.name}
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-graphite-500">
                       {REASON_LABEL[mv.reason]} · {when(mv.createdAt)}
                       {mv.note ? ` · ${mv.note}` : ""}
                     </p>
@@ -233,13 +234,13 @@ export default async function InventoryPage() {
                   <div className="shrink-0 text-right">
                     <p
                       className={`text-sm font-bold tabular-nums ${
-                        mv.delta > 0 ? "text-teal-700" : "text-rose-600"
+                        mv.delta > 0 ? "text-mint-800" : "text-coral-600"
                       }`}
                     >
                       {mv.delta > 0 ? "+" : ""}
                       {mv.delta}
                     </p>
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-[11px] text-graphite-500">
                       left {mv.balance}
                     </p>
                   </div>
@@ -267,24 +268,24 @@ function Tile({
   // Full literal strings: Tailwind scans source text, so an interpolated class
   // compiles to nothing and the colour silently goes missing.
   const bar = {
-    brand: "border-brand-500",
-    teal: "border-teal-500",
-    amber: "border-amber-500",
-    violet: "border-violet-500",
-    rose: "border-rose-500",
+    brand: "border-azure-500",
+    teal: "border-mint-500",
+    amber: "border-gold-500",
+    violet: "border-graphite-500",
+    rose: "border-coral-500",
   }[tone];
 
   return (
     <div
-      className={`rounded-2xl border-t-[3px] bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_12px_32px_-24px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/80 sm:p-4 ${bar}`}
+      className={`rounded-[10px] border-t-[3px] bg-white p-3 shadow-flat ring-1 ring-graphite-200 sm:p-4 ${bar}`}
     >
-      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 sm:text-[11px]">
+      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-graphite-500 sm:text-[11px]">
         {label}
       </p>
-      <p className="mt-1 font-display text-[20px] font-extrabold leading-none tracking-[-0.03em] tabular-nums text-slate-900 sm:text-[26px]">
+      <p className="mt-1 font-display text-[20px] font-extrabold leading-none tracking-[-0.03em] tabular-nums text-graphite-900 sm:text-[26px]">
         {value}
       </p>
-      {hint && <p className="mt-1.5 text-[11px] leading-snug text-slate-500">{hint}</p>}
+      {hint && <p className="mt-1.5 text-[11px] leading-snug text-graphite-500">{hint}</p>}
     </div>
   );
 }

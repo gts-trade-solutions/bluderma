@@ -1,9 +1,10 @@
 "use client";
 
 import { swatchFor } from "./clinicColors";
+import { STATE_STYLES, type VisitState } from "./visitStatus";
 
 /**
- * The left rail: a mini month, and the clinics.
+ * The left rail: a mini month, the clinics, and the key.
  *
  * ── Why a rail at all ────────────────────────────────────────────────────
  * Every calendar a doctor already uses — Google, Outlook, Apple — puts a
@@ -17,6 +18,12 @@ import { swatchFor } from "./clinicColors";
  * A month grid with no load on it is a date picker. The dot under a day says
  * that day has bookings, so the eye can find a busy week without opening it.
  *
+ * ── The key moved here ───────────────────────────────────────────────────
+ * It used to sit above the grid, where it took a full row of the working
+ * surface to explain four symbols. On a desktop it belongs beside the thing
+ * it explains; below xl the toolbar carries its own compact copy, because
+ * this rail is not on screen there.
+ *
  * ── Desktop only ─────────────────────────────────────────────────────────
  * On a phone the grid needs every pixel of width, and a 7x6 mini month beside
  * it would leave neither readable. The month VIEW already answers the same
@@ -24,6 +31,8 @@ import { swatchFor } from "./clinicColors";
  */
 
 const MINI_WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
+
+const CARD = "rounded-[10px] border border-graphite-200 bg-white shadow-flat";
 
 export default function CalendarRail({
   anchor,
@@ -34,6 +43,7 @@ export default function CalendarRail({
   onPick,
   onStepMonth,
   onClinic,
+  states = [],
 }: {
   /** The date the grid is showing. Drives which month the mini shows. */
   anchor: Date;
@@ -45,6 +55,8 @@ export default function CalendarRail({
   onPick: (seed: string) => void;
   onStepMonth: (dir: 1 | -1) => void;
   onClinic: (id: string | null) => void;
+  /** The states actually on screen, for the key. Empty hides it. */
+  states?: VisitState[];
 }) {
   const year = anchor.getUTCFullYear();
   const month = anchor.getUTCMonth();
@@ -68,17 +80,17 @@ export default function CalendarRail({
   });
 
   return (
-    <aside className="hidden w-[15rem] shrink-0 space-y-4 xl:block">
+    <aside className="hidden w-[15rem] shrink-0 space-y-3 xl:block">
       {/* ── Mini month ──────────────────────────────────────────────── */}
-      <div className="rounded-2xl bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/80">
+      <div className={`${CARD} p-3`}>
         <div className="mb-2 flex items-center justify-between">
-          <p className="text-[13px] font-bold text-slate-900">{monthName}</p>
+          <p className="font-portal text-[13px] font-bold text-graphite-900">{monthName}</p>
           <div className="flex items-center gap-0.5">
             <button
               type="button"
               onClick={() => onStepMonth(-1)}
               aria-label="Previous month"
-              className="grid h-6 w-6 place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+              className="grid h-6 w-6 place-items-center rounded-md text-graphite-500 transition hover:bg-graphite-100 hover:text-graphite-900"
             >
               ‹
             </button>
@@ -86,7 +98,7 @@ export default function CalendarRail({
               type="button"
               onClick={() => onStepMonth(1)}
               aria-label="Next month"
-              className="grid h-6 w-6 place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+              className="grid h-6 w-6 place-items-center rounded-md text-graphite-500 transition hover:bg-graphite-100 hover:text-graphite-900"
             >
               ›
             </button>
@@ -97,7 +109,7 @@ export default function CalendarRail({
           {MINI_WEEKDAYS.map((d, i) => (
             <span
               key={i}
-              className="pb-1 text-[10px] font-bold uppercase tracking-wide text-slate-400"
+              className="pb-1 text-[10px] font-bold uppercase tracking-wide text-graphite-500"
             >
               {d}
             </span>
@@ -116,19 +128,19 @@ export default function CalendarRail({
                 onClick={() => onPick(seed)}
                 aria-current={isAnchor ? "date" : undefined}
                 title={load ? `${load} booked` : "Nothing booked"}
-                className={`relative mx-auto grid h-7 w-7 place-items-center rounded-full text-[12px] font-semibold transition ${
+                className={`relative mx-auto grid h-7 w-7 place-items-center rounded-lg text-[12px] font-bold tabular-nums transition ${
                   isAnchor
-                    ? "bg-blue-600 text-white"
+                    ? "bg-graphite-900 text-white"
                     : isToday
-                      ? "bg-blue-50 text-blue-700 ring-1 ring-blue-300"
-                      : "text-slate-700 hover:bg-slate-100"
+                      ? "bg-gold-500 text-graphite-900"
+                      : "text-graphite-700 hover:bg-graphite-100"
                 }`}
               >
                 {d.getUTCDate()}
                 {/* Load, not selection. A day with bookings is worth finding
                     even when it is neither today nor where you are. */}
-                {load > 0 && !isAnchor && (
-                  <span className="absolute bottom-0.5 h-1 w-1 rounded-full bg-blue-500" />
+                {load > 0 && !isAnchor && !isToday && (
+                  <span className="absolute bottom-0.5 h-1 w-1 rounded-full bg-azure-500" />
                 )}
               </button>
             );
@@ -137,12 +149,12 @@ export default function CalendarRail({
       </div>
 
       {/* ── Clinics ─────────────────────────────────────────────────────
-          A checkbox list rather than the chip row the grid used to carry, so
-          the filter stops competing with the toolbar for the top of the page
-          and the colours sit beside the thing they label. */}
+          A list rather than the chip row the grid used to carry, so the
+          filter stops competing with the toolbar for the top of the page and
+          the colours sit beside the thing they label. */}
       {clinics.length > 1 && (
-        <div className="rounded-2xl bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/80">
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400">
+        <div className={`${CARD} p-3`}>
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-graphite-500">
             Locations
           </p>
           <ul className="space-y-0.5">
@@ -152,11 +164,11 @@ export default function CalendarRail({
                 onClick={() => onClinic(null)}
                 className={`flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-[13px] font-semibold transition ${
                   activeClinicId === null
-                    ? "bg-slate-900 text-white"
-                    : "text-slate-600 hover:bg-slate-50"
+                    ? "bg-graphite-900 text-white"
+                    : "text-graphite-700 hover:bg-graphite-100"
                 }`}
               >
-                <span className="h-2.5 w-2.5 shrink-0 rounded-sm bg-slate-400" />
+                <span className="h-2.5 w-2.5 shrink-0 rounded-sm bg-graphite-400" />
                 All locations
               </button>
             </li>
@@ -168,7 +180,9 @@ export default function CalendarRail({
                     type="button"
                     onClick={() => onClinic(c.id)}
                     className={`flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-[13px] font-semibold transition ${
-                      on ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50"
+                      on
+                        ? "bg-graphite-900 text-white"
+                        : "text-graphite-700 hover:bg-graphite-100"
                     }`}
                   >
                     <span
@@ -179,6 +193,27 @@ export default function CalendarRail({
                 </li>
               );
             })}
+          </ul>
+        </div>
+      )}
+
+      {/* ── The key ─────────────────────────────────────────────────── */}
+      {states.length > 0 && (
+        <div className={`${CARD} p-3`}>
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-graphite-500">
+            What the marks mean
+          </p>
+          <ul className="space-y-1.5">
+            {states.map((k) => (
+              <li key={k} className="flex items-center gap-2 text-[12px] text-graphite-700">
+                <span
+                  className={`inline-flex h-4 min-w-4 items-center justify-center rounded px-1 text-[10px] font-black ${STATE_STYLES[k].chip}`}
+                >
+                  {STATE_STYLES[k].tag ?? " "}
+                </span>
+                {STATE_STYLES[k].label}
+              </li>
+            ))}
           </ul>
         </div>
       )}

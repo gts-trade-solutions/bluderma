@@ -138,13 +138,13 @@ export default function ChipMultiSelect({
         <ul className="mb-3 flex flex-wrap gap-1.5">
           {selected.map((s) => (
             <li key={s}>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 py-1 pl-3 pr-1.5 text-xs font-semibold text-brand-800 ring-1 ring-brand-200">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-azure-50 py-1 pl-3 pr-1.5 text-xs font-semibold text-azure-800 ring-1 ring-azure-200">
                 {s}
                 <button
                   type="button"
                   aria-label={`Remove ${s}`}
                   onClick={() => remove(s)}
-                  className="grid h-5 w-5 place-items-center rounded-full text-brand-500 transition hover:bg-brand-100 hover:text-brand-900"
+                  className="grid h-5 w-5 place-items-center rounded-full text-azure-600 transition hover:bg-azure-100 hover:text-azure-900"
                 >
                   ×
                 </button>
@@ -165,7 +165,7 @@ export default function ChipMultiSelect({
           }
         }}
         placeholder="Search treatments, or type your own and press Enter"
-        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+        className="w-full rounded-xl border border-graphite-200 bg-white px-3.5 py-2.5 text-sm text-graphite-900 outline-none transition placeholder:text-graphite-500 focus:border-azure-400 focus:ring-2 focus:ring-azure-100"
       />
 
       {typeahead.length > 0 && (
@@ -178,7 +178,7 @@ export default function ChipMultiSelect({
                   add(t);
                   setQuery("");
                 }}
-                className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50 hover:ring-slate-300"
+                className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-graphite-700 ring-1 ring-graphite-200 transition hover:bg-graphite-50 hover:ring-graphite-300"
               >
                 + {t}
               </button>
@@ -189,7 +189,7 @@ export default function ChipMultiSelect({
 
       {unpicked.length > 0 && q.length < 2 && (
         <div className="mt-3">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-graphite-500">
             {showAll ? `All ${unpicked.length} treatments` : "Commonly offered"}
           </p>
           <ul className="mt-1.5 flex flex-wrap gap-1.5">
@@ -198,7 +198,7 @@ export default function ChipMultiSelect({
                 <button
                   type="button"
                   onClick={() => add(s)}
-                  className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50 hover:ring-slate-300"
+                  className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-graphite-700 ring-1 ring-graphite-200 transition hover:bg-graphite-50 hover:ring-graphite-300"
                 >
                   + {s}
                 </button>
@@ -211,7 +211,7 @@ export default function ChipMultiSelect({
               type="button"
               onClick={() => setShowAll((v) => !v)}
               aria-expanded={showAll}
-              className="mt-2 text-xs font-bold text-brand-700 transition hover:underline"
+              className="mt-2 text-xs font-bold text-azure-700 transition hover:underline"
             >
               {showAll
                 ? "Show fewer"
@@ -228,13 +228,13 @@ export default function ChipMultiSelect({
             <button
               type="button"
               onClick={() => setDescribing(true)}
-              className="text-xs font-bold text-brand-700 hover:underline"
+              className="text-xs font-bold text-azure-700 hover:underline"
             >
               Can&apos;t find it? Describe what you do →
             </button>
           ) : (
-            <div className="rounded-xl bg-slate-50 p-3.5 ring-1 ring-slate-200">
-              <label className="block text-xs font-semibold text-slate-700">
+            <div className="rounded-xl bg-graphite-50 p-3.5 ring-1 ring-graphite-200">
+              <label className="block text-xs font-semibold text-graphite-700">
                 Describe it in your own words
               </label>
               <textarea
@@ -242,14 +242,14 @@ export default function ChipMultiSelect({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="e.g. I do microneedling with PRP for hair thinning"
-                className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+                className="mt-1.5 w-full rounded-lg border border-graphite-200 bg-white px-3 py-2 text-sm text-graphite-900 outline-none focus:border-azure-400 focus:ring-2 focus:ring-azure-100"
               />
               <div className="mt-2 flex items-center gap-2">
                 <button
                   type="button"
                   disabled={matching || description.trim().length < 3}
                   onClick={runMatch}
-                  className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-brand-700 disabled:opacity-50"
+                  className="rounded-lg bg-azure-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-azure-700 disabled:opacity-50"
                 >
                   {matching ? "Looking…" : "Find matches"}
                 </button>
@@ -259,7 +259,7 @@ export default function ChipMultiSelect({
                     setDescribing(false);
                     setMatched(null);
                   }}
-                  className="text-xs font-semibold text-slate-500 hover:text-slate-800"
+                  className="text-xs font-semibold text-graphite-500 hover:text-graphite-800"
                 >
                   Close
                 </button>
@@ -270,13 +270,13 @@ export default function ChipMultiSelect({
               {matched && (
                 <div className="mt-3">
                   {matched.length === 0 ? (
-                    <p className="text-xs text-slate-600">
+                    <p className="text-xs text-graphite-600">
                       Nothing in our catalogue matched that. Type it into the
                       box above and press Enter. Your own wording is fine.
                     </p>
                   ) : (
                     <>
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-graphite-500">
                         Did you mean
                       </p>
                       <ul className="mt-1.5 flex flex-wrap gap-1.5">
@@ -288,7 +288,7 @@ export default function ChipMultiSelect({
                                 add(m);
                                 setMatched((x) => x?.filter((y) => y !== m) ?? null);
                               }}
-                              className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-brand-800 ring-1 ring-brand-200 transition hover:bg-brand-50"
+                              className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-azure-800 ring-1 ring-azure-200 transition hover:bg-azure-50"
                             >
                               + {m}
                             </button>

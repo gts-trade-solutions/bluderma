@@ -193,13 +193,24 @@ export const IMG = {
   prod5: ASSET.facial,
   prod6: ASSET.glow,
 
-  // Men's skin and hair
+  /* Men's skin and hair.
+   *
+   * Three of these pointed at fillerConsult, redness and injectable — all
+   * three of which are photographs of women. A category called Men's
+   * Aesthetics whose cards show women is not a near-miss, it is the section
+   * telling half its audience it was not built for them.
+   *
+   * There are five male assets and six slots, so bodyLaserMan carries both
+   * device-on-a-male-body cards (sweat and back hair) and `men` carries the
+   * hero and the portrait card. Two honest repeats beat one wrong subject. */
   men1: ASSET.men,
-  men2: ASSET.fillerConsult,
-  men3: ASSET.redness,
-  men4: ASSET.injectable,
+  men2: ASSET.bridalGroom,
+  men3: ASSET.smileMan,
+  men4: ASSET.bodyLaserMan,
   men5: ASSET.men,
   men6: ASSET.bodyLaserMan,
+  /** Male pattern hair loss. A man checking his own hairline in a mirror. */
+  menHairLoss: ASSET.menHairline,
 
   // Smile and eye rejuvenation
   smile1: ASSET.smile,

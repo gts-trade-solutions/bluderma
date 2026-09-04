@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import Fold from "@/components/doctor/dashboard/Fold";
+
 import {
   Empty,
   PageHead,
@@ -69,26 +71,39 @@ export default async function PracticePage() {
         <ClinicsStep doctor={doctor} mode="manage" />
       </section>
 
-      <section>
-        <PageHead
-          title="Your hours"
-          sub="Sessions per location. A booking at one clinic blocks the same time at every other. You can only be in one place."
-        />
+      {/* Hours are set once and revisited when something changes. Folded, so
+          the locations — the thing people come here to check — are what the
+          page opens on. */}
+      <Fold
+        storageKey="practice-hours"
+        title="Your hours"
+        sub="Sessions per location. A booking at one clinic blocks the same time at every other. You can only be in one place."
+        summary={`${doctor.availability.length} session${
+          doctor.availability.length === 1 ? "" : "s"
+        } set across ${doctor.clinics.length} location${
+          doctor.clinics.length === 1 ? "" : "s"
+        }`}
+      >
         <HoursStep doctor={doctor} mode="manage" />
-      </section>
+      </Fold>
 
-      <section>
-        <PageHead
-          title="Diary settings"
-          sub="How bookings reach you, and how much room you leave between locations."
-        />
+      <Fold
+        storageKey="practice-diary"
+        title="Diary settings"
+        sub="How bookings reach you, and how much room you leave between locations."
+        summary={`${
+          doctor.requiresApproval
+            ? "You confirm each booking"
+            : "Bookings confirm themselves"
+        } · ${doctor.travelBufferMin} min between locations`}
+      >
         <PracticeSettings
           travelBufferMin={doctor.travelBufferMin}
           requiresApproval={doctor.requiresApproval}
           priorityHoldPerDay={doctor.priorityHoldPerDay}
           multiClinic={doctor.clinics.length > 1}
         />
-      </section>
+      </Fold>
     </div>
   );
 }

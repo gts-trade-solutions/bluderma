@@ -7,9 +7,9 @@ import { redeemGiftCard } from "@/lib/actions/giftCards";
 import { useFormValidation } from "@/hooks/useFormValidation";
 
 const field =
-  "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none";
+  "w-full rounded-xl border border-graphite-200 bg-white px-3.5 py-2.5 text-sm text-graphite-900 placeholder:text-graphite-500 focus:border-azure-400 focus:outline-none";
 const labelClass =
-  "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500";
+  "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-graphite-500";
 
 /**
  * Spending part of a gift card at the counter.
@@ -90,8 +90,8 @@ export default function RedeemForm() {
         <p
           className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${
             result.ok
-              ? "border border-teal-200 bg-teal-50 text-teal-700"
-              : "border border-rose-200 bg-rose-50 text-rose-700"
+              ? "border border-mint-200 bg-mint-50 text-mint-800"
+              : "border border-coral-200 bg-coral-50 text-coral-700"
           }`}
         >
           {result.ok && <Check className="mr-1.5 inline h-4 w-4" />}
@@ -99,7 +99,7 @@ export default function RedeemForm() {
         </p>
       )}
 
-      <p className="text-[11px] leading-relaxed text-slate-500">
+      <p className="text-[11px] leading-relaxed text-graphite-500">
         A card can be spent across several visits. Take only what this visit
         costs and the rest stays on it.
       </p>
@@ -107,7 +107,7 @@ export default function RedeemForm() {
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex min-h-11 items-center gap-2 rounded-full bg-gradient-to-r from-brand-600 to-teal-600 px-6 py-2.5 text-sm font-extrabold text-white transition hover:from-brand-700 hover:to-teal-700 disabled:opacity-60"
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-gold-500 px-6 py-2.5 text-sm font-extrabold text-graphite-900 shadow-flat transition hover:bg-gold-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-graphite-900 focus-visible:ring-offset-2"
       >
         {pending && <LoaderCircle className="h-4 w-4 animate-spin" />}
         Redeem

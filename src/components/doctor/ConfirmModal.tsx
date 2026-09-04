@@ -82,13 +82,13 @@ export default function ConfirmModal({
 
   const confirmClass =
     tone === "danger"
-      ? "bg-rose-600 hover:bg-rose-700 shadow-[0_6px_18px_-6px_rgba(225,29,72,0.7)]"
-      : "bg-brand-600 hover:bg-brand-700 shadow-[0_6px_18px_-6px_rgba(31,111,214,0.7)]";
+      ? "bg-coral-600 hover:bg-coral-700 shadow-[0_6px_18px_-6px_rgba(225,29,72,0.7)]"
+      : "bg-azure-600 hover:bg-azure-700 shadow-[0_6px_18px_-6px_rgba(31,111,214,0.7)]";
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-graphite-900/60 backdrop-blur-sm"
         onClick={() => !busy && onCancel()}
         aria-hidden
       />
@@ -99,15 +99,15 @@ export default function ConfirmModal({
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className="theme-light relative z-10 w-full max-w-lg animate-scale-in overflow-hidden rounded-2xl bg-white shadow-[0_32px_80px_-24px_rgba(15,23,42,0.55)] outline-none ring-1 ring-slate-900/10"
+        className="theme-light relative z-10 w-full max-w-lg animate-scale-in overflow-hidden rounded-[10px] bg-white shadow-flat outline-none ring-1 ring-graphite-900/10"
       >
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
+        <div className="flex items-start justify-between gap-4 border-b border-graphite-100 px-5 py-4">
           <div className="min-w-0">
-            <h2 className="font-display text-lg font-extrabold tracking-[-0.02em] text-slate-900">
+            <h2 className="font-display text-lg font-extrabold tracking-[-0.02em] text-graphite-900">
               {title}
             </h2>
             {lead && (
-              <p className="mt-0.5 text-sm leading-relaxed text-slate-600">{lead}</p>
+              <p className="mt-0.5 text-sm leading-relaxed text-graphite-600">{lead}</p>
             )}
           </div>
           <button
@@ -115,7 +115,7 @@ export default function ConfirmModal({
             onClick={onCancel}
             disabled={busy}
             aria-label="Close"
-            className="-mr-1 -mt-1 grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
+            className="-mr-1 -mt-1 grid h-8 w-8 shrink-0 place-items-center rounded-lg text-graphite-500 transition hover:bg-graphite-100 hover:text-graphite-700 disabled:opacity-50"
           >
             ×
           </button>
@@ -125,7 +125,7 @@ export default function ConfirmModal({
           <div className="max-h-[55vh] overflow-y-auto px-5 py-4">{children}</div>
         )}
 
-        <div className="flex flex-wrap items-center gap-2.5 border-t border-slate-100 bg-slate-50/70 px-5 py-3.5">
+        <div className="flex flex-wrap items-center gap-2.5 border-t border-graphite-100 bg-graphite-50/70 px-5 py-3.5">
           <button
             type="button"
             onClick={onConfirm}
@@ -144,7 +144,7 @@ export default function ConfirmModal({
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="rounded-full px-4 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50"
+            className="rounded-full px-4 py-2 text-sm font-bold text-graphite-600 transition hover:bg-graphite-100 disabled:opacity-50"
           >
             {cancelLabel}
           </button>
@@ -163,11 +163,11 @@ export function ConfirmRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap gap-x-3 gap-y-0.5 border-b border-slate-100 py-2 last:border-0">
-      <dt className="w-32 shrink-0 text-xs font-bold uppercase tracking-wide text-slate-400">
+    <div className="flex flex-wrap gap-x-3 gap-y-0.5 border-b border-graphite-100 py-2 last:border-0">
+      <dt className="w-32 shrink-0 text-xs font-bold uppercase tracking-wide text-graphite-500">
         {label}
       </dt>
-      <dd className="min-w-0 flex-1 text-sm text-slate-800">{children}</dd>
+      <dd className="min-w-0 flex-1 text-sm text-graphite-800">{children}</dd>
     </div>
   );
 }

@@ -1,4 +1,6 @@
 import Link from "next/link";
+
+import Fold from "./Fold";
 import { Suspense } from "react";
 
 import { Empty, Tag, portalBtnQuiet } from "@/components/doctor/portalUi";
@@ -249,14 +251,14 @@ export default async function DashboardHome({
           the height. */}
       <header className="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">
-          <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-brand-600">
+          <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-azure-600">
             <span
               aria-hidden
-              className="h-[3px] w-6 rounded-full bg-gradient-to-r from-brand-500 to-teal-400"
+              className="h-[3px] w-6 rounded-full bg-gradient-to-r from-azure-500 to-mint-400"
             />
             {m.periodLabel}
           </p>
-          <h1 className="mt-1.5 font-display text-[22px] font-extrabold leading-tight tracking-[-0.035em] text-slate-900 sm:text-[28px]">
+          <h1 className="mt-1.5 font-display text-[22px] font-extrabold leading-tight tracking-[-0.035em] text-graphite-900 sm:text-[28px]">
             {greeting()}, {salutation}
           </h1>
         </div>
@@ -265,9 +267,9 @@ export default async function DashboardHome({
           {m.appointments.awaiting > 0 && (
             <Link
               href="/doctor/portal/requests"
-              className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 py-1.5 pl-1.5 pr-3.5 text-xs font-bold text-amber-900 transition hover:bg-amber-100"
+              className="inline-flex items-center gap-2 rounded-full border border-gold-200 bg-gold-50 py-1.5 pl-1.5 pr-3.5 text-xs font-bold text-gold-900 transition hover:bg-gold-100"
             >
-              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-amber-500 text-[11px] font-bold text-white">
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-gold-500 text-[11px] font-bold text-white">
                 {m.appointments.awaiting}
               </span>
               <span>
@@ -279,14 +281,14 @@ export default async function DashboardHome({
           {m.nextToday && (
             <Link
               href="/doctor/portal/today"
-              className="inline-flex min-w-0 items-center gap-2 rounded-full border border-teal-200 bg-teal-50 py-1.5 pl-3 pr-3.5 text-xs font-bold text-teal-900 transition hover:bg-teal-100"
+              className="inline-flex min-w-0 items-center gap-2 rounded-full border border-mint-200 bg-mint-50 py-1.5 pl-3 pr-3.5 text-xs font-bold text-mint-900 transition hover:bg-mint-100"
             >
               <span className="tabular-nums">{m.nextToday.at}</span>
-              <span className="h-3 w-px bg-teal-300" aria-hidden />
+              <span className="h-3 w-px bg-mint-300" aria-hidden />
               <span className="max-w-[9rem] truncate font-semibold">
                 {m.nextToday.patientName}
               </span>
-              <span className="font-semibold text-teal-700">
+              <span className="font-semibold text-mint-800">
                 {countdown(m.nextToday.minutesAway)}
               </span>
             </Link>
@@ -299,7 +301,7 @@ export default async function DashboardHome({
       {/* ── The four headline figures ──────────────────────────────────── */}
       {/* Two across on a phone rather than one: four full-width tiles is four
           screens of scrolling before the first chart. */}
-      <div className="mb-5 grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
+      <div className="mb-5 grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-3 xl:grid-cols-5">
         {/* The labels are the plainest words that are still true.
             "Booked value" and "Visits booked" both lead on a word doing
             grammatical work rather than naming a thing, and a reader has to
@@ -318,6 +320,25 @@ export default async function DashboardHome({
           tone="brand"
           icon="rupee"
           hint="What clients agreed to pay. Not what has reached you yet, and cancelled visits are left out."
+        />
+        {/* The one forward-looking figure. Gold because half of it is
+            capacity nobody has bought yet, which is the same thing gold
+            means on the seats chart and on the calendar. */}
+        <Kpi
+          label="Today's potential"
+          value={money(m.todayPotential.total)}
+          tone="amber"
+          icon="trend"
+          hint={
+            !m.todayPotential.isWorkingDay
+              ? "You are not working today, so there is nothing left to fill."
+              : m.todayPotential.openSeats === 0
+                ? `${money(m.todayPotential.bookedInr)} booked and no seats left — today is full.`
+                : `${money(m.todayPotential.bookedInr)} booked, plus ${m.todayPotential.openSeats} open seat${
+                    m.todayPotential.openSeats === 1 ? "" : "s"
+                  } worth ${money(m.todayPotential.openValue)}.`
+          }
+          href="/doctor/portal/today"
         />
         <Kpi
           label="Appointments"
@@ -348,7 +369,7 @@ export default async function DashboardHome({
         <Kpi
           label="Repeat clients"
           value={String(m.patients.returningCount)}
-          tone="amber"
+          tone="slate"
           icon="repeat"
           hint={clientSplit(
             m.patients.returningCount,
@@ -374,19 +395,19 @@ export default async function DashboardHome({
           sub={`${m.seriesGrain === "week" ? "Week by week" : "Day by day"} across ${m.periodLabel}`}
           action={
             !m.isComplete && m.projected > 0 ? (
-              <span className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-600 ring-1 ring-slate-200">
+              <span className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-graphite-600 ring-1 ring-graphite-200">
                 At this rate:{" "}
-                <span className="tabular-nums text-slate-900">
+                <span className="tabular-nums text-graphite-900">
                   {money(m.projected)}
                 </span>{" "}
-                <span className="font-semibold text-slate-400">by month end</span>
+                <span className="font-semibold text-graphite-500">by month end</span>
               </span>
             ) : undefined
           }
           note={
             best.value > 0 ? (
               <>
-                <strong className="font-bold text-slate-900">
+                <strong className="font-bold text-graphite-900">
                   Your best {m.seriesGrain === "week" ? "week" : "day"}
                   {m.seriesGrain === "week" ? " started " : " was "}
                   {prettyDay(best.date)}
@@ -394,7 +415,7 @@ export default async function DashboardHome({
                 — {money(best.value)} from {best.count} booking
                 {best.count === 1 ? "" : "s"}. Each bar is one{" "}
                 {m.seriesGrain === "week" ? "week" : "day"} of bookings; the
-                green line is the running average, which is the part worth
+                red line is the running average, which is the part worth
                 watching.
                 {!m.isComplete && m.projected > 0 && (
                   <>
@@ -407,16 +428,16 @@ export default async function DashboardHome({
                         and it is not one: it assumes the rest of the period
                         looks like the part already gone. */}
                     That projection is arithmetic, not a forecast:{" "}
-                    <strong className="font-bold text-slate-900">
+                    <strong className="font-bold text-graphite-900">
                       {money(m.periodBooked)}
                     </strong>{" "}
                     booked over {m.daysElapsed} day
                     {m.daysElapsed === 1 ? "" : "s"} is{" "}
-                    <strong className="font-bold text-slate-900">
+                    <strong className="font-bold text-graphite-900">
                       {money(Math.round(m.periodBooked / Math.max(m.daysElapsed, 1)))}
                     </strong>{" "}
                     a day, and {m.daysInPeriod} days at that rate comes to{" "}
-                    <strong className="font-bold text-slate-900">
+                    <strong className="font-bold text-graphite-900">
                       {money(m.projected)}
                     </strong>
                     . It assumes the {m.daysInPeriod - m.daysElapsed} day
@@ -461,18 +482,18 @@ export default async function DashboardHome({
 
           <ul className="mt-3 space-y-1.5">
             <DonutKey
-              dot="bg-teal-500"
+              dot="bg-mint-500"
               label="Money earned"
               amount={money(m.revenue.realised)}
             />
             <DonutKey
-              dot="bg-brand-600"
+              dot="bg-azure-600"
               label="Money coming in"
               amount={money(m.revenue.scheduled)}
             />
             {m.revenue.unresolved > 0 && (
               <DonutKey
-                dot="bg-amber-500"
+                dot="bg-gold-500"
                 label="Not closed off"
                 amount={money(m.revenue.unresolved)}
               />
@@ -485,23 +506,23 @@ export default async function DashboardHome({
       {/* Their own row, four across. Stacked down the side of the donut they
           made that panel 949px tall, which stretched the chart beside it to
           match and left 600px of nothing beneath a 260px chart. */}
-      <div className="mb-5 grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
+      <div className="mb-5 grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-3 xl:grid-cols-5">
         <MoneyCard
-          dot="bg-teal-500"
+          dot="bg-mint-500"
           label="Money earned"
           amount={money(m.revenue.realised)}
           share={share(m.revenue.realised)}
           body="Visits that have happened and that you marked complete in your calendar."
         />
         <MoneyCard
-          dot="bg-brand-600"
+          dot="bg-azure-600"
           label="Money coming in"
           amount={money(m.revenue.scheduled)}
           share={share(m.revenue.scheduled)}
           body="Visits that are booked and confirmed but have not happened yet."
         />
         <MoneyCard
-          dot="bg-amber-500"
+          dot="bg-gold-500"
           label="Not closed off"
           amount={money(m.revenue.unresolved)}
           share={share(m.revenue.unresolved)}
@@ -510,7 +531,7 @@ export default async function DashboardHome({
             m.revenue.unresolved > 0 ? (
               <Link
                 href="/doctor/portal/calendar"
-                className="text-[11px] font-bold text-brand-600 hover:text-brand-700"
+                className="text-[11px] font-bold text-azure-600 hover:text-azure-700"
               >
                 Tidy these up →
               </Link>
@@ -518,13 +539,13 @@ export default async function DashboardHome({
           }
         />
         <MoneyCard
-          dot="bg-rose-600"
+          dot="bg-coral-600"
           label="Money lost"
           amount={money(m.revenue.lost)}
           body="Cancelled, or the client did not turn up. This is not part of the total above."
           action={
             m.revenue.recovered > 0 ? (
-              <span className="text-[11px] font-semibold text-slate-500">
+              <span className="text-[11px] font-semibold text-graphite-500">
                 You kept {money(m.revenue.recovered)} in cancellation fees
               </span>
             ) : undefined
@@ -552,13 +573,13 @@ export default async function DashboardHome({
           note={
             m.seats.emptiestDay ? (
               <>
-                <strong className="font-bold text-slate-900">
+                <strong className="font-bold text-graphite-900">
                   {m.seats.emptiestDay.label} has the most room
                 </strong>{" "}
                 — {m.seats.emptiestDay.empty} seat
                 {m.seats.emptiestDay.empty === 1 ? "" : "s"} nobody has taken,
                 worth about{" "}
-                <strong className="font-bold text-slate-900">
+                <strong className="font-bold text-graphite-900">
                   {money(m.seats.emptiestDay.empty * m.seats.perSeat)}
                 </strong>
                 . The value of a seat is{" "}
@@ -617,19 +638,19 @@ export default async function DashboardHome({
 
           <SeatWeekChart data={m.seats.days} perSeat={m.seats.perSeat} />
 
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-semibold text-slate-500">
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-semibold text-graphite-500">
             <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-sm bg-teal-500" />
+              <span className="h-2.5 w-2.5 rounded-sm bg-mint-500" />
               Booked
             </span>
             <span className="flex items-center gap-1.5">
               {/* Amber, matching the bar. It was slate-200 — the same
                   near-white as the grid lines — so the legend agreed with a
                   chart nobody could read. */}
-              <span className="h-2.5 w-2.5 rounded-sm bg-amber-300" />
+              <span className="h-2.5 w-2.5 rounded-sm bg-gold-300" />
               Still open
             </span>
-            <span className="text-slate-400">
+            <span className="text-graphite-500">
               The number above each bar is that day&apos;s total seats
             </span>
           </div>
@@ -666,13 +687,13 @@ export default async function DashboardHome({
             note={
               <>
                 {m.periodLabel} is on track for{" "}
-                <strong className="font-bold text-slate-900">
+                <strong className="font-bold text-graphite-900">
                   {money(m.projected)}
                 </strong>{" "}
                 at your current rate. Each bar is what that figure would grow by
                 — seeing one more client a week for the{" "}
                 {Math.max(m.daysInPeriod - m.daysElapsed, 0)} days left is worth{" "}
-                <strong className="font-bold text-slate-900">
+                <strong className="font-bold text-graphite-900">
                   {money(m.uplift[0]?.amount ?? 0)}
                 </strong>
                 . This is multiplication, not a forecast: it assumes those
@@ -712,15 +733,15 @@ export default async function DashboardHome({
           note={
             m.utilisation.emptiest && m.utilisation.emptiest.free > 0 ? (
               <>
-                <strong className="font-bold text-slate-900">
+                <strong className="font-bold text-graphite-900">
                   {m.utilisation.emptiest.label}
                 </strong>{" "}
                 has been your quietest day — about {m.utilisation.emptiest.free}{" "}
                 seats went unbooked over four weeks. Each bar is one weekday:
-                the blue part was booked, the grey part nobody took.
+                the blue part was booked, the gold part nobody took.
               </>
             ) : (
-              "Each bar is one weekday. The blue part was booked, the grey part nobody took."
+              "Each bar is one weekday. The blue part was booked, the gold part nobody took."
             )
           }
         >
@@ -739,11 +760,17 @@ export default async function DashboardHome({
         </ChartPanel>
       </div>
 
-      {/* ── Clients ────────────────────────────────────────────────────── */}
-      <SectionHead
+      {/* ── Clients ─────────────────────────────────────────────────────
+          Folded: this is a monthly read, not a daily one. See Fold. */}
+      <Fold
+        storageKey="clients"
         title="Your clients"
         sub="What brings them in, and how reliably the bookings turn into visits."
-      />
+        summary={`${m.patients.thisMonth} client${m.patients.thisMonth === 1 ? "" : "s"} this period${
+          topReason ? ` · most come for ${topReason.label.toLowerCase()}` : ""
+        } · ${m.appointments.completedAllTime} visits completed all time`}
+      >
+      {/* ── Clients ────────────────────────────────────────────────────── */}
       <div className="mb-5 grid gap-3.5 lg:grid-cols-2">
         <ChartPanel
           index={5}
@@ -817,7 +844,7 @@ export default async function DashboardHome({
             />
           </div>
 
-          <dl className="mt-4 grid gap-3 border-t border-slate-100 pt-4 sm:grid-cols-2">
+          <dl className="mt-4 grid gap-3 border-t border-graphite-100 pt-4 sm:grid-cols-2">
             <MiniStat
               label="Clients book ahead by"
               value={
@@ -845,19 +872,19 @@ export default async function DashboardHome({
               opposite problems, and `cancelledBy` was already being written
               on every one of them. */}
           {m.cancellations.total > 0 && (
-            <div className="mt-4 border-t border-slate-100 pt-4">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <div className="mt-4 border-t border-graphite-100 pt-4">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-graphite-500">
                 Who called the cancellations off
               </p>
-              <div className="mt-2.5 flex h-2.5 overflow-hidden rounded-full bg-slate-100">
+              <div className="mt-2.5 flex h-2.5 overflow-hidden rounded-full bg-graphite-100">
                 <span
-                  className="bg-slate-400"
+                  className="bg-graphite-400"
                   style={{
                     width: `${(m.cancellations.byPatient / m.cancellations.total) * 100}%`,
                   }}
                 />
                 <span
-                  className="bg-rose-400"
+                  className="bg-coral-400"
                   style={{
                     width: `${(m.cancellations.byClinic / m.cancellations.total) * 100}%`,
                   }}
@@ -865,25 +892,25 @@ export default async function DashboardHome({
               </div>
               <ul className="mt-2.5 flex flex-wrap gap-x-5 gap-y-1.5">
                 <CancelKey
-                  dot="bg-slate-400"
+                  dot="bg-graphite-400"
                   label="The client cancelled"
                   count={m.cancellations.byPatient}
                 />
                 <CancelKey
-                  dot="bg-rose-400"
+                  dot="bg-coral-400"
                   label="You or our team cancelled"
                   count={m.cancellations.byClinic}
                 />
                 {m.cancellations.unattributed > 0 && (
                   <CancelKey
-                    dot="bg-slate-200"
+                    dot="bg-graphite-200"
                     label="Not recorded"
                     count={m.cancellations.unattributed}
                   />
                 )}
               </ul>
               {m.cancellations.byClinic > m.cancellations.byPatient && (
-                <p className="mt-2.5 text-xs leading-relaxed text-slate-500">
+                <p className="mt-2.5 text-xs leading-relaxed text-graphite-500">
                   More of these came from your side than the client&apos;s.
                   Trimming the hours you rarely keep is usually a smaller cost
                   than cancelling on someone who booked.
@@ -912,22 +939,22 @@ export default async function DashboardHome({
               return (
                 <li key={step.label}>
                   <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-sm font-semibold text-slate-700">
+                    <span className="text-sm font-semibold text-graphite-700">
                       {FUNNEL_LABELS[i] ?? step.label}
                     </span>
-                    <span className="font-display text-base font-bold tabular-nums text-slate-900">
+                    <span className="font-display text-base font-bold tabular-nums text-graphite-900">
                       {step.count}
                       {lost > 0 && (
-                        <span className="ml-2 text-xs font-semibold text-rose-600">
+                        <span className="ml-2 text-xs font-semibold text-coral-600">
                           −{lost} lost here
                         </span>
                       )}
                     </span>
                   </div>
-                  <div className="mt-1.5 h-3 overflow-hidden rounded-full bg-slate-100">
+                  <div className="mt-1.5 h-3 overflow-hidden rounded-full bg-graphite-100">
                     <div
                       className={`h-full rounded-full ${
-                        i === 0 ? "bg-brand-300" : i === 1 ? "bg-brand-500" : "bg-teal-500"
+                        i === 0 ? "bg-azure-300" : i === 1 ? "bg-azure-500" : "bg-mint-500"
                       }`}
                       style={{ width: `${width}%` }}
                     />
@@ -971,7 +998,7 @@ export default async function DashboardHome({
                 {m.clinicSplit.map((c) => (
                   <li
                     key={c.name}
-                    className="flex items-center gap-2 text-xs text-slate-600"
+                    className="flex items-center gap-2 text-xs text-graphite-600"
                   >
                     <span
                       className={`h-2 w-2 shrink-0 rounded-full ${swatchFor(c.colorKey).dot}`}
@@ -979,7 +1006,7 @@ export default async function DashboardHome({
                     <span className="truncate">
                       {c.name.replace(/^BluDerma\s+/, "")}
                     </span>
-                    <span className="font-bold tabular-nums text-slate-900">
+                    <span className="font-bold tabular-nums text-graphite-900">
                       {c.count}
                     </span>
                   </li>
@@ -999,7 +1026,7 @@ export default async function DashboardHome({
       {/* ── The closing summary row ────────────────────────────────────── */}
       {/* The reference decks end a page this way, and it earns its place: a
           reader who scrolled past the charts still leaves with the totals. */}
-      <div className="mb-5 grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
+      <div className="mb-5 grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-3 xl:grid-cols-5">
         <Summary
           tone="brand"
           icon="rupee"
@@ -1037,15 +1064,29 @@ export default async function DashboardHome({
           }
         />
       </div>
+      </Fold>
 
+      {/* ── Your listing, your leave, your link ──────────────────────────
+          Three things a doctor can act on in the next minute, kept together
+          and away from the figures — the rest of this page is a readout, and
+          mixing "here is a number" with "do this" makes both easier to skip.
+          Folded, with the jobs counted on the closed header so a doctor knows
+          whether opening it is worth the click. */}
+      <Fold
+        storageKey="actions"
+        title="Things you can do now"
+        sub="Nothing here is a number to read. Each one is a small job that brings more bookings in."
+        summary={`${
+          listingGaps.length > 0
+            ? `${listingGaps.length} thing${listingGaps.length === 1 ? "" : "s"} missing from your listing`
+            : "Your listing is complete"
+        } · ${m.timeOffAhead.length} leave block${m.timeOffAhead.length === 1 ? "" : "s"} ahead · ${
+          m.reviews.count
+        } published review${m.reviews.count === 1 ? "" : "s"}`}
+      >
       {/* ── Your listing, your leave, your link ────────────────────────── */}
       {/* Three things a doctor can act on in the next minute, kept together
           and away from the figures — the rest of this page is a readout, and
-          mixing "here is a number" with "do this" makes both easier to skip. */}
-      <SectionHead
-        title="Things you can do now"
-        sub="Nothing here is a number to read. Each one is a small job that brings more bookings in."
-      />
       <div className="mb-5 grid gap-3.5 lg:grid-cols-3">
         <ChartPanel
           index={9}
@@ -1069,11 +1110,11 @@ export default async function DashboardHome({
                 <li key={g.key}>
                   <Link
                     href="/doctor/portal/profile"
-                    className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-sm text-slate-700 transition hover:bg-slate-50"
+                    className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-sm text-graphite-700 transition hover:bg-graphite-50"
                   >
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-gold-400" />
                     <span className="min-w-0 flex-1 truncate">{g.label}</span>
-                    <span className="shrink-0 text-xs font-bold text-brand-600">
+                    <span className="shrink-0 text-xs font-bold text-azure-600">
                       Add
                     </span>
                   </Link>
@@ -1106,19 +1147,19 @@ export default async function DashboardHome({
               {m.timeOffAhead.map((t) => (
                 <li
                   key={`${t.startsAt}-${t.endsAt}`}
-                  className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3"
+                  className="flex items-center justify-between gap-3 rounded-xl bg-graphite-50 px-4 py-3"
                 >
                   <span className="min-w-0">
-                    <span className="block text-sm font-bold text-slate-900">
+                    <span className="block text-sm font-bold text-graphite-900">
                       {prettyRange(t.startsAt, t.endsAt)}
                     </span>
                     {t.reason && (
-                      <span className="mt-0.5 block truncate text-xs text-slate-500">
+                      <span className="mt-0.5 block truncate text-xs text-graphite-500">
                         {t.reason}
                       </span>
                     )}
                   </span>
-                  <span className="shrink-0 text-xs font-bold tabular-nums text-slate-500">
+                  <span className="shrink-0 text-xs font-bold tabular-nums text-graphite-500">
                     {t.days} {t.days === 1 ? "day" : "days"}
                   </span>
                 </li>
@@ -1176,7 +1217,7 @@ export default async function DashboardHome({
             is deliberately not shown in full: an unchecked rating on a named
             clinician is exactly what moderation exists for. */}
         {m.reviewsPending > 0 && (
-          <p className="mb-3 rounded-xl bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-900 ring-1 ring-inset ring-amber-200">
+          <p className="mb-3 rounded-xl bg-gold-50 px-4 py-3 text-xs leading-relaxed text-gold-900 ring-1 ring-inset ring-gold-200">
             <strong className="font-bold">
               {m.reviewsPending === 1
                 ? "One review is"
@@ -1191,16 +1232,16 @@ export default async function DashboardHome({
         {m.reviews.latest.length > 0 ? (
           <ul className="grid gap-3 sm:grid-cols-3">
             {m.reviews.latest.map((r) => (
-              <li key={r.id} className="rounded-xl bg-slate-50 px-4 py-3.5">
+              <li key={r.id} className="rounded-xl bg-graphite-50 px-4 py-3.5">
                 <div className="flex items-center justify-between gap-3">
                   <Stars rating={r.rating} />
-                  <span className="text-xs text-slate-400">{prettyDate(r.at)}</span>
+                  <span className="text-xs text-graphite-500">{prettyDate(r.at)}</span>
                 </div>
                 {r.title && (
-                  <p className="mt-1.5 text-sm font-bold text-slate-900">{r.title}</p>
+                  <p className="mt-1.5 text-sm font-bold text-graphite-900">{r.title}</p>
                 )}
                 {r.body && (
-                  <p className="mt-1 text-sm leading-relaxed text-slate-700">{r.body}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-graphite-700">{r.body}</p>
                 )}
               </li>
             ))}
@@ -1213,6 +1254,7 @@ export default async function DashboardHome({
           />
         )}
       </ChartPanel>
+      </Fold>
     </>
   );
 }
@@ -1230,8 +1272,8 @@ function DonutKey({
   return (
     <li className="flex items-center gap-2 text-sm">
       <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dot}`} />
-      <span className="min-w-0 flex-1 truncate text-slate-600">{label}</span>
-      <span className="shrink-0 font-semibold tabular-nums text-slate-900">
+      <span className="min-w-0 flex-1 truncate text-graphite-600">{label}</span>
+      <span className="shrink-0 font-semibold tabular-nums text-graphite-900">
         {amount}
       </span>
     </li>
@@ -1268,12 +1310,12 @@ function SeatStat({
   // Full class strings — Tailwind never sees an interpolated one.
   const skin =
     tone === "rose"
-      ? "bg-rose-50 text-rose-700 ring-rose-100"
+      ? "bg-coral-50 text-coral-700 ring-coral-100"
       : tone === "teal"
-        ? "bg-teal-50 text-teal-700 ring-teal-100"
+        ? "bg-mint-50 text-mint-800 ring-mint-100"
         : tone === "violet"
-          ? "bg-violet-50 text-violet-700 ring-violet-100"
-          : "bg-brand-50 text-brand-700 ring-brand-100";
+          ? "bg-graphite-50 text-graphite-700 ring-graphite-100"
+          : "bg-azure-50 text-azure-700 ring-azure-100";
 
   return (
     <div className={`rounded-xl px-4 py-3 ring-1 ring-inset ${skin}`}>
@@ -1290,7 +1332,7 @@ function SeatStat({
           </span>
         )}
       </p>
-      <p className="mt-1.5 text-[11px] leading-snug text-slate-500">{hint}</p>
+      <p className="mt-1.5 text-[11px] leading-snug text-graphite-500">{hint}</p>
     </div>
   );
 }
@@ -1302,7 +1344,7 @@ function Stars({ rating }: { rating: number }) {
         <svg
           key={n}
           viewBox="0 0 24 24"
-          className={`h-3.5 w-3.5 ${n <= rating ? "text-amber-400" : "text-slate-200"}`}
+          className={`h-3.5 w-3.5 ${n <= rating ? "text-gold-800" : "text-graphite-200"}`}
           fill="currentColor"
         >
           <path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z" />
@@ -1385,10 +1427,10 @@ function CancelKey({
   count: number;
 }) {
   return (
-    <li className="flex items-center gap-2 text-xs text-slate-600">
+    <li className="flex items-center gap-2 text-xs text-graphite-600">
       <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} />
       <span>{label}</span>
-      <span className="font-bold tabular-nums text-slate-900">{count}</span>
+      <span className="font-bold tabular-nums text-graphite-900">{count}</span>
     </li>
   );
 }
@@ -1417,14 +1459,14 @@ function MiniStat({
   hint: string;
 }) {
   return (
-    <div className="rounded-xl bg-slate-50 px-4 py-3">
-      <dt className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+    <div className="rounded-xl bg-graphite-50 px-4 py-3">
+      <dt className="text-[11px] font-bold uppercase tracking-wide text-graphite-500">
         {label}
       </dt>
-      <dd className="mt-1 font-display text-lg font-bold tabular-nums text-slate-900">
+      <dd className="mt-1 font-display text-lg font-bold tabular-nums text-graphite-900">
         {value}
       </dd>
-      <p className="mt-0.5 text-xs text-slate-500">{hint}</p>
+      <p className="mt-0.5 text-xs text-graphite-500">{hint}</p>
     </div>
   );
 }

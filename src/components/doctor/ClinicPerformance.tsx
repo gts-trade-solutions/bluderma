@@ -30,8 +30,8 @@ export default function ClinicPerformance({ perf }: { perf: ClinicPerfSummary })
   if (perf.rows.length === 0) {
     return (
       <div className="px-4 py-6 text-center sm:px-5">
-        <p className="text-sm font-semibold text-slate-700">No locations yet</p>
-        <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-slate-500">
+        <p className="text-sm font-semibold text-graphite-700">No locations yet</p>
+        <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-graphite-500">
           Add the places you practise from and this splits your month across
           them — takings, running costs and what each one actually clears.
         </p>
@@ -41,7 +41,7 @@ export default function ClinicPerformance({ perf }: { perf: ClinicPerfSummary })
 
   return (
     <div>
-      <ul className="divide-y divide-slate-100">
+      <ul className="divide-y divide-graphite-100">
         {perf.rows.map((r) => {
           const meta = CLINIC_TIERS[r.tier];
           // Full literal strings: Tailwind scans source text, so an
@@ -49,29 +49,29 @@ export default function ClinicPerformance({ perf }: { perf: ClinicPerfSummary })
           // missing without anything failing.
           const skin = {
             blue: {
-              edge: "border-l-blue-500",
-              pill: "bg-blue-100 text-blue-900",
-              bar: "from-blue-500 to-teal-400",
+              edge: "border-l-azure-500",
+              pill: "bg-azure-100 text-azure-900",
+              bar: "bg-azure-500",
             },
             teal: {
-              edge: "border-l-teal-500",
-              pill: "bg-teal-100 text-teal-900",
-              bar: "from-teal-500 to-emerald-400",
+              edge: "border-l-mint-500",
+              pill: "bg-mint-100 text-mint-900",
+              bar: "bg-mint-500",
             },
             amber: {
-              edge: "border-l-amber-500",
-              pill: "bg-amber-100 text-amber-900",
-              bar: "from-amber-400 to-orange-500",
+              edge: "border-l-gold-500",
+              pill: "bg-gold-100 text-gold-900",
+              bar: "bg-gold-500",
             },
             rose: {
-              edge: "border-l-rose-500",
-              pill: "bg-rose-100 text-rose-900",
-              bar: "from-rose-400 to-rose-600",
+              edge: "border-l-coral-500",
+              pill: "bg-coral-100 text-coral-900",
+              bar: "bg-coral-500",
             },
             slate: {
-              edge: "border-l-slate-300",
-              pill: "bg-slate-100 text-slate-600",
-              bar: "from-slate-300 to-slate-400",
+              edge: "border-l-graphite-300",
+              pill: "bg-graphite-100 text-graphite-600",
+              bar: "bg-graphite-400",
             },
           }[meta.tone];
 
@@ -83,10 +83,10 @@ export default function ClinicPerformance({ perf }: { perf: ClinicPerfSummary })
               <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-slate-100 text-[11px] font-black tabular-nums text-slate-600">
+                    <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-graphite-100 text-[11px] font-black tabular-nums text-graphite-600">
                       {r.rank}
                     </span>
-                    <p className="truncate text-sm font-bold text-slate-900">
+                    <p className="truncate text-sm font-bold text-graphite-900">
                       {r.name}
                     </p>
                     <span
@@ -95,25 +95,25 @@ export default function ClinicPerformance({ perf }: { perf: ClinicPerfSummary })
                       {meta.label}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  <p className="mt-1 text-xs leading-relaxed text-graphite-500">
                     {r.meaning}
                   </p>
                 </div>
 
                 <div className="shrink-0 text-right">
-                  <p className="font-display text-[19px] font-extrabold leading-none tracking-[-0.03em] tabular-nums text-slate-900">
+                  <p className="font-display text-[19px] font-extrabold leading-none tracking-[-0.03em] tabular-nums text-graphite-900">
                     {money(r.revenueInr)}
                   </p>
-                  <p className="mt-1 text-[11px] font-semibold tabular-nums text-slate-400">
+                  <p className="mt-1 text-[11px] font-semibold tabular-nums text-graphite-500">
                     {pct(r.sharePct)} of placed takings
                   </p>
                 </div>
               </div>
 
               {/* Share of everything that could be placed by location. */}
-              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-graphite-100">
                 <div
-                  className={`h-full rounded-full bg-gradient-to-r ${skin.bar}`}
+                  className={`h-full rounded-full ${skin.bar}`}
                   style={{ width: `${Math.max(r.sharePct * 100, r.revenueInr > 0 ? 3 : 0)}%` }}
                 />
               </div>
@@ -139,18 +139,18 @@ export default function ClinicPerformance({ perf }: { perf: ClinicPerfSummary })
                 />
               </dl>
 
-              <div className="mt-2.5 flex flex-wrap items-baseline justify-between gap-x-3 border-t border-slate-100 pt-2.5">
-                <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">
+              <div className="mt-2.5 flex flex-wrap items-baseline justify-between gap-x-3 border-t border-graphite-100 pt-2.5">
+                <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-graphite-500">
                   Clears
                 </span>
                 <span
                   className={`font-display text-[15px] font-extrabold tabular-nums ${
-                    r.netInr < 0 ? "text-rose-600" : "text-slate-900"
+                    r.netInr < 0 ? "text-coral-600" : "text-graphite-900"
                   }`}
                 >
                   {money(r.netInr)}
                   {r.marginPct !== null && (
-                    <span className="ml-1.5 text-[11px] font-bold text-slate-400">
+                    <span className="ml-1.5 text-[11px] font-bold text-graphite-500">
                       {pct(r.marginPct)} margin
                     </span>
                   )}
@@ -164,7 +164,7 @@ export default function ClinicPerformance({ perf }: { perf: ClinicPerfSummary })
       {/* What is deliberately NOT in the ranking. Stated here rather than
           folded in, because a split figure that was actually a guess would
           make every comparison above unsafe to act on. */}
-      <div className="space-y-1.5 border-t border-slate-100 bg-slate-50/60 px-4 py-3.5 sm:px-5">
+      <div className="space-y-1.5 border-t border-graphite-100 bg-graphite-50/60 px-4 py-3.5 sm:px-5">
         {perf.unattributableInr > 0 && (
           <Aside
             label="Dispensary"
@@ -187,7 +187,7 @@ export default function ClinicPerformance({ perf }: { perf: ClinicPerfSummary })
           />
         )}
         {perf.singleClinic && (
-          <p className="text-[11px] leading-relaxed text-slate-500">
+          <p className="text-[11px] leading-relaxed text-graphite-500">
             One location, so there is nothing to rank against — the breakdown
             still shows where the month came from.
           </p>
@@ -200,20 +200,20 @@ export default function ClinicPerformance({ perf }: { perf: ClinicPerfSummary })
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div>
-      <dt className="text-[10px] font-bold uppercase tracking-[0.07em] text-slate-400">
+      <dt className="text-[10px] font-bold uppercase tracking-[0.07em] text-graphite-500">
         {label}
       </dt>
-      <dd className="text-[13px] font-bold tabular-nums text-slate-700">{value}</dd>
-      {hint && <dd className="text-[10px] leading-tight text-slate-400">{hint}</dd>}
+      <dd className="text-[13px] font-bold tabular-nums text-graphite-700">{value}</dd>
+      {hint && <dd className="text-[10px] leading-tight text-graphite-500">{hint}</dd>}
     </div>
   );
 }
 
 function Aside({ label, value, body }: { label: string; value: string; body: string }) {
   return (
-    <p className="text-[11px] leading-relaxed text-slate-500">
-      <span className="font-bold text-slate-600">{label}</span>
-      <span className="mx-1.5 font-bold tabular-nums text-slate-700">{value}</span>
+    <p className="text-[11px] leading-relaxed text-graphite-500">
+      <span className="font-bold text-graphite-600">{label}</span>
+      <span className="mx-1.5 font-bold tabular-nums text-graphite-700">{value}</span>
       — {body}
     </p>
   );

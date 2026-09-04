@@ -1,6 +1,6 @@
 "use server";
 
-import { newDoctorId, newPatientId } from "@/lib/publicId";
+import { newDoctorId, newPatientId, newClinicId } from "@/lib/publicId";
 import { revalidatePath } from "next/cache";
 import {
   ClinicPhotoKind,
@@ -449,6 +449,10 @@ export async function saveClinicStep(formData: FormData): Promise<AdminResult> {
       } else {
         const created = await tx.clinic.create({
           data: {
+            // The quotable reference for these premises. Generated here so
+            // every clinic has one from its first moment; existing rows were
+            // filled by prisma/backfill-public-ids.ts.
+            publicId: newClinicId(),
             slug: await uniqueSlug(slugify(`${d.name}-${d.area}`), "clinic"),
             name: d.name,
             addressLine1: d.addressLine1,

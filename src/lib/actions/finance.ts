@@ -5,6 +5,7 @@ import { ExpenseCategory, IncomeSource } from "@prisma/client";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
+import { newAssetId } from "@/lib/publicId";
 import { getOwnDoctor } from "@/lib/doctor/guard";
 import { fieldErrors } from "@/lib/validation";
 import type { ActionResult } from "./enquiry";
@@ -158,6 +159,8 @@ export async function saveAsset(input: unknown): Promise<ActionResult> {
   try {
     await prisma.practiceAsset.create({
       data: {
+        // Quotable on a service docket or an insurance claim. See publicId.ts.
+        publicId: newAssetId(),
         doctorId: owner.doctorId,
         name: d.name,
         purpose: d.purpose || null,

@@ -78,14 +78,14 @@ export default function FacilityPicker({
           The heading named the categories and the hint described the mood of
           the thing rather than saying, in one line, what ticking a box DOES
           and whether any of it is required. Both now do. */}
-      <p className="text-sm font-semibold text-slate-800">
+      <p className="text-sm font-semibold text-graphite-800">
         What this clinic has
       </p>
-      <p className="mt-1 text-xs leading-relaxed text-slate-500">
+      <p className="mt-1 text-xs leading-relaxed text-graphite-500">
         Tick anything you have. It appears on your public profile, and
         patients filter searches by it &mdash; parking and wheelchair access
         are the two most used.{" "}
-        <span className="font-semibold text-slate-600">
+        <span className="font-semibold text-graphite-600">
           All of it is optional. You can skip this and add it later.
         </span>
       </p>
@@ -101,10 +101,10 @@ export default function FacilityPicker({
             const cat = categoryOf(s);
             return (
               <li key={s}>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 py-1 pl-3 pr-1.5 text-xs font-semibold text-brand-800 ring-1 ring-brand-200">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-azure-50 py-1 pl-3 pr-1.5 text-xs font-semibold text-azure-800 ring-1 ring-azure-200">
                   {s}
                   {cat === null && (
-                    <span className="text-[10px] font-bold uppercase text-brand-400">
+                    <span className="text-[10px] font-bold uppercase text-azure-600">
                       yours
                     </span>
                   )}
@@ -112,7 +112,7 @@ export default function FacilityPicker({
                     type="button"
                     aria-label={`Remove ${s}`}
                     onClick={() => remove(s)}
-                    className="grid h-5 w-5 place-items-center rounded-full text-brand-500 transition hover:bg-brand-100 hover:text-brand-900"
+                    className="grid h-5 w-5 place-items-center rounded-full text-azure-600 transition hover:bg-azure-100 hover:text-azure-900"
                   >
                     ×
                   </button>
@@ -136,7 +136,7 @@ export default function FacilityPicker({
           }
         }}
         placeholder="Search — parking, laser, pharmacy, UPI…"
-        className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+        className="mt-3 w-full rounded-xl border border-graphite-200 bg-white px-3.5 py-2.5 text-sm text-graphite-900 outline-none transition placeholder:text-graphite-500 focus:border-azure-400 focus:ring-2 focus:ring-azure-100"
       />
 
       {q.length >= 2 && (
@@ -151,8 +151,8 @@ export default function FacilityPicker({
                 }}
                 className={`rounded-full px-3 py-1.5 text-xs font-semibold ring-1 transition ${
                   has(m)
-                    ? "bg-brand-600 text-white ring-brand-600"
-                    : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-50"
+                    ? "bg-azure-600 text-white ring-azure-600"
+                    : "bg-white text-graphite-700 ring-graphite-200 hover:bg-graphite-50"
                 }`}
               >
                 {has(m) ? "✓" : "+"} {m}
@@ -167,7 +167,7 @@ export default function FacilityPicker({
                   add(query);
                   setQuery("");
                 }}
-                className="rounded-full bg-brand-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-brand-700"
+                className="rounded-full bg-azure-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-azure-700"
               >
                 + Add &ldquo;{query.trim()}&rdquo;
               </button>
@@ -177,7 +177,7 @@ export default function FacilityPicker({
       )}
 
       {/* ── The groups ─────────────────────────────────────────────── */}
-      <div className="mt-3 divide-y divide-slate-100 rounded-xl border border-slate-200">
+      <div className="mt-3 divide-y divide-graphite-100 rounded-xl border border-graphite-200">
         {FACILITY_GROUPS.map((g) => {
           const isOpen = open.includes(g.category);
           const count = g.items.filter(has).length;
@@ -194,19 +194,19 @@ export default function FacilityPicker({
                       : [...o, g.category]
                   )
                 }
-                className="flex w-full items-center gap-2 px-3.5 py-3 text-left transition hover:bg-slate-50"
+                className="flex w-full items-center gap-2 px-3.5 py-3 text-left transition hover:bg-graphite-50"
               >
                 <span
                   aria-hidden
-                  className={`text-slate-400 transition-transform ${isOpen ? "rotate-90" : ""}`}
+                  className={`text-graphite-500 transition-transform ${isOpen ? "rotate-90" : ""}`}
                 >
                   ›
                 </span>
-                <span className="flex-1 text-sm font-bold text-slate-800">
+                <span className="flex-1 text-sm font-bold text-graphite-800">
                   {g.label}
                 </span>
                 {count > 0 && (
-                  <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-bold text-brand-800">
+                  <span className="rounded-full bg-azure-100 px-2 py-0.5 text-[11px] font-bold text-azure-800">
                     {count}
                   </span>
                 )}
@@ -214,7 +214,7 @@ export default function FacilityPicker({
 
               {isOpen && (
                 <div className="px-3.5 pb-4">
-                  <p className="mb-2 text-xs text-slate-500">{g.hint}</p>
+                  <p className="mb-2 text-xs text-graphite-500">{g.hint}</p>
                   <ul className="flex flex-wrap gap-1.5">
                     {g.items.map((item) => (
                       <li key={item}>
@@ -224,8 +224,8 @@ export default function FacilityPicker({
                           onClick={() => toggle(item)}
                           className={`rounded-full px-3 py-1.5 text-xs font-semibold ring-1 transition ${
                             has(item)
-                              ? "bg-brand-600 text-white ring-brand-600"
-                              : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-50 hover:ring-slate-300"
+                              ? "bg-azure-600 text-white ring-azure-600"
+                              : "bg-white text-graphite-700 ring-graphite-200 hover:bg-graphite-50 hover:ring-graphite-300"
                           }`}
                         >
                           {has(item) ? "✓" : "+"} {item}
@@ -243,7 +243,7 @@ export default function FacilityPicker({
         <CustomRow onAdd={add} existing={custom} />
       </div>
 
-      <p className="mt-2 text-xs text-slate-500">
+      <p className="mt-2 text-xs text-graphite-500">
         {selected.length === 0
           ? "Nothing selected yet. Even three or four helps a client choose."
           : `${selected.length} selected` +
@@ -277,10 +277,10 @@ function CustomRow({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="text-sm font-bold text-brand-700 transition hover:underline"
+          className="text-sm font-bold text-azure-700 transition hover:underline"
         >
           + Add your own
-          <span className="ml-1.5 font-normal text-slate-500">
+          <span className="ml-1.5 font-normal text-graphite-500">
             something we have not listed
             {existing.length > 0 ? ` (${existing.length} added)` : ""}
           </span>
@@ -300,7 +300,7 @@ function CustomRow({
               if (e.key === "Escape") setOpen(false);
             }}
             placeholder="e.g. Rooftop recovery lounge"
-            className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+            className="min-w-0 flex-1 rounded-xl border border-graphite-200 bg-white px-3.5 py-2 text-sm text-graphite-900 outline-none focus:border-azure-400 focus:ring-2 focus:ring-azure-100"
           />
           <button
             type="button"
@@ -309,14 +309,14 @@ function CustomRow({
               setValue("");
             }}
             disabled={!value.trim()}
-            className="rounded-xl bg-brand-600 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-brand-700 disabled:opacity-50"
+            className="rounded-xl bg-azure-600 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-azure-700 disabled:opacity-50"
           >
             Add
           </button>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="text-xs font-semibold text-slate-500 hover:text-slate-800"
+            className="text-xs font-semibold text-graphite-500 hover:text-graphite-800"
           >
             Done
           </button>

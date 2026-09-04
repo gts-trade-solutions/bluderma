@@ -71,12 +71,12 @@ export default async function DemoDashboardPage() {
           showing invented figures is that nobody can mistake them for real,
           and a banner that scrolls away stops doing that job on the second
           screenful. */}
-      <div className="sticky top-0 z-50 -mx-3.5 mb-5 border-b border-amber-300 bg-amber-100/95 px-4 py-2.5 backdrop-blur sm:-mx-7 sm:px-7 lg:-mx-9 lg:px-9">
+      <div className="sticky top-0 z-50 -mx-3.5 mb-5 border-b border-gold-300 bg-gold-100/95 px-4 py-2.5 backdrop-blur sm:-mx-7 sm:px-7 lg:-mx-9 lg:px-9">
         <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-x-3 gap-y-1.5">
-          <span className="rounded-full bg-amber-800 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.1em] text-amber-50">
+          <span className="rounded-full bg-gold-800 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.1em] text-gold-50">
             Demo data
           </span>
-          <p className="min-w-0 flex-1 text-xs font-semibold text-amber-900">
+          <p className="min-w-0 flex-1 text-xs font-semibold text-gold-900">
             An example practice, so you can see what this looks like in use.
             None of these figures are yours and nothing here has been saved.
           </p>
@@ -88,7 +88,7 @@ export default async function DemoDashboardPage() {
 
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <DemoTour steps={STEPS} exitHref="/doctor/portal" />
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-graphite-500">
           Five stops, about a minute. You can leave it at any point.
         </p>
       </div>

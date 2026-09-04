@@ -145,7 +145,7 @@ export default function AftercareForm({
 
       {visits.length > 0 && (
         <div>
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-graphite-500">
             Fill from a recent visit
           </p>
           <div className="flex flex-wrap gap-2">
@@ -154,7 +154,7 @@ export default function AftercareForm({
                 key={v.id}
                 type="button"
                 onClick={() => pick(v)}
-                className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+                className="rounded-full bg-graphite-100 px-3 py-1.5 text-xs font-semibold text-graphite-700 transition hover:bg-graphite-200"
               >
                 {v.label}
               </button>
@@ -201,7 +201,7 @@ export default function AftercareForm({
 
       <div>
         {notesFor && (
-          <p className="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-[11px] font-semibold text-teal-700">
+          <p className="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-mint-50 px-2.5 py-1 text-[11px] font-semibold text-mint-800">
             <RotateCcw className="h-3 w-3" />
             Filled from your last {notesFor} {isPre ? "pre-treatment" : "aftercare"} sheet
           </p>
@@ -227,12 +227,12 @@ export default function AftercareForm({
           }
           hint="Press Dictate and say it — most of these are written between patients."
         />
-        <label className="mt-2 flex items-center gap-2.5 text-sm text-slate-600">
+        <label className="mt-2 flex items-center gap-2.5 text-sm text-graphite-600">
           <input
             type="checkbox"
             checked={remember}
             onChange={(e) => setRemember(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300"
+            className="h-4 w-4 rounded border-graphite-300"
           />
           Remember these for the next {procedure.trim() || "treatment"}{" "}
           {isPre ? "pre-treatment" : "aftercare"} sheet
@@ -240,12 +240,12 @@ export default function AftercareForm({
       </div>
 
       {error && (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700">
+        <p className="rounded-xl border border-coral-200 bg-coral-50 px-4 py-2.5 text-sm text-coral-700">
           {error}
         </p>
       )}
       {done && (
-        <p className="inline-flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-4 py-2.5 text-sm font-semibold text-teal-700">
+        <p className="inline-flex items-center gap-2 rounded-xl border border-mint-200 bg-mint-50 px-4 py-2.5 text-sm font-semibold text-mint-800">
           <Check className="h-4 w-4" /> Issued. It is in the patient&apos;s
           profile now.
         </p>
@@ -254,7 +254,7 @@ export default function AftercareForm({
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-600 to-teal-600 px-6 py-3 text-sm font-extrabold text-white transition hover:from-brand-700 hover:to-teal-700 disabled:opacity-60"
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-gold-500 px-6 py-2.5 text-sm font-extrabold text-graphite-900 shadow-flat transition hover:bg-gold-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-graphite-900 focus-visible:ring-offset-2"
       >
         {pending && <LoaderCircle className="h-4 w-4 animate-spin" />}
         {isPre ? "Send the before-treatment sheet" : "Issue the aftercare sheet"}
@@ -330,7 +330,7 @@ export default function AftercareForm({
                   "doctorNotes"
                 ) as HTMLTextAreaElement | null)?.value ?? ""
               ).trim() || (
-                <span className="text-slate-400">
+                <span className="text-graphite-500">
                   None — they get the standard list only
                 </span>
               )}
@@ -367,7 +367,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+      <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-graphite-500">
         {label}
         {!required && <span className="ml-1 normal-case tracking-normal">(optional)</span>}
       </span>
@@ -379,7 +379,7 @@ function Field({
         value={value}
         placeholder={placeholder}
         onChange={onChange ? (e) => onChange(e.target.value) : undefined}
-        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none"
+        className="w-full rounded-xl border border-graphite-200 bg-white px-3.5 py-2.5 text-sm text-graphite-900 placeholder:text-graphite-500 focus:border-azure-400 focus:outline-none"
       />
     </label>
   );

@@ -25,6 +25,7 @@ export interface ExpenseRow {
 
 export interface AssetRow {
   id: string;
+  publicId?: string | null;
   name: string;
   purpose: string | null;
   costInr: number;
@@ -35,6 +36,7 @@ export interface AssetRow {
 
 export interface Recovery {
   id: string;
+  publicId?: string | null;
   name: string;
   purpose: string | null;
   /** Purchase price plus upkeep: what actually has to come back. */
@@ -95,6 +97,7 @@ export function recoveryFor(asset: AssetRow, now: Date): Recovery {
 
   return {
     id: asset.id,
+    publicId: asset.publicId ?? null,
     name: asset.name,
     purpose: asset.purpose,
     outlayInr,

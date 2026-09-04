@@ -62,7 +62,7 @@ export default function ProfitPanel({
         action={
           <Link
             href="/doctor/portal/finance"
-            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-600 ring-1 ring-slate-200 transition hover:text-slate-900"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-graphite-600 ring-1 ring-graphite-200 transition hover:text-graphite-900"
           >
             Manage costs <ArrowRight className="h-3.5 w-3.5" />
           </Link>
@@ -87,7 +87,7 @@ export default function ProfitPanel({
               </>
             ) : (
               <>
-                <strong className="font-bold text-slate-900">
+                <strong className="font-bold text-graphite-900">
                   {money(net.netInr)}
                 </strong>{" "}
                 left after {money(net.runningCostInr)} of running costs
@@ -112,7 +112,7 @@ export default function ProfitPanel({
               label="Revenue"
               value={net.takingsInr}
               max={Math.max(net.takingsInr, net.runningCostInr, 1)}
-              className="bg-gradient-to-r from-brand-500 to-brand-400"
+              className="bg-azure-500"
             />
 
             {/* What the revenue bar is made of. Printed under it rather than
@@ -122,8 +122,8 @@ export default function ProfitPanel({
             {streams.length > 1 && (
               <ul className="-mt-1 mb-3 flex flex-wrap gap-x-3 gap-y-0.5">
                 {streams.map((r) => (
-                  <li key={r.key} className="text-[11px] text-slate-500">
-                    <span className="font-semibold text-slate-600">{r.label}</span>{" "}
+                  <li key={r.key} className="text-[11px] text-graphite-500">
+                    <span className="font-semibold text-graphite-600">{r.label}</span>{" "}
                     {money(r.amountInr)}
                   </li>
                 ))}
@@ -134,17 +134,17 @@ export default function ProfitPanel({
               label="Running costs"
               value={net.runningCostInr}
               max={Math.max(net.takingsInr, net.runningCostInr, 1)}
-              className="bg-gradient-to-r from-amber-400 to-orange-500"
+              className="bg-gold-500"
             />
 
             {!nothingRecorded && (
-              <div className="mt-4 border-t border-slate-100 pt-4">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+              <div className="mt-4 border-t border-graphite-100 pt-4">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-graphite-500">
                   Net
                 </p>
                 <p
                   className={`font-display text-3xl font-extrabold tracking-[-0.03em] tabular-nums ${
-                    net.netInr >= 0 ? "text-teal-700" : "text-rose-600"
+                    net.netInr >= 0 ? "text-mint-800" : "text-coral-600"
                   }`}
                 >
                   {money(net.netInr)}
@@ -159,10 +159,10 @@ export default function ProfitPanel({
                     key={c.category}
                     className="flex items-baseline justify-between gap-2 text-xs"
                   >
-                    <span className="font-semibold text-slate-600">
+                    <span className="font-semibold text-graphite-600">
                       {categoryLabel(c.category)}
                     </span>
-                    <span className="font-bold tabular-nums text-slate-900">
+                    <span className="font-bold tabular-nums text-graphite-900">
                       {money(c.amountInr)}
                     </span>
                   </li>
@@ -197,7 +197,7 @@ export default function ProfitPanel({
             {recoveries.length === 0 ? (
               <Link
                 href="/doctor/portal/finance"
-                className="block rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm font-semibold text-slate-500 transition hover:border-violet-400 hover:text-violet-700"
+                className="block rounded-xl border border-dashed border-graphite-300 bg-graphite-50 px-4 py-8 text-center text-sm font-semibold text-graphite-500 transition hover:border-graphite-400 hover:text-graphite-700"
               >
                 Add your first machine
               </Link>
@@ -209,39 +209,39 @@ export default function ProfitPanel({
                   // Full literal strings: Tailwind never sees an interpolated
                   // class, so an interpolated colour compiles to nothing.
                   const bar = {
-                    blue: "from-blue-500 to-teal-400",
-                    teal: "from-teal-500 to-emerald-400",
-                    amber: "from-amber-400 to-orange-500",
-                    rose: "from-rose-400 to-rose-600",
-                    slate: "from-slate-300 to-slate-400",
+                    blue: "bg-azure-500",
+                    teal: "bg-mint-500",
+                    amber: "bg-gold-500",
+                    rose: "bg-coral-500",
+                    slate: "bg-graphite-400",
                   }[status.tone];
                   const dot = {
-                    blue: "bg-blue-500",
-                    teal: "bg-teal-500",
-                    amber: "bg-amber-500",
-                    rose: "bg-rose-500",
-                    slate: "bg-slate-300",
+                    blue: "bg-azure-500",
+                    teal: "bg-mint-500",
+                    amber: "bg-gold-500",
+                    rose: "bg-coral-500",
+                    slate: "bg-graphite-300",
                   }[status.tone];
                   return (
                     <li key={r.id}>
                       <div className="flex items-baseline justify-between gap-2">
                         <span className="flex min-w-0 items-center gap-1.5">
                           <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${dot}`} />
-                          <span className="min-w-0 truncate text-sm font-semibold text-slate-700">
+                          <span className="min-w-0 truncate text-sm font-semibold text-graphite-700">
                             {r.name}
                           </span>
                         </span>
-                        <span className="shrink-0 text-sm font-bold tabular-nums text-slate-900">
+                        <span className="shrink-0 text-sm font-bold tabular-nums text-graphite-900">
                           {pct}%
                         </span>
                       </div>
-                      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
+                      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-graphite-100">
                         <div
-                          className={`h-full rounded-full bg-gradient-to-r ${bar}`}
+                          className={`h-full rounded-full ${bar}`}
                           style={{ width: `${pct}%` }}
                         />
                       </div>
-                      <p className="mt-1 text-[11px] text-slate-500">
+                      <p className="mt-1 text-[11px] text-graphite-500">
                         {money(r.recoveredInr)} of {money(r.outlayInr)}
                         {r.usesToBreakEven !== null && r.usesToBreakEven > 0 && (
                           <> · about {r.usesToBreakEven} more uses</>
@@ -277,12 +277,12 @@ function Bar({
   return (
     <div className="mb-3 last:mb-0">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-xs font-semibold text-slate-500">{label}</span>
-        <span className="text-sm font-bold tabular-nums text-slate-900">
+        <span className="text-xs font-semibold text-graphite-500">{label}</span>
+        <span className="text-sm font-bold tabular-nums text-graphite-900">
           {money(value)}
         </span>
       </div>
-      <div className="mt-1.5 h-3 overflow-hidden rounded-full bg-slate-100">
+      <div className="mt-1.5 h-3 overflow-hidden rounded-full bg-graphite-100">
         <div
           className={`h-full rounded-full ${className}`}
           style={{ width: `${Math.max(width, value > 0 ? 2 : 0)}%` }}

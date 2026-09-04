@@ -26,6 +26,7 @@
     "verify:clinic-sync": "tsx prisma/verify-clinic-sync.ts",
     "verify:money": "tsx prisma/verify-money-inventory.ts",
     "verify:care": "tsx prisma/verify-pre-post-care.ts",
+    "verify:confinement": "tsx prisma/verify-doctor-confinement.ts",
     "verify:phase5": "tsx prisma/verify-phase5.ts",
     "theme:gen": "tsx prisma/gen-theme-overrides.ts",
     "verify:themes": "tsx prisma/verify-themes.ts",

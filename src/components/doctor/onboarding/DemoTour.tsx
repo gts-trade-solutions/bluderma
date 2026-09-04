@@ -104,7 +104,7 @@ export default function DemoTour({
           setI(0);
           setRunning(true);
         }}
-        className="rounded-full bg-brand-600 px-4 py-2 text-sm font-bold text-white shadow-[0_6px_18px_-6px_rgba(31,111,214,0.7)] transition hover:bg-brand-700"
+        className="rounded-full bg-azure-600 px-4 py-2 text-sm font-bold text-white shadow-[0_6px_18px_-6px_rgba(31,111,214,0.7)] transition hover:bg-azure-700"
       >
         Show me around
       </button>
@@ -148,7 +148,7 @@ export default function DemoTour({
         role="dialog"
         aria-modal="false"
         aria-label={`Tour step ${i + 1} of ${steps.length}`}
-        className="fixed z-[81] w-[min(92vw,22rem)] rounded-2xl bg-white p-4 shadow-[0_24px_60px_-20px_rgba(7,13,28,0.6)] ring-1 ring-slate-900/10"
+        className="fixed z-[81] w-[min(92vw,22rem)] rounded-[10px] bg-white p-4 shadow-[0_24px_60px_-20px_rgba(7,13,28,0.6)] ring-1 ring-graphite-900/10"
         style={{
           top: Math.max(
             12,
@@ -167,23 +167,23 @@ export default function DemoTour({
         }}
       >
         <div className="flex items-start justify-between gap-3">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand-600">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-azure-600">
             {i + 1} of {steps.length}
           </p>
           <button
             type="button"
             onClick={() => setRunning(false)}
             aria-label="Close the tour"
-            className="-mt-1 -mr-1 grid h-7 w-7 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            className="-mt-1 -mr-1 grid h-7 w-7 place-items-center rounded-lg text-graphite-500 transition hover:bg-graphite-100 hover:text-graphite-700"
           >
             ×
           </button>
         </div>
 
-        <h3 className="mt-1 font-display text-lg font-extrabold tracking-[-0.02em] text-slate-900">
+        <h3 className="mt-1 font-display text-lg font-extrabold tracking-[-0.02em] text-graphite-900">
           {step.title}
         </h3>
-        <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+        <p className="mt-1.5 text-sm leading-relaxed text-graphite-600">
           {step.body}
         </p>
 
@@ -192,7 +192,7 @@ export default function DemoTour({
             <button
               type="button"
               onClick={() => setI(i - 1)}
-              className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+              className="rounded-full border border-graphite-200 px-3 py-1.5 text-xs font-bold text-graphite-600 transition hover:bg-graphite-50"
             >
               Back
             </button>
@@ -200,7 +200,7 @@ export default function DemoTour({
           {last ? (
             <Link
               href={exitHref}
-              className="rounded-full bg-brand-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-brand-700"
+              className="rounded-full bg-azure-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-azure-700"
             >
               Done
             </Link>
@@ -208,7 +208,7 @@ export default function DemoTour({
             <button
               type="button"
               onClick={() => setI(i + 1)}
-              className="rounded-full bg-brand-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-brand-700"
+              className="rounded-full bg-azure-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-azure-700"
             >
               Next
             </button>
@@ -216,7 +216,7 @@ export default function DemoTour({
           <button
             type="button"
             onClick={() => setRunning(false)}
-            className="ml-auto text-xs font-semibold text-slate-400 transition hover:text-slate-700"
+            className="ml-auto text-xs font-semibold text-graphite-500 transition hover:text-graphite-700"
           >
             Skip
           </button>
@@ -228,7 +228,7 @@ export default function DemoTour({
             <span
               key={s.anchor}
               className={`h-1 flex-1 rounded-full transition ${
-                n <= i ? "bg-brand-500" : "bg-slate-200"
+                n <= i ? "bg-azure-500" : "bg-graphite-200"
               }`}
             />
           ))}

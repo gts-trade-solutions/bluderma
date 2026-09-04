@@ -119,7 +119,7 @@ export default function Combobox({
     <div ref={wrapRef} className="relative">
       <label htmlFor={id} className="mb-1.5 block text-sm font-semibold text-ink">
         {label}
-        {required && <span className="text-brand-500"> *</span>}
+        {required && <span className="text-azure-600"> *</span>}
       </label>
 
       <input
@@ -143,12 +143,12 @@ export default function Combobox({
         }}
         onFocus={() => !readOnly && setOpen(true)}
         onKeyDown={onKeyDown}
-        className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 ${
+        className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition placeholder:text-graphite-500 focus:border-azure-400 focus:ring-2 focus:ring-azure-100 ${
           readOnly
-            ? "border-slate-200 bg-slate-50 text-slate-500"
+            ? "border-graphite-200 bg-graphite-50 text-graphite-500"
             : error
-              ? "border-rose-300 bg-white text-slate-900"
-              : "border-slate-200 bg-white text-slate-900"
+              ? "border-coral-300 bg-white text-graphite-900"
+              : "border-graphite-200 bg-white text-graphite-900"
         }`}
       />
 
@@ -156,10 +156,10 @@ export default function Combobox({
         <ul
           id={listId}
           role="listbox"
-          className="absolute left-0 right-0 top-full z-30 mt-1.5 max-h-60 animate-scale-in overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-[0_18px_48px_-18px_rgba(15,23,42,0.28)]"
+          className="absolute left-0 right-0 top-full z-30 mt-1.5 max-h-60 animate-scale-in overflow-y-auto rounded-xl border border-graphite-200 bg-white py-1 shadow-flat"
         >
           {matches.length === 0 ? (
-            <li className="px-3.5 py-2.5 text-sm text-slate-500">{emptyText}</li>
+            <li className="px-3.5 py-2.5 text-sm text-graphite-500">{emptyText}</li>
           ) : (
             matches.map((o, i) => (
               <li key={o} role="option" aria-selected={i === active}>
@@ -174,8 +174,8 @@ export default function Combobox({
                   onMouseEnter={() => setActive(i)}
                   className={`block w-full px-3.5 py-2 text-left text-sm transition ${
                     i === active
-                      ? "bg-brand-50 text-brand-800"
-                      : "text-slate-700 hover:bg-slate-50"
+                      ? "bg-azure-50 text-azure-800"
+                      : "text-graphite-700 hover:bg-graphite-50"
                   }`}
                 >
                   {o}
@@ -187,7 +187,7 @@ export default function Combobox({
       )}
 
       {error ? (
-        <p className="mt-1.5 text-xs font-medium text-rose-600">{error}</p>
+        <p className="mt-1.5 text-xs font-medium text-coral-600">{error}</p>
       ) : hint ? (
         <p className="mt-1.5 text-xs text-ink-muted">{hint}</p>
       ) : null}

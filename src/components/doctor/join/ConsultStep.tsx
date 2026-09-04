@@ -92,7 +92,7 @@ export default function ConsultStep({
           {concerns.map((c) => (
             <label
               key={c.key}
-              className="cursor-pointer select-none rounded-full border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600 transition has-[:checked]:border-brand-600 has-[:checked]:bg-brand-600 has-[:checked]:text-white"
+              className="cursor-pointer select-none rounded-full border border-graphite-200 px-3 py-1.5 text-sm font-semibold text-graphite-600 transition has-[:checked]:border-azure-600 has-[:checked]:bg-azure-600 has-[:checked]:text-white"
             >
               <input
                 type="checkbox"
@@ -116,7 +116,7 @@ export default function ConsultStep({
           profile but must not silently join the analyzer's matching index
           under a phrase nobody curated.
         */}
-        <div className="mt-5 border-t border-slate-100 pt-5">
+        <div className="mt-5 border-t border-graphite-100 pt-5">
           <TagPicker
             name="otherConcerns"
             label="Something else you treat"

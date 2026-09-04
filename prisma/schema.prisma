@@ -168,6 +168,8 @@ model Category {
 
 model Treatment {
   id           String @id @default(cuid())
+  /// Quotable catalogue reference, e.g. "BLU-T-4K7M2Q". See lib/publicId.ts.
+  publicId     String? @unique
   slug         String @unique
   name         String
   categoryId   String
@@ -1317,6 +1319,8 @@ model PracticeIncome {
 /// a projection dressed up as one.
 model PracticeAsset {
   id       String  @id @default(cuid())
+  /// Quotable equipment reference, e.g. "BLU-E-7Q2NX". See lib/publicId.ts.
+  publicId String? @unique
   doctorId String
   clinicId String?
 
@@ -2942,6 +2946,9 @@ model HubConcern {
 
 model Clinic {
   id           String  @id @default(cuid())
+  /// The quotable identifier for these premises, e.g. "BLU-C-7Q2NX".
+  /// See lib/publicId.ts — a cuid is a key, not something anybody reads out.
+  publicId     String? @unique
   slug         String  @unique
   name         String
   addressLine1 String

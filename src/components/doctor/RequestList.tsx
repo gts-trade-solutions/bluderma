@@ -99,14 +99,14 @@ function RequestCard({ r, onOpen }: { r: RequestRow; onOpen: () => void }) {
   const [error, setError] = useState<string | null>(null);
 
   return (
-    <li className="rounded-2xl border border-amber-200 bg-white p-4">
+    <li className="rounded-[10px] border border-graphite-200 border-l-4 border-l-gold-500 bg-white p-4 shadow-flat">
       <div className="flex flex-wrap items-start gap-4">
         <div className="w-20 shrink-0">
-          <p className="text-xs font-bold uppercase tracking-wide text-amber-600">
+          <p className="text-xs font-bold uppercase tracking-wide text-gold-800">
             {niceDay(r.daySeed)}
           </p>
           <p className="text-lg font-bold tabular-nums text-ink">{r.time}</p>
-          <p className="text-[11px] text-slate-400">{r.durationMin} min</p>
+          <p className="text-[11px] text-graphite-500">{r.durationMin} min</p>
         </div>
 
         <div className="min-w-0 flex-1">
@@ -121,13 +121,13 @@ function RequestCard({ r, onOpen }: { r: RequestRow; onOpen: () => void }) {
               <GoldCollarBadge />
             )}
             {r.isPriority && !r.isMember && (
-              <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-800">
+              <span className="rounded-full bg-graphite-100 px-2 py-0.5 text-[10px] font-bold text-graphite-800">
                 PRIORITY
               </span>
             )}
           </div>
 
-          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-graphite-500">
             <span>{MODE_LABEL[r.mode] ?? r.mode}</span>
             {r.clinicName && (
               <span className="flex items-center gap-1">
@@ -137,7 +137,7 @@ function RequestCard({ r, onOpen }: { r: RequestRow; onOpen: () => void }) {
               </span>
             )}
             <span>₹{r.feeInr.toLocaleString("en-IN")}</span>
-            <span className="text-slate-400">asked {waitingFor(r.requestedAt)}</span>
+            <span className="text-graphite-500">asked {waitingFor(r.requestedAt)}</span>
           </p>
 
           {/* Accepting or declining a request without knowing what it is for
@@ -146,7 +146,7 @@ function RequestCard({ r, onOpen }: { r: RequestRow; onOpen: () => void }) {
           {r.reasonSummary && (
             <p
               className={`mt-2 text-xs font-bold ${
-                r.urgent ? "text-rose-600" : "text-slate-700"
+                r.urgent ? "text-coral-600" : "text-graphite-700"
               }`}
             >
               {r.urgent && "● "}
@@ -154,7 +154,7 @@ function RequestCard({ r, onOpen }: { r: RequestRow; onOpen: () => void }) {
             </p>
           )}
           {(r.reasonDetail || r.notes) && (
-            <p className="mt-1.5 whitespace-pre-line rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
+            <p className="mt-1.5 whitespace-pre-line rounded-lg bg-graphite-50 px-3 py-2 text-sm text-graphite-700">
               {r.reasonDetail || r.notes}
             </p>
           )}
@@ -171,14 +171,14 @@ function RequestCard({ r, onOpen }: { r: RequestRow; onOpen: () => void }) {
                   else setError(res.error ?? "Could not accept that.");
                 })
               }
-              className="rounded-full bg-brand-600 px-5 py-2 text-sm font-bold text-white transition hover:bg-brand-700 disabled:opacity-50"
+              className="rounded-lg bg-gold-500 px-5 py-2 text-sm font-bold text-graphite-900 shadow-flat transition hover:bg-gold-400 disabled:opacity-50"
             >
               {pending ? "…" : "Accept"}
             </button>
             <button
               disabled={pending}
               onClick={() => setDeclining(true)}
-              className="rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-graphite-300 px-4 py-2 text-sm font-bold text-graphite-700 transition hover:bg-graphite-50 disabled:opacity-50"
             >
               Decline
             </button>
@@ -187,8 +187,8 @@ function RequestCard({ r, onOpen }: { r: RequestRow; onOpen: () => void }) {
       </div>
 
       {declining && (
-        <div className="mt-3 space-y-2 rounded-xl border border-rose-200 bg-rose-50/50 p-3">
-          <label className="block text-sm font-semibold text-slate-800">
+        <div className="mt-3 space-y-2 rounded-xl border border-coral-200 bg-coral-50/50 p-3">
+          <label className="block text-sm font-semibold text-graphite-800">
             Why can you not take this?
           </label>
           <textarea
@@ -196,7 +196,7 @@ function RequestCard({ r, onOpen }: { r: RequestRow; onOpen: () => void }) {
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="The client is shown this word for word."
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-graphite-200 bg-white px-3 py-2 text-sm"
           />
           <div className="flex gap-2">
             <button
@@ -211,13 +211,13 @@ function RequestCard({ r, onOpen }: { r: RequestRow; onOpen: () => void }) {
                   else setError(res.error ?? "Could not decline that.");
                 });
               }}
-              className="rounded-full bg-rose-600 px-5 py-2 text-sm font-bold text-white transition hover:bg-rose-700 disabled:opacity-40"
+              className="rounded-full bg-coral-600 px-5 py-2 text-sm font-bold text-white transition hover:bg-coral-700 disabled:opacity-40"
             >
               {pending ? "…" : "Decline and notify"}
             </button>
             <button
               onClick={() => setDeclining(false)}
-              className="rounded-full px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-800"
+              className="rounded-full px-4 py-2 text-sm font-semibold text-graphite-500 hover:text-graphite-800"
             >
               Back
             </button>
@@ -225,7 +225,7 @@ function RequestCard({ r, onOpen }: { r: RequestRow; onOpen: () => void }) {
         </div>
       )}
 
-      {error && <p className="mt-2 text-sm text-rose-600">{error}</p>}
+      {error && <p className="mt-2 text-sm text-coral-600">{error}</p>}
     </li>
   );
 }

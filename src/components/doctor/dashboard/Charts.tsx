@@ -55,23 +55,30 @@ import {
    Bright and distinguishable, because these charts are read at a glance
    between patients rather than studied.
 
+   These are the brand's own five, and they mean here exactly what they mean
+   everywhere else in the portal: azure is the thing being counted, mint is
+   money that arrived, coral is money that did not, gold is capacity nobody
+   has bought yet.
+
    EMPTY was #e2e8f0 — the same near-white the grid lines are drawn in. On
    the seats chart that meant the unbooked half of every bar read as
    background rather than as a quantity, so a doctor could not see the thing
-   the chart exists to show: how much of the week is still sellable. It is a
-   warm amber now. Unbooked time is not neutral, it is money not yet earned,
-   and it should look like something worth acting on.
+   the chart exists to show: how much of the week is still sellable. It is
+   gold now. Unbooked time is not neutral, it is money not yet earned, and it
+   should look like something worth acting on.
 
    Every fill below carries white or near-black type in its label, and each
    pair was checked rather than assumed. */
-const BRAND = "#1f6fd6";
-const BRAND_LIGHT = "#8ecdff";
-const TEAL = "#0fa08e";
-const AMBER = "#f59e0b";
-/** Unbooked capacity. Amber, not grey — see the note above. */
-const EMPTY = "#fcd34d";
+const BRAND = "#3e8ccb";
+const BRAND_LIGHT = "#8cc2e6";
+const TEAL = "#58be9f";
+const AMBER = "#ffc80b";
+/** The mark's red. Peaks, and anything the doctor is losing. */
+const CORAL = "#f15256";
+/** Unbooked capacity. Gold, not grey — see the note above. */
+const EMPTY = "#ffdf47";
 /** Grid lines and axes only. Never a data series. */
-const GRID = "#e2e8f0";
+const GRID = "#ededed";
 
 function useChart(): boolean {
   const [mounted, setMounted] = useState(false);
@@ -102,7 +109,7 @@ function useNarrow(): boolean {
 function Skeleton({ height }: { height: number }) {
   return (
     <div
-      className="w-full animate-pulse rounded-xl bg-slate-100"
+      className="w-full animate-pulse rounded-xl bg-graphite-100"
       style={{ height }}
     />
   );
@@ -110,13 +117,13 @@ function Skeleton({ height }: { height: number }) {
 
 const TOOLTIP = {
   borderRadius: 12,
-  border: "1px solid rgb(226 232 240)",
+  border: "1px solid #dcdcdc",
   fontSize: 12,
   padding: "8px 12px",
   boxShadow: "0 12px 32px -20px rgba(15,23,42,0.4)",
 };
 
-const LABEL_STYLE = { fontWeight: 700, color: "#0f172a", marginBottom: 2 };
+const LABEL_STYLE = { fontWeight: 700, color: "#2f2f2f", marginBottom: 2 };
 
 /**
  * Recharts colours each tooltip row with the series' own fill, which is right
@@ -129,7 +136,7 @@ const LABEL_STYLE = { fontWeight: 700, color: "#0f172a", marginBottom: 2 };
  * the identification; the text is set in ink at a contrast that passes on
  * white whatever the series is filled with.
  */
-const ITEM_STYLE = { color: "#0f172a", fontWeight: 600, padding: "1px 0" };
+const ITEM_STYLE = { color: "#2f2f2f", fontWeight: 600, padding: "1px 0" };
 
 
 const money = (n: number) => `₹${Math.round(n).toLocaleString("en-IN")}`;
@@ -227,8 +234,8 @@ export function RevenueDonut({
   if (total === 0) {
     return (
       <div className="flex h-[200px] flex-col items-center justify-center gap-3 text-center sm:h-[230px]">
-        <div className="h-24 w-24 rounded-full border-[10px] border-slate-100" />
-        <p className="text-xs text-slate-400">Nothing booked in this period yet</p>
+        <div className="h-24 w-24 rounded-full border-[10px] border-graphite-100" />
+        <p className="text-xs text-graphite-500">Nothing booked in this period yet</p>
       </div>
     );
   }
@@ -271,10 +278,10 @@ export function RevenueDonut({
       {/* The total lives in the hole — the thing the ring is a breakdown of,
           and the same figure as the headline at the top of the page. */}
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-        <p className="font-display text-2xl font-bold tabular-nums text-slate-900">
+        <p className="font-display text-2xl font-bold tabular-nums text-graphite-900">
           {money(total)}
         </p>
-        <p className="mt-0.5 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+        <p className="mt-0.5 text-center text-[11px] font-semibold uppercase tracking-wide text-graphite-500">
           total booked
         </p>
       </div>
@@ -314,7 +321,7 @@ export function SeatWeekChart({
 
   if (!data.some((d) => d.seats > 0)) {
     return (
-      <p className="py-14 text-center text-sm text-slate-400">
+      <p className="py-14 text-center text-sm text-graphite-500">
         No working hours in the next seven days. Add your hours under Practice
         and your seats will appear here.
       </p>
@@ -332,18 +339,18 @@ export function SeatWeekChart({
       <div className="absolute inset-0">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chart} margin={{ top: 14, right: 6, bottom: 0, left: -20 }}>
-          <CartesianGrid vertical={false} stroke="#eef2f7" />
+          <CartesianGrid vertical={false} stroke="#ededed" />
           <XAxis
             dataKey="tick"
             tickLine={false}
             axisLine={{ stroke: GRID }}
-            tick={{ fill: "#475569", fontSize: 11, fontWeight: 600 }}
+            tick={{ fill: "#454545", fontSize: 11, fontWeight: 600 }}
           />
           <YAxis
             tickLine={false}
             axisLine={false}
             allowDecimals={false}
-            tick={{ fill: "#94a3b8", fontSize: 10 }}
+            tick={{ fill: "#7a7a7a", fontSize: 10 }}
           />
           <Tooltip
             cursor={{ fill: "rgba(15,23,42,0.04)" }}
@@ -387,7 +394,7 @@ export function SeatWeekChart({
               dataKey="seats"
               position="top"
               formatter={(v) => (Number(v) > 0 ? String(v) : "")}
-              style={{ fill: "#94a3b8", fontSize: 10, fontWeight: 700 }}
+              style={{ fill: "#7a7a7a", fontSize: 10, fontWeight: 700 }}
             />
           </Bar>
         </BarChart>
@@ -416,7 +423,7 @@ export function UtilisationChart({
   if (!mounted) return <Skeleton height={220} />;
   if (!rows.length) {
     return (
-      <p className="py-12 text-center text-sm text-slate-400">
+      <p className="py-12 text-center text-sm text-graphite-500">
         No working hours set yet.
       </p>
     );
@@ -436,18 +443,18 @@ export function UtilisationChart({
       <div className="absolute inset-0">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chart} margin={{ top: 14, right: 6, bottom: 0, left: -20 }}>
-          <CartesianGrid vertical={false} stroke="#eef2f7" />
+          <CartesianGrid vertical={false} stroke="#ededed" />
           <XAxis
             dataKey="day"
             tickLine={false}
             axisLine={{ stroke: GRID }}
-            tick={{ fill: "#475569", fontSize: 11, fontWeight: 600 }}
+            tick={{ fill: "#454545", fontSize: 11, fontWeight: 600 }}
           />
           <YAxis
             tickLine={false}
             axisLine={false}
             allowDecimals={false}
-            tick={{ fill: "#94a3b8", fontSize: 10 }}
+            tick={{ fill: "#7a7a7a", fontSize: 10 }}
           />
           <Tooltip
             cursor={{ fill: "rgba(15,23,42,0.04)" }}
@@ -489,7 +496,7 @@ export function UtilisationChart({
               dataKey="rate"
               position="top"
               formatter={(v) => `${v}%`}
-              style={{ fill: "#94a3b8", fontSize: 10, fontWeight: 700 }}
+              style={{ fill: "#7a7a7a", fontSize: 10, fontWeight: 700 }}
             />
           </Bar>
         </BarChart>
@@ -518,7 +525,7 @@ export function HoursChart({
   if (!mounted) return <Skeleton height={200} />;
   if (!data.length) {
     return (
-      <p className="py-12 text-center text-sm text-slate-400">
+      <p className="py-12 text-center text-sm text-graphite-500">
         Not enough bookings to show a pattern yet.
       </p>
     );
@@ -530,7 +537,7 @@ export function HoursChart({
       <div className="absolute inset-0">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 14, right: 6, bottom: 0, left: -24 }}>
-          <CartesianGrid vertical={false} stroke="#eef2f7" />
+          <CartesianGrid vertical={false} stroke="#ededed" />
           <XAxis
             dataKey="label"
             tickLine={false}
@@ -540,10 +547,10 @@ export function HoursChart({
             // A full working day is a dozen-odd ticks; "09:00" five times over
             // collides on a phone, and the ":00" carries nothing.
             tickFormatter={(v: string) => v.slice(0, 2)}
-            tick={{ fill: "#475569", fontSize: 11 }}
+            tick={{ fill: "#454545", fontSize: 11 }}
           />
           <YAxis
-            tick={{ fill: "#94a3b8", fontSize: 10 }}
+            tick={{ fill: "#7a7a7a", fontSize: 10 }}
             tickLine={false}
             axisLine={false}
             allowDecimals={false}
@@ -561,7 +568,7 @@ export function HoursChart({
           />
           <Bar dataKey="count" radius={[5, 5, 0, 0]} isAnimationActive={false} maxBarSize={38}>
             {data.map((d) => (
-              <Cell key={d.label} fill={d.count === max && max > 0 ? TEAL : BRAND_LIGHT} />
+              <Cell key={d.label} fill={d.count === max && max > 0 ? CORAL : AMBER} />
             ))}
           </Bar>
         </BarChart>
@@ -613,19 +620,19 @@ export function UpliftChart({
       <div className="absolute inset-0">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 22, right: 6, bottom: 0, left: -6 }}>
-          <CartesianGrid vertical={false} stroke="#eef2f7" />
+          <CartesianGrid vertical={false} stroke="#ededed" />
           <XAxis
             dataKey="label"
             tickLine={false}
             axisLine={{ stroke: GRID }}
-            tick={{ fill: "#475569", fontSize: narrow ? 11 : 12, fontWeight: 600 }}
+            tick={{ fill: "#454545", fontSize: narrow ? 11 : 12, fontWeight: 600 }}
           />
           <YAxis
             width={narrow ? 42 : 52}
             tickLine={false}
             axisLine={false}
             tickFormatter={compactMoney}
-            tick={{ fill: "#94a3b8", fontSize: 10 }}
+            tick={{ fill: "#7a7a7a", fontSize: 10 }}
           />
           <Tooltip
             cursor={{ fill: "rgba(15,23,42,0.04)" }}
@@ -654,7 +661,7 @@ export function UpliftChart({
               dataKey="amount"
               position="top"
               formatter={(v) => `+${money(Number(v))}`}
-              style={{ fill: "#0a665d", fontSize: narrow ? 10 : 12, fontWeight: 700 }}
+              style={{ fill: "#2b6857", fontSize: narrow ? 10 : 12, fontWeight: 700 }}
             />
           </Bar>
         </BarChart>
@@ -700,7 +707,7 @@ export function RankedBars({
   if (!mounted) return <Skeleton height={Math.max(data.length * 40, 140)} />;
   if (!data.length) {
     return (
-      <p className="py-10 text-center text-sm text-slate-400">
+      <p className="py-10 text-center text-sm text-graphite-500">
         {emptyNote ?? "Nothing to show yet."}
       </p>
     );
@@ -721,12 +728,12 @@ export function RankedBars({
           // bar and would otherwise be clipped by the plot area.
           margin={{ left: 0, right: narrow ? 34 : 44, top: 4, bottom: 4 }}
         >
-          <CartesianGrid horizontal={false} stroke="#eef2f7" />
+          <CartesianGrid horizontal={false} stroke="#ededed" />
           <XAxis
             type="number"
             tickLine={false}
             axisLine={false}
-            tick={{ fill: "#94a3b8", fontSize: 10 }}
+            tick={{ fill: "#7a7a7a", fontSize: 10 }}
             tickFormatter={(v: number) => print(v)}
             allowDecimals={false}
           />
@@ -736,7 +743,7 @@ export function RankedBars({
             width={narrow ? 104 : 148}
             tickLine={false}
             axisLine={false}
-            tick={{ fill: "#334155", fontSize: narrow ? 10 : 12 }}
+            tick={{ fill: "#383838", fontSize: narrow ? 10 : 12 }}
           />
           <Tooltip
             cursor={{ fill: "rgba(15,23,42,0.04)" }}
@@ -767,7 +774,7 @@ export function RankedBars({
               dataKey="value"
               position="right"
               formatter={(v) => print(Number(v))}
-              style={{ fill: "#0f172a", fontSize: 11, fontWeight: 700 }}
+              style={{ fill: "#2f2f2f", fontSize: 11, fontWeight: 700 }}
             />
           </Bar>
         </BarChart>

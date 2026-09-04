@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Poppins } from "next/font/google";
 import { AppointmentStatus, ApprovalState } from "@prisma/client";
 
 import PortalRail, { type RailItem } from "@/components/doctor/PortalRail";
@@ -16,18 +17,39 @@ export const metadata: Metadata = {
 };
 
 /**
- * The portal shell: a dark rail carrying the brand and navigation, and a light
- * canvas for the work.
+ * The portal's face, loaded here rather than in the root layout.
  *
- * It used to be a white bar, a grey page and a row of underlined tabs, built
- * out of the admin console's components — which is a back-office look, and the
- * reason the portal read as an internal tool beside the client experience. The
- * canvas stays light on purpose: this is read across a whole clinic day and
- * the calendar's per-clinic colour coding needs the contrast.
+ * Poppins is the reference product's own typeface and carries this whole
+ * surface — headings and body both. Declaring it on this layout means the
+ * public site never downloads it: next/font emits the @font-face and the
+ * preload wherever it is imported, and nothing outside /doctor/portal
+ * imports it.
  *
- * The flat #f6f8fb ground is gone — see `.portal-canvas` in globals.css for
- * why two very faint blooms are worth more than a solid grey, and why they
- * are kept at 5-6% rather than made into a feature.
+ * Only the five weights actually used. Poppins ships nine as separate files.
+ * latin-ext for the same reason the other two families have it: ₹ is U+20B9,
+ * which `latin` does not cover, and half this portal is money.
+ *
+ * The variable is consumed by `.portal-canvas` in globals.css and by the
+ * `font-portal` utility.
+ */
+const portalFont = Poppins({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+  variable: "--font-portal",
+});
+
+/**
+ * The portal shell: a charcoal rail carrying the brand and navigation, and a
+ * near-white canvas for the work.
+ *
+ * The rail is the mark's own #2F2F2F, which is the ground the logo is drawn
+ * on, and it is the only dark surface here. The canvas stays light on
+ * purpose: this is read across a whole clinic day and the calendar's
+ * per-clinic colour coding needs the contrast.
+ *
+ * See `.portal-canvas` in globals.css for the ground and the typeface — both
+ * are bound there rather than at every call site.
  */
 export default async function DoctorPortalLayout({
   children,
@@ -74,8 +96,18 @@ export default async function DoctorPortalLayout({
     : false;
   const notYet = "Unlocks when your listing is approved";
 
+  /*
+   * Grouped, and in the order a clinic day actually runs.
+   *
+   * These were thirteen links in one column with "Money" and "Gift cards"
+   * sitting between two screens a practitioner opens hourly. The order is now
+   * frequency-first inside four named groups, and PortalRail prints the group
+   * name above the first item carrying it — so the list has to stay sorted by
+   * section here or the headings repeat.
+   */
   const items: RailItem[] = [
     {
+      section: "Your day",
       label: setup ? "Set up your practice" : "Home",
       href: "/doctor/portal",
       icon: setup ? "clinic" : "chart",
@@ -86,18 +118,21 @@ export default async function DoctorPortalLayout({
       ? []
       : [
           {
+            section: "Your day",
             label: "Today",
             href: "/doctor/portal/today",
             icon: "today",
           } satisfies RailItem,
         ]),
     {
+      section: "Your day",
       label: "Calendar",
       href: "/doctor/portal/calendar",
       icon: "calendar",
       locked: setup ? notYet : undefined,
     },
     {
+      section: "Your day",
       label: "Confirm requests",
       href: "/doctor/portal/requests",
       icon: "inbox",
@@ -105,63 +140,78 @@ export default async function DoctorPortalLayout({
       locked: setup ? notYet : undefined,
     },
     {
-      label: "My practice",
-      href: "/doctor/portal/practice",
-      icon: "clinic",
-      locked: setup ? "Add your locations in the steps first" : undefined,
+      // The way in to every patient screen — chart, photographs, care sheets,
+      // prescriptions. All of it existed and none of it was listed.
+      section: "Clinical",
+      label: "Patients",
+      href: "/doctor/portal/patients",
+      icon: "users",
+      locked: setup ? notYet : undefined,
     },
     {
       // "Medicines" described the list; "Prescriptions" describes what the
       // doctor does there, which is what a nav label is for. The ℞ mark is
       // the one symbol every clinician reads without reading.
+      section: "Clinical",
       label: "Prescriptions",
       href: "/doctor/portal/medicines",
       icon: "rx",
       locked: setup ? notYet : undefined,
     },
     {
-      // Its own entry, not a panel inside Prescriptions. Counting the shelf
-      // and prescribing are different jobs done at different times, and the
-      // one that was nested never got done.
-      label: "My inventory",
-      href: "/doctor/portal/inventory",
-      icon: "clinic",
-      locked: setup ? notYet : undefined,
-    },
-    {
-      label: "Gift cards",
-      href: "/doctor/portal/gift-cards",
-      icon: "star",
-      locked: setup ? notYet : undefined,
-    },
-    {
-      label: "Money",
-      href: "/doctor/portal/finance",
-      icon: "chart",
-      locked: setup ? notYet : undefined,
-    },
-    {
-      label: "Gallery",
-      href: "/doctor/portal/gallery",
-      icon: "star",
-      locked: setup ? notYet : undefined,
-    },
-    {
+      // Pre and post care lives inside this screen now, on its own tab:
+      // planning a course of treatment and telling somebody how to prepare
+      // for it are one job. /doctor/portal/aftercare redirects there.
+      section: "Clinical",
       label: "Treatment programs",
       href: "/doctor/portal/plans",
       icon: "pulse",
       locked: setup ? notYet : undefined,
     },
     {
-      // Both halves live here now, so the label names both. "Aftercare"
-      // described the screen accurately right up until it stopped being
-      // only that.
-      label: "Pre & post care",
-      href: "/doctor/portal/aftercare",
-      icon: "sheet",
+      section: "Clinical",
+      label: "Gallery",
+      href: "/doctor/portal/gallery",
+      icon: "star",
       locked: setup ? notYet : undefined,
     },
-    { label: "Profile", href: "/doctor/portal/profile", icon: "user" },
+    {
+      section: "Business",
+      label: "Money",
+      href: "/doctor/portal/finance",
+      icon: "chart",
+      locked: setup ? notYet : undefined,
+    },
+    {
+      // Its own entry, not a panel inside Prescriptions. Counting the shelf
+      // and prescribing are different jobs done at different times, and the
+      // one that was nested never got done.
+      section: "Business",
+      label: "My inventory",
+      href: "/doctor/portal/inventory",
+      icon: "clinic",
+      locked: setup ? notYet : undefined,
+    },
+    {
+      section: "Business",
+      label: "Gift cards",
+      href: "/doctor/portal/gift-cards",
+      icon: "star",
+      locked: setup ? notYet : undefined,
+    },
+    {
+      section: "Setup",
+      label: "My practice",
+      href: "/doctor/portal/practice",
+      icon: "clinic",
+      locked: setup ? "Add your locations in the steps first" : undefined,
+    },
+    {
+      section: "Setup",
+      label: "Profile",
+      href: "/doctor/portal/profile",
+      icon: "user",
+    },
   ];
 
   // The banner told a DRAFT doctor to "finish it" — which is now the very
@@ -173,7 +223,7 @@ export default async function DoctorPortalLayout({
     : null;
 
   return (
-    <div className="theme-light pro-surface portal-canvas min-h-screen">
+    <div className={`${portalFont.variable} theme-light pro-surface portal-canvas min-h-screen`}>
       {/* Sets the rail state before the browser paints, so a doctor who
           collapsed it last time does not watch it slam shut a moment after
           the page appears. It has to be inline and blocking to beat first
@@ -210,33 +260,33 @@ export default async function DoctorPortalLayout({
             gives the two things reached from everywhere — the day's list and
             the calendar — a fixed home, instead of each page inventing its
             own place to put them. */}
-        <header className="sticky top-0 z-30 hidden border-b border-slate-200/70 bg-white/80 backdrop-blur-md lg:block">
+        <header className="sticky top-0 z-30 hidden border-b border-graphite-200 bg-white/90 backdrop-blur-md lg:block">
           <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-8 py-2.5 lg:px-10">
             {/* Same rule as the rail: the practitioner's own face is a link
                 to their own profile, because that is what everybody tries. */}
             <Link
               href="/doctor/portal/profile"
               title="Open my profile"
-              className="flex min-w-0 items-center gap-3 rounded-xl px-1.5 py-1 transition hover:bg-slate-100"
+              className="flex min-w-0 items-center gap-3 rounded-lg px-1.5 py-1 transition hover:bg-graphite-100"
             >
               <Avatar
                 src={owner?.image}
                 alt={owner?.name ?? "Your practice"}
                 role="doctor"
                 size={36}
-                className="ring-1 ring-slate-200"
+                className="ring-1 ring-graphite-200"
               />
               <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-slate-900">
+                <p className="truncate text-sm font-bold text-graphite-900">
                   {owner?.name || "Your practice"}
                 </p>
-                <p className="truncate text-xs text-slate-500">
+                <p className="truncate text-xs text-graphite-500">
                   {/* The practice id sits with the name because that is where
                       a doctor looks for it when a referral or an aftercare
                       sheet asks. Monospace and selectable: its whole job is
                       being copied or read aloud. */}
                   {owner?.publicId && (
-                    <span className="select-all font-mono font-semibold tracking-wide text-slate-400">
+                    <span className="select-all font-mono font-semibold tracking-wide text-graphite-500">
                       {owner.publicId}
                     </span>
                   )}

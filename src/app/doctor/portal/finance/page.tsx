@@ -10,6 +10,7 @@ import {
   type ClinicOption,
 } from "@/components/doctor/FinanceForms";
 import MachineCard from "@/components/doctor/MachineCard";
+import Fold from "@/components/doctor/dashboard/Fold";
 import { getOwnDoctor } from "@/lib/doctor/guard";
 import { prisma } from "@/lib/prisma";
 import ClinicPerformance from "@/components/doctor/ClinicPerformance";
@@ -114,6 +115,8 @@ export default async function FinancePage() {
         orderBy: { purchasedOn: "desc" },
         select: {
           id: true,
+          // Quotable on a service docket or an insurance claim.
+          publicId: true,
           name: true,
           purpose: true,
           costInr: true,
@@ -190,6 +193,7 @@ export default async function FinancePage() {
     <>
       <PageHead
         title="Money"
+        mark="Money"
         sub={`Revenue, costs and equipment. ${monthLabel} so far.`}
       />
 
@@ -251,31 +255,31 @@ export default async function FinancePage() {
                 {revenue.streams.map((r) => (
                   <li key={r.key}>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-sm font-semibold text-slate-700">
+                      <span className="text-sm font-semibold text-graphite-700">
                         {r.label}
                         {r.count > 0 && (
-                          <span className="ml-1.5 font-normal text-slate-400">
+                          <span className="ml-1.5 font-normal text-graphite-500">
                             {r.count}
                           </span>
                         )}
                       </span>
-                      <span className="text-sm font-bold tabular-nums text-slate-900">
+                      <span className="text-sm font-bold tabular-nums text-graphite-900">
                         {money(r.amountInr)}
-                        <span className="ml-2 text-xs font-semibold text-slate-400">
+                        <span className="ml-2 text-xs font-semibold text-graphite-500">
                           {pct(r.share)}
                         </span>
                       </span>
                     </div>
-                    <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div className="mt-1 h-2 overflow-hidden rounded-full bg-graphite-100">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-teal-400 to-brand-500"
+                        className="h-full rounded-full bg-mint-500"
                         style={{ width: `${Math.round(r.share * 100)}%` }}
                       />
                     </div>
                     {/* The basis line, printed rather than hidden in a
                         tooltip: the reader who needs to know what a stream
                         counts is exactly the reader who will not hover. */}
-                    <p className="mt-1 text-[11px] leading-snug text-slate-500">
+                    <p className="mt-1 text-[11px] leading-snug text-graphite-500">
                       {r.basis}
                     </p>
                   </li>
@@ -284,7 +288,7 @@ export default async function FinancePage() {
             )}
 
             {revenue.overlapWarning && (
-              <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs leading-relaxed text-amber-900">
+              <p className="mt-4 rounded-xl border border-gold-200 bg-gold-50 px-3.5 py-2.5 text-xs leading-relaxed text-gold-900">
                 {revenue.overlapWarning}
               </p>
             )}
@@ -325,23 +329,23 @@ export default async function FinancePage() {
                 {net.groups.map((g) => (
                   <li key={g.key}>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-sm font-semibold text-slate-700">
+                      <span className="text-sm font-semibold text-graphite-700">
                         {g.label}
                       </span>
-                      <span className="text-sm font-bold tabular-nums text-slate-900">
+                      <span className="text-sm font-bold tabular-nums text-graphite-900">
                         {money(g.amountInr)}
-                        <span className="ml-2 text-xs font-semibold text-slate-400">
+                        <span className="ml-2 text-xs font-semibold text-graphite-500">
                           {pct(g.share)}
                         </span>
                       </span>
                     </div>
-                    <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div className="mt-1 h-2 overflow-hidden rounded-full bg-graphite-100">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500"
+                        className="h-full rounded-full bg-gold-500"
                         style={{ width: `${Math.round(g.share * 100)}%` }}
                       />
                     </div>
-                    <p className="mt-1 text-[11px] text-slate-500">
+                    <p className="mt-1 text-[11px] text-graphite-500">
                       {g.categories
                         .map((c) => `${categoryLabel(c.category)} ${money(c.amountInr)}`)
                         .join(" · ")}
@@ -350,7 +354,7 @@ export default async function FinancePage() {
                         number nobody can act on; the division is what invites
                         the comparison with what those people are billing. */}
                     {g.headcount !== null && g.headcount > 0 && (
-                      <p className="mt-1 text-[11px] font-semibold text-slate-600">
+                      <p className="mt-1 text-[11px] font-semibold text-graphite-600">
                         {g.headcount} {g.headcount === 1 ? "person" : "people"} ·{" "}
                         {money(g.amountInr / g.headcount)} each
                         {net.takingsInr > 0 && (
@@ -369,6 +373,17 @@ export default async function FinancePage() {
         </Panel>
       </div>
 
+      {/* ── The two entry forms ──────────────────────────────────────────
+          Folded. Reading this page happens daily; recording a bag of cotton
+          wool happens on a Friday, and two full-width forms sitting between
+          the takings and the equipment made the daily read longer for the
+          sake of the weekly one. */}
+      <Fold
+        storageKey="finance-entry"
+        title="Record something"
+        sub="A running cost, or income that is not a booking."
+        summary="Add a cost — rent, salaries, stock — or other income like retail and room rental."
+      >
       {/* ── The two entry forms ──────────────────────────────────────── */}
       <div className="mb-4 grid gap-4 lg:grid-cols-2">
         <Panel
@@ -418,7 +433,7 @@ export default async function FinancePage() {
               <Empty title="Nothing yet" body="Costs you add appear here." />
             </div>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-graphite-100">
               {expenses.map((e) => (
                 <ExpenseRowItem
                   key={e.id}
@@ -452,7 +467,7 @@ export default async function FinancePage() {
               />
             </div>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-graphite-100">
               {income.map((i) => (
                 <IncomeRowItem
                   key={i.id}
@@ -470,14 +485,27 @@ export default async function FinancePage() {
           )}
         </Panel>
       </div>
+      </Fold>
 
+      {/* ── Equipment ────────────────────────────────────────────────────
+          The second half of this page, and a monthly question rather than a
+          daily one: a laser's recovery does not move between Tuesday and
+          Wednesday. Shut, it says how many machines and how much is still to
+          come back, which is the whole answer most of the time. */}
+      <Fold
+        storageKey="finance-equipment"
+        title="Equipment"
+        sub="What each machine cost, how much of it has come back, and which of them is actually earning."
+        summary={
+          recoveries.length === 0
+            ? "No machines recorded yet."
+            : `${recoveries.length} machine${recoveries.length === 1 ? "" : "s"} · ${money(
+                recoveries.reduce((n, r) => n + r.remainingInr, 0)
+              )} still to come back`
+        }
+      >
       {/* ── Equipment ────────────────────────────────────────────────── */}
-      <div className="mt-8">
-        <PageHead
-          title="Equipment"
-          sub="What each machine cost, how much of it has come back, and which of them is actually earning."
-        />
-        <p className="-mt-2 mb-3 max-w-3xl text-[13px] leading-relaxed text-slate-500">
+        <p className="-mt-2 mb-3 max-w-3xl text-[13px] leading-relaxed text-graphite-500">
           Every figure below is counted from uses you have recorded, never
           estimated. The only projection is the &ldquo;months to go&rdquo; line,
           and it says outright that it assumes things carry on as they have.
@@ -493,17 +521,17 @@ export default async function FinancePage() {
             {MACHINE_TIERS.map((t) => (
               <li
                 key={t.tier}
-                className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500"
+                className="flex items-center gap-1.5 text-[11px] font-semibold text-graphite-500"
               >
                 <span
                   aria-hidden
                   className={`h-2.5 w-2.5 rounded-full ${
                     {
-                      blue: "bg-blue-500",
-                      teal: "bg-teal-500",
-                      amber: "bg-amber-500",
-                      rose: "bg-rose-500",
-                      slate: "bg-slate-300",
+                      blue: "bg-azure-500",
+                      teal: "bg-mint-500",
+                      amber: "bg-gold-500",
+                      rose: "bg-coral-500",
+                      slate: "bg-graphite-300",
                     }[t.tone]
                   }`}
                 />
@@ -533,7 +561,7 @@ export default async function FinancePage() {
             <AssetForm clinics={clinics} />
           </div>
         </Panel>
-      </div>
+      </Fold>
     </>
   );
 }
@@ -552,24 +580,24 @@ function Tile({
   // Full literal strings: Tailwind scans source text, so an interpolated class
   // compiles to nothing and the colour silently goes missing.
   const bar = {
-    brand: "border-brand-500",
-    teal: "border-teal-500",
-    amber: "border-amber-500",
-    violet: "border-violet-500",
-    rose: "border-rose-500",
+    brand: "border-azure-500",
+    teal: "border-mint-500",
+    amber: "border-gold-500",
+    violet: "border-graphite-500",
+    rose: "border-coral-500",
   }[tone];
 
   return (
     <div
-      className={`rounded-2xl border-t-[3px] bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_12px_32px_-24px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/80 sm:p-4 ${bar}`}
+      className={`rounded-[10px] border-t-[3px] bg-white p-3 shadow-flat ring-1 ring-graphite-200 sm:p-4 ${bar}`}
     >
-      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 sm:text-[11px]">
+      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-graphite-500 sm:text-[11px]">
         {label}
       </p>
-      <p className="mt-1 font-display text-[20px] font-extrabold leading-none tracking-[-0.03em] tabular-nums text-slate-900 sm:text-[26px]">
+      <p className="mt-1 font-display text-[20px] font-extrabold leading-none tracking-[-0.03em] tabular-nums text-graphite-900 sm:text-[26px]">
         {value}
       </p>
-      {hint && <p className="mt-1.5 text-[11px] leading-snug text-slate-500">{hint}</p>}
+      {hint && <p className="mt-1.5 text-[11px] leading-snug text-graphite-500">{hint}</p>}
     </div>
   );
 }

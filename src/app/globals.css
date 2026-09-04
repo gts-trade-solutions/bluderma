@@ -827,22 +827,57 @@ select:has(option[value=""]:checked) {
   border-radius: 999px;
 }
 
-/* ── The doctor portal's canvas and motion ──────────────────────────────
-   The portal was a flat #f6f8fb with white panels on it, which is the exact
-   look of an internal admin console — and it is what the client meant by
-   "boring". The ground now carries two very faint blooms, one brand and one
-   teal, fixed so they do not travel with the scroll.
+/* ── The doctor portal's canvas, type and motion ────────────────────────
+   The portal is now built to the reference the client supplied, and this
+   block is where the three things that make it recognisable live: the ground,
+   the face, and the marker stroke.
 
-   Faint on purpose. This surface is read across a whole clinic day and the
-   calendar's per-clinic colour coding has to stay legible on top of it, so
-   the blooms sit at 5-6% and the panels remain pure white. It is depth, not
-   decoration. */
+   GROUND. Two faint brand blooms used to sit here. They were an answer to
+   "boring" and they went as soon as the reference arrived: that design puts
+   flat colour blocks on a near-white ground and gets its depth from hairlines
+   and one shallow shadow, not from atmosphere. #f7f7f7 is graphite-50 — just
+   enough off white for a white card to have an edge without a border doing
+   all the work.
+
+   FACE. Poppins, bound here rather than at 22 call sites, and bound to
+   .font-display too so every heading already written in the display face
+   picks it up without being touched. The public site keeps Bricolage: this
+   selector cannot reach outside the portal shell. */
 .portal-canvas {
-  background-color: #f5f7fb;
-  background-image:
-    radial-gradient(58rem 32rem at 8% -12%, rgba(50, 143, 240, 0.10), transparent 60%),
-    radial-gradient(46rem 28rem at 100% 0%, rgba(15, 160, 142, 0.09), transparent 62%);
-  background-attachment: fixed;
+  background-color: #f7f7f7;
+  /* The wordmark's accent letter, on the portal's own palette. It is the
+     site's teal everywhere else; in here that is the one colour on screen
+     that belongs to no other portal element. Scoped, so the public site's
+     logo is untouched. */
+  --logo-accent: #58be9f;
+  font-family: var(--font-portal), var(--font-sans), -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.portal-canvas .font-display,
+.portal-canvas h1,
+.portal-canvas h2,
+.portal-canvas h3,
+.portal-canvas h4 {
+  font-family: var(--font-portal), var(--font-sans), -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* MARKER. The reference underlines one word of every heading with a
+   hand-drawn stroke that overshoots the word at both ends, and it is the
+   single most recognisable thing about it — a flat rule reads as a border,
+   this reads as somebody having marked the word.
+
+   Drawn as an inline SVG so it stretches to whatever word it wraps
+   (preserveAspectRatio="none"), sits behind the glyphs, and costs no request.
+   Descenders are the reason it sits at 92% and not at the baseline: a "y" has
+   to cross it, or the stroke reads as an underline instead of a highlight. */
+.mark-swoosh {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 22' preserveAspectRatio='none'%3E%3Cpath d='M5 15C70 6 160 4 295 9' stroke='%23FFC80B' stroke-width='10' stroke-linecap='round' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: 100% 0.38em;
+  background-position: 0 92%;
+  padding-bottom: 0.04em;
 }
 
 /* ── The collapsing rail ───────────────────────────────────────────────
@@ -926,9 +961,33 @@ select:has(option[value=""]:checked) {
   .portal-enter {
     animation: none;
   }
-  .portal-canvas {
-    background-attachment: scroll;
-  }
+}
+
+/* ── The calendar's scrollers ───────────────────────────────────────────
+   A fourteen-hour day and a seven-column week both scroll, and the platform
+   scrollbar is a 17px grey slab that lands right where the last column's
+   bookings are. Thin, in the portal's own graphite, and only inside the
+   portal. Firefox takes the standard properties; WebKit needs its own. */
+.portal-canvas .thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #dcdcdc transparent;
+}
+.portal-canvas .thin-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.portal-canvas .thin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.portal-canvas .thin-scroll::-webkit-scrollbar-thumb {
+  background: #dcdcdc;
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 99px;
+}
+.portal-canvas .thin-scroll::-webkit-scrollbar-thumb:hover {
+  background: #bdbdbd;
+  background-clip: content-box;
 }
 
 /* ── The confirmation toast ─────────────────────────────────────────────

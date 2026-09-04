@@ -110,12 +110,12 @@ export default function PatientChart({
       {/* ── Photographs ───────────────────────────────────────────── */}
       <section>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-extrabold text-slate-900">Photographs</h3>
+          <h3 className="text-sm font-extrabold text-graphite-900">Photographs</h3>
           <div className="flex items-center gap-2">
             <select
               value={angle}
               onChange={(e) => setAngle(e.target.value)}
-              className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:border-brand-400 focus:outline-none"
+              className="rounded-lg border border-graphite-200 px-2.5 py-1.5 text-xs font-semibold text-graphite-700 focus:border-azure-400 focus:outline-none"
             >
               {ANGLES.map((a) => (
                 <option key={a} value={a}>
@@ -127,7 +127,7 @@ export default function PatientChart({
               type="button"
               disabled={uploading}
               onClick={() => fileRef.current?.click()}
-              className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-slate-900 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-slate-700 disabled:opacity-60"
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-graphite-900 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-graphite-700 disabled:opacity-60"
             >
               {uploading ? (
                 <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
@@ -151,17 +151,17 @@ export default function PatientChart({
           </div>
         </div>
 
-        {error && <p className="mb-2 text-xs font-semibold text-rose-600">{error}</p>}
+        {error && <p className="mb-2 text-xs font-semibold text-coral-600">{error}</p>}
 
         {photos.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
-            <p className="text-sm font-semibold text-slate-600">
+          <div className="rounded-xl border border-dashed border-graphite-300 bg-graphite-50 px-4 py-8 text-center">
+            <p className="text-sm font-semibold text-graphite-600">
               No photographs yet
             </p>
             {/* The old copy said only what was missing. What a doctor needs to
                 know is what the section is FOR — nobody discovered the markup
                 tool because nothing said it existed. */}
-            <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-slate-500">
+            <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-graphite-500">
               Choose the view above, then take one. Anything the patient
               uploads themselves appears here too. Tap any photograph
               afterwards to draw on it, mark what you would treat and what it
@@ -172,7 +172,7 @@ export default function PatientChart({
           <div className="space-y-4">
             {byAngle.map((group) => (
               <div key={group.angle}>
-                <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-graphite-500">
                   {ANGLE_LABEL[group.angle]} · {group.rows.length}
                 </p>
                 <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -181,7 +181,7 @@ export default function PatientChart({
                       <button
                         type="button"
                         onClick={() => setMarking(p.id)}
-                        className="relative block aspect-[4/5] w-full overflow-hidden rounded-xl bg-slate-900 ring-1 ring-slate-200"
+                        className="relative block aspect-[4/5] w-full overflow-hidden rounded-xl bg-graphite-900 ring-1 ring-graphite-200"
                       >
                         <PhotoThumb id={p.id} />
                         {/* Two counts, because they are two different things:
@@ -192,7 +192,7 @@ export default function PatientChart({
                           {p.strokes.length > 0 && (
                             <span
                               title={`${p.strokes.length} marks`}
-                              className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-black text-white"
+                              className="rounded-full bg-coral-500 px-1.5 py-0.5 text-[9px] font-black text-white"
                             >
                               {p.strokes.length}
                             </span>
@@ -200,7 +200,7 @@ export default function PatientChart({
                           {p.pins.length > 0 && (
                             <span
                               title={`${p.pins.length} treatments`}
-                              className="rounded-full bg-brand-600 px-1.5 py-0.5 text-[9px] font-black text-white"
+                              className="rounded-full bg-azure-600 px-1.5 py-0.5 text-[9px] font-black text-white"
                             >
                               {p.pins.length}
                             </span>
@@ -222,17 +222,17 @@ export default function PatientChart({
 
       {/* ── The markup editor, over the chosen photograph ──────────── */}
       {marking && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/70 p-4">
-          <div className="max-h-full w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-graphite-900/70 p-4">
+          <div className="max-h-full w-full max-w-lg overflow-y-auto rounded-[10px] bg-white p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-extrabold text-slate-900">
+              <h3 className="text-sm font-extrabold text-graphite-900">
                 This photograph
               </h3>
               <button
                 type="button"
                 onClick={() => setMarking(null)}
                 aria-label="Close"
-                className="grid h-8 w-8 place-items-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-900"
+                className="grid h-8 w-8 place-items-center rounded-full text-graphite-500 transition hover:bg-graphite-100 hover:text-graphite-900"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -243,7 +243,7 @@ export default function PatientChart({
                 patient. Putting both in one canvas would make it impossible
                 to tell which of a doctor's marks were an opinion and which
                 were an offer. */}
-            <div className="mb-3 flex gap-1 rounded-full bg-slate-100 p-1">
+            <div className="mb-3 flex gap-1 rounded-full bg-graphite-100 p-1">
               {(["draw", "plan"] as const).map((t) => (
                 <button
                   key={t}
@@ -252,8 +252,8 @@ export default function PatientChart({
                   aria-pressed={tab === t}
                   className={`flex-1 rounded-full px-3 py-1.5 text-xs font-bold transition ${
                     tab === t
-                      ? "bg-white text-slate-900 shadow-sm"
-                      : "text-slate-500 hover:text-slate-800"
+                      ? "bg-white text-graphite-900 shadow-sm"
+                      : "text-graphite-500 hover:text-graphite-800"
                   }`}
                 >
                   {t === "draw" ? "Draw on it" : "What you would treat"}
@@ -295,7 +295,7 @@ export default function PatientChart({
 
       {/* ── Chart notes ───────────────────────────────────────────── */}
       <section>
-        <h3 className="mb-3 text-sm font-extrabold text-slate-900">Your notes</h3>
+        <h3 className="mb-3 text-sm font-extrabold text-graphite-900">Your notes</h3>
 
         <form
           ref={formCheck.formRef}
@@ -318,12 +318,12 @@ export default function PatientChart({
             rows={3}
             required
             placeholder="What you observed, what you did, what to watch."
-            className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none"
+            className="w-full rounded-xl border border-graphite-200 px-3.5 py-2.5 text-sm text-graphite-900 placeholder:text-graphite-500 focus:border-azure-400 focus:outline-none"
           />
           <button
             type="submit"
             disabled={pending}
-            className="mt-2 inline-flex min-h-9 items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-slate-700 disabled:opacity-60"
+            className="mt-2 inline-flex min-h-9 items-center gap-2 rounded-full bg-graphite-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-graphite-700 disabled:opacity-60"
           >
             {pending && <LoaderCircle className="h-3.5 w-3.5 animate-spin" />}
             Add to the chart
@@ -331,25 +331,25 @@ export default function PatientChart({
         </form>
 
         {notes.length === 0 ? (
-          <p className="text-sm text-slate-500">Nothing written yet.</p>
+          <p className="text-sm text-graphite-500">Nothing written yet.</p>
         ) : (
           <ul className="space-y-2">
             {notes.map((n) => (
-              <li key={n.id} className="rounded-xl bg-slate-50 p-3.5">
+              <li key={n.id} className="rounded-xl bg-graphite-50 p-3.5">
                 <div className="flex items-start justify-between gap-3">
-                  <p className="min-w-0 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+                  <p className="min-w-0 whitespace-pre-wrap text-sm leading-relaxed text-graphite-700">
                     {n.body}
                   </p>
                   <button
                     type="button"
                     aria-label="Delete this note"
                     onClick={() => start(async () => void (await deletePatientNote(n.id)))}
-                    className="shrink-0 text-slate-300 transition hover:text-rose-600"
+                    className="shrink-0 text-graphite-400 transition hover:text-coral-600"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
-                <p className="mt-1 text-[11px] text-slate-400">{n.at}</p>
+                <p className="mt-1 text-[11px] text-graphite-500">{n.at}</p>
               </li>
             ))}
           </ul>
@@ -392,7 +392,7 @@ function ShareToPatient({
   const [error, setError] = useState<string | null>(null);
 
   return (
-    <div className="mt-4 border-t border-slate-100 pt-3.5">
+    <div className="mt-4 border-t border-graphite-100 pt-3.5">
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
@@ -405,12 +405,12 @@ function ShareToPatient({
               else setError(res.error ?? "Could not send that.");
             })
           }
-          className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-slate-700 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-full bg-graphite-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-graphite-700 disabled:opacity-50"
         >
           {pending && <LoaderCircle className="h-3.5 w-3.5 animate-spin" />}
           {sent ? "Sent" : "Send this to the patient"}
         </button>
-        <p className="min-w-0 flex-1 text-[11px] leading-snug text-slate-500">
+        <p className="min-w-0 flex-1 text-[11px] leading-snug text-graphite-500">
           {sent
             ? "They have been emailed a link. The photograph itself is not in the email."
             : hasSomething
@@ -418,7 +418,7 @@ function ShareToPatient({
               : "Draw on it or add a treatment first."}
         </p>
       </div>
-      {error && <p className="mt-1.5 text-xs text-rose-600">{error}</p>}
+      {error && <p className="mt-1.5 text-xs text-coral-600">{error}</p>}
     </div>
   );
 }

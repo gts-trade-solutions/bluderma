@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -58,6 +59,17 @@ export default async function DoctorHome() {
     });
     viewer = own?.status === "APPROVED" ? "doctor-live" : "doctor-pending";
   }
+
+  /*
+   * A signed-in practitioner never sees this page.
+   *
+   * It is the pitch for listing a practice, and they have listed one. It is
+   * also where the wordmark points from everywhere on the practitioner side,
+   * so without this a doctor clicking the logo lands on an advert for the
+   * thing they are already using. ADMIN is excluded on purpose: an admin
+   * looks at this page to check it.
+   */
+  if (user?.role === "DOCTOR") redirect("/doctor/portal");
 
   const cta = doctorCta(viewer);
 
@@ -128,7 +140,7 @@ export default async function DoctorHome() {
         </section>
       </main>
 
-      <Footer />
+      <Footer audience="doctor" />
     </div>
   );
 }

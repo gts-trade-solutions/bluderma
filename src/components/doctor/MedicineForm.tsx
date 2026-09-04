@@ -7,9 +7,9 @@ import { adjustStock, retireMedicine, saveMedicine } from "@/lib/actions/medicin
 import { useFormValidation } from "@/hooks/useFormValidation";
 
 const field =
-  "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none";
+  "w-full rounded-xl border border-graphite-200 bg-white px-3.5 py-2.5 text-sm text-graphite-900 placeholder:text-graphite-500 focus:border-azure-400 focus:outline-none";
 const labelClass =
-  "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500";
+  "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-graphite-500";
 
 const money = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 
@@ -85,7 +85,7 @@ export default function MedicineForm() {
             <span className="normal-case tracking-normal">(optional)</span>
           </span>
           <input name="lowStockAt" inputMode="numeric" placeholder="e.g. 5" className={field} />
-          <span className="mt-1.5 block text-xs text-slate-500">
+          <span className="mt-1.5 block text-xs text-graphite-500">
             The list flags it at or below this. Set it to however many days of
             dispensing it takes to reorder.
           </span>
@@ -101,12 +101,12 @@ export default function MedicineForm() {
         </div>
       </div>
 
-      <label className="flex items-center gap-2.5 text-sm text-slate-600">
+      <label className="flex items-center gap-2.5 text-sm text-graphite-600">
         <input
           type="checkbox"
           name="prescriptionOnly"
           defaultChecked
-          className="h-4 w-4 rounded border-slate-300"
+          className="h-4 w-4 rounded border-graphite-300"
         />
         {/* Default on, deliberately. It changes what the patient is asked for
             at checkout, and the safe default is to ask. */}
@@ -114,7 +114,7 @@ export default function MedicineForm() {
       </label>
 
       {error && (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700">
+        <p className="rounded-xl border border-coral-200 bg-coral-50 px-4 py-2.5 text-sm text-coral-700">
           {error}
         </p>
       )}
@@ -122,7 +122,7 @@ export default function MedicineForm() {
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex min-h-11 items-center gap-2 rounded-full bg-gradient-to-r from-brand-600 to-teal-600 px-6 py-2.5 text-sm font-extrabold text-white transition hover:from-brand-700 hover:to-teal-700 disabled:opacity-60"
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-gold-500 px-6 py-2.5 text-sm font-extrabold text-graphite-900 shadow-flat transition hover:bg-gold-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-graphite-900 focus-visible:ring-offset-2"
       >
         {pending && <LoaderCircle className="h-4 w-4 animate-spin" />}
         Add it
@@ -202,16 +202,16 @@ export function MedicineRow({
     <li className="px-4 py-3.5 sm:px-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-bold text-slate-900">
+          <p className="text-sm font-bold text-graphite-900">
             {row.name}
             {row.strength && (
-              <span className="ml-1.5 font-medium text-slate-500">{row.strength}</span>
+              <span className="ml-1.5 font-medium text-graphite-500">{row.strength}</span>
             )}
           </p>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-graphite-500">
             {[row.brand, row.form].filter(Boolean).join(" · ") || "No brand given"}
             {row.prescriptionOnly && (
-              <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">
+              <span className="ml-2 rounded bg-gold-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gold-900">
                 Rx
               </span>
             )}
@@ -219,7 +219,7 @@ export function MedicineRow({
         </div>
         <div className="flex shrink-0 items-center gap-3">
           <div className="text-right">
-            <p className="text-sm font-bold tabular-nums text-slate-900">
+            <p className="text-sm font-bold tabular-nums text-graphite-900">
               {money(row.priceInr)}
             </p>
             {/* "Not tracked" and "none left" are different facts and are said
@@ -228,10 +228,10 @@ export function MedicineRow({
             <p
               className={`text-[11px] font-semibold ${
                 out
-                  ? "text-rose-600"
+                  ? "text-coral-600"
                   : low
-                    ? "text-amber-700"
-                    : "text-slate-400"
+                    ? "text-gold-800"
+                    : "text-graphite-500"
               }`}
             >
               {row.stock === null
@@ -245,7 +245,7 @@ export function MedicineRow({
             <button
               type="button"
               onClick={() => setAdjusting((v) => !v)}
-              className="rounded-full border border-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-600 transition hover:border-brand-300 hover:text-brand-700"
+              className="rounded-full border border-graphite-200 px-2.5 py-1 text-[11px] font-bold text-graphite-600 transition hover:border-azure-300 hover:text-azure-700"
             >
               Stock
             </button>
@@ -255,7 +255,7 @@ export function MedicineRow({
             aria-label={`Delist ${row.name}`}
             disabled={pending}
             onClick={() => start(async () => void (await retireMedicine(row.id)))}
-            className="text-slate-300 transition hover:text-rose-600 disabled:opacity-60"
+            className="text-graphite-400 transition hover:text-coral-600 disabled:opacity-60"
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -263,7 +263,7 @@ export function MedicineRow({
       </div>
 
       {adjusting && row.stock !== null && (
-        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div className="mt-3 rounded-xl border border-graphite-200 bg-graphite-50 p-3">
           <div className="grid gap-2 sm:grid-cols-[1fr_7rem]">
             <label className="block">
               <span className={labelClass}>What happened</span>
@@ -307,14 +307,14 @@ export function MedicineRow({
             </label>
           )}
 
-          {error && <p className="mt-2 text-xs text-rose-600">{error}</p>}
+          {error && <p className="mt-2 text-xs text-coral-600">{error}</p>}
 
           <div className="mt-2.5 flex items-center gap-2">
             <button
               type="button"
               onClick={submit}
               disabled={pending}
-              className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-slate-700 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-full bg-graphite-900 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-graphite-700 disabled:opacity-60"
             >
               {pending && <LoaderCircle className="h-3.5 w-3.5 animate-spin" />}
               Record it
@@ -322,11 +322,11 @@ export function MedicineRow({
             <button
               type="button"
               onClick={() => setAdjusting(false)}
-              className="text-xs font-semibold text-slate-500 hover:text-slate-800"
+              className="text-xs font-semibold text-graphite-500 hover:text-graphite-800"
             >
               Cancel
             </button>
-            <span className="ml-auto text-[11px] text-slate-400">
+            <span className="ml-auto text-[11px] text-graphite-500">
               Every change is logged, with who and when.
             </span>
           </div>

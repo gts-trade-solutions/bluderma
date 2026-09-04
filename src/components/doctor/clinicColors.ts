@@ -1,3 +1,5 @@
+import { AZURE, CORAL, GOLD, GRAPHITE, MINT } from "@/lib/brandPalette";
+
 /**
  * The swatch each clinic gets on the calendar.
  *
@@ -6,23 +8,36 @@
  * the interpolated result. That failure is silent: the colour just goes
  * missing. Same reason src/lib and src/data are in the content globs.
  *
- * Eight distinguishable hues. A doctor practising at more than eight locations
- * wraps around, which is a nicer failure than running out.
+ * ── Nine hues out of four ────────────────────────────────────────────────
+ * The portal now runs on the five colours of the brand mark, and a doctor can
+ * practise at more than five locations. So each of the four brights lends a
+ * light and a dark step — azure and deep azure, mint and deep mint, coral and
+ * deep coral, gold and bronze — with graphite closing the set. Nine hues that
+ * are all obviously from the same family, and all obviously not each other.
  *
- * ── Why the fills are -100 and not -50 ───────────────────────────────────
- * They were -50 on a white grid, which is about four percent of a hue: enough
- * to tell two blocks apart if you compare them deliberately, not enough to
- * read a day at a glance, which is the entire job. The step to -100 with a
- * -600 edge keeps every one of them well clear of WCAG AA for the -900 text
- * they carry while making the clinic legible from across a desk.
+ * The KEYS did not change, and must not: they are stored on Clinic.colorKey
+ * in the database, so renaming "violet" to "navy" would leave every existing
+ * clinic pointing at a swatch that no longer exists.
  *
- * A cancelled booking deliberately does NOT follow: it keeps its place so the
+ * ── Solid in a time grid, tinted in a month ──────────────────────────────
+ * `block` is a solid fill, because a day column is read from across a desk and
+ * a 4%-tint block cannot be told from the one beside it. The step chosen per
+ * hue is the one whose type passes AA: azure and coral go a step darker to
+ * carry white, mint and gold stay light and carry black. Picking -500 for all
+ * of them looked consistent in a palette and left white on #58BE9F at 2.1:1.
+ * `chip` is the tinted version for the month grid, where six of them stack in
+ * a 116px cell and six solid bars would read as a colour chart rather than as
+ * a day. Both were checked against the type they carry.
+ *
+ * A cancelled booking deliberately follows neither: it keeps its place so the
  * doctor can see the slot came back, and stays pale so it stops competing.
  */
 
 export interface ClinicSwatch {
-  /** The block on the calendar. */
+  /** The block in the day and week grids: solid, white type. */
   block: string;
+  /** The chip in the month grid and the agenda: tinted, dark type. */
+  chip: string;
   /** The dot in the filter row and the legend. */
   dot: string;
   /** A tinted pill for the clinic name. */
@@ -37,85 +52,101 @@ export interface ClinicSwatch {
 
 const SWATCHES: Record<string, ClinicSwatch> = {
   blue: {
-    block: "bg-blue-500 border-blue-600 text-white hover:bg-blue-600",
-    dot: "bg-blue-500",
-    pill: "bg-blue-100 text-blue-800",
-    edge: "border-l-blue-600",
-    strip: "bg-blue-500",
-    ring: "ring-blue-400",
+    block: "bg-azure-600 border-azure-700 text-white hover:bg-azure-700",
+    chip: "bg-azure-50 text-azure-900 hover:bg-azure-100",
+    dot: "bg-azure-500",
+    pill: "bg-azure-50 text-azure-800",
+    edge: "border-l-azure-600",
+    strip: "bg-azure-500",
+    ring: "ring-azure-400",
   },
   teal: {
-    block: "bg-teal-500 border-teal-600 text-white hover:bg-teal-600",
-    dot: "bg-teal-500",
-    pill: "bg-teal-100 text-teal-800",
-    edge: "border-l-teal-600",
-    strip: "bg-teal-500",
-    ring: "ring-teal-400",
+    block: "bg-mint-400 border-mint-600 text-graphite-900 hover:bg-mint-500",
+    chip: "bg-mint-50 text-mint-900 hover:bg-mint-100",
+    dot: "bg-mint-500",
+    pill: "bg-mint-50 text-mint-800",
+    edge: "border-l-mint-600",
+    strip: "bg-mint-500",
+    ring: "ring-mint-400",
   },
+  /** Deep azure. Was violet; the key stays for the rows already using it. */
   violet: {
-    block: "bg-violet-500 border-violet-600 text-white hover:bg-violet-600",
-    dot: "bg-violet-500",
-    pill: "bg-violet-100 text-violet-800",
-    edge: "border-l-violet-600",
-    strip: "bg-violet-500",
-    ring: "ring-violet-400",
+    block: "bg-azure-800 border-azure-900 text-white hover:bg-azure-900",
+    chip: "bg-azure-100 text-azure-900 hover:bg-azure-200",
+    dot: "bg-azure-800",
+    pill: "bg-azure-100 text-azure-900",
+    edge: "border-l-azure-900",
+    strip: "bg-azure-800",
+    ring: "ring-azure-700",
   },
+  /** Deep mint. */
   emerald: {
-    block: "bg-emerald-500 border-emerald-600 text-white hover:bg-emerald-600",
-    dot: "bg-emerald-500",
-    pill: "bg-emerald-100 text-emerald-800",
-    edge: "border-l-emerald-600",
-    strip: "bg-emerald-500",
-    ring: "ring-emerald-400",
+    block: "bg-mint-700 border-mint-800 text-white hover:bg-mint-800",
+    chip: "bg-mint-100 text-mint-900 hover:bg-mint-200",
+    dot: "bg-mint-700",
+    pill: "bg-mint-100 text-mint-900",
+    edge: "border-l-mint-800",
+    strip: "bg-mint-700",
+    ring: "ring-mint-600",
   },
+  /** Gold. The one block that carries black type — white on it is 1.6:1. */
   amber: {
-    block: "bg-amber-600 border-amber-700 text-white hover:bg-amber-700",
-    dot: "bg-amber-500",
-    pill: "bg-amber-100 text-amber-800",
-    edge: "border-l-amber-600",
-    strip: "bg-amber-500",
-    ring: "ring-amber-400",
+    block: "bg-gold-500 border-gold-600 text-graphite-900 hover:bg-gold-400",
+    chip: "bg-gold-50 text-gold-900 hover:bg-gold-100",
+    dot: "bg-gold-500",
+    pill: "bg-gold-100 text-gold-900",
+    edge: "border-l-gold-600",
+    strip: "bg-gold-500",
+    ring: "ring-gold-500",
   },
   rose: {
-    block: "bg-rose-500 border-rose-600 text-white hover:bg-rose-600",
-    dot: "bg-rose-500",
-    pill: "bg-rose-100 text-rose-800",
-    edge: "border-l-rose-600",
-    strip: "bg-rose-500",
-    ring: "ring-rose-400",
+    block: "bg-coral-600 border-coral-700 text-white hover:bg-coral-700",
+    chip: "bg-coral-50 text-coral-900 hover:bg-coral-100",
+    dot: "bg-coral-500",
+    pill: "bg-coral-50 text-coral-800",
+    edge: "border-l-coral-600",
+    strip: "bg-coral-500",
+    ring: "ring-coral-400",
   },
+  /** Charcoal. */
   indigo: {
-    block: "bg-indigo-500 border-indigo-600 text-white hover:bg-indigo-600",
-    dot: "bg-indigo-500",
-    pill: "bg-indigo-100 text-indigo-800",
-    edge: "border-l-indigo-600",
-    strip: "bg-indigo-500",
-    ring: "ring-indigo-400",
+    block: "bg-graphite-700 border-graphite-800 text-white hover:bg-graphite-800",
+    chip: "bg-graphite-100 text-graphite-900 hover:bg-graphite-200",
+    dot: "bg-graphite-700",
+    pill: "bg-graphite-100 text-graphite-800",
+    edge: "border-l-graphite-800",
+    strip: "bg-graphite-700",
+    ring: "ring-graphite-600",
   },
+  /** Bronze. */
   orange: {
-    block: "bg-orange-600 border-orange-700 text-white hover:bg-orange-700",
-    dot: "bg-orange-500",
-    pill: "bg-orange-100 text-orange-800",
-    edge: "border-l-orange-600",
-    strip: "bg-orange-500",
-    ring: "ring-orange-400",
+    block: "bg-gold-800 border-gold-900 text-white hover:bg-gold-900",
+    chip: "bg-gold-100 text-gold-900 hover:bg-gold-200",
+    dot: "bg-gold-700",
+    pill: "bg-gold-100 text-gold-900",
+    edge: "border-l-gold-800",
+    strip: "bg-gold-700",
+    ring: "ring-gold-600",
   },
+  /** Deep coral. */
   sky: {
-    block: "bg-sky-500 border-sky-600 text-white hover:bg-sky-600",
-    dot: "bg-sky-500",
-    pill: "bg-sky-100 text-sky-800",
-    edge: "border-l-sky-600",
-    strip: "bg-sky-500",
-    ring: "ring-sky-400",
+    block: "bg-coral-800 border-coral-900 text-white hover:bg-coral-900",
+    chip: "bg-coral-100 text-coral-900 hover:bg-coral-200",
+    dot: "bg-coral-700",
+    pill: "bg-coral-100 text-coral-900",
+    edge: "border-l-coral-800",
+    strip: "bg-coral-700",
+    ring: "ring-coral-600",
   },
   /** Bookings with no clinic — pre-multi-clinic rows. Deliberately colourless. */
   slate: {
-    block: "bg-slate-500 border-slate-600 text-white hover:bg-slate-600",
-    dot: "bg-slate-400",
-    pill: "bg-slate-100 text-slate-700",
-    edge: "border-l-slate-500",
-    strip: "bg-slate-400",
-    ring: "ring-slate-400",
+    block: "bg-graphite-500 border-graphite-600 text-white hover:bg-graphite-600",
+    chip: "bg-graphite-100 text-graphite-800 hover:bg-graphite-200",
+    dot: "bg-graphite-400",
+    pill: "bg-graphite-100 text-graphite-700",
+    edge: "border-l-graphite-500",
+    strip: "bg-graphite-400",
+    ring: "ring-graphite-400",
   },
 };
 
@@ -138,22 +169,23 @@ export function swatchFor(colorKey: string | null | undefined): ClinicSwatch {
 /**
  * The same hue as a hex literal, for charts.
  *
- * Recharts fills are SVG attributes, not classes — it cannot take `bg-teal-500`
- * and Tailwind cannot resolve a class it never sees in source. Keeping the two
- * side by side means a clinic is the same colour in its calendar block and in
- * the dashboard bar for it, which is the entire point of giving it one.
+ * Recharts fills are SVG attributes, not classes — it cannot take `bg-mint-500`
+ * and Tailwind cannot resolve a class it never sees in source. Read from
+ * lib/brandPalette, the same table Tailwind is built from, so a clinic cannot
+ * end up one colour in its calendar block and another in the dashboard bar —
+ * which is the entire point of giving it one.
  */
 const HEXES: Record<string, string> = {
-  blue: "#3b82f6",
-  teal: "#0fa08e",
-  violet: "#8b5cf6",
-  emerald: "#10b981",
-  amber: "#f59e0b",
-  rose: "#f43f5e",
-  indigo: "#6366f1",
-  orange: "#f97316",
-  sky: "#0ea5e9",
-  slate: "#94a3b8",
+  blue: AZURE[500],
+  teal: MINT[500],
+  violet: AZURE[800],
+  emerald: MINT[700],
+  amber: GOLD[500],
+  rose: CORAL[500],
+  indigo: GRAPHITE[700],
+  orange: GOLD[700],
+  sky: CORAL[700],
+  slate: GRAPHITE[400],
 };
 
 export function hexFor(colorKey: string | null | undefined): string {
@@ -165,10 +197,12 @@ export function hexFor(colorKey: string | null | undefined): string {
  * see that the slot came back — but stops competing for attention.
  */
 export const CANCELLED_SWATCH: ClinicSwatch = {
-  block: "bg-slate-50 border-slate-200 text-slate-400 line-through hover:bg-slate-100",
-  dot: "bg-slate-300",
-  pill: "bg-slate-100 text-slate-500",
-  edge: "border-l-slate-300",
-  strip: "bg-slate-300",
-  ring: "ring-slate-300",
+  block:
+    "bg-graphite-50 border-graphite-200 text-graphite-500 line-through hover:bg-graphite-100",
+  chip: "bg-graphite-50 text-graphite-500 line-through hover:bg-graphite-100",
+  dot: "bg-graphite-300",
+  pill: "bg-graphite-100 text-graphite-500",
+  edge: "border-l-graphite-300",
+  strip: "bg-graphite-300",
+  ring: "ring-graphite-300",
 };

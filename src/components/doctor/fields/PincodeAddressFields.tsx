@@ -138,7 +138,7 @@ export default function PincodeAddressFields({
           htmlFor="pincode"
           className="mb-1.5 block text-sm font-semibold text-ink"
         >
-          PIN code<span className="text-brand-500"> *</span>
+          PIN code<span className="text-azure-600"> *</span>
         </label>
         <input
           id="pincode"
@@ -154,21 +154,21 @@ export default function PincodeAddressFields({
           autoComplete="postal-code"
           required
           aria-invalid={pinError ? true : undefined}
-          className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100 ${
+          className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition focus:border-azure-400 focus:ring-2 focus:ring-azure-100 ${
             readOnly
-              ? "border-slate-200 bg-slate-50 text-slate-500"
+              ? "border-graphite-200 bg-graphite-50 text-graphite-500"
               : pinError
-                ? "border-rose-300 bg-white text-slate-900"
-                : "border-slate-200 bg-white text-slate-900"
+                ? "border-coral-300 bg-white text-graphite-900"
+                : "border-graphite-200 bg-white text-graphite-900"
           }`}
         />
         {pinError ? (
-          <p className="mt-1.5 text-xs font-medium text-rose-600">{pinError}</p>
+          <p className="mt-1.5 text-xs font-medium text-coral-600">{pinError}</p>
         ) : (
           <p
             className={`mt-1.5 text-xs ${
               status.kind === "failed" || status.kind === "unknown"
-                ? "text-amber-700"
+                ? "text-gold-800"
                 : "text-ink-muted"
             }`}
             aria-live="polite"
@@ -193,7 +193,7 @@ export default function PincodeAddressFields({
 
       <div>
         <label htmlFor="city" className="mb-1.5 block text-sm font-semibold text-ink">
-          City<span className="text-brand-500"> *</span>
+          City<span className="text-azure-600"> *</span>
         </label>
         <input
           id="city"
@@ -203,22 +203,22 @@ export default function PincodeAddressFields({
           readOnly={readOnly}
           required
           aria-invalid={cityError ? true : undefined}
-          className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100 ${
+          className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition focus:border-azure-400 focus:ring-2 focus:ring-azure-100 ${
             readOnly
-              ? "border-slate-200 bg-slate-50 text-slate-500"
+              ? "border-graphite-200 bg-graphite-50 text-graphite-500"
               : cityError
-                ? "border-rose-300 bg-white text-slate-900"
-                : "border-slate-200 bg-white text-slate-900"
+                ? "border-coral-300 bg-white text-graphite-900"
+                : "border-graphite-200 bg-white text-graphite-900"
           }`}
         />
         {cityError && (
-          <p className="mt-1.5 text-xs font-medium text-rose-600">{cityError}</p>
+          <p className="mt-1.5 text-xs font-medium text-coral-600">{cityError}</p>
         )}
       </div>
 
       <div>
         <label htmlFor="state" className="mb-1.5 block text-sm font-semibold text-ink">
-          State<span className="text-brand-500"> *</span>
+          State<span className="text-azure-600"> *</span>
         </label>
         <input
           id="state"
@@ -228,16 +228,16 @@ export default function PincodeAddressFields({
           readOnly={readOnly}
           required
           aria-invalid={stateError ? true : undefined}
-          className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100 ${
+          className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition focus:border-azure-400 focus:ring-2 focus:ring-azure-100 ${
             readOnly
-              ? "border-slate-200 bg-slate-50 text-slate-500"
+              ? "border-graphite-200 bg-graphite-50 text-graphite-500"
               : stateError
-                ? "border-rose-300 bg-white text-slate-900"
-                : "border-slate-200 bg-white text-slate-900"
+                ? "border-coral-300 bg-white text-graphite-900"
+                : "border-graphite-200 bg-white text-graphite-900"
           }`}
         />
         {stateError && (
-          <p className="mt-1.5 text-xs font-medium text-rose-600">{stateError}</p>
+          <p className="mt-1.5 text-xs font-medium text-coral-600">{stateError}</p>
         )}
       </div>
     </>

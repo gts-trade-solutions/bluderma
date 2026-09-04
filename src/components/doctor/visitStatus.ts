@@ -36,34 +36,34 @@ export const STATE_STYLES: Record<VisitState, StateStyle> = {
   awaiting: {
     // A ring rather than a fill: it sits OUTSIDE the block, so the clinic
     // colour underneath survives intact and both facts are readable at once.
-    block: "ring-2 ring-amber-500 ring-offset-1",
+    block: "ring-2 ring-gold-500 ring-offset-1",
     tag: "!",
     label: "Waiting on you",
-    chip: "bg-amber-100 text-amber-800 ring-1 ring-amber-400",
+    chip: "bg-gold-100 text-gold-900 ring-1 ring-gold-500",
   },
   cancelled: {
     block: "opacity-60",
     tag: null,
     label: "Cancelled",
-    chip: "bg-slate-100 text-slate-500 line-through",
+    chip: "bg-graphite-100 text-graphite-500 line-through",
   },
   completed: {
     block: "",
     tag: "✓",
     label: "Seen",
-    chip: "bg-teal-100 text-teal-800",
+    chip: "bg-mint-100 text-mint-900",
   },
   "no-show": {
-    block: "ring-2 ring-rose-400 ring-offset-1",
+    block: "ring-2 ring-coral-500 ring-offset-1",
     tag: "—",
     label: "Did not attend",
-    chip: "bg-rose-100 text-rose-700 ring-1 ring-rose-300",
+    chip: "bg-coral-100 text-coral-800 ring-1 ring-coral-300",
   },
   confirmed: {
     block: "",
     tag: null,
     label: "Confirmed",
-    chip: "bg-slate-100 text-slate-600",
+    chip: "bg-graphite-100 text-graphite-700",
   },
 };
 

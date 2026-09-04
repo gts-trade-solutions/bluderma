@@ -127,7 +127,7 @@ export default function AssistTextArea({
       <div className="mb-1.5 flex flex-wrap items-end justify-between gap-2">
         <label className="text-sm font-semibold text-ink">
           {label}
-          {required && <span className="text-brand-500"> *</span>}
+          {required && <span className="text-azure-600"> *</span>}
         </label>
 
         {aiEnabled && (
@@ -137,7 +137,7 @@ export default function AssistTextArea({
                 type="button"
                 onClick={draft}
                 disabled={busy !== null}
-                className="rounded-full bg-brand-50 px-3 py-1 text-[11px] font-bold text-brand-800 ring-1 ring-brand-200 transition hover:bg-brand-100 disabled:opacity-50"
+                className="rounded-full bg-azure-50 px-3 py-1 text-[11px] font-bold text-azure-800 ring-1 ring-azure-200 transition hover:bg-azure-100 disabled:opacity-50"
               >
                 {busy === "draft" ? "Writing…" : "Write a draft"}
               </button>
@@ -146,7 +146,7 @@ export default function AssistTextArea({
               type="button"
               onClick={() => improve("improve")}
               disabled={busy !== null}
-              className="rounded-full px-2.5 py-1 text-[11px] font-bold text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-full px-2.5 py-1 text-[11px] font-bold text-graphite-600 ring-1 ring-graphite-200 transition hover:bg-graphite-50 disabled:opacity-50"
             >
               {busy === "improve" ? "…" : "Tidy up"}
             </button>
@@ -154,7 +154,7 @@ export default function AssistTextArea({
               type="button"
               onClick={() => improve("shorten")}
               disabled={busy !== null}
-              className="rounded-full px-2.5 py-1 text-[11px] font-bold text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-full px-2.5 py-1 text-[11px] font-bold text-graphite-600 ring-1 ring-graphite-200 transition hover:bg-graphite-50 disabled:opacity-50"
             >
               {busy === "shorten" ? "…" : "Shorten"}
             </button>
@@ -169,31 +169,31 @@ export default function AssistTextArea({
         required={required}
         defaultValue={defaultValue}
         aria-invalid={error ? true : undefined}
-        className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 ${
-          error ? "border-rose-300" : "border-slate-200"
+        className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-graphite-900 outline-none transition placeholder:text-graphite-500 focus:border-azure-400 focus:ring-2 focus:ring-azure-100 ${
+          error ? "border-coral-300" : "border-graphite-200"
         }`}
       />
 
       {busy === "draft" && (
         <div className="mt-2 space-y-2" aria-live="polite">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-16 animate-pulse rounded-xl bg-slate-100" />
+            <div key={i} className="h-16 animate-pulse rounded-xl bg-graphite-100" />
           ))}
         </div>
       )}
 
       {variants && variants.length > 0 && (
         <div className="mt-3 space-y-2" aria-live="polite">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-graphite-500">
             Pick one and edit it. Nothing is saved until you submit
           </p>
           {variants.map((v) => (
             <div
               key={v.tone}
-              className="rounded-xl bg-slate-50 p-3.5 ring-1 ring-slate-200"
+              className="rounded-xl bg-graphite-50 p-3.5 ring-1 ring-graphite-200"
             >
               <div className="flex items-center justify-between gap-3">
-                <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                <span className="text-[11px] font-bold uppercase tracking-wide text-graphite-500">
                   {TONE_LABEL[v.tone] ?? v.tone}
                   {/* Said plainly: a template draft is not an AI draft. */}
                   {v.source === "template" && " · from your details"}
@@ -204,12 +204,12 @@ export default function AssistTextArea({
                     put(v.text);
                     setVariants(null);
                   }}
-                  className="shrink-0 rounded-lg bg-white px-2.5 py-1 text-[11px] font-bold text-brand-700 ring-1 ring-slate-200 transition hover:bg-brand-50"
+                  className="shrink-0 rounded-lg bg-white px-2.5 py-1 text-[11px] font-bold text-azure-700 ring-1 ring-graphite-200 transition hover:bg-azure-50"
                 >
                   Use this
                 </button>
               </div>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-700">
+              <p className="mt-1.5 text-sm leading-relaxed text-graphite-700">
                 {v.text}
               </p>
             </div>
@@ -217,10 +217,10 @@ export default function AssistTextArea({
         </div>
       )}
 
-      {problem && <p className="mt-2 text-xs text-amber-700">{problem}</p>}
+      {problem && <p className="mt-2 text-xs text-gold-800">{problem}</p>}
 
       {error ? (
-        <p className="mt-1.5 text-xs font-medium text-rose-600">{error}</p>
+        <p className="mt-1.5 text-xs font-medium text-coral-600">{error}</p>
       ) : hint ? (
         <p className="mt-1.5 text-xs text-ink-muted">{hint}</p>
       ) : null}

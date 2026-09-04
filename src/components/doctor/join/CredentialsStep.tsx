@@ -94,7 +94,7 @@ export default function CredentialsStep({
           defaultValue={doctor.licenceDocUrl ?? ""}
           folder="credentials"
         />
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-graphite-500">
           Optional at this stage, but an application without one takes longer to
           approve because we have to come back and ask.
         </p>

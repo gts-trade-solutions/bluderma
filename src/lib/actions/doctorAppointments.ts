@@ -460,3 +460,203 @@ export async function setMeetingLink(formData: FormData): Promise<AdminResult> {
     return { ok: true };
   });
 }
+
+/* ------------------------- Booking one in yourself --------------------- */
+
+const createSchema = z.object({
+  /** An existing client of this practice, or blank for somebody with no account. */
+  patientUserId: z.string().trim().optional(),
+  patientName: z.string().trim().min(2, "Who is it for?").max(120),
+  patientPhone: z.string().trim().max(20).optional(),
+  clinicId: z.string().trim().optional(),
+  /** "2026-09-08" and "14:30", clinic wall clock. */
+  daySeed: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date."),
+  time: z.string().regex(/^\d{2}:\d{2}$/, "Pick a time."),
+  durationMin: z.coerce.number().int().min(5).max(240),
+  mode: z.enum(["CLINIC", "VIDEO", "HOME"]),
+  feeInr: z.coerce.number().int().min(0).max(1_000_000),
+  notes: z.string().trim().max(600).optional(),
+});
+
+/**
+ * A booking the practice takes itself: a walk-in, or somebody who rang.
+ *
+ * ── Why this had to exist ────────────────────────────────────────────────
+ * Every appointment in this system arrived through the client's booking flow.
+ * A doctor could confirm, move, cancel and complete one, but could not create
+ * one — so a walk-in, a phone booking or a follow-up agreed at the end of a
+ * consultation had no way into the calendar at all. That is most of a real
+ * clinic day.
+ *
+ * ── What it enforces, and what it deliberately does not ──────────────────
+ * ENFORCED: no double-booking. The slotLock unique index catches an identical
+ * start time, and the overlap check below catches the case it cannot — a
+ * 30-minute visit at 10:00 and another at 10:15 do not share a lock but do
+ * share the doctor. Both are checked against every location, because slotLock
+ * is doctor-scoped by design: one practitioner cannot be in two clinics at
+ * once.
+ *
+ * NOT ENFORCED: published hours. A walk-in at eight in the evening is exactly
+ * the booking this exists for, and refusing it because the diary says the
+ * clinic shut at seven would be the software arguing with the person standing
+ * in the room. The travel buffer is not applied either, for the same reason —
+ * the doctor knows where they are.
+ *
+ * ── It is already accepted ───────────────────────────────────────────────
+ * `AWAITING_DOCTOR` means a slot is held while the doctor decides. They are
+ * the one creating it, so there is nothing to decide and no email to send: the
+ * client is standing there, or is on the phone being told the time.
+ */
+export async function createBookingByDoctor(
+  formData: FormData
+): Promise<AdminResult> {
+  return runAction("create booking", async () => {
+    const owner = await getOwnDoctor();
+    if (!owner) return { ok: false, error: "No practice linked to this account." };
+
+    const parsed = parseForm(createSchema, formData);
+    if (!parsed.ok) return parsed.result;
+    const d = parsed.data;
+
+    // Clinic wall-clock time is stored labelled as UTC and converted nowhere.
+    // See the contract in queries/availability.ts.
+    const scheduledAt = new Date(`${d.daySeed}T${d.time}:00.000Z`);
+    if (Number.isNaN(scheduledAt.getTime())) {
+      return { ok: false, error: "That is not a real date and time." };
+    }
+
+    // A location has to be one of this practice's own.
+    let clinicId: string | null = null;
+    if (d.clinicId) {
+      const mine = await prisma.doctorClinic.findFirst({
+        where: { doctorId: owner.doctorId, clinicId: d.clinicId, isActive: true },
+        select: { clinicId: true },
+      });
+      if (!mine) return { ok: false, error: "That is not one of your locations." };
+      clinicId = mine.clinicId;
+    }
+    if (d.mode === "CLINIC" && !clinicId) {
+      return { ok: false, error: "Pick which location they are coming to." };
+    }
+
+    // An account, if one was chosen, and only if this practice has seen them.
+    let patientUserId: string | null = null;
+    let patientEmail: string | null = null;
+    if (d.patientUserId) {
+      const seen = await prisma.appointment.findFirst({
+        where: { doctorId: owner.doctorId, patientUserId: d.patientUserId },
+        select: { patientUserId: true },
+      });
+      if (!seen) {
+        return { ok: false, error: "That client is not one of yours." };
+      }
+      patientUserId = d.patientUserId;
+      const u = await prisma.user.findUnique({
+        where: { id: patientUserId },
+        select: { email: true },
+      });
+      patientEmail = u?.email ?? null;
+    }
+
+    /* ── Nothing may overlap ──────────────────────────────────────────
+       The lock catches an identical start; this catches everything else.
+       Scoped to the day and read in JavaScript because the end of an
+       appointment is start + durationMin, which SQL here cannot express. */
+    const dayStart = new Date(`${d.daySeed}T00:00:00.000Z`);
+    const dayEnd = new Date(dayStart.getTime() + 86_400_000);
+    const sameDay = await prisma.appointment.findMany({
+      where: {
+        doctorId: owner.doctorId,
+        scheduledAt: { gte: dayStart, lt: dayEnd },
+        status: {
+          notIn: [AppointmentStatus.CANCELLED, AppointmentStatus.NO_SHOW],
+        },
+      },
+      select: {
+        scheduledAt: true,
+        durationMin: true,
+        patientName: true,
+        clinic: { select: { name: true } },
+      },
+    });
+    const start = scheduledAt.getTime();
+    const end = start + d.durationMin * 60_000;
+    const clash = sameDay.find((a) => {
+      const s = a.scheduledAt.getTime();
+      return s < end && s + (a.durationMin || 30) * 60_000 > start;
+    });
+    if (clash) {
+      const at = clash.scheduledAt.toISOString().slice(11, 16);
+      return {
+        ok: false,
+        error: `That runs into ${clash.patientName} at ${at}${
+          clash.clinic ? ` (${clash.clinic.name})` : ""
+        }.`,
+      };
+    }
+
+    // First visit is a fact about them and this practice, not a checkbox.
+    const before = patientUserId
+      ? await prisma.appointment.count({
+          where: { doctorId: owner.doctorId, patientUserId },
+        })
+      : 0;
+
+    try {
+      const created = await prisma.appointment.create({
+        data: {
+          doctorId: owner.doctorId,
+          patientUserId,
+          clinicId,
+          scheduledAt,
+          durationMin: d.durationMin,
+          mode: d.mode,
+          status: AppointmentStatus.CONFIRMED,
+          // Booked by the practice, so there is nothing awaiting the practice.
+          approvalState: ApprovalState.ACCEPTED,
+          feeAtBooking: d.feeInr,
+          visitFee: 0,
+          discountInr: 0,
+          patientName: d.patientName,
+          patientPhone: d.patientPhone || null,
+          patientEmail: patientEmail ?? undefined,
+          notes: d.notes || null,
+          isFirstVisit: before === 0,
+          photoConsent: false,
+          slotLock: slotLockFor(owner.doctorId, scheduledAt),
+        },
+        select: { id: true },
+      });
+
+      await audit({
+        userId: owner.userId,
+        action: "create",
+        entity: "Appointment",
+        entityId: created.id,
+        after: {
+          patientName: d.patientName,
+          at: `${d.daySeed} ${d.time}`,
+          durationMin: d.durationMin,
+          mode: d.mode,
+          clinicId,
+          bookedBy: "doctor",
+        },
+      });
+
+      refresh();
+      revalidatePath("/doctor/portal/today");
+      revalidatePath("/doctor/portal/patients");
+      return { ok: true };
+    } catch (e) {
+      // P2002 on slotLock: something took that exact minute between the
+      // overlap check above and this write.
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === "P2002"
+      ) {
+        return { ok: false, error: "That time was taken a moment ago. Pick another." };
+      }
+      throw e;
+    }
+  });
+}

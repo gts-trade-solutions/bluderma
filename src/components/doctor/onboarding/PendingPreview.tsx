@@ -69,11 +69,11 @@ export default async function PendingPreview({
         will ever have with this software: after approval they have a clinic
         to run.
       */}
-      <div className="mb-7 rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-teal-50/60 p-5">
-        <p className="font-bold text-slate-900">
+      <div className="mb-7 rounded-[10px] border border-azure-200 bg-gradient-to-br from-azure-50 to-mint-50/60 p-5">
+        <p className="font-bold text-graphite-900">
           While you wait, have a look at what you are getting
         </p>
-        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600">
+        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-graphite-600">
           A worked example of a busy month, on the dashboard you will actually
           use, with a short guided walk through the five things worth knowing
           where to find. The figures in it belong to nobody — they are there so
@@ -106,8 +106,8 @@ export default async function PendingPreview({
         >
           <ul className="space-y-2">
             {advisory.map((g) => (
-              <li key={g.key} className="flex items-center gap-2.5 text-sm text-slate-700">
-                <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
+              <li key={g.key} className="flex items-center gap-2.5 text-sm text-graphite-700">
+                <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-graphite-300" />
                 {g.label}
               </li>
             ))}

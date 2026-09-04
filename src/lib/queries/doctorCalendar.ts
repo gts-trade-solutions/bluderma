@@ -72,7 +72,21 @@ export function toDaySeed(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-export type CalendarView = "month" | "week" | "day";
+export type CalendarView = "month" | "week" | "day" | "agenda";
+
+/**
+ * How far ahead the list view reaches.
+ *
+ * A year, which is every booking a practice actually holds — nobody books a
+ * dermatology follow-up for 2028. It was a fortnight, and a fortnight cannot
+ * answer "what have I got coming", which is the question the list exists for:
+ * a doctor with a course of treatment running over three months could not see
+ * the end of it without stepping through the diary a screen at a time.
+ *
+ * The cost is bounded by the number of bookings, not by the length of the
+ * window — the list renders only days that hold something.
+ */
+export const AGENDA_DAYS = 365;
 
 /**
  * The half-open range a view covers.
@@ -80,8 +94,21 @@ export type CalendarView = "month" | "week" | "day";
  * A month view shows leading and trailing days from the neighbouring months so
  * the grid is always six full weeks — the range has to cover those too, or
  * appointments visibly vanish when they fall in the greyed-out cells.
+ *
+ * The agenda is the odd one: it runs FORWARD from the anchor day rather than
+ * snapping to a week or a month boundary, because the question it answers is
+ * "what is coming", and a list that starts last Sunday answers a different
+ * one. It runs to the horizon rather than to a fixed window — see
+ * AGENDA_DAYS.
  */
 export function rangeFor(view: CalendarView, anchor: Date): { from: Date; to: Date } {
+  if (view === "agenda") {
+    const from = new Date(
+      Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), anchor.getUTCDate())
+    );
+    return { from, to: addDays(from, AGENDA_DAYS) };
+  }
+
   if (view === "day") {
     const from = new Date(
       Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), anchor.getUTCDate())

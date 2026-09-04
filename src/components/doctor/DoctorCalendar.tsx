@@ -12,6 +12,7 @@ import type {
 import { CANCELLED_SWATCH, swatchFor } from "./clinicColors";
 import { LEGEND_STATES, STATE_STYLES, stateOf } from "./visitStatus";
 import AppointmentDrawer from "./AppointmentDrawer";
+import NewBookingDialog from "./NewBookingDialog";
 import CalendarRail from "./CalendarRail";
 import GoldCollarBadge from "@/components/GoldCollarBadge";
 
@@ -351,7 +352,7 @@ export default function DoctorCalendar({
                   onClick={() => step(-1)}
                   aria-label="Previous"
                   title="Previous (left arrow)"
-                  className="grid h-8 w-8 place-items-center text-graphite-600 transition hover:bg-graphite-100 hover:text-graphite-900"
+                  className="grid h-8 w-8 place-items-center text-graphite-600 transition hover:bg-graphite-100 hover:text-graphite-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-azure-500"
                 >
                   <Chevron dir="left" />
                 </button>
@@ -397,6 +398,15 @@ export default function DoctorCalendar({
                 </label>
               )}
 
+              {/* The one thing this toolbar could not do. A walk-in, a phone
+                  booking or a follow-up agreed at the door had no way into
+                  the diary at all — see createBookingByDoctor. It opens on
+                  whichever day is being looked at. */}
+              <NewBookingDialog
+                clinics={clinics.map((c) => ({ id: c.id, name: c.name }))}
+                defaultDaySeed={anchorSeed}
+              />
+
               <div className="flex shrink-0 items-center gap-0.5 rounded-lg bg-graphite-100 p-0.5">
                 {VIEW_TABS.map((t) => (
                   <button
@@ -404,7 +414,7 @@ export default function DoctorCalendar({
                     title={t.hint}
                     onClick={() => go({ view: t.key })}
                     aria-pressed={view === t.key}
-                    className={`rounded-md px-2.5 py-1.5 text-[13px] font-bold transition sm:px-3 ${
+                    className={`rounded-md px-2.5 py-1.5 text-[13px] font-bold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-azure-500 sm:px-3 ${
                       view === t.key
                         ? "bg-graphite-900 text-white shadow-flat"
                         : "text-graphite-600 hover:text-graphite-900"

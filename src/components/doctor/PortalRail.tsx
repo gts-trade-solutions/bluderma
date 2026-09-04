@@ -99,7 +99,7 @@ export default function PortalRail({
      * outright: they were on the page, below the fold of an element that had
      * no fold.
      */
-    <nav className="thin-scroll flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-1">
+    <nav className="flex min-h-0 shrink-0 flex-col gap-0.5 px-3 py-1">
       {items.map((item, i) => {
         const active = isActive(item);
         // The heading prints once, above the first item of its group.
@@ -220,12 +220,30 @@ export default function PortalRail({
 
   return (
     <>
-      {/* ── Desktop rail ──────────────────────────────────────────────── */}
-      <aside className="portal-rail on-dark fixed inset-y-0 left-0 z-40 hidden flex-col bg-graphite-900 lg:flex">
+      {/* ── Desktop rail ──────────────────────────────────────────────
+          The ASIDE is the scroller, not the nav inside it.
+
+          It was the nav, which is technically enough — the links did scroll —
+          and it failed the only way that matters: a doctor whose pointer was
+          over their own name, or over Sign out, or in the gap under the last
+          link, spun the wheel and nothing moved. A scroll region you have to
+          aim at is a scroll region people report as broken, and they are
+          right to.
+
+          `min-h-0` on the nav is still load-bearing: a flex child defaults to
+          `min-height: auto` and refuses to shrink, so without it the aside
+          would grow to fit thirteen links and clip them again.
+
+          Sign out stays stuck to the bottom of the frame rather than scrolling
+          away with everything else — it is the one control somebody reaches
+          for without looking. */}
+      <aside className="portal-rail thin-scroll on-dark fixed inset-y-0 left-0 z-40 hidden flex-col overflow-y-auto overscroll-contain bg-graphite-900 lg:flex">
         {identity}
         {nav}
-        <CollapseToggle />
-        {footer}
+        <div className="sticky bottom-0 mt-auto bg-graphite-900">
+          <CollapseToggle />
+          {footer}
+        </div>
       </aside>
 
       {/* ── Mobile bar ────────────────────────────────────────────────── */}
@@ -258,10 +276,10 @@ export default function PortalRail({
             onClick={() => setOpen(false)}
             className="absolute inset-0 bg-graphite-950/50 backdrop-blur-[2px]"
           />
-          <aside className="on-dark relative flex h-full w-72 max-w-[85vw] flex-col bg-graphite-900 shadow-2xl">
+          <aside className="thin-scroll on-dark relative flex h-full w-72 max-w-[85vw] flex-col overflow-y-auto overscroll-contain bg-graphite-900 shadow-2xl">
             {identity}
             {nav}
-            {footer}
+            <div className="sticky bottom-0 mt-auto bg-graphite-900">{footer}</div>
           </aside>
         </div>
       )}

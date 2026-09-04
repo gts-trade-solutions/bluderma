@@ -24,7 +24,6 @@ import {
   Panel,
   Tag,
   portalBtnPrimary,
-  portalBtnQuiet,
 } from "@/components/doctor/portalUi";
 import { SOCIALS, socialLinks } from "@/lib/social";
 import Combobox from "@/components/doctor/fields/Combobox";
@@ -315,13 +314,13 @@ export default async function DoctorProfilePage() {
             description="Checked against the council's own register. Never shown to clients — it is what earns the verified mark, not what is displayed."
           >
             {doctor.verified ? (
-              <p className="mb-4 rounded-xl bg-teal-50 px-3.5 py-2.5 text-xs leading-relaxed text-teal-900 ring-1 ring-inset ring-teal-200">
+              <p className="mb-4 rounded-xl bg-mint-50 px-3.5 py-2.5 text-xs leading-relaxed text-mint-900 ring-1 ring-inset ring-mint-200">
                 <strong className="font-bold">Verified.</strong> Changing the
                 council or the number below pauses this until somebody has
                 re-checked it. Replacing only the certificate does not.
               </p>
             ) : (
-              <p className="mb-4 rounded-xl bg-amber-50 px-3.5 py-2.5 text-xs leading-relaxed text-amber-900 ring-1 ring-inset ring-amber-200">
+              <p className="mb-4 rounded-xl bg-gold-50 px-3.5 py-2.5 text-xs leading-relaxed text-gold-900 ring-1 ring-inset ring-gold-200">
                 Not verified yet. Clients can still book you; the badge appears
                 once we have checked these details against the register.
               </p>
@@ -390,7 +389,7 @@ export default async function DoctorProfilePage() {
                       name="workDays"
                       value={d.value}
                       defaultChecked={workDays.has(d.value)}
-                      className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-400"
+                      className="h-4 w-4 rounded border-graphite-300 text-azure-600 focus:ring-azure-400"
                     />
                     <span className="text-ink-soft">{d.label}</span>
                   </label>
@@ -434,7 +433,7 @@ export default async function DoctorProfilePage() {
           description="Block out holidays or leave. Bookable slots are hidden for these dates, on top of your weekly hours."
         >
           {timeOff.length > 0 && (
-            <ul className="mb-6 divide-y divide-slate-100 rounded-xl border border-slate-200">
+            <ul className="mb-6 divide-y divide-graphite-100 rounded-xl border border-graphite-200">
               {timeOff.map((t) => {
                 const start = DATE_FMT.format(t.startsAt);
                 const end = DATE_FMT.format(
@@ -538,16 +537,17 @@ function ListingPreview({
     <Panel>
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-display text-lg font-bold text-slate-900">
+          <h2 className="font-display text-lg font-bold text-graphite-900">
             How your listing reads
           </h2>
-          <p className="mt-0.5 text-sm text-slate-500">
+          <p className="mt-0.5 text-sm text-graphite-500">
             Exactly what a client sees before they decide to book you.
           </p>
         </div>
-        <Link href={`/patient/book/${doctor.slug}`} className={portalBtnQuiet}>
-          Open it
-        </Link>
+        {/* No link out to /patient/book any more. A practitioner account is
+            confined to the practitioner side (see middleware), so the button
+            led to a redirect straight back here — and the panel below already
+            renders the listing exactly as a client reads it. */}
       </div>
 
       <div className="flex flex-wrap items-start gap-5">
@@ -556,22 +556,22 @@ function ListingPreview({
           <img
             src={doctor.image}
             alt=""
-            className="h-24 w-24 shrink-0 rounded-2xl object-cover ring-1 ring-slate-200"
+            className="h-24 w-24 shrink-0 rounded-[10px] object-cover ring-1 ring-graphite-200"
           />
         ) : (
-          <div className="grid h-24 w-24 shrink-0 place-items-center rounded-2xl bg-slate-100 text-center text-[11px] font-semibold text-slate-400 ring-1 ring-slate-200">
+          <div className="grid h-24 w-24 shrink-0 place-items-center rounded-[10px] bg-graphite-100 text-center text-[11px] font-semibold text-graphite-500 ring-1 ring-graphite-200">
             No photo
           </div>
         )}
 
         <div className="min-w-0 flex-1">
-          <p className="font-display text-xl font-bold text-slate-900">
+          <p className="font-display text-xl font-bold text-graphite-900">
             {doctor.name}
           </p>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-graphite-600">
             {[doctor.title, doctor.specialty].filter(Boolean).join(" · ")}
           </p>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-graphite-500">
             {[doctor.clinic, doctor.location].filter(Boolean).join(", ")}
           </p>
 
@@ -591,7 +591,7 @@ function ListingPreview({
       </div>
 
       {doctor.about && (
-        <p className="mt-5 whitespace-pre-line text-sm leading-relaxed text-slate-700">
+        <p className="mt-5 whitespace-pre-line text-sm leading-relaxed text-graphite-700">
           {doctor.about}
         </p>
       )}
@@ -611,8 +611,8 @@ function ListingPreview({
       {/* Registration is never published — it is shown here so the doctor can
           confirm we hold the right details. */}
       {(doctor.regCouncil || doctor.regNumber) && (
-        <p className="mt-5 rounded-xl bg-slate-50 px-4 py-3 text-xs text-slate-500">
-          <strong className="font-semibold text-slate-700">
+        <p className="mt-5 rounded-xl bg-graphite-50 px-4 py-3 text-xs text-graphite-500">
+          <strong className="font-semibold text-graphite-700">
             Registration on file
           </strong>{" "}
           is {[doctor.regCouncil, doctor.regNumber, doctor.regYear].filter(Boolean).join(" · ")}.
@@ -621,7 +621,7 @@ function ListingPreview({
       )}
 
       <div className="mt-5">
-        <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+        <p className="text-xs font-bold uppercase tracking-wide text-graphite-500">
           Your links
         </p>
         {links.length ? (
@@ -632,25 +632,25 @@ function ListingPreview({
                 href={l.url}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+                className="rounded-full bg-graphite-100 px-3 py-1.5 text-xs font-semibold text-graphite-700 transition hover:bg-graphite-200"
               >
                 {l.label} · {l.handle}
               </a>
             ))}
           </div>
         ) : (
-          <p className="mt-1.5 text-sm text-slate-400">
+          <p className="mt-1.5 text-sm text-graphite-500">
             None yet. Add them above.
           </p>
         )}
       </div>
 
       {gaps.length > 0 && (
-        <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-          <p className="text-sm font-bold text-amber-900">
+        <div className="mt-6 rounded-xl border border-gold-200 bg-gold-50 px-4 py-3">
+          <p className="text-sm font-bold text-gold-900">
             Your listing is missing {gaps.length === 1 ? "one thing" : `${gaps.length} things`}
           </p>
-          <ul className="mt-1.5 list-inside list-disc text-sm text-amber-900/90">
+          <ul className="mt-1.5 list-inside list-disc text-sm text-gold-900/90">
             {gaps.map((g) => (
               <li key={g.key}>{g.label}</li>
             ))}
@@ -664,13 +664,13 @@ function ListingPreview({
 function Detail({ label, items }: { label: string; items: string[] }) {
   return (
     <div>
-      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+      <p className="text-xs font-bold uppercase tracking-wide text-graphite-500">
         {label}
       </p>
       {items.length ? (
-        <p className="mt-1 text-sm text-slate-700">{items.join(", ")}</p>
+        <p className="mt-1 text-sm text-graphite-700">{items.join(", ")}</p>
       ) : (
-        <p className="mt-1 text-sm text-slate-400">Not set</p>
+        <p className="mt-1 text-sm text-graphite-500">Not set</p>
       )}
     </div>
   );

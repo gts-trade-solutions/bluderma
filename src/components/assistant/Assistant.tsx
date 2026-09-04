@@ -50,6 +50,16 @@ export default function Assistant() {
   const [starters, setStarters] = useState<string[]>([]);
   /** The one-time nudge beside the launcher. See dismissNudge below. */
   const [nudge, setNudge] = useState(false);
+  /*
+   * Seeded from the account, not defaulted to "patient".
+   *
+   * It used to start as "patient" and only correct itself once the panel had
+   * been opened and /api/assistant had answered — so the nudge that appears
+   * unprompted after forty seconds asked a doctor mid-clinic "Question about
+   * a treatment?", which is a client's question, on the practice dashboard.
+   * The server still has the last word; this only stops the first word being
+   * wrong.
+   */
   const [audience, setAudience] = useState<"patient" | "doctor">("patient");
   const [readAloud, setReadAloud] = useState(false);
 
@@ -109,6 +119,12 @@ export default function Assistant() {
   sayRef.current = voice.say;
 
   const signedIn = status === "authenticated";
+
+  useEffect(() => {
+    const role = session?.user?.role;
+    if (role === "DOCTOR" || role === "ADMIN") setAudience("doctor");
+    else if (role === "PATIENT") setAudience("patient");
+  }, [session?.user?.role]);
 
   // Who is asking, and four things worth asking. Fetched when the panel first
   // opens rather than on every page load — an unopened panel costs nothing.
@@ -174,6 +190,10 @@ export default function Assistant() {
      visit. Anything that pops up twice is an interruption the second time. */
   useEffect(() => {
     if (open) return;
+    // Never in the portal. The nudge is an introduction for somebody browsing
+    // a public page; a practitioner working through a clinic list does not
+    // need the software tapping them on the shoulder.
+    if (pathname.startsWith("/doctor/portal")) return;
     try {
       if (localStorage.getItem(NUDGE_KEY)) return;
     } catch {
@@ -183,7 +203,7 @@ export default function Assistant() {
     }
     const t = window.setTimeout(() => setNudge(true), 40_000);
     return () => window.clearTimeout(t);
-  }, [open]);
+  }, [open, pathname]);
 
   function dismissNudge() {
     setNudge(false);

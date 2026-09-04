@@ -9,12 +9,26 @@ const legal = [
   { label: "Precautions", href: "/precautions" },
 ];
 
-export default function Footer() {
+/**
+ * `audience` decides which "Explore" column is printed.
+ *
+ * The client list — Treatments, Doctors, DIY Diagnosis — is now unreachable
+ * for a signed-in practitioner (middleware confines them to /doctor), so
+ * printing it on the practitioner pages offered four links that all bounce
+ * back to the portal. The doctor column names the things a practitioner can
+ * actually open.
+ */
+export default function Footer({
+  audience = "client",
+}: {
+  audience?: "client" | "doctor";
+}) {
+  const clinical = audience === "doctor";
   return (
     <footer id="contact" className="on-dark bg-brand-950 text-brand-100">
       <div className="container-page grid gap-10 py-14 md:grid-cols-4">
         <div className="md:col-span-2">
-          <BrandLogo href="/" tone="light" size={54} />
+          <BrandLogo href={clinical ? "/doctor" : "/"} tone="light" size={54} />
 
           <p className="mt-4 max-w-md text-sm leading-relaxed text-brand-200/80">
             A dermatology and aesthetic treatment reference connecting
@@ -31,26 +45,25 @@ export default function Footer() {
                 lives in the account menu, and Rx Skin, Before & After and
                 Know Yourself are reached from the hub where they sit in
                 context. */}
-            <li>
-              <Link href="/" className="hover:text-white">
-                Home
-              </Link>
-            </li>
-            <li>
-              <Link href="/patient/explore" className="hover:text-white">
-                Treatments
-              </Link>
-            </li>
-            <li>
-              <Link href="/patient/doctors" className="hover:text-white">
-                Doctors
-              </Link>
-            </li>
-            <li>
-              <Link href="/patient/skin-analyzer" className="hover:text-white">
-                DIY Diagnosis
-              </Link>
-            </li>
+            {(clinical
+              ? [
+                  { href: "/doctor", label: "Why list with us" },
+                  { href: "/doctor/join", label: "List your practice" },
+                  { href: "/doctor/portal", label: "Your portal" },
+                ]
+              : [
+                  { href: "/", label: "Home" },
+                  { href: "/patient/explore", label: "Treatments" },
+                  { href: "/patient/doctors", label: "Doctors" },
+                  { href: "/patient/skin-analyzer", label: "DIY Diagnosis" },
+                ]
+            ).map((l) => (
+              <li key={l.href}>
+                <Link href={l.href} className="hover:text-white">
+                  {l.label}
+                </Link>
+              </li>
+            ))}
           </ul>
         </div>
 
@@ -70,12 +83,15 @@ export default function Footer() {
               the page itself, not only from a first-visit dialog somebody
               dismissed months ago. */}
           <h4 className="mt-6 text-sm font-semibold text-white">
-            For doctors
+            {clinical ? "Support" : "For doctors"}
           </h4>
           <ul className="mt-4 space-y-2 text-sm text-brand-200/80">
             <li>
-              <Link href="/doctor" className="hover:text-white">
-                List your practice
+              <Link
+                href={clinical ? "/doctor/portal/practice" : "/doctor"}
+                className="hover:text-white"
+              >
+                {clinical ? "Your practice settings" : "List your practice"}
               </Link>
             </li>
             {/* The portal link that used to sit here is gone. A footer is

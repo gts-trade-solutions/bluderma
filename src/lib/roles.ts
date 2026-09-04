@@ -79,6 +79,38 @@ const ROLE_AREAS: { prefix: string; roles: Role[] }[] = [
 ];
 
 /**
+ * Everywhere a signed-in DOCTOR is allowed to be.
+ *
+ * The client's rule, and it is a confinement rather than a set of exceptions:
+ * a practitioner account exists to run a practice, and the rest of this site
+ * is a shop for clients. A doctor who lands on the home page, the treatment
+ * catalogue or the skin analyser is looking at marketing aimed at somebody
+ * else — and at "Know About You", a client questionnaire that has nothing to
+ * ask them.
+ *
+ * So the list is short and everything outside it goes back to the portal:
+ *
+ *   /doctor    the practitioner side, portal and onboarding both
+ *   /api       the portal's own fetches. These do their own authorisation;
+ *              bouncing them would break the pages rather than protect them
+ *   /forbidden the refusal page itself, or a doctor who reaches for /admin
+ *              gets a silent redirect instead of being told why
+ *
+ * A path with a dot in it is a file — the push service worker, robots.txt —
+ * and is never a page anybody navigates to.
+ *
+ * ADMIN is deliberately not confined: an administrator has to be able to see
+ * what clients see.
+ */
+const DOCTOR_AREAS = ["/doctor", "/api", "/forbidden"];
+
+export function isDoctorArea(path: string): boolean {
+  const clean = path.split("?")[0];
+  if (clean.includes(".")) return true;
+  return DOCTOR_AREAS.some((a) => clean === a || clean.startsWith(`${a}/`));
+}
+
+/**
  * Would this role actually be allowed to open that path?
  *
  * Sign-in used to push straight to whatever callbackUrl it was given. A client
@@ -90,6 +122,10 @@ const ROLE_AREAS: { prefix: string; roles: Role[] }[] = [
  */
 export function canRoleOpen(path: string, role: Role): boolean {
   if (role === "ADMIN") return true;
+  // A doctor is confined to the practitioner side — see DOCTOR_AREAS. This is
+  // the same rule middleware enforces; having it here as well is what stops
+  // sign-in from sending a doctor somewhere it is about to bounce them from.
+  if (role === "DOCTOR") return isDoctorArea(path);
   const area = ROLE_AREAS.find((a) => path.startsWith(a.prefix));
   return !area || area.roles.includes(role);
 }

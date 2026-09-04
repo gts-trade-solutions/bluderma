@@ -328,7 +328,7 @@ function Body({ detail, onDone }: { detail: Detail; onDone: () => void }) {
                 type="button"
                 onClick={() => setPane(t.key)}
                 aria-pressed={active === t.key}
-                className={`flex-1 rounded-md px-3 py-1.5 text-[13px] font-bold transition ${
+                className={`flex-1 rounded-md px-3 py-1.5 text-[13px] font-bold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-azure-500 ${
                   active === t.key
                     ? "bg-graphite-900 text-white shadow-flat"
                     : "text-graphite-600 hover:text-graphite-900"

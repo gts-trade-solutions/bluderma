@@ -74,7 +74,7 @@ export default function Fold({
         type="button"
         onClick={toggle}
         aria-expanded={open}
-        className="group flex w-full items-center gap-3 rounded-[10px] border border-graphite-200 bg-white px-4 py-3 text-left shadow-flat transition hover:border-graphite-300"
+        className="group flex w-full items-center gap-3 rounded-[10px] border border-graphite-200 bg-white px-4 py-3 text-left shadow-flat transition hover:border-graphite-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-azure-500 focus-visible:ring-offset-2"
       >
         <span className="min-w-0 flex-1">
           <span className="block font-portal text-xl font-extrabold tracking-[-0.03em] text-graphite-900 sm:text-2xl">

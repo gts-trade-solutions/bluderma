@@ -53,7 +53,7 @@ export default function CareSheetList({ sheets }: { sheets: CareSheet[] }) {
               type="button"
               onClick={() => setOpenId(open ? null : s.id)}
               aria-expanded={open}
-              className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-graphite-50 sm:px-5"
+              className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-graphite-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-azure-500 sm:px-5"
             >
               <Tag tone={s.kind === "PRE" ? "brand" : "teal"}>
                 {s.kind === "PRE" ? "Before" : "After"}

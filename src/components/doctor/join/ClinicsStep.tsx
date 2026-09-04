@@ -211,7 +211,7 @@ function ClinicCard({
             type="button"
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
-            className="group/addr mt-0.5 flex w-full items-start gap-1.5 rounded-md text-left"
+            className="group/addr mt-0.5 flex w-full items-start gap-1.5 rounded-md text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-azure-500 focus-visible:ring-offset-2"
           >
             <span className="min-w-0 flex-1">
               <span className="block text-sm text-graphite-700 underline-offset-2 group-hover/addr:text-azure-700 group-hover/addr:underline">

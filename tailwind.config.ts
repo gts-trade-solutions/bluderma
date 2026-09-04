@@ -1,5 +1,8 @@
 import type { Config } from "tailwindcss";
 
+// The five brand colours, written down once. See the note in that file.
+import { AZURE, CORAL, GOLD, GRAPHITE, MINT } from "./src/lib/brandPalette";
+
 const config: Config = {
   content: [
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
@@ -71,71 +74,11 @@ const config: Config = {
          * -800 text at AA. Anything picked outside those pairs has not
          * been checked.
          */
-        azure: {
-          50: "#f0f7fc",
-          100: "#dbedf8",
-          200: "#b9dbf1",
-          300: "#8cc2e6",
-          400: "#5ea6d9",
-          500: "#3e8ccb",
-          600: "#2f72ab",
-          700: "#285c8a",
-          800: "#244d71",
-          900: "#22415e",
-          950: "#16293c",
-        },
-        coral: {
-          50: "#fef3f3",
-          100: "#fde4e5",
-          200: "#fbcccd",
-          300: "#f8a7a9",
-          400: "#f47b7e",
-          500: "#f15256",
-          600: "#dc3238",
-          700: "#b9262c",
-          800: "#992429",
-          900: "#7f2428",
-          950: "#450e11",
-        },
-        mint: {
-          50: "#eefaf6",
-          100: "#d1f2e7",
-          200: "#a6e5d2",
-          300: "#8fdcc4",
-          400: "#6fcbae",
-          500: "#58be9f",
-          600: "#3fa287",
-          700: "#33826d",
-          800: "#2b6857",
-          900: "#255548",
-          950: "#11322a",
-        },
-        gold: {
-          50: "#fffcea",
-          100: "#fff6c4",
-          200: "#ffec8a",
-          300: "#ffdf47",
-          400: "#ffd11a",
-          500: "#ffc80b",
-          600: "#e0a800",
-          700: "#b58100",
-          800: "#8f6800",
-          900: "#765400",
-          950: "#452f00",
-        },
-        graphite: {
-          50: "#f7f7f7",
-          100: "#ededed",
-          200: "#dcdcdc",
-          300: "#bdbdbd",
-          400: "#9a9a9a",
-          500: "#7a7a7a",
-          600: "#5c5c5c",
-          700: "#454545",
-          800: "#383838",
-          900: "#2f2f2f",
-          950: "#1f1f1f",
-        },
+        azure: AZURE,
+        coral: CORAL,
+        mint: MINT,
+        gold: GOLD,
+        graphite: GRAPHITE,
       },
       fontFamily: {
         // The tail of these stacks is the ONLY fallback now — globals.css no

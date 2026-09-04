@@ -1,3 +1,5 @@
+import { AZURE, CORAL, GOLD, GRAPHITE, MINT } from "@/lib/brandPalette";
+
 /**
  * The swatch each clinic gets on the calendar.
  *
@@ -168,21 +170,22 @@ export function swatchFor(colorKey: string | null | undefined): ClinicSwatch {
  * The same hue as a hex literal, for charts.
  *
  * Recharts fills are SVG attributes, not classes — it cannot take `bg-mint-500`
- * and Tailwind cannot resolve a class it never sees in source. Keeping the two
- * side by side means a clinic is the same colour in its calendar block and in
- * the dashboard bar for it, which is the entire point of giving it one.
+ * and Tailwind cannot resolve a class it never sees in source. Read from
+ * lib/brandPalette, the same table Tailwind is built from, so a clinic cannot
+ * end up one colour in its calendar block and another in the dashboard bar —
+ * which is the entire point of giving it one.
  */
 const HEXES: Record<string, string> = {
-  blue: "#3e8ccb",
-  teal: "#58be9f",
-  violet: "#244d71",
-  emerald: "#33826d",
-  amber: "#ffc80b",
-  rose: "#f15256",
-  indigo: "#454545",
-  orange: "#b58100",
-  sky: "#b9262c",
-  slate: "#9a9a9a",
+  blue: AZURE[500],
+  teal: MINT[500],
+  violet: AZURE[800],
+  emerald: MINT[700],
+  amber: GOLD[500],
+  rose: CORAL[500],
+  indigo: GRAPHITE[700],
+  orange: GOLD[700],
+  sky: CORAL[700],
+  slate: GRAPHITE[400],
 };
 
 export function hexFor(colorKey: string | null | undefined): string {

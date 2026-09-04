@@ -37,6 +37,18 @@ export const DOCTOR_PREFIX = "BLU-DR";
 export const VENDOR_PREFIX = "BLU-V";
 export const GIFT_PREFIX = "BLU-G";
 export const ORDER_PREFIX = "BLU-O";
+/*
+ * Premises, catalogue entries and equipment.
+ *
+ * Added because everything a clinic quotes on paper needs a form a human can
+ * read back: "which of your three branches" and "which laser" are both
+ * questions somebody answers over a phone. The shapes stay distinct from the
+ * identity ids — five characters, like a vendor — so nothing on a shared
+ * document can be mistaken for a patient or a practice.
+ */
+export const CLINIC_PREFIX = "BLU-C";
+export const TREATMENT_PREFIX = "BLU-T";
+export const ASSET_PREFIX = "BLU-E";
 
 const PATIENT_LENGTH = 6;
 const DOCTOR_LENGTH = 7;
@@ -50,6 +62,9 @@ const VENDOR_LENGTH = 5;
 // happily try the code somebody read out over the phone.
 const GIFT_LENGTH = 8;
 const ORDER_LENGTH = 6;
+const CLINIC_LENGTH = 5;
+const TREATMENT_LENGTH = 5;
+const ASSET_LENGTH = 5;
 
 function body(length: number): string {
   let out = "";
@@ -88,6 +103,21 @@ export function newGiftCardCode(): string {
 /** A fresh order reference, e.g. "BLU-O-4K7M2Q". */
 export function newOrderId(): string {
   return `${ORDER_PREFIX}-${body(ORDER_LENGTH)}`;
+}
+
+/** A fresh clinic identifier, e.g. "BLU-C-7Q2NX". */
+export function newClinicId(): string {
+  return `${CLINIC_PREFIX}-${body(CLINIC_LENGTH)}`;
+}
+
+/** A fresh treatment identifier, e.g. "BLU-T-4K7M2". */
+export function newTreatmentId(): string {
+  return `${TREATMENT_PREFIX}-${body(TREATMENT_LENGTH)}`;
+}
+
+/** A fresh equipment identifier, e.g. "BLU-E-9T3N6". */
+export function newAssetId(): string {
+  return `${ASSET_PREFIX}-${body(ASSET_LENGTH)}`;
 }
 
 /**
@@ -145,6 +175,24 @@ export function isGiftCardCode(value: string): boolean {
 
 export function isOrderId(value: string): boolean {
   return new RegExp(`^${ORDER_PREFIX}-[${ALPHABET}]{${ORDER_LENGTH}}$`).test(
+    normalise(value)
+  );
+}
+
+export function isClinicId(value: string): boolean {
+  return new RegExp(`^${CLINIC_PREFIX}-[${ALPHABET}]{${CLINIC_LENGTH}}$`).test(
+    normalise(value)
+  );
+}
+
+export function isTreatmentId(value: string): boolean {
+  return new RegExp(
+    `^${TREATMENT_PREFIX}-[${ALPHABET}]{${TREATMENT_LENGTH}}$`
+  ).test(normalise(value));
+}
+
+export function isAssetId(value: string): boolean {
+  return new RegExp(`^${ASSET_PREFIX}-[${ALPHABET}]{${ASSET_LENGTH}}$`).test(
     normalise(value)
   );
 }

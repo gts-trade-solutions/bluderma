@@ -934,7 +934,8 @@ export const HUB_CATEGORIES: HubCategory[] = [
         slug: "mens-hair-loss",
         name: "Male Pattern Hair Loss",
         blurb: "Medical plus regenerative, staged by Norwood grade.",
-        image: IMG.hair1,
+        // hair1 is a woman's hair-restoration shot. See hubImages.
+        image: IMG.menHairLoss,
         meta: "Reviewed at 6 months",
       },
       {
